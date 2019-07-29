@@ -127,27 +127,27 @@ void MessageMonitorForm::ubloxProcessor_unidentifiedDataReceived(const QByteArra
 }
 
 
-void MessageMonitorForm::commThread_ErrorMessage(const QString& errorMessage)
+void MessageMonitorForm::ErrorMessage(const QString& errorMessage)
 {
     addLogLine(QString("Serial thread error: ") + errorMessage);
 }
 
-void MessageMonitorForm::commThread_WarningMessage(const QString& warningMessage)
+void MessageMonitorForm::WarningMessage(const QString& warningMessage)
 {
     addLogLine(QString("Serial thread warning: ") + warningMessage);
 }
 
-void MessageMonitorForm::commThread_InfoMessage(const QString& infoMessage)
+void MessageMonitorForm::InfoMessage(const QString& infoMessage)
 {
     addLogLine(QString("Serial thread info: ") + infoMessage);
 }
 
-void MessageMonitorForm::commThread_DataReceived(const QByteArray&)
+void MessageMonitorForm::DataReceived(const QByteArray&)
 {
 
 }
 
-void MessageMonitorForm::commThread_SerialTimeout(void)
+void MessageMonitorForm::serialTimeout(void)
 {
 
 }
@@ -157,37 +157,37 @@ void MessageMonitorForm::commThread_SerialTimeout(void)
 void MessageMonitorForm::connectSerialThreadSlots(SerialThread* serThread)
 {
     QObject::connect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(commThread_InfoMessage(const QString&)));
+                     this, SLOT(InfoMessage(const QString&)));
 
     QObject::connect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(commThread_WarningMessage(const QString&)));
+                     this, SLOT(WarningMessage(const QString&)));
 
     QObject::connect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(commThread_ErrorMessage(const QString&)));
+                     this, SLOT(ErrorMessage(const QString&)));
 
     QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(commThread_DataReceived(const QByteArray&)));
+                     this, SLOT(DataReceived(const QByteArray&)));
 
     QObject::connect(serThread, SIGNAL(serialTimeout(void)),
-                     this, SLOT(commThread_SerialTimeout(void)));
+                     this, SLOT(serialTimeout(void)));
 }
 
 void MessageMonitorForm::disconnectSerialThreadSlots(SerialThread* serThread)
 {
     QObject::disconnect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(commThread_InfoMessage(const QString&)));
+                     this, SLOT(InfoMessage(const QString&)));
 
     QObject::disconnect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(commThread_WarningMessage(const QString&)));
+                     this, SLOT(WarningMessage(const QString&)));
 
     QObject::disconnect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(commThread_ErrorMessage(const QString&)));
+                     this, SLOT(ErrorMessage(const QString&)));
 
     QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(commThread_DataReceived(const QByteArray&)));
+                     this, SLOT(DataReceived(const QByteArray&)));
 
     QObject::disconnect(serThread, SIGNAL(serialTimeout(void)),
-                     this, SLOT(commThread_SerialTimeout(void)));
+                     this, SLOT(serialTimeout(void)));
 }
 
 void MessageMonitorForm::connectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
@@ -236,3 +236,40 @@ void MessageMonitorForm::on_pushButton_ClearAll_clicked()
 {
     ui->plainTextEdit_Output->clear();
 }
+
+void MessageMonitorForm::connectNTRIPThreadSlots(NTRIPThread* ntripThread)
+{
+    QObject::connect(ntripThread, SIGNAL(infoMessage(const QString&)),
+                     this, SLOT(InfoMessage(const QString&)));
+
+    QObject::connect(ntripThread, SIGNAL(warningMessage(const QString&)),
+                     this, SLOT(WarningMessage(const QString&)));
+
+    QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
+                     this, SLOT(ErrorMessage(const QString&)));
+
+    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                     this, SLOT(DataReceived(const QByteArray&)));
+
+//    QObject::connect(serThread, SIGNAL(serialTimeout(void)),
+//                     this, SLOT(commThread_SerialTimeout(void)));
+}
+
+void MessageMonitorForm::disconnectNTRIPThreadSlots(NTRIPThread* ntripThread)
+{
+    QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
+                     this, SLOT(InfoMessage(const QString&)));
+
+    QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
+                     this, SLOT(WarningMessage(const QString&)));
+
+    QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
+                     this, SLOT(ErrorMessage(const QString&)));
+
+    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                     this, SLOT(DataReceived(const QByteArray&)));
+
+//    QObject::disconnect(serThread, SIGNAL(serialTimeout(void)),
+//                     this, SLOT(commThread_SerialTimeout(void)));
+}
+

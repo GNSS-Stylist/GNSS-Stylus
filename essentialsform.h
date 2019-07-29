@@ -32,6 +32,7 @@
 #include <cmath>
 
 #include "serialthread.h"
+#include "ntripthread.h"
 #include "ubloxdatastreamprocessor.h"
 #include "gnssmessage.h"
 #include "postprocessform.h"
@@ -53,8 +54,11 @@ public:
 
     void connectSerialThreadSlots_Base(SerialThread* serThread); //!< Connects signals from SerialThread (base)
     void disconnectSerialThreadSlots_Base(SerialThread* serThread); //!< Disconnects signals from SerialThread (base)
-    void connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Connects signals from UBloxDataStreamProcessor (base)
-    void disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Disconnects signals from UBloxDataStreamProcessor (base)
+    void connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Connects signals from UBloxDataStreamProcessor (base). Works for serial and NTRIP
+    void disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Disconnects signals from UBloxDataStreamProcessor (base). Works for serial and NTRIP
+
+    void connectNTRIPThreadSlots_Base(NTRIPThread* serThread); //!< Connects signals from NTRIPThread
+    void disconnectNTRIPThreadSlots_Base(NTRIPThread* serThread); //!< Disconnects signals from NTRIPThread
 
     void connectSerialThreadSlots_RoverA(SerialThread* serThread); //!< Connects signals from SerialThread (rover A)
     void disconnectSerialThreadSlots_RoverA(SerialThread* serThread); //!< Disconnects signals from SerialThread (rover A)
@@ -73,7 +77,7 @@ private slots:
     void on_pushButton_StartLogging_clicked();
     void on_pushButton_StopLogging_clicked();
 
-    void serialDataReceived_Base(const QByteArray& bytes);
+    void dataReceived_Base(const QByteArray& bytes);
     void nmeaSentenceReceived_Base(const QByteArray& nmeaSentence);
     void ubxMessageReceived_Base(const UBXMessage& ubxMessage);
     void rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage);

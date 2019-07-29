@@ -26,6 +26,7 @@
 
 #include <QWidget>
 #include "serialthread.h"
+#include "ntripthread.h"
 #include "ubloxdatastreamprocessor.h"
 
 namespace Ui {
@@ -72,6 +73,19 @@ public:
      */
     void disconnectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor);
 
+    /**
+     * @brief Connects slots from NTRIPThread
+     * @param ntripThread NTRIPThread to connect signals from
+     */
+    void connectNTRIPThreadSlots(NTRIPThread* ntripThread);
+
+    /**
+     * @brief Disconnects slots from NTRIPThread
+     * @param serThread NTRIPThread to disconnect signals from
+     */
+    void disconnectNTRIPThreadSlots(NTRIPThread* ntripThread);
+
+
 private:
     Ui::MessageMonitorForm *ui;
 
@@ -86,11 +100,12 @@ private slots:
     void ubloxProcessor_nmeaParseError(const QString&);
     void ubloxProcessor_unidentifiedDataReceived(const QByteArray& data);
 
-    void commThread_ErrorMessage(const QString& errorMessage);
-    void commThread_WarningMessage(const QString& warningMessage);
-    void commThread_InfoMessage(const QString& infoMessage);
-    void commThread_DataReceived(const QByteArray& bytes);
-    void commThread_SerialTimeout(void);
+    void ErrorMessage(const QString& errorMessage);
+    void WarningMessage(const QString& warningMessage);
+    void InfoMessage(const QString& infoMessage);
+    void DataReceived(const QByteArray& bytes);
+    void serialTimeout(void);
+
     void on_pushButton_ClearAll_clicked();
 };
 

@@ -24,10 +24,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++17
 
+LIBS += -l"ws2_32"
+
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
+    ntripclientform.cpp \
+    ntripthread.cpp \
     ubloxdatastreamprocessor.cpp \
     serialthread.cpp \
     messagemonitorform.cpp \
@@ -39,6 +43,8 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
     gnssmessage.h \
+    ntripclientform.h \
+    ntripthread.h \
     ubloxdatastreamprocessor.h \
     serialthread.h \
     messagemonitorform.h \
@@ -50,6 +56,7 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
     messagemonitorform.ui \
+    ntripclientform.ui \
     relposnedform.ui \
     essentialsform.ui \
     postprocessform.ui

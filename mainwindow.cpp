@@ -33,11 +33,15 @@ MainWindow::MainWindow(QWidget *parent) :
     serialThread_Base = nullptr;
     serialThread_RoverA = nullptr;
     serialThread_RoverB = nullptr;
+    ntripThread = nullptr;
 
     ui->setupUi(this);
 
-    messageMonitorForm_Base = new MessageMonitorForm(parent, "Message monitor (Base)");
-    messageMonitorForm_Base->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_Base);
+    messageMonitorForm_Base_Serial = new MessageMonitorForm(parent, "Message monitor (Base, serial)");
+    messageMonitorForm_Base_Serial->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_Base_Serial);
+
+    messageMonitorForm_Base_NTRIP = new MessageMonitorForm(parent, "Message monitor (Base, NTRIP)");
+    messageMonitorForm_Base_NTRIP->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_Base_NTRIP);
 
     messageMonitorForm_RoverA = new MessageMonitorForm(parent, "Message monitor (Rover A)");
     messageMonitorForm_RoverA->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_RoverA);
@@ -48,7 +52,9 @@ MainWindow::MainWindow(QWidget *parent) :
     relposnedForm_RoverB = new RELPOSNEDForm(parent, "RELPOSNED (Rover B)");
 
     essentialsForm = new EssentialsForm(parent);
-    essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base);
+    essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_Serial);
+    essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_NTRIP);
+
     essentialsForm->connectUBloxDataStreamProcessorSlots_RoverA(&ubloxDataStreamProcessor_RoverA);
     essentialsForm->connectUBloxDataStreamProcessorSlots_RoverB(&ubloxDataStreamProcessor_RoverB);
 
@@ -62,8 +68,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     essentialsForm->connectPostProcessingSlots(postProcessingForm);
 
-    QObject::connect(&ubloxDataStreamProcessor_Base, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(ubloxProcessor_Base_rtcmMessageReceived(const RTCMMessage&)));
+    QObject::connect(&ubloxDataStreamProcessor_Base_Serial, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
+                     this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&)));
+
+    QObject::connect(&ubloxDataStreamProcessor_Base_NTRIP, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
+                     this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&)));
 
     QObject::connect(&ubloxDataStreamProcessor_RoverA, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&)));
@@ -73,20 +82,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QSettings settings;
 
-    ui->lineEdit_ComPort_Base->setText(settings.value("ComPort_Base", "\\\\.\\COM").toString());
+    ui->lineEdit_ComPort_Base_Serial->setText(settings.value("ComPort_Base", "\\\\.\\COM").toString());
     ui->lineEdit_ComPort_RoverA->setText(settings.value("ComPort_RoverA", "\\\\.\\COM").toString());
     ui->lineEdit_ComPort_RoverB->setText(settings.value("ComPort_RoverB", "\\\\.\\COM").toString());
+    ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
 
 }
 
 MainWindow::~MainWindow()
 {
     QSettings settings;
-    settings.setValue("ComPort_Base", ui->lineEdit_ComPort_Base->text());
+    settings.setValue("ComPort_Base", ui->lineEdit_ComPort_Base_Serial->text());
     settings.setValue("ComPort_RoverA", ui->lineEdit_ComPort_RoverA->text());
     settings.setValue("ComPort_RoverB", ui->lineEdit_ComPort_RoverB->text());
+    settings.setValue("Command_Base_NTRIP", ui->lineEdit_Command_Base_NTRIP->text());
 
-    delete messageMonitorForm_Base;
+    delete messageMonitorForm_Base_Serial;
+    delete messageMonitorForm_Base_NTRIP;
     delete messageMonitorForm_RoverA;
     delete relposnedForm_RoverA;
     delete messageMonitorForm_RoverB;
@@ -99,7 +111,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
-    messageMonitorForm_Base->close();
+    messageMonitorForm_Base_Serial->close();
+    messageMonitorForm_Base_NTRIP->close();
     messageMonitorForm_RoverA->close();
     relposnedForm_RoverA->close();
 
@@ -114,38 +127,38 @@ void MainWindow::closeEvent (QCloseEvent *event)
 
 void MainWindow::commThread_Base_InfoMessage(const QString& infoMessage)
 {
-    ui->label_LastInfoMessage_Base->setText(infoMessage);
+    ui->label_LastInfoMessage_Base_Serial->setText(infoMessage);
 }
 
 void MainWindow::commThread_Base_ErrorMessage(const QString& errorMessage)
 {
-    ui->label_LastErrorMessage_Base->setText(errorMessage);
+    ui->label_LastErrorMessage_Base_Serial->setText(errorMessage);
 }
 
 void MainWindow::commThread_Base_WarningMessage(const QString& warningMessage)
 {
-    ui->label_LastWarningMessage_Base->setText(warningMessage);
+    ui->label_LastWarningMessage_Base_Serial->setText(warningMessage);
 }
 
 void MainWindow::commThread_Base_DataReceived(const QByteArray& data)
 {
-    ubloxDataStreamProcessor_Base.process(data);
+    ubloxDataStreamProcessor_Base_Serial.process(data);
 }
 
 void MainWindow::commThread_Base_SerialTimeout(void)
 {
-    if (ubloxDataStreamProcessor_Base.getNumOfUnprocessedBytes() != 0)
+    if (ubloxDataStreamProcessor_Base_Serial.getNumOfUnprocessedBytes() != 0)
     {
-        ui->label_LastWarningMessage_Base->setText(QString("Warning: discarded ") + QString::number(ubloxDataStreamProcessor_Base.getNumOfUnprocessedBytes()) + " unprocessed bytes due to serial timeout.");
+        ui->label_LastWarningMessage_Base_Serial->setText(QString("Warning: discarded ") + QString::number(ubloxDataStreamProcessor_Base_Serial.getNumOfUnprocessedBytes()) + " unprocessed bytes due to serial timeout.");
     }
 
-    ubloxDataStreamProcessor_Base.flushInputBuffer();
+    ubloxDataStreamProcessor_Base_Serial.flushInputBuffer();
 }
 
-void MainWindow::ubloxProcessor_Base_rtcmMessageReceived(const RTCMMessage& rtcmMessage)
+void MainWindow::ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage& rtcmMessage)
 {
-    messageCounter_RTCM_Base++;
-    ui->label_RTCMMessageCount_Base->setText(QString::number(messageCounter_RTCM_Base));
+    messageCounter_RTCM_Base_Serial++;
+    ui->label_RTCMMessageCount_Base_Serial->setText(QString::number(messageCounter_RTCM_Base_Serial));
 
     if (serialThread_RoverA)
     {
@@ -158,13 +171,12 @@ void MainWindow::ubloxProcessor_Base_rtcmMessageReceived(const RTCMMessage& rtcm
     }
 }
 
-
-void MainWindow::on_pushButton_StartThread_Base_clicked()
+void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
 {
     if (!serialThread_Base)
     {
-        serialThread_Base = new SerialThread(ui->lineEdit_ComPort_Base->text());
-        if (ui->checkBox_SuspendThread_Base->isChecked())
+        serialThread_Base = new SerialThread(ui->lineEdit_ComPort_Base_Serial->text());
+        if (ui->checkBox_SuspendThread_Base_Serial->isChecked())
         {
             serialThread_Base->suspend();
         }
@@ -184,24 +196,26 @@ void MainWindow::on_pushButton_StartThread_Base_clicked()
         QObject::connect(serialThread_Base, SIGNAL(serialTimeout(void)),
                          this, SLOT(commThread_Base_SerialTimeout(void)));
 
-        messageMonitorForm_Base->connectSerialThreadSlots(serialThread_Base);
+        messageMonitorForm_Base_Serial->connectSerialThreadSlots(serialThread_Base);
         essentialsForm->connectSerialThreadSlots_Base(serialThread_Base);
 
         serialThread_Base->start();
 
-        ui->lineEdit_ComPort_Base->setEnabled(false);
-        ui->pushButton_StartThread_Base->setEnabled(false);
-        ui->pushButton_TerminateThread_Base->setEnabled(true);
+        ui->lineEdit_ComPort_Base_Serial->setEnabled(false);
+        ui->pushButton_StartThread_Base_Serial->setEnabled(false);
+        ui->pushButton_TerminateThread_Base_Serial->setEnabled(true);
+        ui->pushButton_StartThread_Base_NTRIP->setEnabled(false);
+        ui->pushButton_TerminateThread_NTRIP->setEnabled(false);
 
-        messageCounter_RTCM_Base = 0;
-        ui->label_RTCMMessageCount_Base->setText(QString::number(messageCounter_RTCM_Base));
-        ui->label_LastInfoMessage_Base->setText("");
-        ui->label_LastWarningMessage_Base->setText("");
-        ui->label_LastErrorMessage_Base->setText("");
+        messageCounter_RTCM_Base_Serial = 0;
+        ui->label_RTCMMessageCount_Base_Serial->setText(QString::number(messageCounter_RTCM_Base_Serial));
+        ui->label_LastInfoMessage_Base_Serial->setText("");
+        ui->label_LastWarningMessage_Base_Serial->setText("");
+        ui->label_LastErrorMessage_Base_Serial->setText("");
     }
 }
 
-void MainWindow::on_pushButton_TerminateThread_Base_clicked()
+void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
 {
     if (serialThread_Base)
     {
@@ -223,19 +237,21 @@ void MainWindow::on_pushButton_TerminateThread_Base_clicked()
         QObject::disconnect(serialThread_Base, SIGNAL(serialTimeout(void)),
                          this, SLOT(commThread_Base_SerialTimeout(void)));
 
-        messageMonitorForm_Base->disconnectSerialThreadSlots(serialThread_Base);
+        messageMonitorForm_Base_Serial->disconnectSerialThreadSlots(serialThread_Base);
         essentialsForm->disconnectSerialThreadSlots_Base(serialThread_Base);
 
         delete serialThread_Base;
         serialThread_Base = nullptr;
 
-        ui->lineEdit_ComPort_Base->setEnabled(true);
-        ui->pushButton_StartThread_Base->setEnabled(true);
-        ui->pushButton_TerminateThread_Base->setEnabled(false);
+        ui->lineEdit_ComPort_Base_Serial->setEnabled(true);
+        ui->pushButton_StartThread_Base_Serial->setEnabled(true);
+        ui->pushButton_TerminateThread_Base_Serial->setEnabled(false);
+        ui->pushButton_StartThread_Base_NTRIP->setEnabled(true);
+        ui->pushButton_TerminateThread_NTRIP->setEnabled(false);
     }
 }
 
-void MainWindow::on_checkBox_SuspendThread_Base_stateChanged(int arg1)
+void MainWindow::on_checkBox_SuspendThread_Base_Serial_stateChanged(int arg1)
 {
     if (arg1 == Qt::Checked)
     {
@@ -247,32 +263,32 @@ void MainWindow::on_checkBox_SuspendThread_Base_stateChanged(int arg1)
     }
 }
 
-void MainWindow::on_pushButton_ShowMessageWindow_Base_clicked()
+void MainWindow::on_pushButton_ShowMessageWindow_Base_Serial_clicked()
 {
-    messageMonitorForm_Base->show();
-    messageMonitorForm_Base->raise();
-    messageMonitorForm_Base->activateWindow();
+    messageMonitorForm_Base_Serial->show();
+    messageMonitorForm_Base_Serial->raise();
+    messageMonitorForm_Base_Serial->activateWindow();
 }
 
-void MainWindow::on_pushButton_ClearRTCMCounter_Base_clicked()
+void MainWindow::on_pushButton_ClearRTCMCounter_Base_Serial_clicked()
 {
-    messageCounter_RTCM_Base = 0;
-    ui->label_RTCMMessageCount_Base->setText(QString::number(messageCounter_RTCM_Base));
+    messageCounter_RTCM_Base_Serial = 0;
+    ui->label_RTCMMessageCount_Base_Serial->setText(QString::number(messageCounter_RTCM_Base_Serial));
 }
 
-void MainWindow::on_pushButton_ClearErrorMessage_Base_clicked()
+void MainWindow::on_pushButton_ClearErrorMessage_Base_Serial_clicked()
 {
-    ui->label_LastErrorMessage_Base->setText("");
+    ui->label_LastErrorMessage_Base_Serial->setText("");
 }
 
-void MainWindow::on_pushButton_ClearWarningMessage_Base_clicked()
+void MainWindow::on_pushButton_ClearWarningMessage_Base_Serial_clicked()
 {
-    ui->label_LastWarningMessage_Base->setText("");
+    ui->label_LastWarningMessage_Base_Serial->setText("");
 }
 
-void MainWindow::on_pushButton_ClearInfoMessage_Base_clicked()
+void MainWindow::on_pushButton_ClearInfoMessage_Base_Serial_clicked()
 {
-    ui->label_LastInfoMessage_Base->setText("");
+    ui->label_LastInfoMessage_Base_Serial->setText("");
 }
 
 void MainWindow::on_pushButton_StartThread_RoverA_clicked()
@@ -630,4 +646,190 @@ void MainWindow::on_pushButton_ShowPostProcessingWindow_clicked()
     postProcessingForm->show();
     postProcessingForm->raise();
     postProcessingForm->activateWindow();
+}
+
+void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
+{
+    if (!ntripThread)
+    {
+        ntripThread = new NTRIPThread(ui->lineEdit_Command_Base_NTRIP->text());
+
+        QObject::connect(ntripThread, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_InfoMessage(const QString&)));
+
+        QObject::connect(ntripThread, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_WarningMessage(const QString&)));
+
+        QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
+
+        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                         this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
+
+        QObject::connect(ntripThread, SIGNAL(threadEnded(void)),
+                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+
+//        QObject::connect(ntripThread, SIGNAL(serialTimeout(void)),
+//                         this, SLOT(ntripThread_Base_SerialTimeout(void)));
+
+        messageMonitorForm_Base_NTRIP->connectNTRIPThreadSlots(ntripThread);
+        essentialsForm->connectNTRIPThreadSlots_Base(ntripThread);
+
+        ntripThread->start();
+
+        ui->lineEdit_Command_Base_NTRIP->setEnabled(false);
+        ui->pushButton_StartThread_Base_Serial->setEnabled(false);
+        ui->pushButton_TerminateThread_Base_Serial->setEnabled(false);
+        ui->pushButton_StartThread_Base_NTRIP->setEnabled(false);
+        ui->pushButton_TerminateThread_NTRIP->setEnabled(true);
+
+        messageCounter_RTCM_Base_NTRIP = 0;
+        ui->label_RTCMMessageCount_Base_NTRIP->setText(QString::number(messageCounter_RTCM_Base_NTRIP));
+        ui->label_LastInfoMessage_Base_NTRIP->setText("");
+        ui->label_LastWarningMessage_Base_NTRIP->setText("");
+        ui->label_LastErrorMessage_Base_NTRIP->setText("");
+    }
+}
+
+void MainWindow::ntripThread_Base_InfoMessage(const QString& infoMessage)
+{
+    ui->label_LastInfoMessage_Base_NTRIP->setText(infoMessage);
+}
+
+void MainWindow::ntripThread_Base_ErrorMessage(const QString& errorMessage)
+{
+    ui->label_LastErrorMessage_Base_NTRIP->setText(errorMessage);
+}
+
+void MainWindow::ntripThread_Base_WarningMessage(const QString& warningMessage)
+{
+    ui->label_LastWarningMessage_Base_NTRIP->setText(warningMessage);
+}
+
+void MainWindow::ntripThread_Base_DataReceived(const QByteArray& data)
+{
+    ubloxDataStreamProcessor_Base_NTRIP.process(data);
+}
+
+void MainWindow::ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage& rtcmMessage)
+{
+    messageCounter_RTCM_Base_NTRIP++;
+    ui->label_RTCMMessageCount_Base_NTRIP->setText(QString::number(messageCounter_RTCM_Base_NTRIP));
+
+    if (serialThread_RoverA)
+    {
+        serialThread_RoverA->addToSendQueue(rtcmMessage.rawMessage);
+    }
+
+    if (serialThread_RoverB)
+    {
+        serialThread_RoverB->addToSendQueue(rtcmMessage.rawMessage);
+    }
+}
+
+
+void MainWindow::ntripThread_Base_ThreadEnded(void)
+{
+    if (ntripThread)
+    {
+        ntripThread->wait(5000);
+
+        QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_InfoMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_WarningMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                         this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
+                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+
+//        QObject::disconnect(ntripThread, SIGNAL(serialTimeout(void)),
+//                         this, SLOT(ntripThread_SerialTimeout(void)));
+
+        messageMonitorForm_Base_NTRIP->disconnectNTRIPThreadSlots(ntripThread);
+        essentialsForm->disconnectNTRIPThreadSlots_Base(ntripThread);
+
+        delete ntripThread;
+        ntripThread = nullptr;
+
+        ui->lineEdit_Command_Base_NTRIP->setEnabled(true);
+        ui->pushButton_StartThread_Base_Serial->setEnabled(true);
+        ui->pushButton_TerminateThread_Base_Serial->setEnabled(false);
+        ui->pushButton_StartThread_Base_NTRIP->setEnabled(true);
+        ui->pushButton_TerminateThread_NTRIP->setEnabled(false);
+    }
+}
+
+void MainWindow::on_pushButton_ShowMessageWindow_NTRIP_clicked()
+{
+    messageMonitorForm_Base_NTRIP->show();
+    messageMonitorForm_Base_NTRIP->raise();
+    messageMonitorForm_Base_NTRIP->activateWindow();
+}
+
+void MainWindow::on_pushButton_ClearRTCMCounter_Base_NTRIP_clicked()
+{
+    messageCounter_RTCM_Base_NTRIP = 0;
+    ui->label_RTCMMessageCount_Base_NTRIP->setText(QString::number(messageCounter_RTCM_Base_NTRIP));
+}
+
+void MainWindow::on_pushButton_ClearErrorMessage_Base_NTRIP_clicked()
+{
+    ui->label_LastErrorMessage_Base_NTRIP->setText("");
+}
+
+void MainWindow::on_pushButton_ClearWarningMessage_Base_NTRIP_clicked()
+{
+    ui->label_LastWarningMessage_Base_NTRIP->setText("");
+}
+
+void MainWindow::on_pushButton_ClearInfoMessage_Base_NTRIP_clicked()
+{
+    ui->label_LastInfoMessage_Base_NTRIP->setText("");
+}
+
+void MainWindow::on_pushButton_TerminateThread_NTRIP_clicked()
+{
+    if (ntripThread)
+    {
+        ntripThread->requestTerminate();
+        ntripThread->wait(5000);
+
+        QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(commThread_Base_InfoMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(commThread_Base_WarningMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(commThread_Base_ErrorMessage(const QString&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                         this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
+
+        QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
+                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+
+//        QObject::disconnect(ntripThread, SIGNAL(serialTimeout(void)),
+//                         this, SLOT(commThread_Base_SerialTimeout(void)));
+
+        messageMonitorForm_Base_NTRIP->disconnectNTRIPThreadSlots(ntripThread);
+        essentialsForm->disconnectNTRIPThreadSlots_Base(ntripThread);
+
+        delete ntripThread;
+        ntripThread = nullptr;
+
+        ui->lineEdit_Command_Base_NTRIP->setEnabled(true);
+        ui->pushButton_StartThread_Base_Serial->setEnabled(true);
+        ui->pushButton_TerminateThread_Base_Serial->setEnabled(false);
+        ui->pushButton_StartThread_Base_NTRIP->setEnabled(true);
+        ui->pushButton_TerminateThread_NTRIP->setEnabled(false);
+    }
+
 }

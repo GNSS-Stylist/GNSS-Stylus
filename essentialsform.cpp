@@ -237,7 +237,7 @@ void EssentialsForm::on_pushButton_StopLogging_clicked()
     closeAllLogFiles();
 }
 
-void EssentialsForm::serialDataReceived_Base(const QByteArray& bytes)
+void EssentialsForm::dataReceived_Base(const QByteArray& bytes)
 {
     if (loggingActive)
     {
@@ -399,13 +399,25 @@ void EssentialsForm::postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&
 void EssentialsForm::connectSerialThreadSlots_Base(SerialThread* serThread)
 {
     QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(serialDataReceived_Base(const QByteArray&)));
+                     this, SLOT(dataReceived_Base(const QByteArray&)));
 }
 
 void EssentialsForm::disconnectSerialThreadSlots_Base(SerialThread* serThread)
 {
     QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(serialDataReceived_Base(const QByteArray&)));
+                     this, SLOT(dataReceived_Base(const QByteArray&)));
+}
+
+void EssentialsForm::connectNTRIPThreadSlots_Base(NTRIPThread* ntripThread)
+{
+    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                     this, SLOT(dataReceived_Base(const QByteArray&)));
+}
+
+void EssentialsForm::disconnectNTRIPThreadSlots_Base(NTRIPThread* ntripThread)
+{
+    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+                     this, SLOT(dataReceived_Base(const QByteArray&)));
 }
 
 void EssentialsForm::connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor)

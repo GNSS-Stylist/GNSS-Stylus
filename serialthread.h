@@ -22,8 +22,8 @@
  * This is currently Windows-only, but could easily be ported to other oparating systems.
  */
 
-#ifndef SERIALLISTENERTHREAD_H
-#define SERIALLISTENERTHREAD_H
+#ifndef SERIALTHREAD_H
+#define SERIALTHREAD_H
 
 #include <QObject>
 #include <QThread>
@@ -84,4 +84,4 @@ signals:
     void serialTimeout(void);               //!< Signal that is emitted when charTimeout have been elapsed after last received byte or no bytes received in charTimeout.
 };
 
-#endif // SERIALLISTENERTHREAD_H
+#endif // SERIALTHREAD_H

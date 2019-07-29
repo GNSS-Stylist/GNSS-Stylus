@@ -28,6 +28,7 @@
 #include <QCloseEvent>
 
 #include "serialthread.h"
+#include "ntripthread.h"
 #include "ubloxdatastreamprocessor.h"
 #include "messagemonitorform.h"
 #include "relposnedform.h"
@@ -58,8 +59,7 @@ private slots:
     void commThread_Base_InfoMessage(const QString& infoMessage);
     void commThread_Base_DataReceived(const QByteArray& byte);
     void commThread_Base_SerialTimeout(void);
-
-    void ubloxProcessor_Base_rtcmMessageReceived(const RTCMMessage&);
+    void ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&);
 
     void commThread_RoverA_ErrorMessage(const QString& errorMessage);
     void commThread_RoverA_WarningMessage(const QString& warningMessage);
@@ -75,21 +75,28 @@ private slots:
     void commThread_RoverB_SerialTimeout(void);
     void ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&);
 
-    void on_pushButton_StartThread_Base_clicked();
+    void ntripThread_Base_ErrorMessage(const QString& errorMessage);
+    void ntripThread_Base_WarningMessage(const QString& warningMessage);
+    void ntripThread_Base_InfoMessage(const QString& infoMessage);
+    void ntripThread_Base_DataReceived(const QByteArray& byte);
+    void ntripThread_Base_ThreadEnded(void);
+    void ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&);
 
-    void on_pushButton_TerminateThread_Base_clicked();
+    void on_pushButton_StartThread_Base_Serial_clicked();
 
-    void on_checkBox_SuspendThread_Base_stateChanged(int arg1);
+    void on_pushButton_TerminateThread_Base_Serial_clicked();
 
-    void on_pushButton_ShowMessageWindow_Base_clicked();
+    void on_checkBox_SuspendThread_Base_Serial_stateChanged(int arg1);
 
-    void on_pushButton_ClearRTCMCounter_Base_clicked();
+    void on_pushButton_ShowMessageWindow_Base_Serial_clicked();
 
-    void on_pushButton_ClearErrorMessage_Base_clicked();
+    void on_pushButton_ClearRTCMCounter_Base_Serial_clicked();
 
-    void on_pushButton_ClearWarningMessage_Base_clicked();
+    void on_pushButton_ClearErrorMessage_Base_Serial_clicked();
 
-    void on_pushButton_ClearInfoMessage_Base_clicked();
+    void on_pushButton_ClearWarningMessage_Base_Serial_clicked();
+
+    void on_pushButton_ClearInfoMessage_Base_Serial_clicked();
 
     void on_pushButton_StartThread_RoverA_clicked();
 
@@ -131,13 +138,32 @@ private slots:
 
     void on_pushButton_ShowPostProcessingWindow_clicked();
 
+    void on_pushButton_StartThread_Base_NTRIP_clicked();
+
+    void on_pushButton_ClearRTCMCounter_Base_NTRIP_clicked();
+
+    void on_pushButton_ClearErrorMessage_Base_NTRIP_clicked();
+
+    void on_pushButton_ClearWarningMessage_Base_NTRIP_clicked();
+
+    void on_pushButton_ClearInfoMessage_Base_NTRIP_clicked();
+
+    void on_pushButton_ShowMessageWindow_NTRIP_clicked();
+
+    void on_pushButton_TerminateThread_NTRIP_clicked();
+
 private:
     Ui::MainWindow *ui;
 
-    MessageMonitorForm* messageMonitorForm_Base;
+    MessageMonitorForm* messageMonitorForm_Base_Serial;
     SerialThread* serialThread_Base;
-    UBloxDataStreamProcessor ubloxDataStreamProcessor_Base;
-    int messageCounter_RTCM_Base;
+    UBloxDataStreamProcessor ubloxDataStreamProcessor_Base_Serial;
+    int messageCounter_RTCM_Base_Serial;
+
+    MessageMonitorForm* messageMonitorForm_Base_NTRIP;
+    NTRIPThread* ntripThread;
+    UBloxDataStreamProcessor ubloxDataStreamProcessor_Base_NTRIP;
+    int messageCounter_RTCM_Base_NTRIP;
 
     MessageMonitorForm* messageMonitorForm_RoverA;
     SerialThread* serialThread_RoverA;
