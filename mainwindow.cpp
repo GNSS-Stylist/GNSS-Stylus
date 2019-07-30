@@ -693,17 +693,17 @@ void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
 
 void MainWindow::ntripThread_Base_InfoMessage(const QString& infoMessage)
 {
-    ui->label_LastInfoMessage_Base_NTRIP->setText(infoMessage);
+    ui->label_LastInfoMessage_Base_NTRIP->setText(infoMessage.trimmed());
 }
 
 void MainWindow::ntripThread_Base_ErrorMessage(const QString& errorMessage)
 {
-    ui->label_LastErrorMessage_Base_NTRIP->setText(errorMessage);
+    ui->label_LastErrorMessage_Base_NTRIP->setText(errorMessage.trimmed());
 }
 
 void MainWindow::ntripThread_Base_WarningMessage(const QString& warningMessage)
 {
-    ui->label_LastWarningMessage_Base_NTRIP->setText(warningMessage);
+    ui->label_LastWarningMessage_Base_NTRIP->setText(warningMessage.trimmed());
 }
 
 void MainWindow::ntripThread_Base_DataReceived(const QByteArray& data)

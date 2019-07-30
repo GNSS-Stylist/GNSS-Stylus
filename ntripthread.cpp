@@ -772,12 +772,12 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                                     else
                                     {
                                         int k;
-                                        fprintf(stderr, "Could not get the requested data: ");
+                                        fprintf_error_buffered("Could not get the requested data: ");
                                         for(k = 12; k < numbytes && rtpbuf[k] != '\n' && rtpbuf[k] != '\r'; ++k)
                                         {
-                                            fprintf(stderr, "%c", isprint(rtpbuf[k]) ? rtpbuf[k] : '.');
+                                            fprintf_error_buffered("%c", isprint(rtpbuf[k]) ? rtpbuf[k] : '.');
                                         }
-                                        fprintf(stderr, "\n");
+                                        fprintf_error_buffered_flush();
                                         error = 1;
                                     }
                                     while(!stop && !error)
@@ -1376,12 +1376,12 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                                     }
                                     else if(!strstr(buf, "ICY 200 OK"))
                                     {
-                                        fprintf(stderr, "Could not get the requested data: ");
+                                        fprintf_error_buffered("Could not get the requested data: ");
                                         for(k = 0; k < numbytes && buf[k] != '\n' && buf[k] != '\r'; ++k)
                                         {
-                                            fprintf(stderr, "%c", isprint(buf[k]) ? buf[k] : '.');
+                                            fprintf_error_buffered("%c", isprint(buf[k]) ? buf[k] : '.');
                                         }
-                                        fprintf(stderr, "\n");
+                                        fprintf_error_buffered_flush();
                                         error = 1;
                                     }
                                     else if(args.mode != NTRIP1)
@@ -1525,6 +1525,13 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
             }
             if(sockfd)
                 closesocket(sockfd);
+
+#ifdef WINDOWSVERSION
+                Sleep((DWORD)(1000));
+#else
+                sleep(1);
+#endif
+
         } while(args.data && *args.data != '%' && !stop);
 
         if(ser)
@@ -1536,29 +1543,60 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
 
 #pragma GCC diagnostic pop
 
-int NTRIPThread::fprintf (FILE *__stream, const char *__format, ...)
+int NTRIPThread::fprintf (FILE *stream, const char *format, ...)
 {
     va_list argList;
-    va_start(argList, __format);
+    va_start(argList, format);
 
     int retval;
 
-    if (__stream == stderr)
+    if ((stream == stderr) || (stream == stdout))
     {
-        QString outString = QString::vasprintf(__format, argList);
+        QString outString = QString::vasprintf(format, argList);
         retval = outString.length();
 
-        emit errorMessage(outString);
+        if (stream == stderr)
+        {
+            emit errorMessage("\n" + outString.trimmed());
+        }
+        else if (stream == stdout)
+        {
+            emit infoMessage("\n" + outString.trimmed());
+        }
     }
     else
     {
-        retval = vfprintf(__stream, __format, argList);
+        retval = vfprintf(stream, format, argList);
     }
 
     va_end(argList);
 
     return retval;
 }
+
+int NTRIPThread::fprintf_error_buffered(const char *__format, ...)
+{
+    va_list argList;
+    va_start(argList, __format);
+
+    int retval;
+
+    QString outString = QString::vasprintf(__format, argList);
+    retval = outString.length();
+
+    fprintf_ErrorBuffer += outString;
+
+    va_end(argList);
+
+    return retval;
+}
+
+void NTRIPThread::fprintf_error_buffered_flush(void)
+{
+    emit errorMessage("\n" + fprintf_ErrorBuffer.trimmed());
+    fprintf_ErrorBuffer.clear();
+}
+
 
 int NTRIPThread::printf (const char *__format, ...)
 {
@@ -1569,7 +1607,7 @@ int NTRIPThread::printf (const char *__format, ...)
 
     va_end(argList);
 
-    emit infoMessage(outString);
+    emit infoMessage("\n" + outString.trimmed());
 
     return outString.length();
 }
@@ -1578,7 +1616,7 @@ size_t NTRIPThread::fwrite(const void *ptr, size_t size, size_t nitems, FILE *st
 {
     size_t retval;
 
-    if (stream == stdout)
+    if ((stream == stdout) || (stream == stderr))
     {
         auto stringBuffer = std::make_unique<char[]>(size * nitems + 1);
 
@@ -1586,7 +1624,14 @@ size_t NTRIPThread::fwrite(const void *ptr, size_t size, size_t nitems, FILE *st
 
         stringBuffer[size * nitems] = 0;
 
-        emit infoMessage("\n" + QString(&stringBuffer[0]));
+        if (stream == stdout)
+        {
+            emit infoMessage("\n" + QString(&stringBuffer[0]).trimmed());
+        }
+        else if (stream == stderr)
+        {
+            emit errorMessage("\n" + QString(&stringBuffer[0]).trimmed());
+        }
 
         retval = nitems;
     }

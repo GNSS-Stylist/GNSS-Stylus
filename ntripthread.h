@@ -58,6 +58,8 @@ private:
     int rtcmDataWrite(const char *buffer, size_t size);
     void myperror(const char *s);
     int fprintf (FILE *__stream, const char *__format, ...);
+    int fprintf_error_buffered(const char *__format, ...);
+    void fprintf_error_buffered_flush(void);
     int printf (const char *__format, ...);
     size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 
@@ -68,6 +70,7 @@ private:
     char getUrlBuffer[1000];
     char *getUrlBufferPtr;
     char *getUrlBufferEndPtr;
+    QString fprintf_ErrorBuffer;
 
 public:
     /**
