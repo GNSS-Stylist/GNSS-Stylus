@@ -44,8 +44,12 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->spinBox_MaxLogLines->setValue(settings.value("PostProcessing_MaxLogLines", "1000").toInt());
 
     ui->checkBox_IncludeNormals->setChecked(settings.value("PostProcessing_IncludeNormals", false).toBool());
+
+    ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "100").toInt());
     ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", false).toBool());
     ui->checkBox_ReportUnalignedITOWS->setChecked(settings.value("PostProcessing_ReportUnalignedITOWS", false).toBool());
+
+    ui->doubleSpinBox_Movie_FPS->setValue(settings.value("PostProcessing_FPS", "30").toDouble());
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -60,8 +64,12 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_MaxLogLines", ui->spinBox_MaxLogLines->value());
 
     settings.setValue("PostProcessing_IncludeNormals", ui->checkBox_IncludeNormals->isChecked());
+
+    settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
     settings.setValue("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked());
     settings.setValue("PostProcessing_ReportUnalignedITOWS", ui->checkBox_ReportUnalignedITOWS->isChecked());
+
+    settings.setValue("PostProcessing_FPS", ui->doubleSpinBox_Movie_FPS->value());
 
     delete ui;
 }
@@ -313,6 +321,8 @@ void PostProcessingForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
 {
     currentRELPOSNEDReadingData.messageCount_UBX++;
 
+    unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
+
     UBXMessage_RELPOSNED relposned(ubxMessage);
 
     if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
@@ -320,18 +330,21 @@ void PostProcessingForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
         // Casting of UBX-message to RELPOSNED was successful
 
         if ((ui->checkBox_ReportUnalignedITOWS->isChecked()) &&
-                ((currentRELPOSNEDReadingData.lastReadITOW != -1) && ((relposned.iTOW % 100) != 0)))
+                ((currentRELPOSNEDReadingData.lastReadITOW != -1) && ((relposned.iTOW % expectedITOWAlignment) != 0)))
         {
-            addLogLine("Warning: iTOW not aligned to 100 ms interval. iTOW: " + QString::number(relposned.iTOW) +
+            addLogLine("Warning: iTOW not aligned to expected interval (" +
+                       QString::number(expectedITOWAlignment) +" ms). iTOW: " + QString::number(relposned.iTOW) +
                        ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
                        "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
         }
         if ((ui->checkBox_ReportMissingITOWs->isChecked()) &&
-                ((currentRELPOSNEDReadingData.lastReadITOW != -1) && (relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW > 100)))
+                ((currentRELPOSNEDReadingData.lastReadITOW != -1) &&
+                 (static_cast<unsigned int>(relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW) > expectedITOWAlignment)))
         {
-            int missingITOWS = (relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW - 1) / 100;
+            int missingITOWS = (relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW - 1) / expectedITOWAlignment;
 
-            addLogLine("Warning: iTOWs not consecutive with 100 ms interval. Number of missing iTOWs: " + QString::number(missingITOWS) +
+            addLogLine("Warning: iTOWs not consecutive with expected interval (" +
+                       QString::number(expectedITOWAlignment) +" ms). Number of missing iTOWs: " + QString::number(missingITOWS) +
                        ". iTOW range: " + QString::number(currentRELPOSNEDReadingData.lastReadITOW + 1) + "..." +
                        QString::number(relposned.iTOW - 1) +
                        ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
@@ -1225,6 +1238,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Min = ui->spinBox_Movie_ITOW_Points_Min->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Max = ui->spinBox_Movie_ITOW_Points_Max->value();
+        unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
 
         QMap<UBXMessage_RELPOSNED::ITOW, Tag>::const_iterator currentTagIterator;
 
@@ -1488,15 +1502,9 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_Movie_ITOW_Script_Min->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_Movie_ITOW_Script_Max->value();
 
-        int fps = ui->spinBox_Movie_FPS->value();
+        double fps = ui->doubleSpinBox_Movie_FPS->value();
 
-        if (fps % 10)
-        {
-            fps -= fps%10;
-            addLogLine("Warning: FPS rounded to lowest value divisible by 10 (=" + QString::number(fps) + ").");
-        }
-
-        iTOWRange_Script_Min -= iTOWRange_Script_Min % 100; // Round to previous 1/10 sec
+        iTOWRange_Script_Min -= iTOWRange_Script_Min % expectedITOWAlignment; // Round to previous aligned ITOW
 
         QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.lowerBound(iTOWRange_Script_Min);
         QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.lowerBound(iTOWRange_Script_Min);
@@ -1504,7 +1512,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         UBXMessage_RELPOSNED::ITOW startingITOW = (relposIterator_RoverA.value().iTOW > relposIterator_RoverB.value().iTOW) ?
                     relposIterator_RoverA.value().iTOW : relposIterator_RoverB.value().iTOW;
 
-        startingITOW -= startingITOW % 100; // Should not be needed, but just to be sure...
+        startingITOW -= startingITOW % expectedITOWAlignment; // Should not be needed, but just to be sure...
 
         int frameCounter = 0;
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>647</width>
-    <height>543</height>
+    <height>562</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,17 +25,17 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>220</height>
+       <height>275</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>220</height>
+       <height>275</height>
       </size>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_Settings">
       <attribute name="title">
@@ -164,13 +164,13 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>130</y>
+         <y>190</y>
          <width>571</width>
          <height>17</height>
         </rect>
        </property>
        <property name="text">
-        <string>Report unaligned RELPOSNED-messages (ITOWs not in 100 ms &quot;alignment&quot;)</string>
+        <string>Report unaligned RELPOSNED-messages (ITOWs not in expected alignment)</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -180,16 +180,92 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>160</y>
+         <y>220</y>
          <width>571</width>
          <height>17</height>
         </rect>
        </property>
        <property name="text">
-        <string>Report missing RELPOSNED-messages (over 100 ms between messages, based on iTOWS read from a file)</string>
+        <string>Report missing RELPOSNED-messages (over expected alignment between messages, based on iTOWS)</string>
        </property>
        <property name="checked">
         <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA_2">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>130</y>
+         <width>111</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-10.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>10.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.900000000000000</double>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_StylusTipDistanceFromRovera_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>130</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Stylus tip distance from rover A (mm):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_ExpectedITOWAlignment">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>160</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Expected ITOW alignment (ms):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="spinBox_ExpectedITOWAlignment">
+       <property name="geometry">
+        <rect>
+         <x>280</x>
+         <y>160</y>
+         <width>111</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="minimum">
+        <number>10</number>
+       </property>
+       <property name="maximum">
+        <number>10000</number>
+       </property>
+       <property name="value">
+        <number>100</number>
        </property>
       </widget>
      </widget>
@@ -200,6 +276,12 @@
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QGroupBox" name="groupBox_RELPOSNED_RoverA">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="title">
           <string>Rover A RELPOSNED-data</string>
          </property>
@@ -233,6 +315,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_RELPOSNED_RoverB">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="title">
           <string>Rover B RELPOSNED-data</string>
          </property>
@@ -266,6 +354,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_TagData">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="title">
           <string>Tags</string>
          </property>
@@ -722,32 +816,10 @@
         </rect>
        </property>
        <property name="text">
-        <string>FPS (must be divisible by 10):</string>
+        <string>FPS:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spinBox_Movie_FPS">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>130</y>
-         <width>141</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>10</number>
-       </property>
-       <property name="maximum">
-        <number>120</number>
-       </property>
-       <property name="singleStep">
-        <number>10</number>
-       </property>
-       <property name="value">
-        <number>30</number>
        </property>
       </widget>
       <widget class="QLabel" name="label_ITOWRange_Points_Max_2">
@@ -811,6 +883,31 @@
         <number>604800000</number>
        </property>
       </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_FPS">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>130</y>
+         <width>141</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>0.100000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>30.000000000000000</double>
+       </property>
+      </widget>
      </widget>
     </widget>
    </item>
@@ -821,7 +918,7 @@
        <item>
         <widget class="QLabel" name="label_MaxLines">
          <property name="text">
-          <string>Max lines:</string>
+          <string>Max log lines (below):</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -849,7 +946,7 @@
      <item>
       <widget class="QPushButton" name="pushButton_ClearAll">
        <property name="text">
-        <string>Clear all</string>
+        <string>Clear all log lines (below)</string>
        </property>
       </widget>
      </item>
