@@ -30,7 +30,6 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
-    ntripclientform.cpp \
     ntripthread.cpp \
     ubloxdatastreamprocessor.cpp \
     serialthread.cpp \
@@ -43,7 +42,6 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
     gnssmessage.h \
-    ntripclientform.h \
     ntripthread.h \
     ubloxdatastreamprocessor.h \
     serialthread.h \
@@ -56,7 +54,6 @@ HEADERS += \
 FORMS += \
         mainwindow.ui \
     messagemonitorform.ui \
-    ntripclientform.ui \
     relposnedform.ui \
     essentialsform.ui \
     postprocessform.ui
