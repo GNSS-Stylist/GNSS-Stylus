@@ -2,6 +2,10 @@
     ntripthread.h (part of GNSS-Stylus)
     Copyright (C) 2019 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
+    Original implementation: NTRIP client for POSIX.
+    $Id: ntripclient.c,v 1.51 2009/09/11 09:49:19 stoecker Exp $
+    Copyright (C) 2003-2008 by Dirk Stöcker <soft@dstoecker.de>
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or

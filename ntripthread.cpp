@@ -3,7 +3,7 @@
     $Id: ntripclient.c,v 1.51 2009/09/11 09:49:19 stoecker Exp $
     Copyright (C) 2003-2008 by Dirk Stöcker <soft@dstoecker.de>
 
-    Modified version ntripthread.cpp (part of GNSS-Stylus)
+    ntripthread.cpp (modifications for GNSS-Stylus)
     Copyright (C) 2019 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,19 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/*
+ * This NTRIP-client-implementation is based on the "NTRIP client for POSIX" by Dirk Stöcker.
+ * Modifications were mostly encapsulating it to a c++ class, removing of the serial interface
+ * and replacing it with QT's signal-based mechanism and overriding the output functions
+ * (printf, fprintf, fwrite). Also some statics were moved into the class to make the
+ * thread restartable.
+ *
+ * Not too pretty but works...
+ *
+ * Note: Does not work with u-center (version 19.06) if authentication is in use.
+ * Authentication works with SNIP.
 */
 
 #ifdef _WIN32
@@ -39,10 +52,6 @@
   typedef SOCKET sockettype;
   typedef u_long in_addr_t;
   typedef size_t socklen_t;
-  void NTRIPThread::myperror(const char *s)
-  {
-    fprintf(stderr, "%s: %d\n", s, WSAGetLastError());
-  }
 #else
   typedef int sockettype;
   #include <signal.h>
@@ -1709,3 +1718,7 @@ NTRIPThread::~NTRIPThread()
     this->wait(5000);
 }
 
+void NTRIPThread::myperror(const char *s)
+{
+  fprintf(stderr, "%s: %d\n", s, WSAGetLastError());
+}
