@@ -66,18 +66,18 @@
   #define ALARMTIME   (2*60)
 #endif
 
-#ifndef COMPILEDATE
-#define COMPILEDATE " built " __DATE__
-#endif
+//#ifndef COMPILEDATE
+//#define COMPILEDATE " built " __DATE__
+//#endif
 
 /* The string, which is send as agent in HTTP request */
-#define AGENTSTRING "NTRIP NtripClientPOSIX"
+#define AGENTSTRING "NTRIP GNSS-Stylus"
 #define TIME_RESOLUTION 125
 
 #define MAXDATASIZE 1000 /* max number of bytes we can get at once */
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdate-time"                    // "expansion of date or time macro is not reproducible" "note: expanded from macro 'COMPILEDATE'"
+//#pragma GCC diagnostic ignored "-Wdate-time"                    // "expansion of date or time macro is not reproducible" "note: expanded from macro 'COMPILEDATE'"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wsign-conversion"              // "implicit conversion changes signedness: 'int' to 'char'"
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"         // "this statement may fall through"
@@ -88,9 +88,10 @@
 //#pragma GCC diagnostic ignored "-Wpointer-sign"                 // "passing 'socklen_t *' (aka 'unsigned int *') to parameter of type 'int *' converts between pointers to integer types with different sign" "winsock.h:283:82: note: passing argument to parameter 'namelen' here"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 
-/* CVS revision and version */
-static char revisionstr[] = "$Revision: 1.51 $";
-static char datestr[]     = "$Date: 2009/09/11 09:49:19 $";
+/* Version (/revision) */
+/* TODO: Get rid of hard-coded version */
+static const char revisionstr[] = "1.0.0";
+//static const char datestr[]     = "2019/08/21";
 
 /* option parsing */
 #ifdef NO_LONG_OPTS
@@ -277,8 +278,7 @@ int NTRIPThread::getargs(const int argc, const char* const* argv, struct Args* c
 {
   int res = 1;
   int getoptr;
-  char *a;
-  int i = 0, help = 0;
+  int help = 0;
 
   args->server = "www.euref-ip.net";
   args->port = "2101";
@@ -354,23 +354,9 @@ int NTRIPThread::getargs(const int argc, const char* const* argv, struct Args* c
     }
   } while(getoptr != -1 && res);
 
-  for(a = revisionstr+11; *a && *a != ' '; ++a)
-    revisionstr[i++] = *a;
-  revisionstr[i] = 0;
-  datestr[0] = datestr[7];
-  datestr[1] = datestr[8];
-  datestr[2] = datestr[9];
-  datestr[3] = datestr[10];
-  datestr[5] = datestr[12];
-  datestr[6] = datestr[13];
-  datestr[8] = datestr[15];
-  datestr[9] = datestr[16];
-  datestr[4] = datestr[7] = '-';
-  datestr[10] = 0;
-
   if(!res || help)
   {
-    printf("\nVersion %s (%s) GPL" COMPILEDATE "\nUsage:\n-s server -u user ...\n"
+    printf("Usage:\n-s server -u user ...\n"
     " -m " LONG_OPT("--mountpoint ") "the requested data set or sourcetable filtering criteria\n"
     " -s " LONG_OPT("--server     ") "the server name or address\n"
     " -p " LONG_OPT("--password   ") "the login password\n"
@@ -391,7 +377,7 @@ int NTRIPThread::getargs(const int argc, const char* const* argv, struct Args* c
     " -P " LONG_OPT("--udpport    ") "set the local UDP port\n"
     " -S " LONG_OPT("--proxyhost  ") "proxy name or address\n"
     " -R " LONG_OPT("--proxyport  ") "proxy port, optional (default 2101)\n"
-    , revisionstr, datestr);
+    );
     exit(1);
   }
   return res;
