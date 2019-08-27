@@ -25,7 +25,7 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>275</height>
+       <height>250</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -164,7 +164,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>190</y>
+         <y>160</y>
          <width>571</width>
          <height>17</height>
         </rect>
@@ -180,7 +180,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>220</y>
+         <y>190</y>
          <width>571</width>
          <height>17</height>
         </rect>
@@ -192,52 +192,11 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA_2">
-       <property name="geometry">
-        <rect>
-         <x>280</x>
-         <y>130</y>
-         <width>111</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="decimals">
-        <number>3</number>
-       </property>
-       <property name="minimum">
-        <double>-10.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>10.000000000000000</double>
-       </property>
-       <property name="singleStep">
-        <double>0.010000000000000</double>
-       </property>
-       <property name="value">
-        <double>0.900000000000000</double>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_StylusTipDistanceFromRovera_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>130</y>
-         <width>261</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Stylus tip distance from rover A (mm):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_ExpectedITOWAlignment">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>160</y>
+         <y>130</y>
          <width>261</width>
          <height>16</height>
         </rect>
@@ -253,7 +212,7 @@
        <property name="geometry">
         <rect>
          <x>280</x>
-         <y>160</y>
+         <y>130</y>
          <width>111</width>
          <height>22</height>
         </rect>
