@@ -36,7 +36,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_Base_Serial">
        <property name="autoFillBackground">
@@ -62,12 +62,38 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_ComPort_Base_Serial">
+           <widget class="QLineEdit" name="lineEdit_SerialPort_Base">
             <property name="text">
              <string>\\.\COM</string>
             </property>
             <property name="maxLength">
              <number>256</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_SerSpeed_Base">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinBox_SerialSpeed_Base">
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>300</number>
+            </property>
+            <property name="maximum">
+             <number>10000000</number>
+            </property>
+            <property name="value">
+             <number>115200</number>
             </property>
            </widget>
           </item>
@@ -199,6 +225,9 @@
            <widget class="QLabel" name="label_LastErrorMessage_Base_Serial">
             <property name="text">
              <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -582,17 +611,43 @@
          <item>
           <widget class="QLabel" name="label__Comport_RoverA">
            <property name="text">
-            <string>Com port:</string>
+            <string>Serial port:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_ComPort_RoverA">
+          <widget class="QLineEdit" name="lineEdit_SerialPort_RoverA">
            <property name="text">
             <string>\\.\COM</string>
            </property>
            <property name="maxLength">
             <number>256</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_SerSpeed_RoverA">
+           <property name="text">
+            <string>Bps:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_SerialSpeed_RoverA">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="minimum">
+            <number>300</number>
+           </property>
+           <property name="maximum">
+            <number>10000000</number>
+           </property>
+           <property name="value">
+            <number>115200</number>
            </property>
           </widget>
          </item>
@@ -780,12 +835,38 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_ComPort_RoverB">
+          <widget class="QLineEdit" name="lineEdit_SerialPort_RoverB">
            <property name="text">
             <string>\\.\COM</string>
            </property>
            <property name="maxLength">
             <number>256</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_SerSpeed_RoverB">
+           <property name="text">
+            <string>Bps:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox_SerialSpeed_RoverB">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="minimum">
+            <number>300</number>
+           </property>
+           <property name="maximum">
+            <number>10000000</number>
+           </property>
+           <property name="value">
+            <number>115200</number>
            </property>
           </widget>
          </item>

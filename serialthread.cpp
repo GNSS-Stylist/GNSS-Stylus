@@ -19,20 +19,23 @@
 /**
  * @file serialthread.cpp
  * @brief Definitions for a class handling serial communication.
- * This is currently Windows-only, but could easily be ported to other oparating systems.
  */
 
-#include <memory>
+//#include <memory>
+#include <QElapsedTimer>
 #include "serialthread.h"
 
-SerialThread::SerialThread(const QString& comPortFileName, const unsigned int charTimeout, const unsigned int maxReadDataSize)
+SerialThread::SerialThread(const QString& serialPortFileName,
+                           const unsigned int charTimeout,
+                           const unsigned int maxReadDataSize,
+                           const unsigned int serialPortBPS)
     : QThread()
 {
-    this->comPortFileName = comPortFileName;
+    this->serialPortFileName = serialPortFileName;
     this->charTimeout = charTimeout;
     this->maxReadDataSize = maxReadDataSize;
+    this->serialPortBPS = serialPortBPS;
 
-    commHandle = INVALID_HANDLE_VALUE;
     terminateRequest = false;
     suspended = false;
 }
@@ -43,12 +46,38 @@ SerialThread::~SerialThread()
     this->wait(5000);
 }
 
+static const QString serialPortErrors[] =
+{
+    "NoError",
+    "DeviceNotFoundError",
+    "PermissionError",
+    "OpenError",
+    "ParityError",
+    "FramingError",
+    "BreakConditionError",
+    "WriteError",
+    "ReadError",
+    "ResourceError",
+    "UnsupportedOperationError",
+    "UnknownError",
+    "TimeoutError",
+    "NotOpenError"
+};
+
 void SerialThread::run()
 {
+    QSerialPort serialPort;
+
+    serialPort.setPortName(serialPortFileName);
+    serialPort.setBaudRate(serialPortBPS);
+    serialPort.setDataBits(QSerialPort::Data8);
+    serialPort.setFlowControl(QSerialPort::NoFlowControl);
+    serialPort.setParity(QSerialPort::NoParity);
+    serialPort.setStopBits(QSerialPort::OneStop);
+
     while (!terminateRequest)
     {
-        // Try to open com port
-
+        // Try to open serial port
         do
         {
             if (suspended && !terminateRequest)
@@ -64,101 +93,86 @@ void SerialThread::run()
                 }
             }
 
-            std::unique_ptr<wchar_t> portFileName_Wchar(new wchar_t[static_cast<unsigned int>(comPortFileName.length() + 1)]);   // +1 for null...
-
-            int portNameLength = comPortFileName.toWCharArray(portFileName_Wchar.get());
-
-            portFileName_Wchar.get()[portNameLength] = 0;
-
-            emit infoMessage("Opening com port \"" + comPortFileName + "\"...");
-            commHandle = CreateFile(portFileName_Wchar.get(), GENERIC_READ | GENERIC_WRITE, 0, nullptr,
-                                    OPEN_EXISTING, 0, nullptr);
-
-            if (commHandle == INVALID_HANDLE_VALUE)
+            emit infoMessage("Opening serial port \"" + serialPortFileName + "\"...");
+            if (!serialPort.open(QIODevice::ReadWrite))
             {
-                emit errorMessage("Can't open com port\"" + comPortFileName + "\". Trying again after 1 s...");
+                QSerialPort::SerialPortError error = serialPort.error();
+
+                if (error < sizeof(serialPortErrors) / sizeof(serialPortErrors[0]))
+                {
+                    emit errorMessage("Can't open serial port\"" + serialPortFileName + "\". Reason: " + serialPortErrors[error] + ". Trying again after 1 s...");
+                }
+                else
+                {
+                    emit errorMessage("Can't open serial port\"" + serialPortFileName + "\", error " + QString::number(error) + ". Trying again after 1 s...");
+                }
                 sleep(1);
             }
-            else
-            {
-                DCB CommDCB;
-
-                ZeroMemory(&CommDCB, sizeof(DCB));
-                CommDCB.DCBlength = sizeof(DCB);
-                GetCommState(commHandle, &CommDCB);
-
-                CommDCB.BaudRate=115200;
-                CommDCB.fBinary=1;
-                CommDCB.fParity=0;
-                CommDCB.fOutxCtsFlow=0;
-                CommDCB.fOutxDsrFlow=0;
-                CommDCB.fDtrControl=DTR_CONTROL_ENABLE;
-                CommDCB.fDsrSensitivity=0;
-                CommDCB.fOutX=0;
-                CommDCB.fInX=0;
-                CommDCB.fNull=0;
-                CommDCB.fRtsControl=RTS_CONTROL_HANDSHAKE;
-                CommDCB.fAbortOnError=0;
-                CommDCB.ByteSize=8;
-                CommDCB.Parity=NOPARITY;
-                CommDCB.StopBits=ONESTOPBIT;
-
-                // Set com port parameters
-                if (!SetCommState(commHandle, &CommDCB))
-                {
-                    emit errorMessage("Can't set com port\"" + comPortFileName + "\". parameters. Opening port and retrying again after 1 s...");
-                    CloseHandle(commHandle);
-                    commHandle = INVALID_HANDLE_VALUE;
-                    sleep(1);
-                }
-            }
-        } while ((commHandle == INVALID_HANDLE_VALUE) && !terminateRequest);
+        } while ((!serialPort.isOpen()) && !terminateRequest);
 
         if (!terminateRequest)
         {
-            setDefaultCommTimeouts();
-            flush();
+            flushReceiveBuffer(&serialPort);
             sendMutex.lock();
             sendQueue.clear();
             sendMutex.unlock();
             emit infoMessage("Entering main loop.");
         }
 
+        QElapsedTimer lastByteReceivedTimer;
+        QElapsedTimer dataStartTimer;
+
         while (!terminateRequest)
         {
             char readBuffer[256];
-            unsigned long BytesRead;
-            do
+            qint64 BytesRead;
+
+            unsigned long bytesToRead = sizeof(readBuffer);
+
+            if (bytesToRead > maxReadDataSize - static_cast<unsigned int>(receiveBuffer.length()))
             {
-                // Read bytes from com port using only total timeout (see setDefaultCommTimeouts-function)
-                // since some serial adapters can work strangely with "higher level" timeouts.
+                bytesToRead = maxReadDataSize - static_cast<unsigned int>(receiveBuffer.length());
+            }
 
-                unsigned long bytesToRead = sizeof(readBuffer);
+            if ((serialPort.bytesAvailable() != 0) ||  (serialPort.waitForReadyRead(1)))
+            {
+                // Data is ready to be read
 
-                if (bytesToRead > maxReadDataSize - static_cast<unsigned int>(receiveBuffer.length()))
+                lastByteReceivedTimer.start();
+
+                if (receiveBuffer.length() == 0)
                 {
-                    bytesToRead = maxReadDataSize - static_cast<unsigned int>(receiveBuffer.length());
+                    // No bytes received in this "burst" -> Store the starting time
+
+                    dataStartTimer.start();
                 }
 
-                ReadFile(commHandle, readBuffer, bytesToRead, &BytesRead, nullptr);
-                if (BytesRead != 0)
+                BytesRead = serialPort.read(readBuffer, bytesToRead);
+
+                if (BytesRead > 0)
                 {
-                    // Bytes received inside the timeout
-                    // -> Add them to the buffer
+                    // Bytes received -> Add them to the buffer
                     receiveBuffer.append(readBuffer, static_cast<int>(BytesRead));
 
                     if (static_cast<unsigned int>(receiveBuffer.length()) >= maxReadDataSize)
                     {
-                        emit dataReceived(receiveBuffer);
+                        emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference());
                         receiveBuffer.clear();
                     }
                 }
-                else if (receiveBuffer.length() != 0)
+            }
+
+            if (lastByteReceivedTimer.elapsed() >= charTimeout)
+            {
+                if (receiveBuffer.length() != 0)
                 {
-                    // No bytes received inside the timeout
+                    // Byte not received inside the timeout
                     // -> Emit any bytes already received
-                    emit dataReceived(receiveBuffer);
+                    emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference());
                     receiveBuffer.clear();
+
+                    // Also emit timeout
+                    emit serialTimeout();
                 }
 
                 sendMutex.lock();
@@ -169,72 +183,48 @@ void SerialThread::run()
                     QByteArray sendArray = sendQueue.dequeue();
                     sendMutex.unlock();
 
-                    DWORD numofBytesWritten;
-
-                    WriteFile(commHandle, sendArray.data(), DWORD(sendArray.length()), &numofBytesWritten, nullptr);
+                    serialPort.write(sendArray);
 
                     sendMutex.lock();
                 }
                 sendMutex.unlock();
 
-                if (suspended && !terminateRequest)
-                {
-                    emit infoMessage("Suspending...");
-                    while (suspended && !terminateRequest)
-                    {
-                        sendMutex.lock();
-                        sendQueue.clear();
-                        sendMutex.unlock();
-
-                        msleep(100);
-                    }
-                    if (!terminateRequest)
-                    {
-                        emit infoMessage("Resuming...");
-                        flush();
-                    }
-                }
-            } while (BytesRead && !terminateRequest);
-
-            if (!terminateRequest)
-            {
-                emit serialTimeout();
+                lastByteReceivedTimer.start();
             }
-        }
-    }
 
-    CloseHandle(commHandle);
-    commHandle = INVALID_HANDLE_VALUE;
+            if (suspended && !terminateRequest)
+            {
+                emit infoMessage("Suspending...");
+                while (suspended && !terminateRequest)
+                {
+                    sendMutex.lock();
+                    sendQueue.clear();
+                    sendMutex.unlock();
+
+                    msleep(100);
+                }
+                if (!terminateRequest)
+                {
+                    emit infoMessage("Resuming...");
+                    flushReceiveBuffer(&serialPort);
+                }
+            }
+        } // while (!terminateRequest)
+    } // while (!terminateRequest)
+
+    serialPort.close();
 
     emit infoMessage("Thread terminated.");
 }
 
-void SerialThread::flush(void)
+void SerialThread::flushReceiveBuffer(QSerialPort* serialPort)
 {
-    COMMTIMEOUTS originalTimeouts;
-    COMMTIMEOUTS to;
-
-    GetCommTimeouts(commHandle, &originalTimeouts);
-
-    to.ReadIntervalTimeout = MAXDWORD;
-    to.ReadTotalTimeoutMultiplier = 0;
-    to.ReadTotalTimeoutConstant = 0;
-    SetCommTimeouts(commHandle, &to);
-
-    // Read everything away from buffer
-
-    unsigned long BytesRead;
-
-    char TempBuffer[256];
-
-    do
+    while (serialPort->bytesAvailable() != 0)
     {
-        ReadFile(commHandle, &TempBuffer, sizeof(TempBuffer), &BytesRead, nullptr);
-    } while (BytesRead);
+        serialPort->read(256);
+    }
 
     receiveBuffer.clear();
-
-    SetCommTimeouts(commHandle, &originalTimeouts);
 }
 
 
@@ -244,31 +234,6 @@ void SerialThread::addToSendQueue(const QByteArray& dataToSend)
     {
         QMutexLocker locker(&sendMutex);
         sendQueue.enqueue(dataToSend);
-    }
-}
-
-void SerialThread::setDefaultCommTimeouts(void)
-{
-    COMMTIMEOUTS CommTimeouts;
-
-    /* From SetCommTimeouts documentation:
-    * If an application sets ReadIntervalTimeout and ReadTotalTimeoutMultiplier to MAXDWORD
-    * and sets ReadTotalTimeoutConstant to a value greater than zero and less than MAXDWORD,
-    * one of the following occurs when the ReadFile function is called:
-
-    * If there are any bytes in the input buffer, ReadFile returns immediately with the bytes in the buffer.
-    * If there are no bytes in the input buffer, ReadFile waits until a byte arrives and then returns immediately.
-    * If no bytes arrive within the time specified by ReadTotalTimeoutConstant, ReadFile times out.
-    */
-    CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-    CommTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-    CommTimeouts.ReadTotalTimeoutConstant = charTimeout;
-    CommTimeouts.WriteTotalTimeoutMultiplier = 0;
-    CommTimeouts.WriteTotalTimeoutConstant = 0;
-
-    if (!SetCommTimeouts(commHandle, &CommTimeouts))
-    {
-        emit warningMessage("Can't set com port\"" + comPortFileName + "\". timeouts.");
     }
 }
 

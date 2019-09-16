@@ -19,7 +19,6 @@
 /**
  * @file serialthread.h
  * @brief Declarations for a class handling serial communication.
- * This is currently Windows-only, but could easily be ported to other oparating systems.
  */
 
 #ifndef SERIALTHREAD_H
@@ -29,7 +28,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QQueue>
-#include <windows.h>
+#include <QSerialPort>
 
 #include "gnssmessage.h"
 
@@ -49,26 +48,25 @@ private:
 
     QByteArray receiveBuffer;       //!< Buffer for received data
 
-    void flush(void);               //!< Flushes receive buffer
+    void flushReceiveBuffer(QSerialPort* serialPort);//!< Flushes receive buffer
 
-    void setDefaultCommTimeouts(void);  //!< Sets default comm timeouts
-
-    HANDLE commHandle;                  //!< Handle for com port
-
-    QString comPortFileName;            //!< File name for com port
+    QString serialPortFileName;         //!< File name for serial port
     unsigned int charTimeout;           //!< Timeout (ms) when reading after which any received bytes are emitted. Timeout-signal is emitted afterwards even if no bytes were received.
     unsigned int maxReadDataSize;       //!< Maximum bytes allowed to be transferred with one dataReceived-signal
+    unsigned int serialPortBPS;         //!< Serial port speed (Bits Per Second) or "baud rate"
 
 public:
     /**
      * @brief Constructor
-     * @param comPortFileName File name of com port to open
+     * @param serialPortFileName File name of com port to open
      * @param charTimeout Maximum time to allow between two received bytes whe maxReadDataSize bytes were not received yet. Signal is emitted when exceeded.
      * @param maxReadDataSize Maximum number of bytes to read on one go. Signal is emitted after this number of bytes were received.
+     * @param serialPortBPS Speed (Bits Per Second) of the serial port
      */
-    SerialThread(const QString& comPortFileName,
+    SerialThread(const QString& serialPortFileName,
                  const unsigned int charTimeout = 20,
-                 const unsigned int maxReadDataSize = 256);
+                 const unsigned int maxReadDataSize = 256,
+                 const unsigned int serialPortBPS = 115200);
     ~SerialThread() override;
     void run() override;            //!< Thread code
     void requestTerminate(void);    //!< Requests thread to terminate
@@ -80,7 +78,7 @@ signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)
     void warningMessage(const QString&);    //!< Signal for warning message (less severe than error)
     void errorMessage(const QString&);      //!< Signal for error message
-    void dataReceived(const QByteArray&);   //!< Signal that is emitted when data is received. Amount of bytes is limited either by maxReadDataSize or time elapses between two received bytes.
+    void dataReceived(const QByteArray&, qint64 startTime, qint64 endTime);   //!< Signal that is emitted when data is received. Amount of bytes is limited either by maxReadDataSize or time elapses between two received bytes. Times are read by QElapsedTimer::msecsSinceReference()
     void serialTimeout(void);               //!< Signal that is emitted when charTimeout have been elapsed after last received byte or no bytes received in charTimeout.
 };
 

@@ -82,19 +82,30 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QSettings settings;
 
-    ui->lineEdit_ComPort_Base_Serial->setText(settings.value("ComPort_Base", "\\\\.\\COM").toString());
-    ui->lineEdit_ComPort_RoverA->setText(settings.value("ComPort_RoverA", "\\\\.\\COM").toString());
-    ui->lineEdit_ComPort_RoverB->setText(settings.value("ComPort_RoverB", "\\\\.\\COM").toString());
-    ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
+    ui->lineEdit_SerialPort_Base->setText(settings.value("SerialPort_Base", "\\\\.\\COM").toString());
+    ui->spinBox_SerialSpeed_Base->setValue(settings.value("SerialSpeed_Base", "115200").toInt());
 
+    ui->lineEdit_SerialPort_RoverA->setText(settings.value("SerialPort_RoverA", "\\\\.\\COM").toString());
+    ui->spinBox_SerialSpeed_RoverA->setValue(settings.value("SerialSpeed_RoverA", "115200").toInt());
+
+    ui->lineEdit_SerialPort_RoverB->setText(settings.value("SerialPort_RoverB", "\\\\.\\COM").toString());
+    ui->spinBox_SerialSpeed_RoverB->setValue(settings.value("SerialSpeed_RoverB", "115200").toInt());
+
+    ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
 }
 
 MainWindow::~MainWindow()
 {
     QSettings settings;
-    settings.setValue("ComPort_Base", ui->lineEdit_ComPort_Base_Serial->text());
-    settings.setValue("ComPort_RoverA", ui->lineEdit_ComPort_RoverA->text());
-    settings.setValue("ComPort_RoverB", ui->lineEdit_ComPort_RoverB->text());
+    settings.setValue("SerialPort_Base", ui->lineEdit_SerialPort_Base->text());
+    settings.setValue("SerialSpeed_Base", ui->spinBox_SerialSpeed_Base->value());
+
+    settings.setValue("SerialPort_RoverA", ui->lineEdit_SerialPort_RoverA->text());
+    settings.setValue("SerialSpeed_RoverA", ui->spinBox_SerialSpeed_RoverA->value());
+
+    settings.setValue("SerialPort_RoverB", ui->lineEdit_SerialPort_RoverB->text());
+    settings.setValue("SerialSpeed_RoverB", ui->spinBox_SerialSpeed_RoverB->value());
+
     settings.setValue("Command_Base_NTRIP", ui->lineEdit_Command_Base_NTRIP->text());
 
     delete messageMonitorForm_Base_Serial;
@@ -175,7 +186,7 @@ void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
 {
     if (!serialThread_Base)
     {
-        serialThread_Base = new SerialThread(ui->lineEdit_ComPort_Base_Serial->text());
+        serialThread_Base = new SerialThread(ui->lineEdit_SerialPort_Base->text(), 20, 1, ui->spinBox_SerialSpeed_Base->value());
         if (ui->checkBox_SuspendThread_Base_Serial->isChecked())
         {
             serialThread_Base->suspend();
@@ -190,7 +201,7 @@ void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
         QObject::connect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::connect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_Base, SIGNAL(serialTimeout(void)),
@@ -201,7 +212,8 @@ void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
 
         serialThread_Base->start();
 
-        ui->lineEdit_ComPort_Base_Serial->setEnabled(false);
+        ui->lineEdit_SerialPort_Base->setEnabled(false);
+        ui->spinBox_SerialSpeed_Base->setEnabled(false);
         ui->pushButton_StartThread_Base_Serial->setEnabled(false);
         ui->pushButton_TerminateThread_Base_Serial->setEnabled(true);
         ui->pushButton_StartThread_Base_NTRIP->setEnabled(false);
@@ -231,7 +243,7 @@ void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
         QObject::disconnect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::disconnect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_Base, SIGNAL(serialTimeout(void)),
@@ -243,7 +255,8 @@ void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
         delete serialThread_Base;
         serialThread_Base = nullptr;
 
-        ui->lineEdit_ComPort_Base_Serial->setEnabled(true);
+        ui->lineEdit_SerialPort_Base->setEnabled(true);
+        ui->spinBox_SerialSpeed_Base->setEnabled(true);
         ui->pushButton_StartThread_Base_Serial->setEnabled(true);
         ui->pushButton_TerminateThread_Base_Serial->setEnabled(false);
         ui->pushButton_StartThread_Base_NTRIP->setEnabled(true);
@@ -295,7 +308,7 @@ void MainWindow::on_pushButton_StartThread_RoverA_clicked()
 {
     if (!serialThread_RoverA)
     {
-        serialThread_RoverA = new SerialThread(ui->lineEdit_ComPort_RoverA->text());
+        serialThread_RoverA = new SerialThread(ui->lineEdit_SerialPort_RoverA->text(), 20, 1, ui->spinBox_SerialSpeed_RoverA->value());
         if (ui->checkBox_SuspendThread_RoverA->isChecked())
         {
             serialThread_RoverA->suspend();
@@ -310,7 +323,7 @@ void MainWindow::on_pushButton_StartThread_RoverA_clicked()
         QObject::connect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::connect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_RoverA_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
@@ -321,7 +334,8 @@ void MainWindow::on_pushButton_StartThread_RoverA_clicked()
 
         serialThread_RoverA->start();
 
-        ui->lineEdit_ComPort_RoverA->setEnabled(false);
+        ui->lineEdit_SerialPort_RoverA->setEnabled(false);
+        ui->spinBox_SerialSpeed_RoverA->setEnabled(false);
         ui->pushButton_StartThread_RoverA->setEnabled(false);
         ui->pushButton_TerminateThread_RoverA->setEnabled(true);
 
@@ -350,7 +364,7 @@ void MainWindow::on_pushButton_TerminateThread_RoverA_clicked()
         QObject::disconnect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::disconnect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_RoverA_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
@@ -362,7 +376,8 @@ void MainWindow::on_pushButton_TerminateThread_RoverA_clicked()
         delete serialThread_RoverA;
         serialThread_RoverA = nullptr;
 
-        ui->lineEdit_ComPort_RoverA->setEnabled(true);
+        ui->lineEdit_SerialPort_RoverA->setEnabled(true);
+        ui->spinBox_SerialSpeed_RoverA->setEnabled(true);
         ui->pushButton_StartThread_RoverA->setEnabled(true);
         ui->pushButton_TerminateThread_RoverA->setEnabled(false);
     }
@@ -468,7 +483,7 @@ void MainWindow::on_pushButton_StartThread_RoverB_clicked()
 {
     if (!serialThread_RoverB)
     {
-        serialThread_RoverB = new SerialThread(ui->lineEdit_ComPort_RoverB->text());
+        serialThread_RoverB = new SerialThread(ui->lineEdit_SerialPort_RoverB->text(), 20, 1, ui->spinBox_SerialSpeed_RoverB->value());
         if (ui->checkBox_SuspendThread_RoverB->isChecked())
         {
             serialThread_RoverB->suspend();
@@ -483,7 +498,7 @@ void MainWindow::on_pushButton_StartThread_RoverB_clicked()
         QObject::connect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::connect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_RoverB_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
@@ -494,7 +509,8 @@ void MainWindow::on_pushButton_StartThread_RoverB_clicked()
 
         serialThread_RoverB->start();
 
-        ui->lineEdit_ComPort_RoverB->setEnabled(false);
+        ui->lineEdit_SerialPort_RoverB->setEnabled(false);
+        ui->spinBox_SerialSpeed_RoverB->setEnabled(false);
         ui->pushButton_StartThread_RoverB->setEnabled(false);
         ui->pushButton_TerminateThread_RoverB->setEnabled(true);
 
@@ -523,7 +539,7 @@ void MainWindow::on_pushButton_TerminateThread_RoverB_clicked()
         QObject::disconnect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::disconnect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_RoverB_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
@@ -535,7 +551,8 @@ void MainWindow::on_pushButton_TerminateThread_RoverB_clicked()
         delete serialThread_RoverB;
         serialThread_RoverB = nullptr;
 
-        ui->lineEdit_ComPort_RoverB->setEnabled(true);
+        ui->lineEdit_SerialPort_RoverB->setEnabled(true);
+        ui->spinBox_SerialSpeed_RoverB->setEnabled(true);
         ui->pushButton_StartThread_RoverB->setEnabled(true);
         ui->pushButton_TerminateThread_RoverB->setEnabled(false);
     }
@@ -663,7 +680,7 @@ void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
         QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::connect(ntripThread, SIGNAL(threadEnded(void)),
@@ -743,7 +760,7 @@ void MainWindow::ntripThread_Base_ThreadEnded(void)
         QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
@@ -810,7 +827,7 @@ void MainWindow::on_pushButton_TerminateThread_NTRIP_clicked()
         QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
