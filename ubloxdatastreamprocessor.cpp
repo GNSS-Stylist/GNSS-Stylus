@@ -23,10 +23,13 @@
 
 #include "ubloxdatastreamprocessor.h"
 
-UBloxDataStreamProcessor::UBloxDataStreamProcessor(unsigned int maxUBXMessageLength, unsigned int maxNMEASentenceLenght)
+UBloxDataStreamProcessor::UBloxDataStreamProcessor(const unsigned int maxUBXMessageLength,
+                                                   const unsigned int maxNMEASentenceLenght,
+                                                   const unsigned int maxUnidentifiedDataSize)
 {
     this->maxUBXMessageLength = maxUBXMessageLength;
     this->maxNMEASentenceLenght = maxNMEASentenceLenght;
+    this->maxUnidentifiedDataSize = maxUnidentifiedDataSize;
 //    inputBuffer.reserve(1024);
     inputBuffer.clear();
     state = WAITING_FOR_START_BYTE;
@@ -47,6 +50,11 @@ void UBloxDataStreamProcessor::process(const char inbyte)
             }
             inputBuffer.clear();
             inputBuffer.append(inbyte);
+        }
+        else if (static_cast<unsigned int>(inputBuffer.length()) >= maxUnidentifiedDataSize)
+        {
+            emit unidentifiedDataReceived(inputBuffer);
+            inputBuffer.clear();
         }
 
         if (inbyte == '$')

@@ -70,13 +70,17 @@ private:
     unsigned int maxNMEASentenceLenght;
     unsigned int maxUBXMessageLength;
 
+    unsigned int maxUnidentifiedDataSize;
+
 public:
     /**
      * @brief Constructor
      * @param maxUBXMessageLength Maximum length of UBX-message including all headers/tails (bytes)
      * @param maxNMEASentenceLenght Maximum length of NMEA-message (characters)
      */
-    UBloxDataStreamProcessor(unsigned int maxUBXMessageLength = 65536+8, unsigned int maxNMEASentenceLenght = 1024);
+    UBloxDataStreamProcessor(const unsigned int maxUBXMessageLength = 65536+8,
+                             const unsigned int maxNMEASentenceLenght = 1024,
+                             const unsigned int maxUnidentifiedDataSize = 100);
     void process(const char byte);                  //!< Processes single byte
     void process(const QByteArray& data);           //!< Processes data
     void flushInputBuffer(void);                    //!< Discards any data already in input buffer
