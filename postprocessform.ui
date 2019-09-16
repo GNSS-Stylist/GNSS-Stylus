@@ -34,10 +34,16 @@
        <height>275</height>
       </size>
      </property>
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
      <widget class="QWidget" name="tab_Settings">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Settings</string>
       </attribute>
@@ -229,6 +235,9 @@
       </widget>
      </widget>
      <widget class="QWidget" name="Files">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Files</string>
       </attribute>
@@ -353,6 +362,9 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_PointCloud">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Point cloud</string>
       </attribute>
@@ -384,6 +396,9 @@
       </widget>
      </widget>
      <widget class="QWidget" name="tab_Replayer">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Replay</string>
       </attribute>
@@ -587,6 +602,9 @@
       </widget>
      </widget>
      <widget class="QWidget" name="tab_MovieScriptCreator">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Processing &quot;movie script&quot; generator</string>
       </attribute>
