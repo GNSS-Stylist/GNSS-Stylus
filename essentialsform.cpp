@@ -398,13 +398,13 @@ void EssentialsForm::postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&
 
 void EssentialsForm::connectSerialThreadSlots_Base(SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(dataReceived_Base(const QByteArray&)));
 }
 
 void EssentialsForm::disconnectSerialThreadSlots_Base(SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(dataReceived_Base(const QByteArray&)));
 }
 
@@ -446,13 +446,13 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStrea
 
 void EssentialsForm::connectSerialThreadSlots_RoverA(SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(serialDataReceived_RoverA(const QByteArray&)));
 }
 
 void EssentialsForm::disconnectSerialThreadSlots_RoverA(SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(serialDataReceived_RoverA(const QByteArray&)));
 }
 
@@ -476,13 +476,13 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStr
 
 void EssentialsForm::connectSerialThreadSlots_RoverB(SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(serialDataReceived_RoverB(const QByteArray&)));
 }
 
 void EssentialsForm::disconnectSerialThreadSlots_RoverB(SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                      this, SLOT(serialDataReceived_RoverB(const QByteArray&)));
 }
 

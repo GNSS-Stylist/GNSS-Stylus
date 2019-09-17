@@ -92,6 +92,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBox_SerialSpeed_RoverB->setValue(settings.value("SerialSpeed_RoverB", "115200").toInt());
 
     ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
+
+    // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
+    qRegisterMetaType<SerialThread::DataReceivedEmitReason>();
 }
 
 MainWindow::~MainWindow()
@@ -201,7 +204,7 @@ void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
         QObject::connect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::connect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_Base, SIGNAL(serialTimeout(void)),
@@ -243,7 +246,7 @@ void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
         QObject::disconnect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::disconnect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_Base, SIGNAL(serialTimeout(void)),
@@ -323,7 +326,7 @@ void MainWindow::on_pushButton_StartThread_RoverA_clicked()
         QObject::connect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::connect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_RoverA_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
@@ -364,7 +367,7 @@ void MainWindow::on_pushButton_TerminateThread_RoverA_clicked()
         QObject::disconnect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::disconnect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_RoverA_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
@@ -498,7 +501,7 @@ void MainWindow::on_pushButton_StartThread_RoverB_clicked()
         QObject::connect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
 
-        QObject::connect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::connect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_RoverB_DataReceived(const QByteArray&)));
 
         QObject::connect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
@@ -539,7 +542,7 @@ void MainWindow::on_pushButton_TerminateThread_RoverB_clicked()
         QObject::disconnect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
 
-        QObject::disconnect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::disconnect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_RoverB_DataReceived(const QByteArray&)));
 
         QObject::disconnect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
@@ -680,7 +683,7 @@ void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
         QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::connect(ntripThread, SIGNAL(threadEnded(void)),
@@ -760,7 +763,7 @@ void MainWindow::ntripThread_Base_ThreadEnded(void)
         QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
@@ -827,7 +830,7 @@ void MainWindow::on_pushButton_TerminateThread_NTRIP_clicked()
         QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(commThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64)),
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
                          this, SLOT(commThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),

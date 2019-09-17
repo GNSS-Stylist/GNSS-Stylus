@@ -56,6 +56,13 @@ private:
     unsigned int serialPortBPS;         //!< Serial port speed (Bits Per Second) or "baud rate"
 
 public:
+    enum DataReceivedEmitReason
+    {
+        MAX_BYTES = 0,
+        TIMEOUT,
+    };
+    Q_ENUM(DataReceivedEmitReason)
+
     /**
      * @brief Constructor
      * @param serialPortFileName File name of com port to open
@@ -78,7 +85,9 @@ signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)
     void warningMessage(const QString&);    //!< Signal for warning message (less severe than error)
     void errorMessage(const QString&);      //!< Signal for error message
-    void dataReceived(const QByteArray&, qint64 startTime, qint64 endTime);   //!< Signal that is emitted when data is received. Amount of bytes is limited either by maxReadDataSize or time elapses between two received bytes. Times are read by QElapsedTimer::msecsSinceReference()
+
+    // QT's signals and slots need to be defined exactly the same way, therefore SerialThread::DataReceivedEmitReason
+    void dataReceived(const QByteArray&, qint64 startTime, qint64 endTime, const SerialThread::DataReceivedEmitReason&);   //!< Signal that is emitted when data is received. Amount of bytes is limited either by maxReadDataSize or time elapses between two received bytes. Times are read by QElapsedTimer::msecsSinceReference()
     void serialTimeout(void);               //!< Signal that is emitted when charTimeout have been elapsed after last received byte or no bytes received in charTimeout.
 };
 

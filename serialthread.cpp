@@ -156,7 +156,7 @@ void SerialThread::run()
 
                     if (static_cast<unsigned int>(receiveBuffer.length()) >= maxReadDataSize)
                     {
-                        emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference());
+                        emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference(), MAX_BYTES);
                         receiveBuffer.clear();
                     }
                 }
@@ -168,7 +168,7 @@ void SerialThread::run()
                 {
                     // Byte not received inside the timeout
                     // -> Emit any bytes already received
-                    emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference());
+                    emit dataReceived(receiveBuffer, dataStartTimer.msecsSinceReference(), lastByteReceivedTimer.msecsSinceReference(), TIMEOUT);
                     receiveBuffer.clear();
 
                     // Also emit timeout
