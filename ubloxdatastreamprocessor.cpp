@@ -35,7 +35,7 @@ UBloxDataStreamProcessor::UBloxDataStreamProcessor(const unsigned int maxUBXMess
     state = WAITING_FOR_START_BYTE;
 }
 
-void UBloxDataStreamProcessor::process(const char inbyte)
+void UBloxDataStreamProcessor::process(const char inbyte, qint64 byteTime)
 {
     switch (state)
     {
@@ -43,6 +43,8 @@ void UBloxDataStreamProcessor::process(const char inbyte)
 
         if ((inbyte == '$') || (static_cast<unsigned char>(inbyte) == 0xB5) || (static_cast<unsigned char>(inbyte) == 0xD3))
         {
+            firstMessageByteTime = byteTime;
+
             if (inputBuffer.length() != 0)
             {
                 // inputBuffer should be empty at this point if all bytes can be interpreted as valid ones.
@@ -166,7 +168,7 @@ void UBloxDataStreamProcessor::process(const char inbyte)
             {
                 // Frame is formally valid
                 UBXMessage newUbxMessage(inputBuffer);
-                emit ubxMessageReceived(newUbxMessage);
+                emit ubxMessageReceived(newUbxMessage, firstMessageByteTime, byteTime);
             }
         }
 
@@ -259,11 +261,13 @@ void UBloxDataStreamProcessor::process(const char inbyte)
     }
 }
 
-void UBloxDataStreamProcessor::process(const QByteArray& data)
+void UBloxDataStreamProcessor::process(const QByteArray& data, const qint64 firstByteTime, const qint64 lastByteTime)
 {
     for (int i = 0; i < data.length(); i++)
     {
-        process(data[i]);
+        qint64 byteTime = data.length() > 1 ? firstByteTime + (lastByteTime - firstByteTime) * i / (data.length() - 1) : lastByteTime;
+
+        process(data[i], byteTime);
     }
 }
 

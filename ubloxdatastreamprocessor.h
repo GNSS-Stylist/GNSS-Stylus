@@ -72,6 +72,8 @@ private:
 
     unsigned int maxUnidentifiedDataSize;
 
+    qint64 firstMessageByteTime;
+
 public:
     /**
      * @brief Constructor
@@ -81,14 +83,14 @@ public:
     UBloxDataStreamProcessor(const unsigned int maxUBXMessageLength = 65536+8,
                              const unsigned int maxNMEASentenceLenght = 1024,
                              const unsigned int maxUnidentifiedDataSize = 100);
-    void process(const char byte);                  //!< Processes single byte
-    void process(const QByteArray& data);           //!< Processes data
+    void process(const char byte, qint64 byteTime);                  //!< Processes single byte
+    void process(const QByteArray& data, const qint64 firstByteTime, const qint64 lastByteTime);           //!< Processes data
     void flushInputBuffer(void);                    //!< Discards any data already in input buffer
     unsigned int getNumOfUnprocessedBytes(void);    //!< @returns number of unprocessed bytes
 
 signals:
     void nmeaSentenceReceived(const QByteArray&);   //!< Complete NMEA-sentence has been interpreted from input stream
-    void ubxMessageReceived(const UBXMessage&);     //!< Complete and formally valid UBX-message has been interpreted from input stream
+    void ubxMessageReceived(const UBXMessage&, qint64 startTime, qint64 endTime);     //!< Complete and formally valid UBX-message has been interpreted from input stream
     void rtcmMessageReceived(const RTCMMessage&);   //!< Complete RTCM-message has been interpreted from input stream
     void ubxParseError(const QString&);             //!< Parsing of UBX-message failed. String is descriptive string about the reason.
     void nmeaParseError(const QString&);            //!< Parsing of NMEA-message failed. String is descriptive string about the reason.

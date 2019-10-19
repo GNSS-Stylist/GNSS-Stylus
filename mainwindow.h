@@ -34,6 +34,8 @@
 #include "relposnedform.h"
 #include "essentialsform.h"
 #include "postprocessform.h"
+#include "laserrangefinder20hzv2messagemonitorform.h"
+#include "laserrangefinder20hzv2serialthread.h"
 
 namespace Ui {
 class MainWindow;
@@ -57,21 +59,21 @@ private slots:
     void commThread_Base_ErrorMessage(const QString& errorMessage);
     void commThread_Base_WarningMessage(const QString& warningMessage);
     void commThread_Base_InfoMessage(const QString& infoMessage);
-    void commThread_Base_DataReceived(const QByteArray& byte);
+    void commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
     void commThread_Base_SerialTimeout(void);
     void ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&);
 
     void commThread_RoverA_ErrorMessage(const QString& errorMessage);
     void commThread_RoverA_WarningMessage(const QString& warningMessage);
     void commThread_RoverA_InfoMessage(const QString& infoMessage);
-    void commThread_RoverA_DataReceived(const QByteArray& byte);
+    void commThread_RoverA_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
     void commThread_RoverA_SerialTimeout(void);
     void ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&);
 
     void commThread_RoverB_ErrorMessage(const QString& errorMessage);
     void commThread_RoverB_WarningMessage(const QString& warningMessage);
     void commThread_RoverB_InfoMessage(const QString& infoMessage);
-    void commThread_RoverB_DataReceived(const QByteArray& byte);
+    void commThread_RoverB_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
     void commThread_RoverB_SerialTimeout(void);
     void ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&);
 
@@ -81,6 +83,13 @@ private slots:
     void ntripThread_Base_DataReceived(const QByteArray& byte);
     void ntripThread_Base_ThreadEnded(void);
     void ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&);
+
+    void commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString& errorMessage);
+    void commThread_LaserRangeFinder20HzV2_WarningMessage(const QString& warningMessage);
+    void commThread_LaserRangeFinder20HzV2_InfoMessage(const QString& infoMessage);
+    void commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance);
+    void commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString);
+    void commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data);
 
     void on_pushButton_StartThread_Base_Serial_clicked();
 
@@ -152,6 +161,14 @@ private slots:
 
     void on_pushButton_TerminateThread_NTRIP_clicked();
 
+    void on_pushButton_StartThread_LaserDist_clicked();
+
+    void on_pushButton_ShowMessageWindow_LaserDist_clicked();
+
+    void on_pushButton_TerminateThread_LaserDist_clicked();
+
+    void on_MainWindow_destroyed();
+
 private:
     Ui::MainWindow *ui;
 
@@ -176,6 +193,10 @@ private:
     UBloxDataStreamProcessor ubloxDataStreamProcessor_RoverB;
     int messageCounter_RELPOSNED_RoverB;
     RELPOSNEDForm* relposnedForm_RoverB;
+
+    LaserRangeFinder20HzV2MessageMonitorForm* messageMonitorForm_LaserDist;
+    LaserRangeFinder20HzV2SerialThread* serialThread_LaserDist;
+    int messageCounter_LaserDist_Distance;
 
     EssentialsForm* essentialsForm;
 

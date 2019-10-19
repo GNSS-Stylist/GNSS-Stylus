@@ -130,8 +130,12 @@ void PostProcessingForm::addLogLine(const QString& line)
     QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
+//#include "geodetic_conv.hpp"
+
 void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverA_clicked()
 {
+
+
     relposnedMessages_RoverA.clear();
     addLogLine("Rover A RELPOSNED-data cleared.");
 }
@@ -247,7 +251,7 @@ void PostProcessingForm::addRELPOSNEDFileData(const QStringList& fileNames)
                 {
                     // Handle data byte-by-byte using UBloxDataStreamProcessor.
                     // It will send signals when necessary
-                    ubloxProcessor.process(static_cast<char>(fileData[static_cast<std::size_t>(currentRELPOSNEDReadingData.currentFileByteIndex)]));
+                    ubloxProcessor.process(static_cast<char>(fileData[static_cast<std::size_t>(currentRELPOSNEDReadingData.currentFileByteIndex)]), 0);
                 }
 
                 if (currentRELPOSNEDReadingData.firstDuplicateITOW != -1)

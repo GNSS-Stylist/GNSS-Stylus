@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>570</width>
-    <height>674</height>
+    <height>918</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,7 +55,7 @@
            <number>8</number>
           </property>
           <item>
-           <widget class="QLabel" name="label__Comport_Base_Serial">
+           <widget class="QLabel" name="label__Serialport_Base_Serial">
             <property name="text">
              <string>Com port:</string>
             </property>
@@ -609,7 +609,7 @@
           <number>8</number>
          </property>
          <item>
-          <widget class="QLabel" name="label__Comport_RoverA">
+          <widget class="QLabel" name="label__SerialPort_RoverA">
            <property name="text">
             <string>Serial port:</string>
            </property>
@@ -828,9 +828,9 @@
           <number>8</number>
          </property>
          <item>
-          <widget class="QLabel" name="label__Comport_RoverB">
+          <widget class="QLabel" name="label__SerialPort_RoverB">
            <property name="text">
-            <string>Com port:</string>
+            <string>Serial port:</string>
            </property>
           </widget>
          </item>
@@ -887,6 +887,239 @@
         </layout>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
+       <attribute name="title">
+        <string>Distance provider (constant)</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_3">
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
+       <attribute name="title">
+        <string>Distance provider (&quot;20 Hz laser Rangefinder module V2&quot;)</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_Thread_RoverA_2">
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_Serialport_LaserDist">
+            <property name="text">
+             <string>Serial port:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_SerialPort_LaserDist">
+            <property name="text">
+             <string>\\.\COM</string>
+            </property>
+            <property name="maxLength">
+             <number>256</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_DistanceOffset_LaserDist">
+            <property name="text">
+             <string>Distance offset:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_DistanceOffset_LaserDist">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.001000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_StartThread_LaserDist">
+            <property name="text">
+             <string>Start thread</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_TerminateThread_LaserDist">
+            <property name="text">
+             <string>Terminate thread</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout_Messages_RoverA_2" columnstretch="0,1,0" columnminimumwidth="0,50,0">
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_DistanceMessageCount_LaserDist">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_LastWarningMessageLabel_LaserDist">
+            <property name="text">
+             <string>Last warning message:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="label_LastWarningMessage_LaserDist">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_DistanceMessageCountLabel_Laser">
+            <property name="text">
+             <string>Distance messages received:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_LastInfoMessageLabel_LaserDist">
+            <property name="text">
+             <string>Last info message:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_LastErrorMessageLabel_LaserDist">
+            <property name="text">
+             <string>Last error message:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="pushButton_ClearErrorMessage_LaserDist">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QPushButton" name="pushButton_ClearInfoMessage_LaserDist">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="label_LastInfoMessage_LaserDist">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="pushButton_ClearDistanceMessageCounter_LaserDist">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QPushButton" name="pushButton_ClearWarningMessage_LaserDist">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_LastErrorMessage_LaserDist">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_DistanceLabel_LaserDist">
+            <property name="text">
+             <string>Last received distance:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_Distance_LaserDist">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_Middle_RoverA_2">
+          <item>
+           <widget class="QPushButton" name="pushButton_ShowMessageWindow_LaserDist">
+            <property name="text">
+             <string>Show message window</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_SuspendThread_LaserDist">
+            <property name="text">
+             <string>Suspended</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
     <item>

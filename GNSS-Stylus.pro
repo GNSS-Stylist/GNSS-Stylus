@@ -27,6 +27,8 @@ CONFIG += c++17
 LIBS += -l"ws2_32"
 
 SOURCES += \
+    laserrangefinder20hzv2messagemonitorform.cpp \
+    laserrangefinder20hzv2serialthread.cpp \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
@@ -40,6 +42,8 @@ SOURCES += \
     postprocessform.cpp
 
 HEADERS += \
+    laserrangefinder20hzv2messagemonitorform.h \
+    laserrangefinder20hzv2serialthread.h \
         mainwindow.h \
     gnssmessage.h \
     ntripthread.h \
@@ -52,6 +56,7 @@ HEADERS += \
     postprocessform.h
 
 FORMS += \
+    laserrangefinder20hzv2messagemonitorform.ui \
         mainwindow.ui \
     messagemonitorform.ui \
     relposnedform.ui \

@@ -425,7 +425,7 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamPr
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_Base(const QByteArray&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
 
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
@@ -437,7 +437,7 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStrea
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_Base(const QByteArray&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
 
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
@@ -461,7 +461,7 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStream
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_RoverA(const QByteArray&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
 }
 
@@ -470,7 +470,7 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStr
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_RoverA(const QByteArray&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
 }
 
@@ -491,7 +491,7 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStream
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_RoverB(const QByteArray&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 }
 
@@ -500,7 +500,7 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStr
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
                      this, SLOT(nmeaSentenceReceived_RoverB(const QByteArray&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 }
 
