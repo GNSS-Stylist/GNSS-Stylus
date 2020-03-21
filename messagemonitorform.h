@@ -95,8 +95,8 @@ private:
     qint64 lastRELPOSNEDMessageEndTime = 0;
 
 private slots:
-    void ubloxProcessor_nmeaSentenceReceived(const QByteArray&);
-    void ubloxProcessor_ubxMessageReceived(const UBXMessage&, qint64, qint64);
+    void ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&);
+    void ubloxProcessor_ubxMessageReceived(const UBXMessage&);
     void ubloxProcessor_rtcmMessageReceived(const RTCMMessage&);
 
     void ubloxProcessor_ubxParseError(const QString&);

@@ -61,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent) :
     essentialsForm->connectUBloxDataStreamProcessorSlots_RoverA(&ubloxDataStreamProcessor_RoverA);
     essentialsForm->connectUBloxDataStreamProcessorSlots_RoverB(&ubloxDataStreamProcessor_RoverB);
 
+    QObject::connect(this, SIGNAL(distanceChanged(const EssentialsForm::DistanceItem&)),
+                     essentialsForm, SLOT(on_distanceReceived(const EssentialsForm::DistanceItem&)));
+
     postProcessingForm = new PostProcessingForm(parent);
 
     QObject::connect(postProcessingForm, SIGNAL(replayData_RoverA(const UBXMessage&)),
@@ -77,10 +80,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(&ubloxDataStreamProcessor_Base_NTRIP, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
                      this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&)));
 
-    QObject::connect(&ubloxDataStreamProcessor_RoverA, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::connect(&ubloxDataStreamProcessor_RoverA, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&)));
 
-    QObject::connect(&ubloxDataStreamProcessor_RoverB, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::connect(&ubloxDataStreamProcessor_RoverB, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&)));
 
     QSettings settings;
@@ -688,7 +691,7 @@ void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
         QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray& const SerialThread::DataReceivedEmitReason&)),
+        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::connect(ntripThread, SIGNAL(threadEnded(void)),
@@ -733,7 +736,13 @@ void MainWindow::ntripThread_Base_WarningMessage(const QString& warningMessage)
 
 void MainWindow::ntripThread_Base_DataReceived(const QByteArray& data)
 {
-    ubloxDataStreamProcessor_Base_NTRIP.process(data, 0, 0);
+    QElapsedTimer timer;
+
+    timer.start();
+
+    qint64 timestamp = timer.msecsSinceReference();
+
+    ubloxDataStreamProcessor_Base_NTRIP.process(data, timestamp, timestamp);
 }
 
 void MainWindow::ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage& rtcmMessage)
@@ -768,7 +777,7 @@ void MainWindow::ntripThread_Base_ThreadEnded(void)
         QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                          this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, const SerialThread::DataReceivedEmitReason&)),
+        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
                          this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
 
         QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
@@ -879,7 +888,7 @@ void MainWindow::on_pushButton_StartThread_LaserDist_clicked()
                          this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString&)));
 
         QObject::connect(serialThread_LaserDist, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&)));
+                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&, qint64, qint64)));
 
         QObject::connect(serialThread_LaserDist, SIGNAL(errorReceived(const QString&, qint64, qint64)),
                          this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString&)));
@@ -888,7 +897,7 @@ void MainWindow::on_pushButton_StartThread_LaserDist_clicked()
                          this, SLOT(commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray&)));
 
         messageMonitorForm_LaserDist->connectSerialThreadSlots(serialThread_LaserDist);
-// TODO: Add essential slots        essentialsForm->connectSerialThreadSlots_RoverB(serialThread_RoverB);
+        essentialsForm->connectLaserRangeFinder20HzV2SerialThreadSlots(serialThread_LaserDist);
 
         serialThread_LaserDist->start();
 
@@ -922,9 +931,22 @@ void MainWindow::commThread_LaserRangeFinder20HzV2_WarningMessage(const QString&
     ui->label_LastWarningMessage_LaserDist->setText(warningMessage);
 }
 
-void MainWindow::commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance)
+void MainWindow::commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance, qint64, qint64)
 {
     ui->label_Distance_LaserDist->setText(QString::number(distance, 'f', 4));
+
+    // No need for this, signal is connected directly to essentialForm
+#if 0
+    EssentialsForm::DistanceItem distanceItem;
+
+    distanceItem.type = EssentialsForm::DistanceItem::MEASURED;
+    distanceItem.distance = distance;
+    distanceItem.frameStartTime = frameStartTime;
+    distanceItem.frameEndTime = frameEndTime;
+
+    emit distanceChanged(distanceItem);
+#endif
+
 }
 
 void MainWindow::commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString)
@@ -963,7 +985,7 @@ void MainWindow::on_pushButton_TerminateThread_LaserDist_clicked()
                          this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString&)));
 
         QObject::disconnect(serialThread_LaserDist, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&)));
+                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&, qint64, qint64)));
 
         QObject::disconnect(serialThread_LaserDist, SIGNAL(errorReceived(const QString&, qint64, qint64)),
                          this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString&)));
@@ -972,7 +994,7 @@ void MainWindow::on_pushButton_TerminateThread_LaserDist_clicked()
                          this, SLOT(commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray&)));
 
         messageMonitorForm_LaserDist->disconnectSerialThreadSlots(serialThread_LaserDist);
-// TODO: Essential slots       essentialsForm->disconnectSerialThreadSlots_RoverB(serialThread_LaserDist);
+        essentialsForm->disconnectLaserRangeFinder20HzV2SerialThreadSlots(serialThread_LaserDist);
 
         delete serialThread_LaserDist;
         serialThread_LaserDist = nullptr;
@@ -987,4 +1009,23 @@ void MainWindow::on_pushButton_TerminateThread_LaserDist_clicked()
 void MainWindow::on_MainWindow_destroyed()
 {
 
+}
+
+void MainWindow::on_doubleSpinBox_Distance_Constant_valueChanged(double distance)
+{
+    if (!serialThread_LaserDist)
+    {
+        EssentialsForm::DistanceItem distanceItem;
+
+        distanceItem.type = EssentialsForm::DistanceItem::CONSTANT;
+        distanceItem.distance = distance;
+
+        QElapsedTimer elapsedTimer;
+        elapsedTimer.start();
+
+        distanceItem.frameStartTime = elapsedTimer.msecsSinceReference();
+        distanceItem.frameEndTime = distanceItem.frameStartTime;
+
+        emit distanceChanged(distanceItem);
+    }
 }

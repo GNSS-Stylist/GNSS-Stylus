@@ -28,6 +28,31 @@
 #include "ui_postprocessform.h"
 //#include "tinyspline/tinysplinecpp.h"
 
+struct
+{
+    QString name;
+    double values[4][4];
+} static const transformationPresets[] =
+{
+    { "XYZ = +N+E+D or NED -> +X+Y+Z (default \"no conversion\")",
+        {
+            {  1,  0,  0,  0 },
+            {  0,  1,  0,  0 },
+            {  0,  0,  1,  0 },
+            {  0,  0,  0,  1 },
+        }
+    },
+    { "XYZ = +E+D-N or NED -> -Z+X+Y (Processing's \"movie script\" default left-handed)",
+        {
+            {  0,  1,  0,  0 },
+            {  0,  0,  1,  0 },
+            { -1,  0,  0,  0 },
+            {  0,  0,  0,  1 },
+        }
+    },
+};
+
+
 PostProcessingForm::PostProcessingForm(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PostProcessingForm)
@@ -36,7 +61,7 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
 
     QSettings settings;
 
-    ui->doubleSpinBox_StylusTipDistanceFromRoverA->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA", "900").toDouble());
+    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Fallback", "900").toDouble());
     ui->lineEdit_TagIndicatingBeginningOfNewObject->setText(settings.value("PostProcessing_TagIndicatingBeginningOfNewObject", "New object").toString());
     ui->lineEdit_TagIndicatingBeginningOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingBeginningOfObjectPoints", "LMB").toString());
     ui->lineEdit_TagIndicatingEndOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingEndOfObjectPoints", "RMB").toString());
@@ -46,8 +71,40 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->checkBox_IncludeNormals->setChecked(settings.value("PostProcessing_IncludeNormals", false).toBool());
 
     ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "100").toInt());
+    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Correction", "0").toDouble());
     ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", false).toBool());
     ui->checkBox_ReportUnalignedITOWS->setChecked(settings.value("PostProcessing_ReportUnalignedITOWS", false).toBool());
+
+    ui->doubleSpinBox_Translation_N->setValue(settings.value("PostProcessing_Translation_N", "0").toDouble());
+    ui->doubleSpinBox_Translation_E->setValue(settings.value("PostProcessing_Translation_E", "0").toDouble());
+    ui->doubleSpinBox_Translation_D->setValue(settings.value("PostProcessing_Translation_D", "0").toDouble());
+
+    ui->doubleSpinBox_Movie_Camera_N->setValue(settings.value("PostProcessing_Movie_Camera_N", "-1").toDouble());
+    ui->doubleSpinBox_Movie_Camera_E->setValue(settings.value("PostProcessing_Movie_Camera_E", "0").toDouble());
+    ui->doubleSpinBox_Movie_Camera_D->setValue(settings.value("PostProcessing_Movie_Camera_D", "-0.05").toDouble());
+
+    ui->doubleSpinBox_Movie_LookAt_N->setValue(settings.value("PostProcessing_Movie_LookAt_N", "0").toDouble());
+    ui->doubleSpinBox_Movie_LookAt_E->setValue(settings.value("PostProcessing_Movie_LookAt_E", "0").toDouble());
+    ui->doubleSpinBox_Movie_LookAt_D->setValue(settings.value("PostProcessing_Movie_LookAt_D", "-0.05").toDouble());
+
+    for (int row = 0; row < 4; row++)
+    {
+        for (int column = 0; column < 4; column++)
+        {
+            QString settingKey = "PostProcessing_Transform_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            QString defaultValue = "0";
+
+            if (row == column)
+            {
+                defaultValue = "1";
+            }
+
+            ui->tableWidget_TransformationMatrix->item(row, column)->setText(settings.value(settingKey, defaultValue).toString());
+        }
+    }
 
     ui->doubleSpinBox_Movie_FPS->setValue(settings.value("PostProcessing_FPS", "30").toDouble());
 }
@@ -56,7 +113,7 @@ PostProcessingForm::~PostProcessingForm()
 {
     QSettings settings;
 
-    settings.setValue("PostProcessing_StylusTipDistanceFromRoverA", ui->doubleSpinBox_StylusTipDistanceFromRoverA->value());
+    settings.setValue("PostProcessing_StylusTipDistanceFromRoverA_Fallback", ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value());
     settings.setValue("PostProcessing_TagIndicatingBeginningOfNewObject", ui->lineEdit_TagIndicatingBeginningOfNewObject->text());
     settings.setValue("PostProcessing_TagIndicatingBeginningOfObjectPoints", ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text());
     settings.setValue("PostProcessing_TagIndicatingEndOfObjectPoints", ui->lineEdit_TagIndicatingEndOfObjectPoints->text());
@@ -66,8 +123,40 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_IncludeNormals", ui->checkBox_IncludeNormals->isChecked());
 
     settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
+    settings.setValue("PostProcessing_StylusTipDistanceFromRoverA_Correction", ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->value());
     settings.setValue("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked());
     settings.setValue("PostProcessing_ReportUnalignedITOWS", ui->checkBox_ReportUnalignedITOWS->isChecked());
+
+    settings.setValue("PostProcessing_Translation_N", ui->doubleSpinBox_Translation_N->value());
+    settings.setValue("PostProcessing_Translation_E", ui->doubleSpinBox_Translation_E->value());
+    settings.setValue("PostProcessing_Translation_D", ui->doubleSpinBox_Translation_D->value());
+
+    settings.setValue("PostProcessing_Movie_Camera_N", ui->doubleSpinBox_Movie_Camera_N->value());
+    settings.setValue("PostProcessing_Movie_Camera_E", ui->doubleSpinBox_Movie_Camera_E->value());
+    settings.setValue("PostProcessing_Movie_Camera_D", ui->doubleSpinBox_Movie_Camera_D->value());
+
+    settings.setValue("PostProcessing_Movie_LookAt_N", ui->doubleSpinBox_Movie_LookAt_N->value());
+    settings.setValue("PostProcessing_Movie_LookAt_E", ui->doubleSpinBox_Movie_LookAt_E->value());
+    settings.setValue("PostProcessing_Movie_LookAt_D", ui->doubleSpinBox_Movie_LookAt_D->value());
+
+    for (int row = 0; row < 4; row++)
+    {
+        for (int column = 0; column < 4; column++)
+        {
+            QString settingKey = "PostProcessing_Transform_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            QString defaultValue = "0";
+
+            if (row == column)
+            {
+                defaultValue = "1";
+            }
+
+            settings.setValue(settingKey, ui->tableWidget_TransformationMatrix->item(row, column)->text());
+        }
+    }
 
     settings.setValue("PostProcessing_FPS", ui->doubleSpinBox_Movie_FPS->value());
 
@@ -78,7 +167,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 {
     QWidget::showEvent(event);
 
-    if (!fileDialogsInitialized)
+    if (!onShowInitializationsDone)
     {
         fileDialog_UBX.setFileMode(QFileDialog::ExistingFiles);
 
@@ -100,6 +189,39 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_Tags.setNameFilters(tagFilters);
 
+        fileDialog_Distances.setFileMode(QFileDialog::ExistingFiles);
+
+        QStringList distanceFilters;
+
+        distanceFilters << "Distance-files (*.distances)"
+                << "Txt-files (*.txt)"
+                << "Any files (*)";
+
+        fileDialog_Distances.setNameFilters(distanceFilters);
+
+        fileDialog_Sync.setFileMode(QFileDialog::ExistingFiles);
+
+        QStringList syncFilters;
+
+        syncFilters << "Sync-files (*.sync)"
+                << "Txt-files (*.txt)"
+                << "Any files (*)";
+
+        fileDialog_Sync.setNameFilters(syncFilters);
+
+        fileDialog_All.setFileMode(QFileDialog::ExistingFiles);
+
+        QStringList allFilesFilters;
+
+        allFilesFilters << "UBX log files (*.ubx)"
+                << "Raw log files (*.raw)"
+                << "Tag-files (*.tags)"
+                << "Txt-files (*.txt)"
+                << "Sync-files (*.sync)"
+                << "Any files (*)";
+
+        fileDialog_All.setNameFilters(allFilesFilters);
+
         fileDialog_PointCloud.setFileMode(QFileDialog::Directory);
 
         fileDialog_MovieScript.setFileMode(QFileDialog::AnyFile);
@@ -112,7 +234,28 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_MovieScript.setNameFilters(movieScriptFilters);
 
-        fileDialogsInitialized = true;
+
+        fileDialog_Transformation_Load.setFileMode(QFileDialog::ExistingFile);
+
+        QStringList transformationFilters;
+
+        transformationFilters << "Transformation files (*.Transformation)"
+                << "Any files (*)";
+
+        fileDialog_Transformation_Load.setNameFilters(transformationFilters);
+
+
+        fileDialog_Transformation_Save.setFileMode(QFileDialog::AnyFile);
+        fileDialog_Transformation_Save.setDefaultSuffix("Transformation");
+
+        fileDialog_Transformation_Save.setNameFilters(transformationFilters);
+
+        for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
+        {
+            ui->comboBox_Presets->addItem(transformationPresets[presetIndex].name);
+        }
+
+        onShowInitializationsDone = true;
     }
 }
 
@@ -134,8 +277,6 @@ void PostProcessingForm::addLogLine(const QString& line)
 
 void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverA_clicked()
 {
-
-
     relposnedMessages_RoverA.clear();
     addLogLine("Rover A RELPOSNED-data cleared.");
 }
@@ -152,6 +293,17 @@ void PostProcessingForm::on_pushButton_ClearTagData_clicked()
     addLogLine("Tag data cleared.");
 }
 
+void PostProcessingForm::addRELPOSNEDData_RoverA(const QStringList& fileNames)
+{
+    addLogLine("Reading files into rover A relposned-data...");
+
+    currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverA;
+
+    addRELPOSNEDFileData(fileNames);
+
+    currentRELPOSNEDReadingData.relposnedMessages = nullptr;
+}
+
 void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverA_clicked()
 {
     if (fileDialog_UBX.exec())
@@ -163,14 +315,19 @@ void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverA_clicked()
             fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
         }
 
-        addLogLine("Reading files into rover A relposned-data...");
-
-        currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverA;
-
-        addRELPOSNEDFileData(fileNames);
-
-        currentRELPOSNEDReadingData.relposnedMessages = nullptr;
+        addRELPOSNEDData_RoverA(fileNames);
     }
+}
+
+void PostProcessingForm::addRELPOSNEDData_RoverB(const QStringList& fileNames)
+{
+    addLogLine("Reading files into rover B relposned-data...");
+
+    currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverB;
+
+    addRELPOSNEDFileData(fileNames);
+
+    currentRELPOSNEDReadingData.relposnedMessages = nullptr;
 }
 
 void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverB_clicked()
@@ -184,13 +341,7 @@ void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverB_clicked()
             fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
         }
 
-        addLogLine("Reading files into rover B relposned-data...");
-
-        currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverB;
-
-        addRELPOSNEDFileData(fileNames);
-
-        currentRELPOSNEDReadingData.relposnedMessages = nullptr;
+        addRELPOSNEDData_RoverB(fileNames);
     }
 }
 
@@ -227,8 +378,8 @@ void PostProcessingForm::addRELPOSNEDFileData(const QStringList& fileNames)
 
                 currentRELPOSNEDReadingData.init();
 
-                QObject::connect(&ubloxProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                                 this, SLOT(ubloxProcessor_nmeaSentenceReceived(const QByteArray&)));
+                QObject::connect(&ubloxProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                                 this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
 
                 QObject::connect(&ubloxProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                                  this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
@@ -313,7 +464,7 @@ void PostProcessingForm::RELPOSNEDReadingData::init()
     discardedBytesCount = 0;
 }
 
-void PostProcessingForm::ubloxProcessor_nmeaSentenceReceived(const QByteArray& nmeaSentence)
+void PostProcessingForm::ubloxProcessor_nmeaSentenceReceived(const NMEAMessage& nmeaSentence)
 {
     // NMEA-messages are not utilized, but count them anyway
     Q_UNUSED(nmeaSentence);
@@ -455,6 +606,181 @@ void PostProcessingForm::on_pushButton_ClearAll_clicked()
     ui->plainTextEdit_Log->clear();
 }
 
+void PostProcessingForm::addTagData(const QStringList& fileNames)
+{
+    addLogLine("Reading tags...");
+
+    for (const auto& fileName : fileNames)
+    {
+        QFileInfo fileInfo(fileName);
+        addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+        QFile tagFile;
+        tagFile.setFileName(fileName);
+        if (tagFile.open(QIODevice::ReadOnly))
+        {
+            int numberOfTags = 0;
+
+            QTextStream textStream(&tagFile);
+
+            int64_t fileLength = tagFile.size();
+
+            if (fileLength > 0x7FFFFFFFLL)
+            {
+                addLogLine("Error: File \"" + fileInfo.fileName() + "\" is too big. Skipped.");
+                tagFile.close();
+                continue;
+            }
+
+            QString headerLine = textStream.readLine();
+
+            bool uptimeColumnExists;
+
+            if (!headerLine.compare("Time\tiTOW\tTag\tText", Qt::CaseInsensitive))
+            {
+                addLogLine("Warning: File's \"" + fileInfo.fileName() + "\" doesn't have \"Uptime\"-column (old format). Using iTOWS as uptimes. Distances and sync-data may not be valid.");
+                uptimeColumnExists = false;
+            }
+            else if (!headerLine.compare("Time\tiTOW\tTag\tText\tUptime", Qt::CaseInsensitive))
+            {
+                uptimeColumnExists = true;
+            }
+            else
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have supported header. Skipped.");
+                tagFile.close();
+                continue;
+            }
+
+            int lineNumber = 1;
+            int discardedLines = 0;
+            int firstDuplicateTagLine = 0;
+            int lastDuplicateTagLine = 0;
+
+            while (!textStream.atEnd())
+            {
+                lineNumber++;
+
+                QString line = textStream.readLine();
+
+                QStringList subItems = line.split("\t");
+
+                if ((subItems.count() < 4) ||
+                        ((subItems.count() < 5) && uptimeColumnExists))
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Not enough tab-separated items. Line skipped.");
+                    continue;
+                }
+
+                Tag newTag;
+
+                bool iTOWConvOk;
+                newTag.iTOW = subItems[1].toInt(&iTOWConvOk);
+
+                if (!iTOWConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 2 (iTOW) to integer. Line skipped.");
+                    continue;
+                }
+
+                if (subItems[2].length() == 0)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Empty tag. Line skipped.");
+                    continue;
+                }
+
+                bool uptimeConvOk;
+                qint64 uptime;
+
+                if (uptimeColumnExists)
+                {
+                    uptime = subItems[4].toLongLong(&uptimeConvOk);
+
+                    if (!uptimeConvOk)
+                    {
+                        discardedLines++;
+                        addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 5 (uptime) to 64-bit integer. Line skipped.");
+                        continue;
+                    }
+                }
+                else
+                {
+                    // Old format -> Use iTOW as uptime
+                    uptime = newTag.iTOW;
+                }
+
+                newTag.sourceFile = fileName;
+                newTag.sourceFileLine = lineNumber;
+                newTag.ident = subItems[2];
+                newTag.text = subItems[3];
+
+                if (tags.find(uptime) != tags.end())
+                {
+                    QList simultaneousItems = tags.values(uptime);
+
+                    bool skip = false;
+
+                    for (int i = 0; i < simultaneousItems.size(); i++)
+                    {
+                        if (simultaneousItems.at(i).ident == newTag.ident)
+                        {
+                            discardedLines++;
+                            if (!firstDuplicateTagLine)
+                            {
+                                firstDuplicateTagLine = lineNumber;
+                            }
+
+                            lastDuplicateTagLine = lineNumber;
+                            skip = true;
+                            continue;
+                        }
+                    }
+
+                    if (skip)
+                    {
+                        continue;
+                    }
+                }
+
+                if (firstDuplicateTagLine)
+                {
+                    addLogLine("Warning: Line(s) " + QString::number(firstDuplicateTagLine) + "-" +
+                               QString::number(lastDuplicateTagLine) +
+                               ": Duplicate tag(s). Line(s) skipped.");
+
+                    firstDuplicateTagLine = 0;
+                }
+
+                tags.insertMulti(uptime, newTag);
+
+                numberOfTags ++;
+            }
+
+            if (firstDuplicateTagLine)
+            {
+                addLogLine("Warning: Line(s) " + QString::number(firstDuplicateTagLine) + "-" +
+                           QString::number(lastDuplicateTagLine) +
+                           ": Duplicate tag(s). Line(s) skipped.");
+
+                firstDuplicateTagLine = 0;
+            }
+
+            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid tags: " +
+                       QString::number(numberOfTags) +
+                       ", total lines: " + QString::number(lineNumber) +
+                       ", discarded lines: " + QString::number(discardedLines) + ".");
+        }
+        else
+        {
+            addLogLine("Error: Can not open file \"" + fileInfo.fileName() + "\". Skipped.");
+        }
+    }
+    addLogLine("Files read.");
+}
+
 
 void PostProcessingForm::on_pushButton_AddTagData_clicked()
 {
@@ -467,122 +793,30 @@ void PostProcessingForm::on_pushButton_AddTagData_clicked()
             fileDialog_Tags.setDirectory(QFileInfo(fileNames[0]).path());
         }
 
-        addLogLine("Reading tags...");
-
-        for (const auto& fileName : fileNames)
-        {
-            QFileInfo fileInfo(fileName);
-            addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
-
-            QFile tagFile;
-            tagFile.setFileName(fileName);
-            if (tagFile.open(QIODevice::ReadOnly))
-            {
-                int numberOfTags = 0;
-
-                QTextStream textStream(&tagFile);
-
-                int64_t fileLength = tagFile.size();
-
-                if (fileLength > 0x7FFFFFFFLL)
-                {
-                    addLogLine("Error: File \"" + fileInfo.fileName() + "\" is too big. Skipped.");
-                    tagFile.close();
-                    continue;
-                }
-
-                QString headerLine = textStream.readLine();
-
-                if (headerLine.compare("Time\tiTOW\tTag\tText", Qt::CaseInsensitive))
-                {
-                    addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Skipped.");
-                    tagFile.close();
-                    continue;
-                }
-
-                int lineNumber = 1;
-                int discardedLines = 0;
-
-                while (!textStream.atEnd())
-                {
-                    lineNumber++;
-
-                    QString line = textStream.readLine();
-
-                    QStringList subItems = line.split("\t");
-
-                    if (subItems.count() < 3)
-                    {
-                        discardedLines++;
-                        addLogLine("Warning: Line " + QString::number(lineNumber) + ": Not enough tab-separated items. Line skipped.");
-                        continue;
-                    }
-
-                    bool iTOWConvOk;
-                    int iTOW = subItems[1].toInt(&iTOWConvOk);
-
-                    if (!iTOWConvOk)
-                    {
-                        discardedLines++;
-                        addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 2 (iTOW) to integer. Line skipped.");
-                        continue;
-                    }
-
-                    if (subItems[2].length() == 0)
-                    {
-                        discardedLines++;
-                        addLogLine("Warning: Line " + QString::number(lineNumber) + ": Empty tag. Line skipped.");
-                        continue;
-                    }
-
-                    Tag newTag;
-
-                    newTag.sourceFile = fileName;
-                    newTag.sourceFileLine = lineNumber;
-//                    newTag.iTOW = iTOW;
-                    newTag.ident = subItems[2];
-
-                    if (subItems.count() > 3)
-                    {
-                        newTag.text = subItems[3];
-                    }
-
-                    if (tags.find(iTOW) != tags.end())
-                    {
-                        discardedLines++;
-                        addLogLine("Warning: Line " + QString::number(lineNumber) + ": Tag with duplicate iTOW. Line skipped.");
-                        continue;
-                    }
-
-                    tags[iTOW] = newTag;
-
-                    numberOfTags ++;
-                }
-
-                addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid tags: " +
-                           QString::number(numberOfTags) +
-                           ", total lines: " + QString::number(lineNumber) +
-                           ", discarded lines: " + QString::number(discardedLines) + ".");
-            }
-            else
-            {
-                addLogLine("Error: Can not open file \"" + fileInfo.fileName() + "\". Skipped.");
-            }
-        }
-        addLogLine("Files read.");
+        addTagData(fileNames);
     }
 
 }
 
 void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
 {
+    Eigen::Matrix4d transformMatrix;
+
+    if (!generateTransformationMatrix(transformMatrix))
+    {
+        return;
+    }
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform;
+    transform = transformMatrix;
+
     if (fileDialog_PointCloud.exec())
     {
         QDir dir = fileDialog_PointCloud.directory();
 
         if (!dir.exists())
         {
-            addLogLine("Directory \"" + dir.path() + "\" doesn't exist. Point cloud files not created.");
+            addLogLine("Error: Directory \"" + dir.path() + "\" doesn't exist. Point cloud files not created.");
             return;
         }
 
@@ -592,14 +826,14 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
         QString tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-        double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA->value();
+        double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
         bool includeNormals = ui->checkBox_IncludeNormals->checkState();
 
-        QMap<UBXMessage_RELPOSNED::ITOW, Tag>::const_iterator currentTagIterator;
+//        QMultiMap<qint64, Tag_New>::const_iterator currentTagIterator;
 
         bool objectActive = false;
 
-        int beginningITOW = -1;
+        qint64 beginningUptime = -1;
         int pointsWritten = 0;
 
         bool ignoreBeginningAndEndingTags = false;
@@ -607,270 +841,507 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
         QFile* outFile = nullptr;
         QTextStream* outStream = nullptr;
 
-        for (currentTagIterator = tags.begin(); currentTagIterator != tags.end(); currentTagIterator++)
+        qint64 uptime = -1;
+        Tag beginningTag;
+
+        while (tags.upperBound(uptime) != tags.end())
         {
-            const Tag& currentTag = currentTagIterator.value();
+            uptime = tags.upperBound(uptime).key();
 
-            if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
+            QList<Tag> tagItems = tags.values(uptime);
+
+            // Since "The items that share the same key are available from most recently to least recently inserted."
+            // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+            for (int i = tagItems.size() - 1; i >= 0; i--)
             {
-                // Tag type: new object
+                const Tag& currentTag = tagItems[i];
 
-                if (objectActive)
+                if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
                 {
-                    // Object already active -> Close existing stream and file
+                    // Tag type: new object
 
-                    if (outStream)
+                    if (objectActive)
                     {
-                        delete outStream;
-                        outStream = nullptr;
+                        // Object already active -> Close existing stream and file
+
+                        if (outStream)
+                        {
+                            delete outStream;
+                            outStream = nullptr;
+                        }
+                        if (outFile)
+                        {
+                            addLogLine("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsWritten));
+                            outFile->close();
+                            delete outFile;
+                            outFile = nullptr;
+                        }
+                        objectActive = false;
                     }
-                    if (outFile)
+
+                    if (currentTag.text.length() == 0)
                     {
-                        addLogLine("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsWritten));
-                        outFile->close();
+                        // Empty name for the new object not allowed
+
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": New object without a name. Ending previous object, but not beginning new nor creating a new file. Ignoring subsequent beginning and ending tags.");
+
+                        ignoreBeginningAndEndingTags = true;
+
+                        continue;
+                    }
+
+                    QString fileName = QDir::cleanPath(dir.path() + "/" + currentTag.text + ".xyz");
+
+                    outFile = new QFile(fileName);
+
+                    if (outFile->exists())
+                    {
+                        // File already exists -> Not allowed
+
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+                        ignoreBeginningAndEndingTags = true;
+
                         delete outFile;
                         outFile = nullptr;
-                    }
-                    objectActive = false;
-                }
-
-                if (currentTag.text.length() == 0)
-                {
-                    // Empty name for the new object not allowed
-
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": New object without a name. Ending previous object, but not beginning new nor creating a new file. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    continue;
-                }
-
-                QString fileName = QDir::cleanPath(dir.path() + "/" + currentTag.text + ".xyz");
-
-                outFile = new QFile(fileName);
-
-                if (outFile->exists())
-                {
-                    // File already exists -> Not allowed
-
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    delete outFile;
-                    outFile = nullptr;
-                    continue;
-                }
-
-                addLogLine("Creating file \"" + fileName + "\"...");
-
-                if (!outFile->open(QIODevice::WriteOnly | QIODevice::Text))
-                {
-                    // Creating the file failed
-
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    delete outFile;
-                    outFile = nullptr;
-                    continue;
-                }
-
-                outStream = new QTextStream(outFile);
-                objectActive = true;
-                ignoreBeginningAndEndingTags = false;
-                beginningITOW = -1;
-                pointsWritten = 0;
-            }
-            else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
-            {
-                // Tag type: Begin points
-
-                if (!objectActive)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": Beginning tag outside object. Skipped.");
-                    continue;
-                }
-
-                if (beginningITOW != -1)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": Duplicate beginning tag. Skipped.");
-                    continue;
-                }
-
-                // Just store the beginning iTOW-value. Writing of the points is done in ending tag-branch
-                beginningITOW = currentTagIterator.key();
-            }
-            else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
-            {
-                // Tag type: end points
-
-                if (!objectActive)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": End tag outside object. Skipped.");
-                    continue;
-                }
-
-                if (beginningITOW == -1)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": End tag without beginning tag. Skipped.");
-                    continue;
-                }
-
-                const Tag& endingTag = currentTag;
-                const Tag& beginningTag = tags[beginningITOW];
-
-                if (endingTag.sourceFile != beginningTag.sourceFile)
-                {
-                    addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
-                               beginningTag.sourceFile + "\", line " +
-                               QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
-                               endingTag.sourceFile + "\", line " +
-                               QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
-                    continue;
-                }
-
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(beginningITOW);
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(beginningITOW);
-
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTagIterator.key());
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTagIterator.key());
-
-                int pointsBetweenTags = 0;
-
-                while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                    (relposIterator_RoverB != relposIterator_RoverB_EndTag))
-                {
-                    while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                           (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                           (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
-                    {
-                        // Skip all rover A RELPOSNEDs that have lower iTOW than the next rover B RELPOSNED (sync)
-                        relposIterator_RoverA++;
+                        continue;
                     }
 
-                    while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                           (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                           (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
+                    addLogLine("Creating file \"" + fileName + "\"...");
+
+                    if (!outFile->open(QIODevice::WriteOnly | QIODevice::Text))
                     {
-                        // Skip all rover B RELPOSNEDs that have lower iTOW than the next rover A RELPOSNED (sync)
-                        relposIterator_RoverB++;
+                        // Creating the file failed
+
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+                        ignoreBeginningAndEndingTags = true;
+
+                        delete outFile;
+                        outFile = nullptr;
+                        continue;
                     }
 
-                    if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                        (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                    outStream = new QTextStream(outFile);
+                    objectActive = true;
+                    ignoreBeginningAndEndingTags = false;
+                    beginningUptime = -1;
+                    pointsWritten = 0;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
+                {
+                    // Tag type: Begin points
+
+                    if (!objectActive)
                     {
-                        double n_RoverA = relposIterator_RoverA.value().relPosN;
-                        double e_RoverA = relposIterator_RoverA.value().relPosE;
-                        double d_RoverA = relposIterator_RoverA.value().relPosD;
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Beginning tag outside object. Skipped.");
+                        continue;
+                    }
 
-                        double n_RoverB = relposIterator_RoverB.value().relPosN;
-                        double e_RoverB = relposIterator_RoverB.value().relPosE;
-                        double d_RoverB = relposIterator_RoverB.value().relPosD;
+                    if (beginningUptime != -1)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Duplicate beginning tag. Skipped.");
+                        continue;
+                    }
 
-                        double diffN = n_RoverA - n_RoverB;
-                        double diffE = e_RoverA - e_RoverB;
-                        double diffD = d_RoverA - d_RoverB;
+                    // Just store the beginning uptime-value and tag. Writing of the points is done in ending tag-branch
+                    beginningUptime = uptime;
+                    beginningTag = currentTag;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
+                {
+                    // Tag type: end points
 
-                        double vectorLength = sqrt(diffN * diffN + diffE * diffE + diffD * diffD);
+                    if (!objectActive)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag outside object. Skipped.");
+                        continue;
+                    }
 
-                        // Unit vector pointing from B to A (= from point A towards tip) in NED coordinate system
-                        double unitVecN = diffN / vectorLength;
-                        double unitVecE = diffE / vectorLength;
-                        double unitVecD = diffD / vectorLength;
+                    if (beginningUptime == -1)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag without beginning tag. Skipped.");
+                        continue;
+                    }
 
-                        double n_StylusTip = n_RoverA + unitVecN * stylusTipDistanceFromRoverA;
-                        double e_StylusTip = e_RoverA + unitVecE * stylusTipDistanceFromRoverA;
-                        double d_StylusTip = d_RoverA + unitVecD * stylusTipDistanceFromRoverA;
+                    const Tag& endingTag = currentTag;
 
-                        // Convert to left-handed XYZ-coordinate system for post-prosessing with Processing (yeah, really).
-                        // (positive X = east, Y = down, Z = south)
-                        // This will cause Y-axis to be mirrored in MeshLab since it seems to use right-handed-coordinate system
-                        // (also the default orientation of the point cloud is upside-down).
-                        // Doesn't really matter now as mirroring can be done in MeshLab (Transform: Flip and / or swap axis) if needed.
-                        // But do NOT mirror it there if you intend to use obj-file in Processing.
-                        // You may need to change these to get other coordinate systems into use.
+                    if (endingTag.sourceFile != beginningTag.sourceFile)
+                    {
+                        addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
+                                   beginningTag.sourceFile + "\", line " +
+                                   QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
+                                   endingTag.sourceFile + "\", line " +
+                                   QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
+                        continue;
+                    }
 
-                        double x = e_StylusTip;
-                        double y = d_StylusTip;
-                        double z = -n_StylusTip;
+                    bool constDistancesOnly = true;
 
-                        double x_SurfaceNormal = -unitVecE;
-                        double y_SurfaceNormal = -unitVecD;
-                        double z_SurfaceNormal = unitVecN;
+                    QMap<qint64, DistanceItem>::const_iterator distIter = distances.upperBound(beginningUptime);
 
-                        QString lineOut;
-
-                        if (includeNormals)
+                    while ((distIter != distances.end()) && (distIter.key() < uptime))
+                    {
+                        if (distIter.value().type == DistanceItem::Type::MEASURED)
                         {
-                            lineOut = QString::number(x, 'f', 4) +
-                                    "\t" + QString::number(y, 'f', 4) +
-                                    "\t" + QString::number(z, 'f', 4) +
-                                    "\t" + QString::number(x_SurfaceNormal, 'f', 4) +
-                                    "\t" + QString::number(y_SurfaceNormal, 'f', 4) +
-                                    "\t" + QString::number(z_SurfaceNormal, 'f', 4);
-                        }
-                        else
-                        {
-                            lineOut = QString::number(x, 'f', 4) +
-                                    "\t" + QString::number(y, 'f', 4) +
-                                    "\t" + QString::number(z, 'f', 4);
+                            constDistancesOnly = false;
+                            break;
                         }
 
-                        outStream->operator<<(lineOut + "\n");
-
-                        pointsWritten++;
-
-                        pointsBetweenTags++;
-                        relposIterator_RoverA++;
-                        relposIterator_RoverB++;
+                        distIter++;
                     }
-                }
 
-                if (pointsBetweenTags == 0)
-                {
-                    addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
-                               QString::number(beginningTag.sourceFileLine) +
-                               ", iTOW " + QString::number(beginningITOW) + ", ending tag line " +
-                               QString::number(endingTag.sourceFileLine) +
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ", File \"" + endingTag.sourceFile + "\""
-                               " No points between tags.");
-                }
+                    int pointsBetweenTags = 0;
 
-                beginningITOW = -1;
+                    if (constDistancesOnly)
+                    {
+                        distIter = distances.upperBound(beginningUptime);
+
+                        if (distIter != distances.end())
+                        {
+                            distIter--;
+
+                            if ((distIter == distances.end()) ||
+                                    (distIter.value().type != DistanceItem::Type::CONSTANT))
+                            {
+                                addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                           QString::number(currentTag.sourceFileLine)+
+                                           ", uptime " + QString::number(uptime) +
+                                           ", iTOW " + QString::number(currentTag.iTOW) +
+                                           ": Points between tags having only constant distances without preceeding constant distance. Skipped.");
+                                continue;
+                            }
+
+                            stylusTipDistanceFromRoverA = distIter.value().distance;
+                        }
+
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(beginningTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(beginningTag.iTOW);
+
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTag.iTOW);
+
+                        while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                            (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                        {
+                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                                   (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
+                            {
+                                // Skip all rover A RELPOSNEDs that have lower iTOW than the next rover B RELPOSNED (sync)
+                                relposIterator_RoverA++;
+                            }
+
+                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                                   (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
+                            {
+                                // Skip all rover B RELPOSNEDs that have lower iTOW than the next rover A RELPOSNED (sync)
+                                relposIterator_RoverB++;
+                            }
+
+                            if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                            {
+                                Eigen::Vector3d roverAPosNED;
+                                roverAPosNED << relposIterator_RoverA.value().relPosN,
+                                        relposIterator_RoverA.value().relPosE,
+                                        relposIterator_RoverA.value().relPosD;
+
+                                Eigen::Vector3d roverBPosNED;
+                                roverBPosNED << relposIterator_RoverB.value().relPosN,
+                                        relposIterator_RoverB.value().relPosE,
+                                        relposIterator_RoverB.value().relPosD;
+
+                                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
+                                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
+                                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
+
+                                // Convert to XYZ-coordinates
+                                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
+                                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
+                                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+                                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
+
+                                QString lineOut;
+
+                                if (includeNormals)
+                                {
+                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
+                                }
+                                else
+                                {
+                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
+                                }
+
+                                outStream->operator<<(lineOut + "\n");
+
+                                pointsWritten++;
+
+                                pointsBetweenTags++;
+                                relposIterator_RoverA++;
+                                relposIterator_RoverB++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Distances found, sync point creation to them.
+                        // Rover coordinates are interpolated according to distance timestamps.
+
+                        distIter = distances.upperBound(beginningUptime);
+
+                        while ((distIter != distances.end()) && (distIter.key() < uptime))
+                        {
+                            if (distIter.value().type == DistanceItem::Type::CONSTANT)
+                            {
+                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                           QString::number(distIter.value().sourceFileLine)+
+                                           ", uptime " + QString::number(distIter.key()) +
+                                           ": Constant distance between measured ones. Skipped.");
+                                distIter++;
+                                continue;
+                            }
+                            else if (distIter.value().type == DistanceItem::Type::MEASURED)
+                            {
+                                // Try to find next and previous rover coordinates
+                                // for this uptime
+
+                                qint64 distanceUptime = distIter.key();
+                                // TODO: Add/subtract fine tune sync value here if needed
+
+                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = roverSyncData_RoverA.lowerBound(distanceUptime);
+                                UBXMessage_RELPOSNED interpolated_RoverA;
+
+                                if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                {
+                                    const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
+                                    RoverSyncItem lowerSyncItem;
+                                    roverAUptimeIter--;
+                                    if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                    {
+                                        lowerSyncItem = roverAUptimeIter.value();
+                                    }
+                                    else
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A sync data (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverA.find(upperSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverA.find(lowerSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverA.find(lowerSyncItem.iTOW).value(),
+                                                            relposnedMessages_RoverA.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                }
+                                else
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Can not find corresponding rover A sync data (upper limit). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
+
+                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = roverSyncData_RoverB.lowerBound(distanceUptime);
+                                UBXMessage_RELPOSNED interpolated_RoverB;
+
+                                if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                {
+                                    const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
+                                    RoverSyncItem lowerSyncItem;
+                                    roverBUptimeIter--;
+                                    if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                    {
+                                        lowerSyncItem = roverBUptimeIter.value();
+                                    }
+                                    else
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B sync data (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverB.find(upperSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverB.find(lowerSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverB.find(lowerSyncItem.iTOW).value(),
+                                                            relposnedMessages_RoverB.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                }
+                                else
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Can not find corresponding rover B sync data (upper limit). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
+
+                                stylusTipDistanceFromRoverA = distIter.value().distance;
+
+                                Eigen::Vector3d roverAPosNED(
+                                        interpolated_RoverA.relPosN,
+                                        interpolated_RoverA.relPosE,
+                                        interpolated_RoverA.relPosD);
+
+                                Eigen::Vector3d roverBPosNED(
+                                        interpolated_RoverB.relPosN,
+                                        interpolated_RoverB.relPosE,
+                                        interpolated_RoverB.relPosD);
+
+                                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
+                                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
+                                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
+
+                                // Convert to XYZ-coordinates
+                                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
+                                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
+                                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+                                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
+
+                                QString lineOut;
+
+                                if (includeNormals)
+                                {
+                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
+                                }
+                                else
+                                {
+                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
+                                }
+
+                                outStream->operator<<(lineOut + "\n");
+                                pointsWritten++;
+                                pointsBetweenTags++;
+                            }
+                            else
+                            {
+                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                           QString::number(distIter.value().sourceFileLine)+
+                                           ", uptime " + QString::number(distIter.key()) +
+                                           ": Unknown distance type between measured ones. Skipped.");
+                                distIter++;
+                                continue;
+                            }
+
+                            distIter++;
+                        }
+                    }
+
+                    if (pointsBetweenTags == 0)
+                    {
+                        addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
+                                   QString::number(beginningTag.sourceFileLine) +
+                                   ", uptime " + QString::number(beginningUptime) +
+                                   ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
+                                   QString::number(endingTag.sourceFileLine) +
+                                   ", uptime " + QString::number(currentTag.iTOW) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ", File \"" + endingTag.sourceFile + "\""
+                                   " No points between tags.");
+                    }
+
+                    beginningUptime = -1;
+                }
             }
         }
 
-        if (beginningITOW != -1)
+        if (beginningUptime != -1)
         {
-            const Tag& beginningTag = tags[beginningITOW];
-
             addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", line " +
                        QString::number(beginningTag.sourceFileLine) +
-                       ", iTOW " + QString::number(beginningITOW) +
+                       ", iTOW " + QString::number(beginningUptime) +
+                       ", iTOW " + QString::number(beginningTag.iTOW) +
                        " (beginning tag): File ended before end tag. Points after beginning tag ignored.");
         }
 
@@ -890,11 +1361,35 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
     }
 }
 
+
 void PostProcessingForm::on_pushButton_StartReplay_clicked()
 {
-    lastReplayedITOW = ui->spinBox_Replay_ITOW_Min->value() -1;
+    bool convOk;
+    firstUptimeToReplay = ui->lineEdit_Uptime_Min->text().toLongLong(&convOk);
+    lastReplayedUptime_ms = firstUptimeToReplay - 1;
+    if (!convOk)
+    {
+        addLogLine("Invalid uptime range for replay, min.");
+        ui->lineEdit_Uptime_Min->setFocus();
+        return;
+    }
 
-    if (getLastRoverITOW() < 0)
+    lastUptimeToReplay = ui->lineEdit_Uptime_Max->text().toLongLong(&convOk);
+    if (!convOk)
+    {
+        addLogLine("Invalid uptime range for replay, max.");
+        ui->lineEdit_Uptime_Max->setFocus();
+        return;
+    }
+
+    if (firstUptimeToReplay >= lastUptimeToReplay)
+    {
+        addLogLine("Invalid uptime range for replay, min>max.");
+        ui->lineEdit_Uptime_Min->setFocus();
+        return;
+    }
+
+    if (getLastUptime() < 0)
     {
         addLogLine("No data to replay.\nData for both rovers empty or no valid data found\n(tags are synced to rovers' iTOWs).");
     }
@@ -905,10 +1400,16 @@ void PostProcessingForm::on_pushButton_StartReplay_clicked()
         ui->pushButton_StartReplay->setEnabled(false);
         ui->pushButton_ContinueReplay->setEnabled(false);
         ui->pushButton_StopReplay->setEnabled(true);
-        ui->spinBox_Replay_ITOW_Min->setEnabled(false);
-        ui->spinBox_Replay_ITOW_Max->setEnabled(false);
+        ui->lineEdit_Uptime_Min->setEnabled(false);
+        ui->lineEdit_Uptime_Max->setEnabled(false);
 
         stopReplayRequest = false;
+
+        // emit initial distance (/ fallback if no distances in file)
+        DistanceItem initialDistanceItem;
+        initialDistanceItem.distance = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
+        initialDistanceItem.type = DistanceItem::CONSTANT;
+        emit replayData_Distance(1, initialDistanceItem);
 
         handleReplay(true);
     }
@@ -922,79 +1423,120 @@ void PostProcessingForm::on_replayTimerTimeout()
 
 void PostProcessingForm::handleReplay(bool firstRound)
 {
-    UBXMessage_RELPOSNED::ITOW lastITOWInRoverFiles = getLastRoverITOW();
+    qint64 nextUptime_ms = getNextUptime(lastReplayedUptime_ms);
 
     if (stopReplayRequest)
     {
-        addLogLine("Replay stopped. Last replayed ITOW: " + QString::number(lastReplayedITOW));
+        addLogLine("Replay stopped. Last replayed uptime: " + QString::number(lastReplayedUptime_ms));
         ui->pushButton_StartReplay->setEnabled(true);
         ui->pushButton_ContinueReplay->setEnabled(true);
         ui->pushButton_StopReplay->setEnabled(false);
-        ui->spinBox_Replay_ITOW_Min->setEnabled(true);
-        ui->spinBox_Replay_ITOW_Max->setEnabled(true);
+        ui->lineEdit_Uptime_Min->setEnabled(true);
+        ui->lineEdit_Uptime_Max->setEnabled(true);
 
         stopReplayRequest = false;
-    } else if ((lastReplayedITOW < lastITOWInRoverFiles) && (lastReplayedITOW <= ui->spinBox_Replay_ITOW_Max->value()))
+    } else if ((nextUptime_ms >= 0) && (lastReplayedUptime_ms <= lastUptimeToReplay))
     {
-        UBXMessage_RELPOSNED::ITOW nextITOWInRoverFiles = getNextRoverITOW(lastReplayedITOW);
+//        qint64 nextUptime = getNextUptime(lastReplayedUptime);
 
-        bool relposnedReplayed_RoverA = false;
-        bool relposnedReplayed_RoverB = false;
-
-        if (relposnedMessages_RoverA.find(nextITOWInRoverFiles) != relposnedMessages_RoverA.end())
+        if ((!roverSyncData_RoverA.empty()) && (roverSyncData_RoverA.upperBound(lastReplayedUptime_ms) != roverSyncData_RoverA.end()))
         {
-            emit replayData_RoverA(relposnedMessages_RoverA[nextITOWInRoverFiles]);
-            relposnedReplayed_RoverA = true;
+            nextUptime_ms = roverSyncData_RoverA.upperBound(lastReplayedUptime_ms).key();
         }
 
-        if (relposnedMessages_RoverB.find(nextITOWInRoverFiles) != relposnedMessages_RoverB.end())
+        if ((!roverSyncData_RoverB.empty()) && (roverSyncData_RoverB.upperBound(lastReplayedUptime_ms) != roverSyncData_RoverB.end()) &&
+                (roverSyncData_RoverB.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
         {
-            emit replayData_RoverB(relposnedMessages_RoverB[nextITOWInRoverFiles]);
-            relposnedReplayed_RoverB = true;
+            nextUptime_ms = roverSyncData_RoverB.upperBound(lastReplayedUptime_ms).key();
         }
 
-        // Skip tags not matching any rover iTOW
-
-        QMap<UBXMessage_RELPOSNED::ITOW, Tag>::const_iterator orphanedTagIterator = tags.upperBound(lastReplayedITOW);
-
-        while ((orphanedTagIterator != tags.end()) &&
-               (orphanedTagIterator.key() < nextITOWInRoverFiles))
+        if ((!tags.empty()) && (tags.upperBound(lastReplayedUptime_ms) != tags.end()) &&
+                (tags.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
         {
-            const UBXMessage_RELPOSNED::ITOW orphanedTagITOW = orphanedTagIterator.key();
-            const Tag& orphanedTag = orphanedTagIterator.value();
-
-            addLogLine("Warning: Tag in file \"" + orphanedTag.sourceFile + "\", line " +
-                       QString::number(orphanedTag.sourceFileLine)+
-                       ", iTOW " + QString::number(orphanedTagITOW) +
-                       ": File \"" + orphanedTag.sourceFile + "\": No matching RELPOSNED-data found in rover files. Tag ignored.");
-
-            orphanedTagIterator++;
+            nextUptime_ms = tags.upperBound(lastReplayedUptime_ms).key();
         }
 
-        if (tags.find(nextITOWInRoverFiles) != tags.end())
+        if ((!distances.empty()) && (distances.upperBound(lastReplayedUptime_ms) != distances.end()) &&
+                (distances.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
         {
-            if (relposnedReplayed_RoverA && relposnedReplayed_RoverB)
+            nextUptime_ms = distances.upperBound(lastReplayedUptime_ms).key();
+        }
+
+        if (roverSyncData_RoverA.find(nextUptime_ms) != roverSyncData_RoverA.end())
+        {
+            RoverSyncItem syncItem = roverSyncData_RoverA[nextUptime_ms];
+
+            if (relposnedMessages_RoverA.find(syncItem.iTOW) != relposnedMessages_RoverA.end())
             {
-                emit replayData_Tag(nextITOWInRoverFiles, tags[nextITOWInRoverFiles]);
+                // Make local copy to add time stamp / frame duration.
+
+                UBXMessage_RELPOSNED relposnedMessage = relposnedMessages_RoverA[syncItem.iTOW];
+
+                relposnedMessage.messageStartTime = nextUptime_ms;
+                relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
+
+                emit replayData_RoverA(relposnedMessage);
             }
             else
             {
-                const UBXMessage_RELPOSNED::ITOW orphanedTagITOW = orphanedTagIterator.key();
-                const Tag& orphanedTag = orphanedTagIterator.value();
-
-                addLogLine("Warning: Tag in file \"" + orphanedTag.sourceFile + "\", line " +
-                           QString::number(orphanedTag.sourceFileLine)+
-                           ", iTOW " + QString::number(orphanedTagITOW) +
-                           ": File \"" + orphanedTag.sourceFile + "\": No matching RELPOSNED-data found in both rover files. Tag ignored.");
+                addLogLine("Warning: File \"" + syncItem.sourceFile + "\", line " +
+                           QString::number(syncItem.sourceFileLine)+
+                           ",  uptime " + QString::number(nextUptime_ms) +
+                           ",  iTOW " + QString::number(syncItem.iTOW) +
+                           ": No matching rover A-data found. Skipped.");
             }
         }
 
-        lastReplayedITOW = nextITOWInRoverFiles;
+        if (roverSyncData_RoverB.find(nextUptime_ms) != roverSyncData_RoverB.end())
+        {
+            RoverSyncItem syncItem = roverSyncData_RoverB[nextUptime_ms];
 
-        // Go on to next ITOW
-        nextITOWInRoverFiles = getNextRoverITOW(lastReplayedITOW);
+            if (relposnedMessages_RoverB.find(syncItem.iTOW) != relposnedMessages_RoverB.end())
+            {
+                // Make local copy to add time stamp / frame duration.
 
-        if (nextITOWInRoverFiles >= 0)
+                UBXMessage_RELPOSNED relposnedMessage = relposnedMessages_RoverB[syncItem.iTOW];
+
+                relposnedMessage.messageStartTime = nextUptime_ms;
+                relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
+
+                emit replayData_RoverB(relposnedMessage);
+            }
+            else
+            {
+                addLogLine("Warning: File \"" + syncItem.sourceFile + "\", line " +
+                           QString::number(syncItem.sourceFileLine)+
+                           ",  uptime " + QString::number(nextUptime_ms) +
+                           ",  iTOW " + QString::number(syncItem.iTOW) +
+                           ": No matching rover B-data found. Skipped.");
+            }
+        }
+
+        if (distances.find(nextUptime_ms) != distances.end())
+        {
+            emit replayData_Distance(nextUptime_ms, distances[nextUptime_ms]);
+        }
+
+        if (tags.find(nextUptime_ms) != tags.end())
+        {
+            QList<Tag> tagItems = tags.values(nextUptime_ms);
+
+            // Since "The items that share the same key are available from most recently to least recently inserted."
+            // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+            for (int i = tagItems.size() - 1; i >= 0; i--)
+            {
+                emit replayData_Tag(nextUptime_ms, tagItems[i]);
+            }
+        }
+
+        lastReplayedUptime_ms = nextUptime_ms;
+
+        // Go on to next uptime
+
+        nextUptime_ms = getNextUptime(nextUptime_ms);
+
+        if (nextUptime_ms >= 0)
         {
             qint64 timerTotalError_ns = 0;
 
@@ -1008,7 +1550,16 @@ void PostProcessingForm::handleReplay(bool firstRound)
                 timerTotalError_ns = static_cast<qint64>(replayTimeElapsedTimer.nsecsElapsed()) - cumulativeRequestedWaitTime_ns;
             }
 
-            int iTOWDifference = nextITOWInRoverFiles - lastReplayedITOW;
+            qint64 uptimeDifference_ms = nextUptime_ms - lastReplayedUptime_ms;
+
+            if (uptimeDifference_ms > (ui->doubleSpinBox_LimitInterval->value() * 1000))
+            {
+                addLogLine("Warning: Time between messages limited to max value (" +
+                           QString::number(ui->doubleSpinBox_LimitInterval->value(), 'g', 3) + " s) between uptimes " +
+                           QString::number(lastReplayedUptime_ms) + " and " +
+                           QString::number(nextUptime_ms) + ".");
+                uptimeDifference_ms = ui->doubleSpinBox_LimitInterval->value() * 1000;
+            }
 
             qint64 expectedWaitTime_ns;
 
@@ -1019,12 +1570,12 @@ void PostProcessingForm::handleReplay(bool firstRound)
             }
             else
             {
-                expectedWaitTime_ns = static_cast<qint64>((1000000. * iTOWDifference) / ui->doubleSpinBox_ReplaySpeed->value());
+                expectedWaitTime_ns = static_cast<qint64>((1000000. * uptimeDifference_ms) / ui->doubleSpinBox_ReplaySpeed->value());
             }
 
             if ((timerTotalError_ns >= 1e9) && (ui->doubleSpinBox_ReplaySpeed->value() <= 1))
             {
-                addLogLine("Replay timer total error exceeded 1s (computer was in sleep or otherwise laggy?), timer reset.");
+                addLogLine("Warning: Replay timer total error exceeded 1s (computer was in sleep or otherwise laggy?), timer reset.");
                 timerTotalError_ns = 0;
                 cumulativeRequestedWaitTime_ns = 0;
                 replayTimeElapsedTimer.restart();
@@ -1046,19 +1597,19 @@ void PostProcessingForm::handleReplay(bool firstRound)
 
             int waitTime_ms = static_cast<int>(waitTime_ns / 1000000);
 
-            UBXMessage_RELPOSNED::ITOW replayRange_Min = getFirstRoverITOW();
-            if (ui->spinBox_Replay_ITOW_Min->value() > replayRange_Min)
+            qint64 replayRange_Min = getFirstUptime();
+            if (firstUptimeToReplay > replayRange_Min)
             {
-                replayRange_Min = ui->spinBox_Replay_ITOW_Min->value();
+                replayRange_Min = firstUptimeToReplay;
             }
 
-            UBXMessage_RELPOSNED::ITOW replayRange_Max = lastITOWInRoverFiles;
-            if (ui->spinBox_Replay_ITOW_Max->value() < replayRange_Max)
+            qint64 replayRange_Max = getLastUptime();
+            if (lastUptimeToReplay < replayRange_Max)
             {
-                replayRange_Max = ui->spinBox_Replay_ITOW_Max->value();
+                replayRange_Max = lastUptimeToReplay;
             }
 
-            int progress = (lastReplayedITOW - replayRange_Min) * 100 / (replayRange_Max - replayRange_Min);
+            int progress = (lastReplayedUptime_ms - replayRange_Min) * 100 / (replayRange_Max - replayRange_Min);
 
             ui->progress_ReplayProgress->setValue(progress);
 
@@ -1068,6 +1619,7 @@ void PostProcessingForm::handleReplay(bool firstRound)
         {
             // Replay is finished
 
+#if 0
             // List tags with iTOW larger than any of the rover iTOWs
 
             QMap<UBXMessage_RELPOSNED::ITOW, Tag>::const_iterator orphanedTagIterator = tags.upperBound(lastReplayedITOW);
@@ -1084,14 +1636,15 @@ void PostProcessingForm::handleReplay(bool firstRound)
 
                 orphanedTagIterator++;
             }
+#endif
 
             addLogLine("Replay finished.");
             ui->progress_ReplayProgress->setValue(0);
             ui->pushButton_StartReplay->setEnabled(true);
             ui->pushButton_ContinueReplay->setEnabled(false);
             ui->pushButton_StopReplay->setEnabled(false);
-            ui->spinBox_Replay_ITOW_Min->setEnabled(true);
-            ui->spinBox_Replay_ITOW_Max->setEnabled(true);
+            ui->lineEdit_Uptime_Min->setEnabled(true);
+            ui->lineEdit_Uptime_Max->setEnabled(true);
         }
     }
     else
@@ -1101,64 +1654,108 @@ void PostProcessingForm::handleReplay(bool firstRound)
         ui->pushButton_StartReplay->setEnabled(true);
         ui->pushButton_ContinueReplay->setEnabled(false);
         ui->pushButton_StopReplay->setEnabled(false);
-        ui->spinBox_Replay_ITOW_Min->setEnabled(true);
-        ui->spinBox_Replay_ITOW_Max->setEnabled(true);
+        ui->lineEdit_Uptime_Min->setEnabled(true);
+        ui->lineEdit_Uptime_Max->setEnabled(true);
     }
 
 }
 
-UBXMessage_RELPOSNED::ITOW PostProcessingForm::getFirstRoverITOW()
+qint64 PostProcessingForm::getFirstUptime()
 {
-    UBXMessage_RELPOSNED::ITOW firstITOWInRoverFiles = -1;
+    qint64 firstUptime = std::numeric_limits<qint64>::max();
 
-    if (!relposnedMessages_RoverA.empty())
+    if ((!roverSyncData_RoverA.isEmpty()) && (roverSyncData_RoverA.firstKey() < firstUptime))
     {
-        firstITOWInRoverFiles = relposnedMessages_RoverA.firstKey();
+        firstUptime = roverSyncData_RoverA.firstKey();
     }
 
-    if ((!relposnedMessages_RoverB.empty()) && (relposnedMessages_RoverB.firstKey() < firstITOWInRoverFiles))
+    if ((!roverSyncData_RoverB.isEmpty()) && (roverSyncData_RoverB.firstKey() < firstUptime))
     {
-        firstITOWInRoverFiles = relposnedMessages_RoverB.lastKey();
+        firstUptime = roverSyncData_RoverB.firstKey();
     }
 
-    return firstITOWInRoverFiles;
+    if ((!distances.isEmpty()) && (distances.firstKey() < firstUptime))
+    {
+        firstUptime = distances.firstKey();
+    }
+
+    if ((!tags.isEmpty()) && (tags.firstKey() < firstUptime))
+    {
+        firstUptime = tags.firstKey();
+    }
+
+    if (firstUptime == std::numeric_limits<qint64>::max())
+    {
+        firstUptime = -1;
+    }
+
+    return firstUptime;
 }
 
-UBXMessage_RELPOSNED::ITOW PostProcessingForm::getLastRoverITOW()
+qint64 PostProcessingForm::getLastUptime()
 {
-    UBXMessage_RELPOSNED::ITOW lastITOWInRoverFiles = -1;
+    qint64 lastUptime = -1;
 
-    if ((!relposnedMessages_RoverA.empty()) && (relposnedMessages_RoverA.lastKey() > lastITOWInRoverFiles))
+    if ((!roverSyncData_RoverA.isEmpty()) && (roverSyncData_RoverA.lastKey() > lastUptime))
     {
-        lastITOWInRoverFiles = relposnedMessages_RoverA.lastKey();
+        lastUptime = roverSyncData_RoverA.lastKey();
     }
 
-    if ((!relposnedMessages_RoverB.empty()) && (relposnedMessages_RoverB.lastKey() > lastITOWInRoverFiles))
+    if ((!roverSyncData_RoverB.isEmpty()) && (roverSyncData_RoverB.lastKey() > lastUptime))
     {
-        lastITOWInRoverFiles = relposnedMessages_RoverB.lastKey();
+        lastUptime = roverSyncData_RoverB.lastKey();
     }
 
-    return lastITOWInRoverFiles;
+    if ((!distances.isEmpty()) && (distances.lastKey() > lastUptime))
+    {
+        lastUptime = distances.lastKey();
+    }
+
+    if ((!tags.isEmpty()) && (tags.lastKey() > lastUptime))
+    {
+        lastUptime = tags.lastKey();
+    }
+
+    return lastUptime;
 }
 
-UBXMessage_RELPOSNED::ITOW PostProcessingForm::getNextRoverITOW(const UBXMessage_RELPOSNED::ITOW& iTOW)
+qint64 PostProcessingForm::getNextUptime(const qint64 uptime)
 {
-    UBXMessage_RELPOSNED::ITOW nextITOWInRoverFiles = -1;
+    qint64 nextUptime = std::numeric_limits<qint64>::max();
 
-    if ((!relposnedMessages_RoverA.empty()) && (relposnedMessages_RoverA.upperBound(iTOW) != relposnedMessages_RoverA.end()))
+    if ((!roverSyncData_RoverA.empty()) && (roverSyncData_RoverA.upperBound(uptime) != roverSyncData_RoverA.end()) &&
+            (roverSyncData_RoverA.upperBound(uptime).key() < nextUptime))
     {
-        nextITOWInRoverFiles = relposnedMessages_RoverA.upperBound(iTOW).key();
+        nextUptime = roverSyncData_RoverA.upperBound(uptime).key();
     }
 
-    if ((!relposnedMessages_RoverB.empty()) && (relposnedMessages_RoverB.upperBound(iTOW) != relposnedMessages_RoverB.end()) &&
-            relposnedMessages_RoverB.upperBound(iTOW).key() < nextITOWInRoverFiles)
+    if ((!roverSyncData_RoverB.empty()) && (roverSyncData_RoverB.upperBound(uptime) != roverSyncData_RoverB.end()) &&
+            (roverSyncData_RoverB.upperBound(uptime).key() < nextUptime))
     {
-        nextITOWInRoverFiles = relposnedMessages_RoverB.upperBound(iTOW).key();
+        nextUptime = roverSyncData_RoverB.upperBound(uptime).key();
     }
 
-    return nextITOWInRoverFiles;
+    if ((!tags.empty()) && (tags.upperBound(uptime) != tags.end()) &&
+            ((tags.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
+    {
+        nextUptime = tags.upperBound(uptime).key();
+    }
+
+    if ((!distances.empty()) && (distances.upperBound(uptime) != distances.end()) &&
+            ((distances.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
+    {
+        nextUptime = distances.upperBound(uptime).key();
+    }
+
+    if (nextUptime == std::numeric_limits<qint64>::max())
+    {
+        return -1;
+    }
+    else
+    {
+        return nextUptime;
+    }
 }
-
 
 
 void PostProcessingForm::on_pushButton_StopReplay_clicked()
@@ -1168,7 +1765,7 @@ void PostProcessingForm::on_pushButton_StopReplay_clicked()
 
 void PostProcessingForm::on_pushButton_ContinueReplay_clicked()
 {
-    if (getLastRoverITOW() < 0)
+    if (getLastUptime() < 0)
     {
         addLogLine("No data to replay.\nData for both rovers empty or no valid data found\n(tags are synced to rovers' iTOWs).");
     }
@@ -1179,8 +1776,8 @@ void PostProcessingForm::on_pushButton_ContinueReplay_clicked()
         ui->pushButton_StartReplay->setEnabled(false);
         ui->pushButton_ContinueReplay->setEnabled(false);
         ui->pushButton_StopReplay->setEnabled(true);
-        ui->spinBox_Replay_ITOW_Min->setEnabled(false);
-        ui->spinBox_Replay_ITOW_Max->setEnabled(false);
+        ui->lineEdit_Uptime_Min->setEnabled(false);
+        ui->lineEdit_Uptime_Max->setEnabled(false);
 
         stopReplayRequest = false;
         handleReplay(true);
@@ -1189,6 +1786,18 @@ void PostProcessingForm::on_pushButton_ContinueReplay_clicked()
 
 void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 {
+    Eigen::Matrix4d transformMatrix;
+
+    if (!generateTransformationMatrix(transformMatrix))
+    {
+        return;
+    }
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform;
+    transform = transformMatrix;
+
+    Eigen::Matrix3d transform_NoTranslation = transformMatrix.block<3,3>(0,0);
+
     if (fileDialog_MovieScript.exec())
     {
         QStringList fileNameList = fileDialog_MovieScript.selectedFiles();
@@ -1239,258 +1848,484 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         QString tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-        double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA->value();
+        double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Min = ui->spinBox_Movie_ITOW_Points_Min->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Max = ui->spinBox_Movie_ITOW_Points_Max->value();
         unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
 
-        QMap<UBXMessage_RELPOSNED::ITOW, Tag>::const_iterator currentTagIterator;
+//        QMap<qint64, Tag_New>::const_iterator currentTagIterator;
 
         bool objectActive = false;
 
-        int beginningITOW = -1;
+        qint64 beginningUptime = -1;
         int pointsWritten = 0;
 
         bool ignoreBeginningAndEndingTags = false;
 
         QString objectName = "N/A";
 
-        for (currentTagIterator = tags.begin(); currentTagIterator != tags.end(); currentTagIterator++)
+        qint64 uptime = -1;
+        Tag beginningTag;
+
+        while (tags.upperBound(uptime) != tags.end())
         {
-            const Tag& currentTag = currentTagIterator.value();
+            uptime = tags.upperBound(uptime).key();
 
-            if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
+            QList<Tag> tagItems = tags.values(uptime);
+
+            // Since "The items that share the same key are available from most recently to least recently inserted."
+            // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+            for (int i = tagItems.size() - 1; i >= 0; i--)
             {
-                objectActive = false;
+                const Tag& currentTag = tagItems[i];
 
-                if (currentTag.text.length() == 0)
+                if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
                 {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": New object without a name. Ending previous object, but not beginning new nor creating a new line. Ignoring subsequent beginning and ending tags.");
+                    objectActive = false;
 
-                    ignoreBeginningAndEndingTags = true;
-                    objectName = "N/A";
-
-                    continue;
-                }
-
-#if 0
-                // Take this into use (and modify accordingly) if you need to filter out multiple objects with the same name
-                QString fileName = QDir::cleanPath(dir.path() + "/" + currentTag.Text + ".xyz");
-
-                outFile = new QFile(fileName);
-
-                if (outFile->exists())
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    delete outFile;
-                    outFile = nullptr;
-                    continue;
-                }
-                addLogLine("Creating file \"" + fileName + "\"...");
-#endif
-
-                addLogLine("Object \"" + currentTag.text + "\"...");
-
-                objectActive = true;
-                objectName = currentTag.text;
-                ignoreBeginningAndEndingTags = false;
-                beginningITOW = -1;
-                pointsWritten = 0;
-            }
-            else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
-            {
-                if (!objectActive)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": Beginning tag outside object. Skipped.");
-                    continue;
-                }
-
-                if (beginningITOW != -1)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": Duplicate beginning tag. Skipped.");
-                    continue;
-                }
-
-                beginningITOW = currentTagIterator.key();
-            }
-            else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
-            {
-                if (!objectActive)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": End tag outside object. Skipped.");
-                    continue;
-                }
-
-                if (beginningITOW == -1)
-                {
-                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ": End tag without beginning tag. Skipped.");
-                    continue;
-                }
-
-                const Tag& endingTag = currentTag;
-                const Tag& beginningTag = tags[beginningITOW];
-
-                if (endingTag.sourceFile != beginningTag.sourceFile)
-                {
-                    addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
-                               beginningTag.sourceFile + "\", line " +
-                               QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
-                               endingTag.sourceFile + "\", line " +
-                               QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
-                    continue;
-                }
-
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(beginningITOW);
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(beginningITOW);
-
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTagIterator.key());
-                QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTagIterator.key());
-
-                int pointsBetweenTags = 0;
-
-                while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                    (relposIterator_RoverB != relposIterator_RoverB_EndTag))
-                {
-                    while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                           (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                           (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
+                    if (currentTag.text.length() == 0)
                     {
-                        relposIterator_RoverA++;
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": New object without a name. Ending previous object, but not beginning new nor creating a new line. Ignoring subsequent beginning and ending tags.");
+
+                        ignoreBeginningAndEndingTags = true;
+                        objectName = "N/A";
+
+                        continue;
                     }
 
-                    while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                           (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                           (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
+                    addLogLine("Object \"" + currentTag.text + "\"...");
+
+                    objectActive = true;
+                    objectName = currentTag.text;
+                    ignoreBeginningAndEndingTags = false;
+                    beginningUptime = -1;
+                    pointsWritten = 0;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
+                {
+                    if (!objectActive)
                     {
-                        relposIterator_RoverB++;
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Beginning tag outside object. Skipped.");
+                        continue;
                     }
 
-                    if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                        (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                    if (beginningUptime != -1)
                     {
-                        if ((relposIterator_RoverA.key() >= iTOWRange_Lines_Min) &&
-                        (relposIterator_RoverA.key() <= iTOWRange_Lines_Max))
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Duplicate beginning tag. Skipped.");
+                        continue;
+                    }
+
+                    beginningUptime = uptime;
+                    beginningTag = currentTag;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
+                {
+                    if (!objectActive)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag outside object. Skipped.");
+                        continue;
+                    }
+
+                    if (beginningUptime == -1)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(uptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag without beginning tag. Skipped.");
+                        continue;
+                    }
+
+                    const Tag& endingTag = currentTag;
+    //                const Tag_New beginningTag = tags_New[beginningUptime];
+
+                    if (endingTag.sourceFile != beginningTag.sourceFile)
+                    {
+                        addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
+                                   beginningTag.sourceFile + "\", line " +
+                                   QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
+                                   endingTag.sourceFile + "\", line " +
+                                   QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
+                        continue;
+                    }
+
+                    bool constDistancesOnly = true;
+
+                    QMap<qint64, DistanceItem>::const_iterator distIter = distances.upperBound(beginningUptime);
+
+                    while ((distIter != distances.end()) && (distIter.key() < uptime))
+                    {
+                        if (distIter.value().type == DistanceItem::Type::MEASURED)
                         {
-                            double n_RoverA = relposIterator_RoverA.value().relPosN;
-                            double e_RoverA = relposIterator_RoverA.value().relPosE;
-                            double d_RoverA = relposIterator_RoverA.value().relPosD;
+                            constDistancesOnly = false;
+                            break;
+                        }
 
-                            double n_RoverB = relposIterator_RoverB.value().relPosN;
-                            double e_RoverB = relposIterator_RoverB.value().relPosE;
-                            double d_RoverB = relposIterator_RoverB.value().relPosD;
+                        distIter++;
+                    }
 
-                            double diffN = n_RoverA - n_RoverB;
-                            double diffE = e_RoverA - e_RoverB;
-                            double diffD = d_RoverA - d_RoverB;
+                    int pointsBetweenTags = 0;
 
-                            double vectorLength = sqrt(diffN * diffN + diffE * diffE + diffD * diffD);
+                    if (constDistancesOnly)
+                    {
+                        distIter = distances.upperBound(beginningUptime);
 
-                            // Unit vector pointing from B to A (= from point A towards tip) in NED coordinate system
-                            double unitVecN = diffN / vectorLength;
-                            double unitVecE = diffE / vectorLength;
-                            double unitVecD = diffD / vectorLength;
+                        if (distIter != distances.end())
+                        {
+                            distIter--;
 
-                            double n_StylusTip = n_RoverA + unitVecN * stylusTipDistanceFromRoverA;
-                            double e_StylusTip = e_RoverA + unitVecE * stylusTipDistanceFromRoverA;
-                            double d_StylusTip = d_RoverA + unitVecD * stylusTipDistanceFromRoverA;
-
-                            // Convert to left-handed XYZ-coordinate system for post-prosessing with Processing (yeah, really).
-                            // (positive X = east, Y = down, Z = south)
-                            // You may need to change these to get other coordinate systems into use.
-
-                            double x = e_StylusTip;
-                            double y = d_StylusTip;
-                            double z = -n_StylusTip;
-
-                            // Use accuracies of rover A (used for stylus tip accuracy)
-                            // Could calculate some kind of "worst case" scenario using both rovers,
-                            // but probably errors are mostly common to both of them.
-                            double accX = relposIterator_RoverA.value().accE;
-                            double accY = relposIterator_RoverA.value().accD;
-                            double accZ = relposIterator_RoverA.value().accN;
-
-    /*                        double x_SurfaceNormal = -unitVecE;
-                            double y_SurfaceNormal = -unitVecD;
-                            double z_SurfaceNormal = unitVecN;
-    */
-                            QString lineOut;
-
-                            if (pointsBetweenTags == 0)
+                            if ((distIter == distances.end()) ||
+                                    (distIter.value().type != DistanceItem::Type::CONSTANT))
                             {
-                                lineOut = "LStart";
+                                addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                           QString::number(currentTag.sourceFileLine)+
+                                           ", uptime " + QString::number(uptime) +
+                                           ", iTOW " + QString::number(currentTag.iTOW) +
+                                           ": Points between tags having only constant distances without preceeding constant distance. Skipped.");
+                                continue;
+                            }
 
+                            stylusTipDistanceFromRoverA = distIter.value().distance;
+                        }
+
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(roverSyncData_RoverA.upperBound(beginningUptime).value().iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(roverSyncData_RoverB.upperBound(beginningUptime).value().iTOW);
+
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTag.iTOW);
+
+                        while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                            (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                        {
+                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                                   (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
+                            {
+                                relposIterator_RoverA++;
+                            }
+
+                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                                   (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
+                            {
+                                relposIterator_RoverB++;
+                            }
+
+                            if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                                (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+                            {
+                                if ((relposIterator_RoverA.key() >= iTOWRange_Lines_Min) &&
+                                (relposIterator_RoverA.key() <= iTOWRange_Lines_Max))
+                                {
+                                    Eigen::Vector3d roverAPosNED(
+                                            relposIterator_RoverA.value().relPosN,
+                                            relposIterator_RoverA.value().relPosE,
+                                            relposIterator_RoverA.value().relPosD);
+
+                                    Eigen::Vector3d roverBPosNED(
+                                            relposIterator_RoverB.value().relPosN,
+                                            relposIterator_RoverB.value().relPosE,
+                                            relposIterator_RoverB.value().relPosD);
+
+                                    Eigen::Vector3d roverBToAVecNormalized = (roverAPosNED - roverBPosNED).normalized();
+
+                                    Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToAVecNormalized * stylusTipDistanceFromRoverA;
+                                    Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+
+                                    Eigen::Vector3d stylusTipAccNED(
+                                                relposIterator_RoverA.value().accN,
+                                                relposIterator_RoverA.value().accE,
+                                                relposIterator_RoverA.value().accD);
+
+                                    // Use accuracies of rover A (used for stylus tip accuracy)
+                                    // Could calculate some kind of "worst case" scenario using both rovers,
+                                    // but probably errors are mostly common to both of them.
+                                    Eigen::Vector3d stylusTipAccXYZ = transform_NoTranslation * stylusTipAccNED;
+
+                                    QString lineOut;
+
+                                    if (pointsBetweenTags == 0)
+                                    {
+                                        lineOut = "LStart";
+
+                                    }
+                                    else
+                                    {
+                                        lineOut = "LCont";
+                                    }
+
+                                    lineOut +=
+                                            "\t" + QString::number(relposIterator_RoverA.key()) +
+                                            "\t" + QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                                            "\t" + QString::number(stylusTipAccXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(stylusTipAccXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(stylusTipAccXYZ(2), 'f', 4) +
+                                            "\t" + objectName;
+
+                                    textStream << (lineOut + "\n");
+
+                                    pointsWritten++;
+
+                                    pointsBetweenTags++;
+                                }
+                                relposIterator_RoverA++;
+                                relposIterator_RoverB++;
+                            }
+                        }
+                    } // if (constDistancesOnly)
+                    else
+                    {
+                        // Distances found, sync point creation to them.
+                        // Rover coordinates are interpolated according to distance timestamps.
+
+                        distIter = distances.upperBound(beginningUptime);
+
+                        while ((distIter != distances.end()) && (distIter.key() < uptime))
+                        {
+                            if (distIter.value().type == DistanceItem::Type::CONSTANT)
+                            {
+                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                           QString::number(distIter.value().sourceFileLine)+
+                                           ", uptime " + QString::number(distIter.key()) +
+                                           ": Constant distance between measured ones. Skipped.");
+                                distIter++;
+                                continue;
+                            }
+                            else if (distIter.value().type == DistanceItem::Type::MEASURED)
+                            {
+                                // Try to find next and previous rover coordinates
+                                // for this uptime
+
+                                qint64 distanceUptime = distIter.key();
+                                // TODO: Add/subtract fine tune sync value here if needed
+
+                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = roverSyncData_RoverA.lowerBound(distanceUptime);
+                                UBXMessage_RELPOSNED interpolated_RoverA;
+
+                                if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                {
+                                    const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
+                                    RoverSyncItem lowerSyncItem;
+                                    roverAUptimeIter--;
+                                    if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                    {
+                                        lowerSyncItem = roverAUptimeIter.value();
+                                    }
+                                    else
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A sync data (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverA.find(upperSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverA.find(lowerSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverA.find(lowerSyncItem.iTOW).value(),
+                                                            relposnedMessages_RoverA.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                }
+                                else
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Can not find corresponding rover A sync data (upper limit). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
+
+                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = roverSyncData_RoverB.lowerBound(distanceUptime);
+                                UBXMessage_RELPOSNED interpolated_RoverB;
+
+                                if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                {
+                                    const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
+                                    RoverSyncItem lowerSyncItem;
+                                    roverBUptimeIter--;
+                                    if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                    {
+                                        lowerSyncItem = roverBUptimeIter.value();
+                                    }
+                                    else
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B sync data (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverB.find(upperSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    if (relposnedMessages_RoverB.find(lowerSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    {
+                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                                   QString::number(distIter.value().sourceFileLine)+
+                                                   ", uptime " + QString::number(distIter.key()) +
+                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                                        distIter++;
+                                        continue;
+                                    }
+
+                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverB.find(lowerSyncItem.iTOW).value(),
+                                                            relposnedMessages_RoverB.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                }
+                                else
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Can not find corresponding rover B sync data (upper limit). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
+
+                                stylusTipDistanceFromRoverA = distIter.value().distance;
+
+                                Eigen::Vector3d roverAPosNED(
+                                        interpolated_RoverA.relPosN,
+                                        interpolated_RoverA.relPosE,
+                                        interpolated_RoverA.relPosD);
+
+                                Eigen::Vector3d roverBPosNED(
+                                        interpolated_RoverB.relPosN,
+                                        interpolated_RoverB.relPosE,
+                                        interpolated_RoverB.relPosD);
+
+                                Eigen::Vector3d roverBToAVecNormalized = (roverAPosNED - roverBPosNED).normalized();
+
+                                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToAVecNormalized * stylusTipDistanceFromRoverA;
+                                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+
+                                Eigen::Vector3d stylusTipAccNED(
+                                            interpolated_RoverA.accN,
+                                            interpolated_RoverA.accE,
+                                            interpolated_RoverA.accD);
+
+                                // Use accuracies of rover A (used for stylus tip accuracy)
+                                // Could calculate some kind of "worst case" scenario using both rovers,
+                                // but probably errors are mostly common to both of them.
+                                Eigen::Vector3d stylusTipAccXYZ = transform_NoTranslation * stylusTipAccNED;
+
+                                QString lineOut;
+
+                                if (pointsBetweenTags == 0)
+                                {
+                                    lineOut = "LStart";
+                                }
+                                else
+                                {
+                                    lineOut = "LCont";
+                                }
+
+                                lineOut +=
+                                        "\t" + QString::number(interpolated_RoverA.iTOW) +
+                                        "\t" + QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                                        "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                                        "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                                        "\t" + QString::number(stylusTipAccXYZ(0), 'f', 4) +
+                                        "\t" + QString::number(stylusTipAccXYZ(1), 'f', 4) +
+                                        "\t" + QString::number(stylusTipAccXYZ(2), 'f', 4) +
+                                        "\t" + objectName;
+
+                                textStream << (lineOut + "\n");
+
+                                pointsWritten++;
+                                pointsBetweenTags++;
                             }
                             else
                             {
-                                lineOut = "LCont";
+                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                           QString::number(distIter.value().sourceFileLine)+
+                                           ", uptime " + QString::number(distIter.key()) +
+                                           ": Unknown distance type between measured ones. Skipped.");
+                                distIter++;
+                                continue;
                             }
 
-                            lineOut +=
-                                    "\t" + QString::number(relposIterator_RoverA.key()) +
-                                    "\t" + QString::number(x, 'f', 4) +
-                                    "\t" + QString::number(y, 'f', 4) +
-                                    "\t" + QString::number(z, 'f', 4) +
-                                    "\t" + QString::number(accX, 'f', 4) +
-                                    "\t" + QString::number(accY, 'f', 4) +
-                                    "\t" + QString::number(accZ, 'f', 4) +
-                                    "\t" + objectName;
-
-                            textStream << (lineOut + "\n");
-
-                            pointsWritten++;
-
-                            pointsBetweenTags++;
+                            distIter++;
                         }
-                        relposIterator_RoverA++;
-                        relposIterator_RoverB++;
                     }
-                }
 
-                if (pointsBetweenTags == 0)
-                {
-                    addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
-                               QString::number(beginningTag.sourceFileLine) +
-                               ", iTOW " + QString::number(beginningITOW) + ", ending tag line " +
-                               QString::number(endingTag.sourceFileLine) +
-                               ", iTOW " + QString::number(currentTagIterator.key()) +
-                               ", File \"" + endingTag.sourceFile + "\""
-                               " No points between tags.");
-                }
 
-                beginningITOW = -1;
+                    if (pointsBetweenTags == 0)
+                    {
+                        addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
+                                   QString::number(beginningTag.sourceFileLine) +
+                                   ", iTOW " + QString::number(roverSyncData_RoverA.upperBound(beginningUptime).value().iTOW) + ", ending tag line " +
+                                   QString::number(endingTag.sourceFileLine) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ", File \"" + endingTag.sourceFile + "\""
+                                   " No points between tags.");
+                    }
+
+                    beginningTag.iTOW = -1;
+                    beginningUptime = -1;
+                }
             }
         }
 
-        if (beginningITOW != -1)
+        if (beginningTag.iTOW != -1)
         {
-            const Tag& beginningTag = tags[beginningITOW];
-
             addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", line " +
                        QString::number(beginningTag.sourceFileLine) +
-                       ", iTOW " + QString::number(beginningITOW) +
+                       ", iTOW " + QString::number(beginningTag.iTOW) +
                        " (beginning tag): File ended before end tag. Points after beginning tag ignored.");
         }
+
+        stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
 
         addLogLine("Processing script...");
         textStream << "// Frame type\tiTOW"
@@ -1501,7 +2336,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                       "\tRoverA_acc_X\tRoverA_Acc_Y\tRoverA_Acc_Z"
                       "\tRoverB_acc_X\tRoverB_Acc_Y\tRoverB_Acc_Z"
                       "\tCamera_X\tCamera_Y\tCamera_Z"
-                      "\tLookAt_X\tLookAt_Y\tLookAt_X\n";
+                      "\tLookAt_X\tLookAt_Y\tLookAt_X\tTipPositionValidity\n";
 
         UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_Movie_ITOW_Script_Min->value();
         UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_Movie_ITOW_Script_Max->value();
@@ -1521,11 +2356,18 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         int frameCounter = 0;
 
         // Some variables for camera:
-        double cameraXShift = ui->doubleSpinBox_Movie_CameraX->value();
-        double cameraYShift = ui->doubleSpinBox_Movie_CameraY->value();
-        double cameraZShift = ui->doubleSpinBox_Movie_CameraZ->value();
+        double cameraNShift = ui->doubleSpinBox_Movie_Camera_N->value();
+        double cameraEShift = ui->doubleSpinBox_Movie_Camera_E->value();
+        double cameraDShift = ui->doubleSpinBox_Movie_Camera_D->value();
+
+        double lookAtNShift = ui->doubleSpinBox_Movie_LookAt_N->value();
+        double lookAtEShift = ui->doubleSpinBox_Movie_LookAt_E->value();
+        double lookAtDShift = ui->doubleSpinBox_Movie_LookAt_D->value();
 
         UBXMessage_RELPOSNED::ITOW iTOW = (frameCounter * 1000) / fps + startingITOW;
+
+        UBXMessage_RELPOSNED::ITOW lastRoverANagITOW = -1;
+        UBXMessage_RELPOSNED::ITOW lastRoverBNagITOW = -1;
 
         while ((iTOW <= iTOWRange_Script_Max) &&
                (relposnedMessages_RoverA.upperBound(iTOW) != relposnedMessages_RoverA.end()) &&
@@ -1536,12 +2378,41 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
             UBXMessage_RELPOSNED relposned_RoverA;
             UBXMessage_RELPOSNED relposned_RoverB;
 
+            qint64 uptime = -1;
+
             if ((relposnedMessages_RoverA.find(iTOW) != relposnedMessages_RoverA.end()) &&
                     (relposnedMessages_RoverB.find(iTOW) != relposnedMessages_RoverB.end()))
             {
                 frameType = "F_Key";
                 relposned_RoverA = relposnedMessages_RoverA.find(iTOW).value();
                 relposned_RoverB = relposnedMessages_RoverB.find(iTOW).value();
+
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA = reverseSync_RoverA.find(iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB = reverseSync_RoverB.find(iTOW);
+
+                if ((reverseIter_RoverA == reverseSync_RoverA.end()) &&
+                        (lastRoverANagITOW != iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverANagITOW = iTOW;
+                }
+
+                if ((reverseIter_RoverB == reverseSync_RoverB.end()) &&
+                        (lastRoverBNagITOW != iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverBNagITOW = iTOW;
+                }
+
+                if ((reverseIter_RoverA != reverseSync_RoverA.end()) &&
+                        (reverseIter_RoverB != reverseSync_RoverB.end()))
+                {
+                    uptime = (reverseIter_RoverA.value() + reverseIter_RoverB.value()) / 2;
+                }
             }
             else
             {
@@ -1555,106 +2426,217 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
                 relposned_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(interpAStart, interpAEnd, iTOW);
                 relposned_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(interpBStart, interpBEnd, iTOW);
+
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_Start = reverseSync_RoverA.find(interpAStart.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_End = reverseSync_RoverA.find(interpAEnd.iTOW);
+
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_Start = reverseSync_RoverB.find(interpBStart.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_End = reverseSync_RoverB.find(interpBEnd.iTOW);
+
+                if ((reverseIter_RoverA_Start == reverseSync_RoverA.end()) &&
+                        (lastRoverANagITOW != interpAStart.iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(interpAStart.iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverANagITOW = interpAStart.iTOW;
+                }
+
+                if ((reverseIter_RoverA_End == reverseSync_RoverA.end()) &&
+                        (lastRoverANagITOW != interpAEnd.iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(interpAEnd.iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverANagITOW = interpAEnd.iTOW;
+                }
+
+                if ((reverseIter_RoverB_Start == reverseSync_RoverB.end()) &&
+                        (lastRoverBNagITOW != interpBStart.iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(interpBStart.iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverBNagITOW = interpBStart.iTOW;
+                }
+
+                if ((reverseIter_RoverB_End == reverseSync_RoverB.end()) &&
+                        (lastRoverBNagITOW != interpBEnd.iTOW))
+                {
+                    addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(interpBEnd.iTOW) +
+                               " not found in sync data. Distance can not be synced.");
+
+                    lastRoverBNagITOW = interpBEnd.iTOW;
+                }
+
+                if ((reverseIter_RoverA_Start != reverseSync_RoverA.end()) &&
+                        (reverseIter_RoverA_End != reverseSync_RoverA.end()) &&
+                        (reverseIter_RoverB_Start != reverseSync_RoverB.end()) &&
+                        (reverseIter_RoverB_End != reverseSync_RoverB.end()))
+                {
+                    double startITOWAvg = (interpAStart.iTOW + interpBStart.iTOW) / 2;
+                    double endITOWAvg = (interpAEnd.iTOW + interpBEnd.iTOW) / 2;
+
+                    double fraction = static_cast<double>((iTOW - startITOWAvg)) /
+                            (endITOWAvg - startITOWAvg);
+
+                    uptime = (reverseIter_RoverA_Start.value() + reverseIter_RoverB_Start.value()) / 2 +
+                            fraction *
+                            (((reverseIter_RoverA_End.value() - reverseIter_RoverA_Start.value()) +
+                             (reverseIter_RoverB_End.value() - reverseIter_RoverB_Start.value())) / 2);
+                }
             }
 
-            double x_RoverA = relposned_RoverA.relPosE;
-            double y_RoverA = relposned_RoverA.relPosD;
-            double z_RoverA = -relposned_RoverA.relPosN;
+            bool distanceValid = false;
 
-            double x_RoverB = relposned_RoverB.relPosE;
-            double y_RoverB = relposned_RoverB.relPosD;
-            double z_RoverB = -relposned_RoverB.relPosN;
+            QMap<qint64, DistanceItem>::const_iterator distIter = distances.upperBound(uptime);
 
-            double diffX = x_RoverB - x_RoverA;
-            double diffY = y_RoverB - y_RoverA;
-            double diffZ = z_RoverB - z_RoverA;
+            if ((distIter != distances.cend()) && (uptime != -1))
+            {
+                QMap<qint64, DistanceItem>::const_iterator nextDistIter = distIter;
 
-            // Unit vector pointing from rover A to B (= from tip to point A)
-            QVector3D unitVec_StylusZAxis(static_cast<float>(diffX), static_cast<float>(diffY), static_cast<float>((diffZ)));
-            unitVec_StylusZAxis.normalize();
+                if (distIter != distances.cbegin())
+                {
+                    distIter--;
 
-            double x_StylusTip = x_RoverA - static_cast<double>(unitVec_StylusZAxis.x()) * stylusTipDistanceFromRoverA;
-            double y_StylusTip = y_RoverA - static_cast<double>(unitVec_StylusZAxis.y()) * stylusTipDistanceFromRoverA;
-            double z_StylusTip = z_RoverA - static_cast<double>(unitVec_StylusZAxis.z()) * stylusTipDistanceFromRoverA;
+                    QMap<qint64, DistanceItem>::const_iterator prevDistIter = distIter;
 
-            double accX_RoverA = relposned_RoverA.accE;
-            double accY_RoverA = relposned_RoverA.accD;
-            double accZ_RoverA = relposned_RoverA.accN;
+                    if (prevDistIter.value().type == DistanceItem::Type::CONSTANT)
+                    {
+                        distanceValid = true;
+                        stylusTipDistanceFromRoverA = prevDistIter.value().distance;
+                    }
+                    else if ((prevDistIter.value().type == DistanceItem::Type::MEASURED) &&
+                             (nextDistIter.value().type == DistanceItem::Type::MEASURED))
+                    {
+                        // Interpolate between measured distances
 
-            double accX_RoverB = relposned_RoverB.accE;
-            double accY_RoverB = relposned_RoverB.accD;
-            double accZ_RoverB = relposned_RoverB.accN;
+                        double fraction = static_cast<double>((uptime - prevDistIter.key())) /
+                                (nextDistIter.key() - prevDistIter.key());
+
+                        stylusTipDistanceFromRoverA = prevDistIter.value().distance +
+                                fraction * (nextDistIter.value().distance - prevDistIter.value().distance);
+
+                        if ((uptime - prevDistIter.key()) < 500)
+                        {
+                            distanceValid = true;
+                        }
+                    }
+                    else if (prevDistIter.value().type == DistanceItem::Type::MEASURED)
+                    {
+                        // No more measured distances -> Use the last one
+
+                        stylusTipDistanceFromRoverA = prevDistIter.value().distance;
+
+                        if ((uptime - prevDistIter.key()) < 500)
+                        {
+                            distanceValid = true;
+                        }
+                    }
+                    else
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Unknown distance type between measured ones. Skipped.");
+                    }
+                }
+            }
+
+            Eigen::Vector3d roverAPosNED(
+                    relposned_RoverA.relPosN,
+                    relposned_RoverA.relPosE,
+                    relposned_RoverA.relPosD);
+
+            Eigen::Vector3d roverBPosNED(
+                    relposned_RoverB.relPosN,
+                    relposned_RoverB.relPosE,
+                    relposned_RoverB.relPosD);
+
+            Eigen::Vector3d roverBToAVecNormalizedNED = (roverAPosNED - roverBPosNED).normalized();
+
+            Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToAVecNormalizedNED * stylusTipDistanceFromRoverA;
+
+            Eigen::Vector3d roverAAccNED(
+                        relposned_RoverA.accN,
+                        relposned_RoverA.accE,
+                        relposned_RoverA.accD);
+
+            Eigen::Vector3d roverBAccNED(
+                        relposned_RoverB.accN,
+                        relposned_RoverB.accE,
+                        relposned_RoverB.accD);
+
+            Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
+            Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
+            Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+
+            Eigen::Vector3d roverAAccXYZ = transform_NoTranslation * roverAAccNED;
+            Eigen::Vector3d roverBAccXYZ = transform_NoTranslation * roverBAccNED;
 
             // Use accuracies of rover A (used for stylus tip accuracy)
             // Could calculate some kind of "worst case" scenario using both rovers,
             // but probably errors are mostly common to both of them.
-            double AccX_Tip = accX_RoverA;
-            double accY_Tip = accY_RoverA;
-            double accZ_Tip = accZ_RoverA;
+            Eigen::Vector3d stylusTipAccXYZ = roverAAccXYZ;
 
-            QVector3D downVec(0,1,0);
-            QVector3D unitVec_StylusXAxis = QVector3D::crossProduct(downVec, unitVec_StylusZAxis);
-            unitVec_StylusXAxis.normalize();
-            if (unitVec_StylusXAxis.isNull())
+            Eigen::Vector3d downVecNED(0,0,1);
+            Eigen::Vector3d stylusForwardAxis = roverBToAVecNormalizedNED;
+            Eigen::Vector3d stylusRightAxis = -(roverBToAVecNormalizedNED.cross(downVecNED).normalized());
+            Eigen::Vector3d stylusDownAxis = roverBToAVecNormalizedNED.cross(stylusRightAxis).normalized();
+
+            Eigen::Vector3d cameraPosNED = roverAPosNED +
+                    stylusForwardAxis * cameraNShift +
+                    stylusRightAxis * cameraEShift +
+                    stylusDownAxis * cameraDShift;
+
+            Eigen::Vector3d cameraPosXYZ = transform * cameraPosNED;
+
+            Eigen::Vector3d lookAtPosNED = roverAPosNED +
+                    stylusForwardAxis * lookAtNShift +
+                    stylusRightAxis * lookAtEShift +
+                    stylusDownAxis * lookAtDShift;
+
+            Eigen::Vector3d lookAtPosXYZ = transform * lookAtPosNED;
+
+            QString stylusTipPositionValidityString;
+
+            if (distanceValid)
             {
-                // Stylus is pointing exactly up or down
-                unitVec_StylusXAxis.setX(1);
+                stylusTipPositionValidityString = "Valid";
             }
-
-            QVector3D unitVec_StylusYAxis = QVector3D::crossProduct(unitVec_StylusZAxis, unitVec_StylusXAxis);
-            unitVec_StylusYAxis.normalize();
-
-            double x_Camera = x_StylusTip;
-            double y_Camera = y_StylusTip;
-            double z_Camera = z_StylusTip;
-
-            // X-shift
-            x_Camera += cameraXShift * static_cast<double>(unitVec_StylusXAxis.x());
-            y_Camera += cameraXShift * static_cast<double>(unitVec_StylusXAxis.y());
-            z_Camera += cameraXShift * static_cast<double>(unitVec_StylusXAxis.z());
-
-            // Y-shift
-            x_Camera += cameraYShift * static_cast<double>(unitVec_StylusYAxis.x());
-            y_Camera += cameraYShift * static_cast<double>(unitVec_StylusYAxis.y());
-            z_Camera += cameraYShift * static_cast<double>(unitVec_StylusYAxis.z());
-
-            // Z-shift
-            x_Camera += cameraZShift * static_cast<double>(unitVec_StylusZAxis.x());
-            y_Camera += cameraZShift * static_cast<double>(unitVec_StylusZAxis.y());
-            z_Camera += cameraZShift * static_cast<double>(unitVec_StylusZAxis.z());
-
-            double x_lookAt = x_StylusTip;
-            double y_lookAt = y_StylusTip;
-            double z_lookAt = z_StylusTip;
+            else
+            {
+                stylusTipPositionValidityString = "Invalid";
+            }
 
             QString lineOut =
                     frameType +
                     "\t" + QString::number(iTOW) +
-                    "\t" + QString::number(x_StylusTip, 'f', 4) +
-                    "\t" + QString::number(y_StylusTip, 'f', 4) +
-                    "\t" + QString::number(z_StylusTip, 'f', 4) +
-                    "\t" + QString::number(x_RoverA, 'f', 4) +
-                    "\t" + QString::number(y_RoverA, 'f', 4) +
-                    "\t" + QString::number(z_RoverA, 'f', 4) +
-                    "\t" + QString::number(x_RoverB, 'f', 4) +
-                    "\t" + QString::number(y_RoverB, 'f', 4) +
-                    "\t" + QString::number(z_RoverB, 'f', 4) +
-                    "\t" + QString::number(AccX_Tip, 'f', 4) +
-                    "\t" + QString::number(accY_Tip, 'f', 4) +
-                    "\t" + QString::number(accZ_Tip, 'f', 4) +
-                    "\t" + QString::number(accX_RoverA, 'f', 4) +
-                    "\t" + QString::number(accY_RoverA, 'f', 4) +
-                    "\t" + QString::number(accZ_RoverA, 'f', 4) +
-                    "\t" + QString::number(accX_RoverB, 'f', 4) +
-                    "\t" + QString::number(accY_RoverB, 'f', 4) +
-                    "\t" + QString::number(accZ_RoverB, 'f', 4) +
-                    "\t" + QString::number(x_Camera, 'f', 4) +
-                    "\t" + QString::number(y_Camera, 'f', 4) +
-                    "\t" + QString::number(z_Camera, 'f', 4) +
-                    "\t" + QString::number(x_lookAt, 'f', 4) +
-                    "\t" + QString::number(y_lookAt, 'f', 4) +
-                    "\t" + QString::number(z_lookAt, 'f', 4);
-
+                    "\t" + QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                    "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                    "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                    "\t" + QString::number(roverAPosXYZ(0), 'f', 4) +
+                    "\t" + QString::number(roverAPosXYZ(1), 'f', 4) +
+                    "\t" + QString::number(roverAPosXYZ(2), 'f', 4) +
+                    "\t" + QString::number(roverBPosXYZ(0), 'f', 4) +
+                    "\t" + QString::number(roverBPosXYZ(1), 'f', 4) +
+                    "\t" + QString::number(roverBPosXYZ(2), 'f', 4) +
+                    "\t" + QString::number(stylusTipAccXYZ(0), 'f', 4) +
+                    "\t" + QString::number(stylusTipAccXYZ(1), 'f', 4) +
+                    "\t" + QString::number(stylusTipAccXYZ(2), 'f', 4) +
+                    "\t" + QString::number(roverAAccXYZ(0), 'f', 4) +
+                    "\t" + QString::number(roverAAccXYZ(1), 'f', 4) +
+                    "\t" + QString::number(roverAAccXYZ(2), 'f', 4) +
+                    "\t" + QString::number(roverBAccXYZ(0), 'f', 4) +
+                    "\t" + QString::number(roverBAccXYZ(1), 'f', 4) +
+                    "\t" + QString::number(roverBAccXYZ(2), 'f', 4) +
+                    "\t" + QString::number(cameraPosXYZ(0), 'f', 4) +
+                    "\t" + QString::number(cameraPosXYZ(1), 'f', 4) +
+                    "\t" + QString::number(cameraPosXYZ(2), 'f', 4) +
+                    "\t" + QString::number(lookAtPosXYZ(0), 'f', 4) +
+                    "\t" + QString::number(lookAtPosXYZ(1), 'f', 4) +
+                    "\t" + QString::number(lookAtPosXYZ(2), 'f', 4) +
+                    "\t" + stylusTipPositionValidityString;
 
             textStream << (lineOut + "\n");
 
@@ -1665,50 +2647,810 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
     addLogLine("Movie script generated.");
 }
 
-#if 0
-void PostProcessingForm::multiplyMatrix(const double inputMatrix[4][1], const double rotationMatrix[4][4], double (&outputMatrix)[4][1])
+void PostProcessingForm::on_pushButton_ClearDistanceData_clicked()
 {
-    for(int i = 0; i < 4; i++ )
-    {
-        for(int j = 0; j < 1; j++)
-        {
-            outputMatrix[i][j] = 0;
+    distances.clear();
+    addLogLine("Distance data cleared.");
+}
 
-            for(int k = 0; k < 4; k++)
+void PostProcessingForm::addDistanceData(const QStringList& fileNames)
+{
+    double distanceCorrection = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->value();
+
+    addLogLine("Reading distances...");
+
+    for (const auto& fileName : fileNames)
+    {
+        QFileInfo fileInfo(fileName);
+        addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+        QFile distanceFile;
+        distanceFile.setFileName(fileName);
+        if (distanceFile.open(QIODevice::ReadOnly))
+        {
+            int numberOfDistances = 0;
+
+            QTextStream textStream(&distanceFile);
+
+            int64_t fileLength = distanceFile.size();
+
+            if (fileLength > 0x7FFFFFFFLL)
             {
-                outputMatrix[i][j] += rotationMatrix[i][k] * inputMatrix[k][j];
+                addLogLine("Error: File \"" + fileInfo.fileName() + "\" is too big. Skipped.");
+                distanceFile.close();
+                continue;
+            }
+
+            QString headerLine = textStream.readLine();
+
+            if (headerLine.compare("Time\tDistance\tType\tUptime(Start)\tFrame time", Qt::CaseInsensitive))
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Skipped.");
+                distanceFile.close();
+                continue;
+            }
+
+            int lineNumber = 1;
+            int discardedLines = 0;
+
+            int firstDuplicateUptimeLine = 0;
+            int lastDuplicateUptimeLine = 0;
+
+            while (!textStream.atEnd())
+            {
+                lineNumber++;
+
+                QString line = textStream.readLine();
+
+                QStringList subItems = line.split("\t");
+
+                if (subItems.count() < 5)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Not enough tab-separated items. Line skipped.");
+                    continue;
+                }
+
+                bool distanceConvOk;
+
+                DistanceItem newDistanceItem;
+                newDistanceItem.distance = subItems[1].toDouble(&distanceConvOk);
+
+                if (!distanceConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 2 (distance) to double. Line skipped.");
+                    continue;
+                }
+
+                if (!subItems[2].compare("constant", Qt::CaseInsensitive))
+                {
+                    newDistanceItem.type = DistanceItem::Type::CONSTANT;
+                }
+                else if (!subItems[2].compare("measured", Qt::CaseInsensitive))
+                {
+                    newDistanceItem.type = DistanceItem::Type::MEASURED;
+                    newDistanceItem.distance += distanceCorrection;
+                }
+                else
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Distance type not either \"constant\" nor \"measured\". Line skipped");
+                    continue;
+                }
+
+                bool uptimeConvOk;
+
+                qint64 uptime = subItems[3].toLongLong(&uptimeConvOk);
+
+                if (!uptimeConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 4 (Uptime(Start)) to 64-bit integer. Line skipped.");
+                    continue;
+                }
+
+                bool frametimeConvOk;
+
+                newDistanceItem.frameDuration = subItems[4].toLongLong(&frametimeConvOk);
+
+                if (!frametimeConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 5 (Frame time) to 64-bit integer. Frame time set to 0.");
+                    newDistanceItem.frameDuration = 0;
+                }
+
+                if (distances.find(uptime) != distances.end())
+                {
+                    if (!firstDuplicateUptimeLine)
+                    {
+                        firstDuplicateUptimeLine = lineNumber;
+                    }
+
+                    lastDuplicateUptimeLine = lineNumber;
+
+                    discardedLines++;
+                    continue;
+                }
+
+                if (firstDuplicateUptimeLine)
+                {
+                    addLogLine("Warning: Line(s) " + QString::number(firstDuplicateUptimeLine) + "-"  +
+                               QString::number(lastDuplicateUptimeLine) +
+                               ": Distance(s) with duplicate uptime(s). Line(s) skipped.");
+
+                    firstDuplicateUptimeLine = 0;
+                }
+
+                newDistanceItem.sourceFile = fileName;
+                newDistanceItem.sourceFileLine = lineNumber;
+
+                distances[uptime] = newDistanceItem;
+
+                numberOfDistances ++;
+            }
+
+            if (firstDuplicateUptimeLine)
+            {
+                addLogLine("Warning: Line(s) " + QString::number(firstDuplicateUptimeLine) + "-"  +
+                           QString::number(lastDuplicateUptimeLine) +
+                           ": Distance(s) with duplicate uptime(s). Line(s) skipped.");
+            }
+
+            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid distances: " +
+                       QString::number(numberOfDistances) +
+                       ", total lines: " + QString::number(lineNumber) +
+                       ", discarded lines: " + QString::number(discardedLines) + ".");
+        }
+        else
+        {
+            addLogLine("Error: Can not open file \"" + fileInfo.fileName() + "\". Skipped.");
+        }
+    }
+    addLogLine("Files read.");
+}
+
+
+void PostProcessingForm::on_pushButton_AddDistanceData_clicked()
+{
+    if (fileDialog_Distances.exec())
+    {
+        QStringList fileNames = fileDialog_Distances.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Distances.setDirectory(QFileInfo(fileNames[0]).path());
+        }
+
+        addDistanceData(fileNames);
+    }
+}
+
+void PostProcessingForm::on_pushButton_ClearSyncData_clicked()
+{
+    roverSyncData_RoverA.clear();
+    roverSyncData_RoverB.clear();
+
+    reverseSync_RoverA.clear();
+    reverseSync_RoverB.clear();
+
+    addLogLine("Sync data cleared.");
+}
+
+void PostProcessingForm::addSyncData(const QStringList& fileNames)
+{
+    addLogLine("Reading sync data...");
+
+    for (const auto& fileName : fileNames)
+    {
+        QFileInfo fileInfo(fileName);
+        addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+        QFile syncFile;
+        syncFile.setFileName(fileName);
+        if (syncFile.open(QIODevice::ReadOnly))
+        {
+            int numberOfSyncItems = 0;
+
+            QTextStream textStream(&syncFile);
+
+            int64_t fileLength = syncFile.size();
+
+            if (fileLength > 0x7FFFFFFFLL)
+            {
+                addLogLine("Error: File \"" + fileInfo.fileName() + "\" is too big. Skipped.");
+                syncFile.close();
+                continue;
+            }
+
+            QString headerLine = textStream.readLine();
+
+            if (headerLine.compare("Time\tSource\tType\tiTOW\tUptime(Start)\tFrame time", Qt::CaseInsensitive))
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Skipped.");
+                syncFile.close();
+                continue;
+            }
+
+            int lineNumber = 1;
+            int discardedLines = 0;
+
+            int firstDuplicateSyncItemLine = 0;
+            int lastDuplicateSyncItemLine = 0;
+
+            while (!textStream.atEnd())
+            {
+                lineNumber++;
+
+                QString line = textStream.readLine();
+
+                QStringList subItems = line.split("\t");
+
+                if (subItems.count() < 6)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Not enough tab-separated items. Line skipped.");
+                    continue;
+                }
+
+                RoverSyncItem newSyncItem;
+
+                QMap<qint64, RoverSyncItem>* roverContainer = nullptr;
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>* reverseContainer = nullptr;
+
+                if (!subItems[1].compare("rover a", Qt::CaseInsensitive))
+                {
+                    roverContainer = &roverSyncData_RoverA;
+                    reverseContainer = &reverseSync_RoverA;
+                }
+                else if (!subItems[1].compare("rover b", Qt::CaseInsensitive))
+                {
+                    roverContainer = &roverSyncData_RoverB;
+                    reverseContainer = &reverseSync_RoverB;
+                }
+                else
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Source not either \"rover a\" nor \"rover b\". Line skipped");
+                    continue;
+                }
+
+                if (!subItems[2].compare("RELPOSNED", Qt::CaseInsensitive))
+                {
+                    newSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
+                }
+                else
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Type not \"RELPOSNED\" (currently only supported type). Line skipped");
+                    continue;
+                }
+
+                bool iTOWConvOk;
+
+                newSyncItem.iTOW = subItems[3].toInt(&iTOWConvOk);
+
+                if (!iTOWConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 4 (iTOW) to 64-bit integer. Line skipped.");
+                    continue;
+                }
+
+                bool uptimeConvOk;
+
+                qint64 uptime = subItems[4].toLongLong(&uptimeConvOk);
+
+                if (!uptimeConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 5 (Uptime(Start)) to 64-bit integer. Line skipped.");
+                    continue;
+                }
+
+                bool frametimeConvOk;
+
+                newSyncItem.frameTime = subItems[5].toLongLong(&frametimeConvOk);
+
+                if (!frametimeConvOk)
+                {
+                    discardedLines++;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Can't convert column 5 (Frame time) to 64-bit integer. Frame time set to 0.");
+                    newSyncItem.frameTime = 0;
+                }
+
+                newSyncItem.sourceFile = fileName;
+                newSyncItem.sourceFileLine = lineNumber;
+
+                if (roverContainer->find(uptime) != roverContainer->end())
+                {
+                    discardedLines++;
+
+                    if (!firstDuplicateSyncItemLine)
+                    {
+                        firstDuplicateSyncItemLine = lineNumber;
+                    }
+
+                    lastDuplicateSyncItemLine = lineNumber;
+                    continue;
+                }
+
+                if (firstDuplicateSyncItemLine)
+                {
+                    addLogLine("Warning: Line(s) " + QString::number(firstDuplicateSyncItemLine) + "-" +
+                               QString::number(lastDuplicateSyncItemLine) +
+                               ": Duplicate rover sync item(s). Line(s) skipped.");
+
+                    firstDuplicateSyncItemLine = 0;
+                }
+
+                roverContainer->insert(uptime, newSyncItem);
+                reverseContainer->insert(newSyncItem.iTOW, uptime);
+
+                numberOfSyncItems ++;
+            }
+
+            if (firstDuplicateSyncItemLine)
+            {
+                addLogLine("Warning: Line(s) " + QString::number(firstDuplicateSyncItemLine) + "-" +
+                           QString::number(lastDuplicateSyncItemLine) +
+                           ": Duplicate rover sync item(s). Line(s) skipped.");
+            }
+
+            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid sync items: " +
+                       QString::number(numberOfSyncItems) +
+                       ", total lines: " + QString::number(lineNumber) +
+                       ", discarded lines: " + QString::number(discardedLines) + ".");
+        }
+        else
+        {
+            addLogLine("Error: Can not open file \"" + fileInfo.fileName() + "\". Skipped.");
+        }
+    }
+    addLogLine("Files read.");
+}
+
+
+void PostProcessingForm::on_pushButton_AddSyncData_clicked()
+{
+    if (fileDialog_Sync.exec())
+    {
+        QStringList fileNames = fileDialog_Sync.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Sync.setDirectory(QFileInfo(fileNames[0]).path());
+        }
+
+        addSyncData(fileNames);
+    }
+}
+
+void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
+{
+    roverSyncData_RoverA.clear();
+    roverSyncData_RoverB.clear();
+
+    reverseSync_RoverA.clear();
+    reverseSync_RoverB.clear();
+
+    addLogLine("Previous sync data cleared.");
+
+    int itemCount = 0;
+    int lineNumber = 2; // Header at first line
+
+    for (const auto& relposnedData : relposnedMessages_RoverA)
+    {
+        RoverSyncItem fakeSyncItem;
+
+        fakeSyncItem.sourceFile = "None";
+        fakeSyncItem.sourceFileLine = lineNumber;
+        fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
+        fakeSyncItem.iTOW = relposnedData.iTOW;
+        fakeSyncItem.frameTime = 0;
+        roverSyncData_RoverA.insert(fakeSyncItem.iTOW, fakeSyncItem);
+        reverseSync_RoverA.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
+
+        lineNumber += 2;    // "Interleaved" data
+        itemCount++;
+    }
+
+    lineNumber = 3; // "Interleaved" data
+
+    for (const auto& relposnedData : relposnedMessages_RoverB)
+    {
+        RoverSyncItem fakeSyncItem;
+
+        fakeSyncItem.sourceFile = "None";
+        fakeSyncItem.sourceFileLine = lineNumber;
+        fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
+        fakeSyncItem.iTOW = relposnedData.iTOW;
+        fakeSyncItem.frameTime = 0;
+        roverSyncData_RoverB.insertMulti(fakeSyncItem.iTOW, fakeSyncItem);
+        reverseSync_RoverB.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
+
+        lineNumber += 2;    // "Interleaved" data
+        itemCount++;
+    }
+
+    addLogLine(QString::number(itemCount) + " sync items created.");
+}
+
+bool PostProcessingForm::generateTransformationMatrix(Eigen::Matrix4d& outputMatrix)
+{
+    Eigen::Matrix4d translation_NED;
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int k= 0; k < 4; k++)
+        {
+            translation_NED(i, k) = 0;
+        }
+
+        translation_NED(i, i) = 1;
+    }
+
+    translation_NED(0, 3) = ui->doubleSpinBox_Translation_N->value();
+    translation_NED(1, 3) = ui->doubleSpinBox_Translation_E->value();
+    translation_NED(2, 3) = ui->doubleSpinBox_Translation_D->value();
+
+    Eigen::Matrix4d prelimTransform;
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int k= 0; k < 4; k++)
+        {
+            bool ok;
+            prelimTransform(i, k) = ui->tableWidget_TransformationMatrix->item(i, k)->text().toDouble(&ok);
+
+            if (!ok)
+            {
+                addLogLine("Error: Row " + QString::number(i + 1) +
+                           ", column " + QString::number(k + 1) +
+                           " of transformation matrix not convertible to a (double precision) floating point value. "
+                           "Unable to perform NED->XYZ-coordinate conversion.");
+
+                return false;
+            }
+        }
+    }
+
+    outputMatrix = prelimTransform * translation_NED;
+
+
+    return true;
+}
+
+void PostProcessingForm::on_pushButton_ClearAllFileData_clicked()
+{
+    this->on_pushButton_ClearRELPOSNEDData_RoverA_clicked();
+    this->on_pushButton_ClearRELPOSNEDData_RoverB_clicked();
+    this->on_pushButton_ClearTagData_clicked();
+    this->on_pushButton_ClearDistanceData_clicked();
+    this->on_pushButton_ClearSyncData_clicked();
+}
+
+void PostProcessingForm::addAllData(const bool includeTransformation)
+{
+    if (fileDialog_All.exec())
+    {
+        QStringList selectedFileNames = fileDialog_All.selectedFiles();
+
+        if (selectedFileNames.size() != 0)
+        {
+            fileDialog_All.setDirectory(QFileInfo(selectedFileNames[0]).path());
+        }
+
+        QStringList baseFileNames;
+
+        for (const auto& fileName : selectedFileNames)
+        {
+            struct
+            {
+                QString endsWith;
+                QString formatName;
+            } const fileNameEndings [] =
+            {
+                { "_base.NMEA", "NMEA (base)" },
+                { "_base.raw", "raw (base)" },
+                { "_base.RTCM", "RTCM (base)" },
+                { "_base.ubx", "ubx (base)" },
+
+                { "_RoverA.NMEA", "NMEA (Rover A)" },
+                { "_RoverA.raw", "raw (Rover A)" },
+                { "_RoverA.ubx", "ubx (Rover A)" },
+                { "_RoverA_RELPOSNED.ubx", "ubx (relposned, Rover A)" },
+
+                { "_RoverB.NMEA", "NMEA (Rover B)" },
+                { "_RoverB.raw", "raw (Rover B)" },
+                { "_RoverB.ubx", "ubx (Rover B)" },
+                { "_RoverB_RELPOSNED.ubx", "ubx (relposned, Rover B)" },
+
+                { "_tags.tags", "tags (""double extension""" },
+                { ".tags", "tags (""single extension""" },
+
+                { ".distances", "distances" },
+
+                { ".sync", "sync" },
+                { ".transformation", "transformation" },
+            };
+
+            bool formatKnown = false;
+
+            for (unsigned int endingIndex = 0; endingIndex < (sizeof(fileNameEndings) / sizeof(fileNameEndings[0])); endingIndex++)
+            {
+                if (fileName.endsWith(fileNameEndings[endingIndex].endsWith, Qt::CaseInsensitive))
+                {
+                    QString baseFileName = fileName;
+                    baseFileName.resize(baseFileName.length() - fileNameEndings[endingIndex].endsWith.length());
+
+                    addLogLine(QString("File selection """) + fileName + """ recognized as a format """ +
+                               fileNameEndings[endingIndex].formatName + """. Base filename: """ +
+                               baseFileName + """");
+
+                    baseFileNames.append(baseFileName);
+
+                    formatKnown = true;
+                    break;
+                }
+            }
+
+            if (!formatKnown)
+            {
+                addLogLine(QString("Warning: file selection """) + fileName +
+                           """ not recognized as any supported format. Skipping... ");
+            }
+        }
+
+        QStringList fileNames = getAppendedFileNames(baseFileNames, "_RoverA_RELPOSNED.ubx");
+        addRELPOSNEDData_RoverA(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_RoverB_RELPOSNED.ubx");
+        addRELPOSNEDData_RoverB(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_tags.tags");
+        addTagData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".distances");
+        addDistanceData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".sync");
+        addSyncData(fileNames);
+
+        if (includeTransformation)
+        {
+            fileNames = getAppendedFileNames(baseFileNames, ".Transformation");
+
+            if (fileNames.count() == 0)
+            {
+                addLogLine("Warning: No file(s) selected. Transformation not read.");
+            }
+            else
+            {
+                if (fileNames.count() != 1)
+                {
+                    addLogLine("Warning: Multiple files selected. Transformation read only using the first one ("""+
+                               fileNames[0] + """)");
+                }
+
+                loadTransformation(fileNames[0]);
             }
         }
     }
 }
 
-void PostProcessingForm::setUpRotationMatrix(double angle, double u, double v, double w, double (&rotationMatrix)[4][4])
+
+void PostProcessingForm::on_pushButton_AddAll_clicked()
 {
-    double L = (u*u + v * v + w * w);
-//    angle = angle * M_PI / 180.0; //converting to radian value
-    double u2 = u * u;
-    double v2 = v * v;
-    double w2 = w * w;
-
-    rotationMatrix[0][0] = (u2 + (v2 + w2) * cos(angle)) / L;
-    rotationMatrix[0][1] = (u * v * (1 - cos(angle)) - w * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[0][2] = (u * w * (1 - cos(angle)) + v * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[0][3] = 0.0;
-
-    rotationMatrix[1][0] = (u * v * (1 - cos(angle)) + w * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[1][1] = (v2 + (u2 + w2) * cos(angle)) / L;
-    rotationMatrix[1][2] = (v * w * (1 - cos(angle)) - u * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[1][3] = 0.0;
-
-    rotationMatrix[2][0] = (u * w * (1 - cos(angle)) - v * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[2][1] = (v * w * (1 - cos(angle)) + u * sqrt(L) * sin(angle)) / L;
-    rotationMatrix[2][2] = (w2 + (u2 + v2) * cos(angle)) / L;
-    rotationMatrix[2][3] = 0.0;
-
-    rotationMatrix[3][0] = 0.0;
-    rotationMatrix[3][1] = 0.0;
-    rotationMatrix[3][2] = 0.0;
-    rotationMatrix[3][3] = 1.0;
+    addAllData(false);
 }
 
-#endif
+QStringList PostProcessingForm::getAppendedFileNames(const QStringList& fileNames, const QString appendix)
+{
+    QStringList appendedList;
+
+    for (auto fileName : fileNames)
+    {
+        appendedList.append(fileName + appendix);
+    }
+
+    return appendedList;
+}
+
+static QString getTransformationFileHeaderLine(void)
+{
+    QString line = "Translation_N\tTranslation_E\tTranslation_D";
+
+    for (int row = 0; row < 4; row++)
+    {
+        for (int column = 0; column < 4; column++)
+        {
+            line += "\tTransf R" + QString::number(row + 1) + ", C" + QString::number(column + 1);
+        }
+    }
+
+    return line;
+}
+
+void PostProcessingForm::loadTransformation(const QString fileName)
+{
+    QFileInfo fileInfo(fileName);
+    addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+    QFile transformationFile;
+    transformationFile.setFileName(fileName);
+    if (transformationFile.open(QIODevice::ReadOnly))
+    {
+        QTextStream textStream(&transformationFile);
+
+        QString headerLine = textStream.readLine();
+
+        if (headerLine.compare(getTransformationFileHeaderLine(), Qt::CaseInsensitive))
+        {
+            addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Data not read.");
+            transformationFile.close();
+            return;
+        }
+
+        QString dataLine = textStream.readLine();
+
+        QStringList dataLineItems = dataLine.split("\t");
+
+        if (dataLineItems.count() != (16 + 3))
+        {
+            addLogLine("Error: File's \"" + fileInfo.fileName() + "\" data line doesn't have correct number of items (19). Data not read.");
+            transformationFile.close();
+            return;
+        }
+        else
+        {
+            double convertedItems[3];
+            bool convOk = true;
+
+            for (int itemIndex = 0; itemIndex < (3); itemIndex++)
+            {
+                convertedItems[itemIndex] = dataLineItems[itemIndex].toDouble(&convOk);
+
+                if (!convOk)
+                {
+                    addLogLine("Error: File's \"" + fileInfo.fileName() +
+                               "\" data line item #" + QString::number(itemIndex + 1) +
+                               "can't be converted to double. Data not read.");
+
+                    transformationFile.close();
+
+                    break;
+                }
+            }
+
+            if (convOk)
+            {
+                ui->doubleSpinBox_Translation_N->setValue(convertedItems[0]);
+                ui->doubleSpinBox_Translation_E->setValue(convertedItems[1]);
+                ui->doubleSpinBox_Translation_D->setValue(convertedItems[2]);
+
+                for (int row = 0; row < 4; row++)
+                {
+                    for (int column = 0; column < 4; column++)
+                    {
+                        ui->tableWidget_TransformationMatrix->item(row, column)->setText(dataLineItems[3 + (row * 4) + column]);
+                    }
+                }
+                addLogLine("File read.");
+            }
+        }
+    }
+    else
+    {
+        addLogLine("Error: can't open file \"" + fileInfo.fileName() + "\". Data not read.");
+    }
+}
+
+void PostProcessingForm::on_pushButton_LoadTransformation_clicked()
+{
+    if (fileDialog_Transformation_Load.exec())
+    {
+        QStringList fileNames = fileDialog_Transformation_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Transformation_Load.setDirectory(QFileInfo(fileNames[0]).path());
+
+            loadTransformation(fileNames[0]);
+        }
+        else
+        {
+            addLogLine("Warning: No transformation file selected. Data not read.");
+        }
+    }
+}
+
+void PostProcessingForm::on_pushButton_SaveTransformation_clicked()
+{
+    if (fileDialog_Transformation_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_Transformation_Save.selectedFiles();
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Error: Multiple file selection not supported. Transformation not saved.");
+            return;
+        }
+
+        QFile transformationFile;
+
+        transformationFile.setFileName(fileNameList[0]);
+
+        if (transformationFile.exists())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Transformation not saved.");
+                return;
+            }
+        }
+
+        if (!transformationFile.open(QIODevice::WriteOnly))
+        {
+            addLogLine("Error: Can't open transformation file.");
+            return;
+        }
+
+        QTextStream textStream(&transformationFile);
+
+        textStream << getTransformationFileHeaderLine() << "\n";
+
+        textStream << QString::number(ui->doubleSpinBox_Translation_N->value()) << "\t"
+                      << QString::number(ui->doubleSpinBox_Translation_E->value()) << "\t"
+                      << QString::number(ui->doubleSpinBox_Translation_D->value());
+
+        for (int row = 0; row < 4; row++)
+        {
+            for (int column = 0; column < 4; column++)
+            {
+                textStream << "\t" << ui->tableWidget_TransformationMatrix->item(row, column)->text();
+            }
+        }
+
+        textStream << "\n";
+    }
+}
+
+void PostProcessingForm::on_pushButton_AddAllIncludingTransform_clicked()
+{
+    addAllData(true);
+}
+
+void PostProcessingForm::on_pushButton_Preset_clicked()
+{
+    int presetIndex = ui->comboBox_Presets->currentIndex();
+
+    if ((presetIndex < 0) || (presetIndex > int(sizeof(transformationPresets) / sizeof(transformationPresets[0]))))
+    {
+        addLogLine("Error: index out of bounds (this should never happen...)");
+    }
+    else
+    {
+        for (int row = 0; row < 4; row++)
+        {
+            for (int column = 0; column < 3; column++)
+            {
+                ui->tableWidget_TransformationMatrix->item(row, column)->setText(QString::number(transformationPresets[presetIndex].values[row][column]));
+            }
+        }
+
+        ui->tableWidget_TransformationMatrix->item(3, 3)->setText(QString::number(transformationPresets[presetIndex].values[3][3]));
+    }
+}

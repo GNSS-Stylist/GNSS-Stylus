@@ -54,15 +54,15 @@ void MessageMonitorForm::addLogLine(const QString& line)
     ui->plainTextEdit_Output->appendPlainText(timeString + ": " + line);
 }
 
-void MessageMonitorForm::ubloxProcessor_nmeaSentenceReceived(const QByteArray& nmeaSentence)
+void MessageMonitorForm::ubloxProcessor_nmeaSentenceReceived(const NMEAMessage& nmeaSentence)
 {
     if ((!ui->checkBox_SuspendOutput->checkState()) && (ui->checkBox_NMEA->checkState()))
     {
-        addLogLine(QString("NMEA: ") + nmeaSentence.trimmed());
+        addLogLine(QString("NMEA: ") + nmeaSentence.rawMessage.trimmed());
     }
 }
 
-void MessageMonitorForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage, qint64 firstByteTime, qint64 lastByteTime)
+void MessageMonitorForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage)
 {
     UBXMessage_RELPOSNED relposned(ubxMessage);
 
@@ -70,17 +70,17 @@ void MessageMonitorForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
 
     if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
     {
-        qint64 startTimeDifference = firstByteTime - lastRELPOSNEDMessageStartTime;
-        qint64 burstDuration = lastByteTime - firstByteTime;
-        qint64 idleTime = firstByteTime - lastRELPOSNEDMessageEndTime;
+        qint64 startTimeDifference = ubxMessage.messageStartTime - lastRELPOSNEDMessageStartTime;
+        qint64 burstDuration = ubxMessage.messageEndTime - ubxMessage.messageStartTime;
+        qint64 idleTime = ubxMessage.messageStartTime - lastRELPOSNEDMessageEndTime;
 
         timeString = " Start time difference: ";
         timeString += QString::number(startTimeDifference);
         timeString += ", burst duration: " + QString::number(burstDuration);
         timeString += ", idle time: " + QString::number(idleTime);
 
-        lastRELPOSNEDMessageStartTime = firstByteTime;
-        lastRELPOSNEDMessageEndTime = lastByteTime;
+        lastRELPOSNEDMessageStartTime = ubxMessage.messageStartTime;
+        lastRELPOSNEDMessageEndTime = ubxMessage.messageEndTime;
     }
 
     if ((!ui->checkBox_SuspendOutput->checkState()) && (ui->checkBox_UBX->checkState()))
@@ -213,11 +213,11 @@ void MessageMonitorForm::disconnectSerialThreadSlots(SerialThread* serThread)
 
 void MessageMonitorForm::connectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const QByteArray&)));
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
-                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&, qint64, qint64)));
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
 
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxParseError(const QString&)),
                      this, SLOT(ubloxProcessor_ubxParseError(const QString&)));
@@ -234,11 +234,11 @@ void MessageMonitorForm::connectUBloxDataStreamProcessorSlots(UBloxDataStreamPro
 
 void MessageMonitorForm::disconnectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const QByteArray&)));
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
-                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&, qint64, qint64)));
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
 
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxParseError(const QString&)),
                      this, SLOT(ubloxProcessor_ubxParseError(const QString&)));
@@ -269,7 +269,7 @@ void MessageMonitorForm::connectNTRIPThreadSlots(NTRIPThread* ntripThread)
     QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
                      this, SLOT(ErrorMessage(const QString&)));
 
-    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
+    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
                      this, SLOT(DataReceived(const QByteArray&)));
 
 //    QObject::connect(serThread, SIGNAL(serialTimeout(void)),
@@ -287,7 +287,7 @@ void MessageMonitorForm::disconnectNTRIPThreadSlots(NTRIPThread* ntripThread)
     QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
                      this, SLOT(ErrorMessage(const QString&)));
 
-    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
+    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
                      this, SLOT(DataReceived(const QByteArray&)));
 
 //    QObject::disconnect(serThread, SIGNAL(serialTimeout(void)),

@@ -36,7 +36,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_Base_Serial">
        <property name="autoFillBackground">
@@ -158,6 +158,12 @@
           </item>
           <item row="3" column="1">
            <widget class="QLabel" name="label_LastInfoMessage_Base_Serial">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -165,6 +171,12 @@
           </item>
           <item row="2" column="1">
            <widget class="QLabel" name="label_LastWarningMessage_Base_Serial">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -172,6 +184,12 @@
           </item>
           <item row="0" column="1">
            <widget class="QLabel" name="label_RTCMMessageCount_Base_Serial">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>0</string>
             </property>
@@ -223,6 +241,12 @@
           </item>
           <item row="1" column="1">
            <widget class="QLabel" name="label_LastErrorMessage_Base_Serial">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -302,7 +326,7 @@
           <item row="2" column="1">
            <widget class="QLabel" name="label_LastErrorMessage_Base_NTRIP">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -359,7 +383,7 @@
           <item row="3" column="1">
            <widget class="QLabel" name="label_LastWarningMessage_Base_NTRIP">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -385,7 +409,7 @@
           <item row="1" column="1">
            <widget class="QLabel" name="label_RTCMMessageCount_Base_NTRIP">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -496,6 +520,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_LastInfoMessage_RoverA">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -503,6 +533,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QLabel" name="label_LastWarningMessage_RoverA">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -510,6 +546,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="label_RELPOSNEDMessageCount_RoverA">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -561,6 +603,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QLabel" name="label_LastErrorMessage_RoverA">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -715,6 +763,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_LastInfoMessage_RoverB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -722,6 +776,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QLabel" name="label_LastWarningMessage_RoverB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -729,6 +789,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="label_RELPOSNEDMessageCount_RoverB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -780,6 +846,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QLabel" name="label_LastErrorMessage_RoverB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -904,6 +976,44 @@
        <attribute name="title">
         <string>Distance provider (constant)</string>
        </attribute>
+       <widget class="QLabel" name="label_Distance_Constant">
+        <property name="geometry">
+         <rect>
+          <x>17</x>
+          <y>8</y>
+          <width>77</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Distance:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Distance_Constant">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>10</y>
+          <width>65</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>-10.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab_3">
        <property name="autoFillBackground">
@@ -987,6 +1097,12 @@
           </property>
           <item row="1" column="1">
            <widget class="QLabel" name="label_DistanceMessageCount_LaserDist">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>0</string>
             </property>
@@ -1004,6 +1120,12 @@
           </item>
           <item row="3" column="1">
            <widget class="QLabel" name="label_LastWarningMessage_LaserDist">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -1055,6 +1177,12 @@
           </item>
           <item row="4" column="1">
            <widget class="QLabel" name="label_LastInfoMessage_LaserDist">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -1076,6 +1204,12 @@
           </item>
           <item row="2" column="1">
            <widget class="QLabel" name="label_LastErrorMessage_LaserDist">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -1093,6 +1227,12 @@
           </item>
           <item row="0" column="1">
            <widget class="QLabel" name="label_Distance_LaserDist">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>

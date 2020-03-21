@@ -29,6 +29,8 @@
 GNSSMessage::GNSSMessage()
 {
     rawMessage.clear();
+    messageStartTime = 0;
+    messageEndTime = 0;
 }
 
 NMEAMessage::NMEAMessage()
@@ -36,10 +38,12 @@ NMEAMessage::NMEAMessage()
     messageDataStatus = STATUS_UNINITIALIZED;
 }
 
-NMEAMessage::NMEAMessage(const QByteArray &messageString)
+NMEAMessage::NMEAMessage(const QByteArray &messageString, qint64 messageStartTime, qint64 messageEndTime)
 {
     // TODO: Add parsing with error/checksum-checking etc. Now this just copies the string.
     rawMessage = messageString;
+    this->messageStartTime = messageStartTime;
+    this->messageEndTime = messageEndTime;
     messageDataStatus = STATUS_VALID;
 }
 
@@ -48,9 +52,11 @@ UBXMessage::UBXMessage()
     init();
 }
 
-UBXMessage::UBXMessage(const QByteArray& ubxRawData)
+UBXMessage::UBXMessage(const QByteArray& ubxRawData, qint64 messageStartTime, qint64 messageEndTime)
 {
     rawMessage = ubxRawData;
+    this->messageStartTime = messageStartTime;
+    this->messageEndTime = messageEndTime;
 
     if (ubxRawData.length() < 8)
     {
@@ -234,10 +240,12 @@ RTCMMessage::RTCMMessage()
     messageDataStatus = STATUS_UNINITIALIZED;
 }
 
-RTCMMessage::RTCMMessage(const QByteArray &rtcmData)
+RTCMMessage::RTCMMessage(const QByteArray &rtcmData, qint64 messageStartTime, qint64 messageEndTime)
 {
     // TODO: Add parsing with error/checksum-checking etc. Now this just copies the data.
     rawMessage = rtcmData;
+    this->messageStartTime = messageStartTime;
+    this->messageEndTime = messageEndTime;
     messageDataStatus = STATUS_VALID;
 
     if (rtcmData.length() >= 8)
@@ -252,7 +260,7 @@ RTCMMessage::RTCMMessage(const QByteArray &rtcmData)
 
 UBXMessage_RELPOSNED UBXMessage_RELPOSNED::interpolateCoordinates(const UBXMessage_RELPOSNED& startValues, const UBXMessage_RELPOSNED& endValues, const ITOW iTOW)
 {
-    // Only calculated fields (doubles) interpolated
+    // Only calculated fields (doubles) and uptimes (messageStarttime/messageEndTime) interpolated
     // if iTOW is out of range, values will be either start- or end-values
 
     UBXMessage_RELPOSNED retval;
@@ -267,6 +275,8 @@ UBXMessage_RELPOSNED UBXMessage_RELPOSNED::interpolateCoordinates(const UBXMessa
     retval.accD = interpolateDouble(startValues.accD, endValues.accD, startValues.iTOW, endValues.iTOW, iTOW);
     retval.accLength = interpolateDouble(startValues.accLength, endValues.accLength, startValues.iTOW, endValues.iTOW, iTOW);
     retval.accHeading = interpolateDouble(startValues.accHeading, endValues.accHeading, startValues.iTOW, endValues.iTOW, iTOW);
+    retval.messageStartTime = interpolateQint64(startValues.messageStartTime, endValues.messageStartTime, startValues.iTOW, endValues.iTOW, iTOW);
+    retval.messageEndTime = interpolateQint64(startValues.messageEndTime, endValues.messageEndTime, startValues.iTOW, endValues.iTOW, iTOW);
 
     return retval;
 }
@@ -279,7 +289,7 @@ double UBXMessage_RELPOSNED::interpolateDouble(const double startVal, const doub
     }
     else if (currITOW >= endITOW)
     {
-        return endITOW;
+        return endVal;
     }
     else
     {
@@ -287,6 +297,24 @@ double UBXMessage_RELPOSNED::interpolateDouble(const double startVal, const doub
         return startVal + fraction * (endVal - startVal);
     }
 }
+
+qint64 UBXMessage_RELPOSNED::interpolateQint64(const qint64 startVal, const qint64 endVal, const ITOW startITOW, const ITOW endITOW, ITOW currITOW)
+{
+    if (currITOW <= startITOW)
+    {
+        return startVal;
+    }
+    else if (currITOW >= endITOW)
+    {
+        return endVal;
+    }
+    else
+    {
+        double fraction = static_cast<double>((currITOW - startITOW)) / (endITOW - startITOW);
+        return startVal + fraction * (endVal - startVal);
+    }
+}
+
 
 QString UBXMessage_RELPOSNED::getCarrSolnString(void)
 {

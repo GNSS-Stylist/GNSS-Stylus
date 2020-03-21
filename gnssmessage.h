@@ -37,7 +37,10 @@
 class GNSSMessage
 {
 public:
-    QByteArray rawMessage;  //!< Message contents as received from serial port. Includes all checksums and CR/LF (for NMEA) etc. Terminating null (for NMEA) is handled by QByteArray itself.
+    QByteArray rawMessage;      //!< Message contents as received from serial port. Includes all checksums and CR/LF (for NMEA) etc. Terminating null (for NMEA) is handled by QByteArray itself.
+    qint64 messageStartTime;    //!< Uptime when first byte/character of this message was received (QElapsedTimer->msecsSinceReference()). 0 if not valid or not applicable
+    qint64 messageEndTime;      //!< Uptime when last byte/character of this message was received (QElapsedTimer->msecsSinceReference()). 0 if not valid or not applicable
+
     GNSSMessage();
 };
 
@@ -57,8 +60,10 @@ public:
     /**
      * @brief NMEAMessage Constructor that takes NMEA-string as an input.
      * @param messageString NMEA-message string, including every character (also CR/LF) but no terminating null as QByteArrays's "payload".
+     * @param messageStartTime Uptime (QElapsedTimer->msecsSinceReference()) of the first byte of this message
+     * @param messageEndTime Uptime (QElapsedTimer->msecsSinceReference()) of the last byte of this message
      */
-    NMEAMessage(const QByteArray& messageString);
+    NMEAMessage(const QByteArray& messageString, qint64 messageStartTime = 0, qint64 messageEndTime = 0);
 
     /**
      * @brief Enumeration for message data status.
@@ -103,10 +108,13 @@ public:
     UBXMessage();   //!< Default constructor
 
     /**
-     * @brief Parses raw data to UBX-message and sets messageDataStatus, messageClass, messageId and payloadLength accordingly.
+     * @brief Parses raw data to UBX-message and sets messageDataStatus, messageClass, messageId, payloadLength and times accordingly.
      * @param ubxRawData Raw data to parse.
+     * @param messageStartTime Uptime (QElapsedTimer->msecsSinceReference()) of the first byte of this message
+     * @param messageEndTime Uptime (QElapsedTimer->msecsSinceReference()) of the last byte of this message
      */
-    UBXMessage(const QByteArray& ubxRawData);
+    UBXMessage(const QByteArray& ubxRawData, qint64 messageStartTime = 0, qint64 messageEndTime = 0);
+
 };
 
 /**
@@ -191,6 +199,7 @@ public:
 private:
     void initRELPOSNEDFields(void);
     static double interpolateDouble(const double startVal, const double endVal, const ITOW startITOW, const ITOW endITOW, ITOW currITOW);
+    static qint64 interpolateQint64(const qint64 startVal, const qint64 endVal, const ITOW startITOW, const ITOW endITOW, ITOW currITOW);
 };
 
 /**
@@ -207,8 +216,10 @@ public:
     /**
      * @brief RTCMMessage Constructor that takes RTCM data as an input.
      * @param rtcmData RTCM data, including every byte (also 0xD3 and CRC).
+     * @param messageStartTime Uptime (QElapsedTimer->msecsSinceReference()) of the first byte of this message
+     * @param messageEndTime Uptime (QElapsedTimer->msecsSinceReference()) of the last byte of this message
      */
-    RTCMMessage(const QByteArray& rtcmData);
+    RTCMMessage(const QByteArray& rtcmData, qint64 messageStartTime = 0, qint64 messageEndTime = 0);
 
     /**
      * @brief Enum for message data status.

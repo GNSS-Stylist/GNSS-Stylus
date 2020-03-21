@@ -167,8 +167,8 @@ void UBloxDataStreamProcessor::process(const char inbyte, qint64 byteTime)
             else
             {
                 // Frame is formally valid
-                UBXMessage newUbxMessage(inputBuffer);
-                emit ubxMessageReceived(newUbxMessage, firstMessageByteTime, byteTime);
+                UBXMessage newUbxMessage(inputBuffer, firstMessageByteTime, byteTime);
+                emit ubxMessageReceived(newUbxMessage);
             }
         }
 
@@ -197,7 +197,8 @@ void UBloxDataStreamProcessor::process(const char inbyte, qint64 byteTime)
         inputBuffer.append(inbyte);
         if (inbyte == 10)
         {
-            emit nmeaSentenceReceived(inputBuffer);
+            NMEAMessage newNMEAMessage(inputBuffer, firstMessageByteTime, byteTime);
+            emit nmeaSentenceReceived(newNMEAMessage);
         }
         else
         {
@@ -252,7 +253,7 @@ void UBloxDataStreamProcessor::process(const char inbyte, qint64 byteTime)
         // TODO: Calculate and check CRC
         // Now this just naively emits data without any checking
 
-        RTCMMessage newRTCMMessage(inputBuffer);
+        RTCMMessage newRTCMMessage(inputBuffer, firstMessageByteTime, byteTime);
         emit rtcmMessageReceived(newRTCMMessage);
 
         inputBuffer.clear();

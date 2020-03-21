@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>647</width>
-    <height>562</height>
+    <height>716</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -31,14 +31,14 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>275</height>
+       <height>400</height>
       </size>
      </property>
      <property name="autoFillBackground">
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_Settings">
       <property name="autoFillBackground">
@@ -47,17 +47,17 @@
       <attribute name="title">
        <string>Settings</string>
       </attribute>
-      <widget class="QLabel" name="label_StylusTipDistanceFromRovera">
+      <widget class="QLabel" name="label_StylusTipDistanceFromRoverA_Fallback">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>130</x>
          <y>10</y>
-         <width>261</width>
-         <height>16</height>
+         <width>351</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>Stylus tip distance from rover A (mm):</string>
+        <string>Stylus tip distance from rover A (fallback / initial value) (mm):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -66,7 +66,7 @@
       <widget class="QLabel" name="label_TagIndicatingBeginningOfObjectPoints">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>220</x>
          <y>40</y>
          <width>261</width>
          <height>16</height>
@@ -82,7 +82,7 @@
       <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfObjectPoints">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>490</x>
          <y>40</y>
          <width>113</width>
          <height>20</height>
@@ -92,7 +92,7 @@
       <widget class="QLabel" name="label_TagIndicatingEndOfObjectPoints">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>220</x>
          <y>70</y>
          <width>261</width>
          <height>16</height>
@@ -108,7 +108,7 @@
       <widget class="QLineEdit" name="lineEdit_TagIndicatingEndOfObjectPoints">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>490</x>
          <y>70</y>
          <width>113</width>
          <height>20</height>
@@ -118,7 +118,7 @@
       <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfNewObject">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>490</x>
          <y>100</y>
          <width>113</width>
          <height>20</height>
@@ -128,7 +128,7 @@
       <widget class="QLabel" name="label_TagIndicatingBeginningOfNewObject">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>220</x>
          <y>100</y>
          <width>261</width>
          <height>16</height>
@@ -141,10 +141,10 @@
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA">
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA_Fallback">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>490</x>
          <y>10</y>
          <width>111</width>
          <height>22</height>
@@ -170,7 +170,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>160</y>
+         <y>200</y>
          <width>571</width>
          <height>17</height>
         </rect>
@@ -186,7 +186,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>190</y>
+         <y>230</y>
          <width>571</width>
          <height>17</height>
         </rect>
@@ -201,7 +201,7 @@
       <widget class="QLabel" name="label_ExpectedITOWAlignment">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>220</x>
          <y>130</y>
          <width>261</width>
          <height>16</height>
@@ -217,7 +217,7 @@
       <widget class="QSpinBox" name="spinBox_ExpectedITOWAlignment">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>490</x>
          <y>130</y>
          <width>111</width>
          <height>22</height>
@@ -233,8 +233,55 @@
         <number>100</number>
        </property>
       </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA_Correction">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>160</y>
+         <width>111</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>4</number>
+       </property>
+       <property name="minimum">
+        <double>-10.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>10.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_StylusTipDistanceFromRoverA_Correction">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>160</y>
+         <width>481</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Correction for measured stylus tip &lt;-&gt; Rover A distances (mm, added when reading distances):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
      </widget>
-     <widget class="QWidget" name="Files">
+     <widget class="QWidget" name="tab_Files">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>350</height>
+       </size>
+      </property>
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
@@ -243,7 +290,73 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
+        <widget class="QGroupBox" name="groupBox_MassOperations">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Mass opeations</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearAllFileData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear all</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddAll">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddAllIncludingTransform">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files including transform...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_RELPOSNED_RoverA">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -253,36 +366,44 @@
          <property name="title">
           <string>Rover A RELPOSNED-data</string>
          </property>
-         <widget class="QPushButton" name="pushButton_ClearRELPOSNEDData_RoverA">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>75</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_AddRELPOSNEDData_RoverA">
-          <property name="geometry">
-           <rect>
-            <x>90</x>
-            <y>20</y>
-            <width>101</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Add from files...</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearRELPOSNEDData_RoverA">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddRELPOSNEDData_RoverA">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_RELPOSNED_RoverB">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -292,36 +413,44 @@
          <property name="title">
           <string>Rover B RELPOSNED-data</string>
          </property>
-         <widget class="QPushButton" name="pushButton_ClearRELPOSNEDData_RoverB">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>75</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_AddRELPOSNEDData_RoverB">
-          <property name="geometry">
-           <rect>
-            <x>90</x>
-            <y>20</y>
-            <width>101</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Add from files...</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearRELPOSNEDData_RoverB">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddRELPOSNEDData_RoverB">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_TagData">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -331,35 +460,472 @@
          <property name="title">
           <string>Tags</string>
          </property>
-         <widget class="QPushButton" name="pushButton_ClearTagData">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>75</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_AddTagData">
-          <property name="geometry">
-           <rect>
-            <x>90</x>
-            <y>20</y>
-            <width>101</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Add from files...</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearTagData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddTagData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_Distances">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Distances</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearDistanceData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddDistanceData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_Sync">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Sync</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="pushButton_ClearSyncData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_AddSyncData">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Add from files...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_GenerateSyncDataBasedOnITOWS">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Generate sync data from rover data using iTOWS</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QWidget" name="tab_TranslateTransform">
+      <attribute name="title">
+       <string>Translate/Transform</string>
+      </attribute>
+      <widget class="QLabel" name="label_CameraPosition_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>291</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Translation in NED-coordinates (before transformation):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_E">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>10</y>
+         <width>91</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-10000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>10000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_D">
+       <property name="geometry">
+        <rect>
+         <x>510</x>
+         <y>10</y>
+         <width>91</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-10000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>10000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+      </widget>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_N">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>10</y>
+         <width>91</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-10000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>10000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_TransformationMatrix">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>601</width>
+         <height>191</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Transformation matrix</string>
+       </property>
+       <widget class="QTableWidget" name="tableWidget_TransformationMatrix">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>581</width>
+          <height>161</height>
+         </rect>
+        </property>
+        <property name="alternatingRowColors">
+         <bool>false</bool>
+        </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
+        <property name="cornerButtonEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="rowCount">
+         <number>4</number>
+        </property>
+        <property name="columnCount">
+         <number>4</number>
+        </property>
+        <attribute name="horizontalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>130</number>
+        </attribute>
+        <attribute name="horizontalHeaderStretchLastSection">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="verticalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <row>
+         <property name="text">
+          <string>X</string>
+         </property>
+        </row>
+        <row>
+         <property name="text">
+          <string>Y</string>
+         </property>
+        </row>
+        <row>
+         <property name="text">
+          <string>Z</string>
+         </property>
+        </row>
+        <row>
+         <property name="text">
+          <string/>
+         </property>
+        </row>
+        <column>
+         <property name="text">
+          <string>N</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>E</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>D</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Tr (XYZ)</string>
+         </property>
+        </column>
+        <item row="0" column="0">
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item row="0" column="1">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="0" column="2">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="0" column="3">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="1" column="0">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="1" column="1">
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item row="1" column="2">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="1" column="3">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="2" column="0">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="2" column="1">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="2" column="2">
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item row="2" column="3">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="3" column="0">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="3" column="1">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="3" column="2">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+        <item row="3" column="3">
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+      <widget class="QPushButton" name="pushButton_LoadTransformation">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>240</y>
+         <width>111</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load from file...</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_SaveTransformation">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>240</y>
+         <width>111</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Save to file...</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_Preset">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>280</y>
+         <width>51</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Preset:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_Presets">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>280</y>
+         <width>431</width>
+         <height>22</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_Preset">
+       <property name="geometry">
+        <rect>
+         <x>510</x>
+         <y>280</y>
+         <width>101</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Use</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="tab_PointCloud">
       <property name="autoFillBackground">
@@ -423,7 +989,7 @@
         <rect>
          <x>270</x>
          <y>10</y>
-         <width>62</width>
+         <width>81</width>
          <height>22</height>
         </rect>
        </property>
@@ -464,7 +1030,7 @@
         <rect>
          <x>270</x>
          <y>40</y>
-         <width>62</width>
+         <width>81</width>
          <height>22</height>
         </rect>
        </property>
@@ -485,7 +1051,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>110</y>
+         <y>170</y>
          <width>75</width>
          <height>23</height>
         </rect>
@@ -501,7 +1067,7 @@
        <property name="geometry">
         <rect>
          <x>90</x>
-         <y>110</y>
+         <y>170</y>
          <width>75</width>
          <height>23</height>
         </rect>
@@ -517,7 +1083,7 @@
        <property name="geometry">
         <rect>
          <x>170</x>
-         <y>110</y>
+         <y>170</y>
          <width>75</width>
          <height>23</height>
         </rect>
@@ -530,7 +1096,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>150</y>
+         <y>210</y>
          <width>601</width>
          <height>23</height>
         </rect>
@@ -542,14 +1108,14 @@
       <widget class="QLabel" name="label_ITOWRange_Replay">
        <property name="geometry">
         <rect>
-         <x>60</x>
+         <x>50</x>
          <y>70</y>
-         <width>201</width>
+         <width>211</width>
          <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>ITOW range for replay:</string>
+        <string>Uptime range for replay, min:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -558,46 +1124,43 @@
       <widget class="QLabel" name="label_ITOWRange_Points_Max_3">
        <property name="geometry">
         <rect>
-         <x>420</x>
-         <y>70</y>
-         <width>41</width>
+         <x>50</x>
+         <y>100</y>
+         <width>211</width>
          <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>max:</string>
+        <string>Uptime range for replay, max:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
-      <widget class="QSpinBox" name="spinBox_Replay_ITOW_Min">
+      <widget class="QLineEdit" name="lineEdit_Uptime_Min">
        <property name="geometry">
         <rect>
          <x>270</x>
          <y>70</y>
-         <width>141</width>
-         <height>22</height>
+         <width>171</width>
+         <height>20</height>
         </rect>
        </property>
-       <property name="maximum">
-        <number>604800000</number>
+       <property name="text">
+        <string>0</string>
        </property>
       </widget>
-      <widget class="QSpinBox" name="spinBox_Replay_ITOW_Max">
+      <widget class="QLineEdit" name="lineEdit_Uptime_Max">
        <property name="geometry">
         <rect>
-         <x>470</x>
-         <y>70</y>
-         <width>141</width>
-         <height>22</height>
+         <x>270</x>
+         <y>100</y>
+         <width>171</width>
+         <height>20</height>
         </rect>
        </property>
-       <property name="maximum">
-        <number>604800000</number>
-       </property>
-       <property name="value">
-        <number>604800000</number>
+       <property name="text">
+        <string>9223372036854775807</string>
        </property>
       </widget>
      </widget>
@@ -614,33 +1177,33 @@
          <x>0</x>
          <y>0</y>
          <width>611</width>
-         <height>61</height>
+         <height>101</height>
         </rect>
        </property>
        <property name="title">
-        <string>Camera settings when stylus is pointing north (coordinate system where positive X = east, Y = down, Z = south)</string>
+        <string>Camera settings when stylus is pointing north in N(orth), E(east), D(own)-coordinate system</string>
        </property>
        <widget class="QLabel" name="label_CameraPosition">
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>20</y>
-          <width>341</width>
+          <y>30</y>
+          <width>371</width>
           <height>20</height>
          </rect>
         </property>
         <property name="text">
-         <string>Camera position in relation to stylus tip. X,Y and Z-axes (m):</string>
+         <string>Camera position in relation to rover A (N, E and D-axes, m):</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_CameraX">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_N">
         <property name="geometry">
          <rect>
-          <x>360</x>
-          <y>20</y>
+          <x>390</x>
+          <y>30</y>
           <width>62</width>
           <height>22</height>
          </rect>
@@ -657,12 +1220,40 @@
         <property name="singleStep">
          <double>0.010000000000000</double>
         </property>
+        <property name="value">
+         <double>-1.000000000000000</double>
+        </property>
        </widget>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_CameraY">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_E">
         <property name="geometry">
          <rect>
-          <x>430</x>
-          <y>20</y>
+          <x>460</x>
+          <y>30</y>
+          <width>62</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>-10000.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_D">
+        <property name="geometry">
+         <rect>
+          <x>530</x>
+          <y>30</y>
           <width>62</width>
           <height>22</height>
          </rect>
@@ -683,11 +1274,36 @@
          <double>-0.050000000000000</double>
         </property>
        </widget>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_CameraZ">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_E">
         <property name="geometry">
          <rect>
-          <x>500</x>
-          <y>20</y>
+          <x>460</x>
+          <y>60</y>
+          <width>62</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>-10000.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_N">
+        <property name="geometry">
+         <rect>
+          <x>390</x>
+          <y>60</y>
           <width>62</width>
           <height>22</height>
          </rect>
@@ -708,12 +1324,53 @@
          <double>1.000000000000000</double>
         </property>
        </widget>
+       <widget class="QLabel" name="label_LookAtPosition">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>60</y>
+          <width>371</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Camera &quot;look at&quot; position in relation to rover A (N, E and D-axes, m):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_D">
+        <property name="geometry">
+         <rect>
+          <x>530</x>
+          <y>60</y>
+          <width>62</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>-10000.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
       </widget>
       <widget class="QLabel" name="label_ITOWRange_Points_Min">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>70</y>
+         <x>20</x>
+         <y>110</y>
          <width>201</width>
          <height>20</height>
         </rect>
@@ -728,8 +1385,8 @@
       <widget class="QSpinBox" name="spinBox_Movie_ITOW_Points_Min">
        <property name="geometry">
         <rect>
-         <x>220</x>
-         <y>70</y>
+         <x>230</x>
+         <y>110</y>
          <width>141</width>
          <height>22</height>
         </rect>
@@ -741,8 +1398,8 @@
       <widget class="QLabel" name="label_ITOWRange_Points_Max">
        <property name="geometry">
         <rect>
-         <x>370</x>
-         <y>70</y>
+         <x>380</x>
+         <y>110</y>
          <width>41</width>
          <height>20</height>
         </rect>
@@ -757,8 +1414,8 @@
       <widget class="QSpinBox" name="spinBox_Movie_ITOW_Points_Max">
        <property name="geometry">
         <rect>
-         <x>420</x>
-         <y>70</y>
+         <x>430</x>
+         <y>110</y>
          <width>141</width>
          <height>22</height>
         </rect>
@@ -773,8 +1430,8 @@
       <widget class="QPushButton" name="pushButton_Movie_GenerateScript">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>160</y>
+         <x>20</x>
+         <y>200</y>
          <width>141</width>
          <height>23</height>
         </rect>
@@ -786,8 +1443,8 @@
       <widget class="QLabel" name="label_Movie_FPS">
        <property name="geometry">
         <rect>
-         <x>50</x>
-         <y>130</y>
+         <x>60</x>
+         <y>170</y>
          <width>161</width>
          <height>16</height>
         </rect>
@@ -802,8 +1459,8 @@
       <widget class="QLabel" name="label_ITOWRange_Points_Max_2">
        <property name="geometry">
         <rect>
-         <x>370</x>
-         <y>100</y>
+         <x>380</x>
+         <y>140</y>
          <width>41</width>
          <height>20</height>
         </rect>
@@ -818,8 +1475,8 @@
       <widget class="QSpinBox" name="spinBox_Movie_ITOW_Script_Max">
        <property name="geometry">
         <rect>
-         <x>420</x>
-         <y>100</y>
+         <x>430</x>
+         <y>140</y>
          <width>141</width>
          <height>22</height>
         </rect>
@@ -834,8 +1491,8 @@
       <widget class="QLabel" name="label_ITOWRange_Points_Min_2">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>100</y>
+         <x>20</x>
+         <y>140</y>
          <width>201</width>
          <height>20</height>
         </rect>
@@ -850,8 +1507,8 @@
       <widget class="QSpinBox" name="spinBox_Movie_ITOW_Script_Min">
        <property name="geometry">
         <rect>
-         <x>220</x>
-         <y>100</y>
+         <x>230</x>
+         <y>140</y>
          <width>141</width>
          <height>22</height>
         </rect>
@@ -863,8 +1520,8 @@
       <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_FPS">
        <property name="geometry">
         <rect>
-         <x>220</x>
-         <y>130</y>
+         <x>230</x>
+         <y>170</y>
          <width>141</width>
          <height>22</height>
         </rect>

@@ -34,6 +34,7 @@
 
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
+#include "Eigen/Geometry"
 
 namespace Ui {
 class PostProcessingForm;
@@ -58,10 +59,28 @@ public:
     class Tag
     {
     public:
+        int iTOW = -1;
         QString sourceFile;     //!< Filename of the source file
-        int sourceFileLine;     //!< Line of the source file where this tag was read from
+        int sourceFileLine = 0; //!< Line of the source file where this tag was read from
         QString ident;          //!< Identifier
         QString text;           //!< Additional textual info (for example a name for a new object)
+    };
+
+    class DistanceItem
+    {
+    public:
+        double distance = 0;
+
+        enum Type
+        {
+            UNKNOWN = 0,
+            CONSTANT,
+            MEASURED,
+        } type = UNKNOWN;
+
+        QString sourceFile;     //!< Filename of the source file
+        int sourceFileLine = 0;     //!< Line of the source file where this tag was read from
+        int frameDuration = 0;
     };
 
     explicit PostProcessingForm(QWidget *parent = nullptr); //!< Constructor
@@ -99,12 +118,34 @@ private slots:
     void on_pushButton_Movie_GenerateScript_clicked();
 
     // Slots for UBloxDataStreamProcessor
-    void ubloxProcessor_nmeaSentenceReceived(const QByteArray& nmeaSentence);
+    void ubloxProcessor_nmeaSentenceReceived(const NMEAMessage& nmeaSentence);
     void ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage);
     void ubloxProcessor_rtcmMessageReceived(const RTCMMessage& rtcmMessage);
     void ubloxProcessor_ubxParseError(const QString& errorString);
     void ubloxProcessor_nmeaParseError(const QString& errorString);
     void ubloxProcessor_unidentifiedDataReceived(const QByteArray& data);
+
+    void on_pushButton_ClearDistanceData_clicked();
+
+    void on_pushButton_AddDistanceData_clicked();
+
+    void on_pushButton_ClearSyncData_clicked();
+
+    void on_pushButton_AddSyncData_clicked();
+
+    void on_pushButton_GenerateSyncDataBasedOnITOWS_clicked();
+
+    void on_pushButton_ClearAllFileData_clicked();
+
+    void on_pushButton_AddAll_clicked();
+
+    void on_pushButton_LoadTransformation_clicked();
+
+    void on_pushButton_SaveTransformation_clicked();
+
+    void on_pushButton_AddAllIncludingTransform_clicked();
+
+    void on_pushButton_Preset_clicked();
 
 private:
     /**
@@ -136,60 +177,85 @@ private:
 
     RELPOSNEDReadingData currentRELPOSNEDReadingData;   // For UBloxDataProcessor callbacks
 
-#if 0
-    class MovieFrame
-    {
-    public:
-        QVector3D roverAPos;
-        QVector3D roverBPos;
-        QVector3D stylusTipAPos;
-        QVector3D cameraPos;
-        QVector3D cameraLookingDirection;
-    };
-#endif
-
     Ui::PostProcessingForm *ui;
 
     QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages_RoverA;    //!< RELPOSNED-data for rover A
     QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages_RoverB;    //!< RELPOSNED-data for rover B
-    QMap<UBXMessage_RELPOSNED::ITOW, Tag> tags;     //!< Tags read from a file
+    QMultiMap<qint64, Tag> tags;     //!< Tags read from a file
 
-    bool fileDialogsInitialized = false;
+    QMap<qint64, DistanceItem> distances;
+
+    class RoverSyncItem
+    {
+    public:
+        typedef enum
+        {
+            MSGTYPE_UNKNOWN = 0,
+            MSGTYPE_UBX_RELPOSNED,
+        } MessageType;
+
+        QString sourceFile;     //!< Filename of the source file
+        int sourceFileLine = 0;     //!< Line of the source file where this tag was read from
+        MessageType messageType = MSGTYPE_UNKNOWN;
+        UBXMessage_RELPOSNED::ITOW iTOW = -1;
+        qint64 frameTime = 0;
+    };
+
+    QMap<qint64, RoverSyncItem> roverSyncData_RoverA;
+    QMap<qint64, RoverSyncItem> roverSyncData_RoverB;
+
+    QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync_RoverA;
+    QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync_RoverB;
+
+    bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;
     QFileDialog fileDialog_Tags;
     QFileDialog fileDialog_PointCloud;
     QFileDialog fileDialog_MovieScript;
-
+    QFileDialog fileDialog_Distances;
+    QFileDialog fileDialog_Sync;
+    QFileDialog fileDialog_All;
+    QFileDialog fileDialog_Transformation_Load;
+    QFileDialog fileDialog_Transformation_Save;
 
     // Replay:
-    UBXMessage_RELPOSNED::ITOW lastReplayedITOW = -1;
+    qint64 firstUptimeToReplay = 0;
+    qint64 lastUptimeToReplay = std::numeric_limits < qint64 >::max();
+    qint64 lastReplayedUptime_ms = 0;
     QElapsedTimer replayTimeElapsedTimer;
     qint64 cumulativeRequestedWaitTime_ns;
     bool stopReplayRequest = false;
 
     void addLogLine(const QString& line);
+    void addRELPOSNEDData_RoverA(const QStringList& fileNames);
+    void addRELPOSNEDData_RoverB(const QStringList& fileNames);
     void addRELPOSNEDFileData(const QStringList& fileNames);
     void handleReplay(bool firstRound);
-    UBXMessage_RELPOSNED::ITOW getNextRoverITOW(const UBXMessage_RELPOSNED::ITOW& iTOW);
-    UBXMessage_RELPOSNED::ITOW getFirstRoverITOW();
-    UBXMessage_RELPOSNED::ITOW getLastRoverITOW();
 
-#if 0
-    // Functions below not needed after all (used "cross-producted" unit vectors instead).
-    // But left here for possible use in the future.
+    void addTagData(const QStringList& fileNames);
+    void addDistanceData(const QStringList& fileNames);
+    void addSyncData(const QStringList& fileNames);
+    void addAllData(const bool includeTransformation);
 
-    // Some helpers to get camera location calculated (need to rotate around arbitrary axis...)
-    // Thanks to https://www.programming-techniques.com/2012/03/3d-rotation-algorithm-about-arbitrary-axis-with-c-c-code.html
-    void multiplyMatrix(const double inputMatrix[4][1], const double rotationMatrix[4][4], double (&outputMatrix)[4][1]);
-    void setUpRotationMatrix(double angle, double u, double v, double w, double  (&rotationMatrix)[4][4]);
-#endif
+    void loadTransformation(const QString fileName);
+
+    QStringList getAppendedFileNames(const QStringList& fileNames, const QString appendix);
+
+
+    qint64 getNextUptime(const qint64 uptime);
+    qint64 getFirstUptime();
+    qint64 getLastUptime();
+
+    bool generateTransformationMatrix(Eigen::Matrix4d& outputMatrix);
 
 signals:
     void replayData_RoverA(const UBXMessage&);  //!< New data for rover A
     void replayData_RoverB(const UBXMessage&);  //!< New data for rover B
 
     // QT's signals and slots need to be defined exactly the same way, therefore PostProcessingForm::Tag
-    void replayData_Tag(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag&); //!< New tag
+    void replayData_Tag(const qint64, const PostProcessingForm::Tag&); //!< New tag
+
+    void replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&); //!< New distance
 };
 
 #endif // POSTPROCESSFORM_H

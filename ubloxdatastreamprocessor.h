@@ -89,8 +89,8 @@ public:
     unsigned int getNumOfUnprocessedBytes(void);    //!< @returns number of unprocessed bytes
 
 signals:
-    void nmeaSentenceReceived(const QByteArray&);   //!< Complete NMEA-sentence has been interpreted from input stream
-    void ubxMessageReceived(const UBXMessage&, qint64 startTime, qint64 endTime);     //!< Complete and formally valid UBX-message has been interpreted from input stream
+    void nmeaSentenceReceived(const NMEAMessage&);   //!< Complete NMEA-sentence has been interpreted from input stream
+    void ubxMessageReceived(const UBXMessage&);     //!< Complete and formally valid UBX-message has been interpreted from input stream
     void rtcmMessageReceived(const RTCMMessage&);   //!< Complete RTCM-message has been interpreted from input stream
     void ubxParseError(const QString&);             //!< Parsing of UBX-message failed. String is descriptive string about the reason.
     void nmeaParseError(const QString&);            //!< Parsing of NMEA-message failed. String is descriptive string about the reason.

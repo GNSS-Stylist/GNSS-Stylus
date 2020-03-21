@@ -36,6 +36,7 @@
 #include "ubloxdatastreamprocessor.h"
 #include "gnssmessage.h"
 #include "postprocessform.h"
+#include "laserrangefinder20hzv2serialthread.h"
 
 namespace Ui {
 class EssentialsForm;
@@ -49,6 +50,22 @@ class EssentialsForm : public QWidget
     Q_OBJECT
 
 public:
+    class DistanceItem
+    {
+    public:
+        double distance = 0;
+
+        enum Type
+        {
+            UNKNOWN = 0,
+            CONSTANT,
+            MEASURED,
+        } type = UNKNOWN;
+
+        qint64 frameStartTime = 0;
+        qint64 frameEndTime = 0;
+    };
+
     explicit EssentialsForm(QWidget *parent = nullptr); //!< Constructor
     ~EssentialsForm();
 
@@ -73,24 +90,32 @@ public:
     void connectPostProcessingSlots(PostProcessingForm* postProcessingForm); //!< Connects signals from PostProcessingForm
     void disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm); //!< Disconnects signals from PostProcessingForm
 
+    void connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread); //!< Connects signals from "Laser range finder 20 Hz V2"-thread
+    void disconnectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread); //!< Disconnects signals from "Laser range finder 20 Hz V2"-thread
+
+public slots:
+    void on_distanceReceived(const EssentialsForm::DistanceItem& item);
+    void on_measuredDistanceReceived(const double& distance, qint64 frameStartTime, qint64 frameEndTime);
+
 private slots:
     void on_pushButton_StartLogging_clicked();
     void on_pushButton_StopLogging_clicked();
 
     void dataReceived_Base(const QByteArray& bytes);
-    void nmeaSentenceReceived_Base(const QByteArray& nmeaSentence);
+    void nmeaSentenceReceived_Base(const NMEAMessage& nmeaSentence);
     void ubxMessageReceived_Base(const UBXMessage& ubxMessage);
     void rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage);
 
     void serialDataReceived_RoverA(const QByteArray& bytes);
-    void nmeaSentenceReceived_RoverA(const QByteArray& nmeaSentence);
+    void nmeaSentenceReceived_RoverA(const NMEAMessage& nmeaSentence);
     void ubxMessageReceived_RoverA(const UBXMessage& ubxMessage);
 
     void serialDataReceived_RoverB(const QByteArray& bytes);
-    void nmeaSentenceReceived_RoverB(const QByteArray& nmeaSentence);
+    void nmeaSentenceReceived_RoverB(const NMEAMessage& nmeaSentence);
     void ubxMessageReceived_RoverB(const UBXMessage& ubxMessage);
 
-    void postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag& tag);
+    void postProcessingTagReceived(const qint64 uptime, const PostProcessingForm::Tag& tag);
+    void postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&);
 
     void on_pushButton_AddTag_clicked();
 
@@ -100,18 +125,27 @@ private slots:
 
     void on_spinBox_FluctuationHistoryLength_valueChanged(int);
 
+    void on_horizontalScrollBar_Volume_MouseButtonTagging_valueChanged(int value);
+
+    void on_horizontalScrollBar_Volume_DistanceReceived_valueChanged(int value);
+
+    void on_checkBox_PlaySound_stateChanged(int arg1);
+
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
 
 private:
     /**
-     * @brief Small helper class to store coordinates, accuracies and ITOW
+     * @brief Small helper class to store coordinates, accuracies and ITOW/uptime
      */
     class NEDPoint
     {
         public:
 
-        UBXMessage_RELPOSNED::ITOW iTOW = -1;   //!< GNSS Time Of Week
+        bool valid = false;
+
+        UBXMessage_RELPOSNED::ITOW iTOW = -1;   //!< GNSS Time Of Week (-1 if not applicable)
+        qint64 uptime = 0;                      //!< Uptime (QElapsedTimer->msecsSinceReference())
 
         double n = 0;       //!< North (m)
         double e = 0;       //!< East (m)
@@ -123,6 +157,8 @@ private:
 
         NEDPoint(const UBXMessage_RELPOSNED relposnedMessage);
         NEDPoint() = default;
+
+        double getDistanceTo(const NEDPoint& other);
     };
 
     Ui::EssentialsForm *ui;
@@ -144,31 +180,45 @@ private:
 
     QFile logFile_Tags;             //!< Log file for tags
 
+    QFile logFile_Distances;        //!< Log file for distance measurements
+    QFile logFile_Distances_Unfiltered;        //!< Log file for distance measurements (unfiltered)
+    QFile logFile_Sync;             //!< Log file for syncing data (RELPOSNED-messages)
+
     bool treeItemsCreated = false;  //!< Textual items (name/value pairs) created?
     bool loggingActive = 0;         //!< All log files open and logging active?
 
     UBXMessage_RELPOSNED::ITOW lastMatchingRELPOSNEDiTOW = -1;  //!< Last matching iTOW for both rovers (-1 if no matching iTOW found)
+    QElapsedTimer lastMatchingRELPOSNEDiTOWTimer;               //!< Started every time a matching iTOW is found
     UBXMessage_RELPOSNED::ITOW  lastTaggedRELPOSNEDiTOW = -1;   //!< To prevent multiple tags on same iTOW.
 
     QSoundEffect soundEffect_LMB;       //!< Sound effect for mouse button tagging (Left Mouse Button)
     QSoundEffect soundEffect_RMB;       //!< Sound effect for mouse button tagging (Right Mouse Button)
     QSoundEffect soundEffect_MMB;       //!< Sound effect for mouse button tagging (Middle Mouse Button/"Undo")
-    QSoundEffect soundEffect_Error;     //!< Sound effect for mouse button tagging (Error)
+    QSoundEffect soundEffect_MBError;   //!< Sound effect for mouse button tagging (Error)
+    QSoundEffect soundEffect_Distance;  //!< Sound effect for new distance
 
     QQueue<UBXMessage_RELPOSNED> messageQueue_RELPOSNED_RoverA; //!< Message queue for rover A RELPOSNED-messages (used to sync rovers)
     QQueue<UBXMessage_RELPOSNED> messageQueue_RELPOSNED_RoverB; //!< Message queue for rover B RELPOSNED-messages (used to sync rovers)
+
+    UBXMessage_RELPOSNED lastMatchingRoverARELPOSNED;   //!< Last Rover A RELPOSNED-message with a matching Rover B iTOW
+    UBXMessage_RELPOSNED lastMatchingRoverBRELPOSNED;   //!< Last Rover B RELPOSNED-message with a matching Rover A iTOW
 
     const int maxPositionHistoryLength = 6000;                  //!< Maximum number of position history items to keep (used to calculate fluctuations)
 
     QList<UBXMessage_RELPOSNED> positionHistory_RoverA;         //!< Used to calculate fluctuation of rover A's position
     QList<UBXMessage_RELPOSNED> positionHistory_RoverB;         //!< Used to calculate fluctuation of rover A's position
     QList<NEDPoint> positionHistory_StylusTip;                  //!< Used to calculate fluctuation of stylus tip's position
+    NEDPoint lastStylusTipPosition;
 
     double distanceBetweenFarthestCoordinates_RoverA = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (rover A)
     double distanceBetweenFarthestCoordinates_RoverB = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (rover B)
     double distanceBetweenFarthestCoordinates_StylusTip = nan("");  //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (stylus tip)
 
     double distanceBetweenRovers = 0;   //!< Euclidean distance between rovers (m)
+
+    NEDPoint stylusTipPosition_LMB;  //!< Stylus tip position when the Left Mouse Button was pressed last time
+    NEDPoint stylusTipPosition_RMB;  //!< Stylus tip position when the Right Mouse Button was pressed last time
+    NEDPoint stylusTipPosition_MMB;  //!< Stylus tip position when the Middle Mouse Button was pressed last time
 
     QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_RoverA;
     QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_RoverB;
@@ -177,10 +227,8 @@ private:
     QTreeWidgetItem *treeItem_LastTag;
 
     QTreeWidgetItem *treeItem_StylusTipNED;
-    QTreeWidgetItem *treeItem_StylusTipXYZ;
 
     QTreeWidgetItem *treeItem_StylusTipAccNED;
-    QTreeWidgetItem *treeItem_StylusTipAccXYZ;
 
     QTreeWidgetItem *treeItem_RoverAITOW;
     QTreeWidgetItem *treeItem_RoverBITOW;
@@ -191,21 +239,41 @@ private:
     QTreeWidgetItem *treeItem_RoverADiffSoln;
     QTreeWidgetItem *treeItem_RoverBDiffSoln;
 
+    QTreeWidgetItem *treeItem_LMBNED;
+    QTreeWidgetItem *treeItem_RMBNED;
+
+    QTreeWidgetItem *treeItem_Distance_TipToLMB;
+    QTreeWidgetItem *treeItem_Distance_TipToRMB;
+    QTreeWidgetItem *treeItem_Distance_LMBToRMB;
+    QTreeWidgetItem *treeItem_Distance_RoverAToTip;
 
     void handleRELPOSNEDQueues(void);   //!< Handles also syncing of rover RELPOSNED-messages
     void closeAllLogFiles(void);
     double calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& positionHistory, int samples); //!< Calculates distance between min/max coordinate values for all NED-axes of last n samples
     double calcDistanceBetweenFarthestCoordinates(const QList<UBXMessage_RELPOSNED>& positionHistory, int samples); //!< Calculates distance between min/max coordinate values for all NED-axes of last n samples
     void updateTreeItems(void);
-    void addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect);  //!< Adds mouse button tag to log file and plays soundEffect if successful
+    void addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect, qint64 uptime = -1);  //!< Adds mouse button tag to log file and plays soundEffect if successful
+    void addTextTag(qint64 uptime = -1);
+    void addDistanceLogItem(const DistanceItem& item);    //!< Adds distance to log file
+    void addDistanceLogItem_Unfiltered(const DistanceItem& item);    //!< Adds distance to log file (unfiltered)
+    void updateTipData(void);   //!< Updates tip-related fields
 
     // Settings for video frame writing (ugly I know, but this is just to make video "recording" possible)
-    QString video_FileNameBeginning = "";   // Leave empty for no video frame writing
-//    QString video_FileNameBeginning = "D:\\GNSSStylusData\\Videos\\EssentialFrames\\Frame_";   // Leave empty for no video frame writing
+    bool video_WriteFrames = false;
+    QString video_FileNameBeginning = "D:\\GNSSStylusData\\Videos\\EssentialFrames\\Video";
     int video_FrameCounter = 0;
-    UBXMessage_RELPOSNED::ITOW video_LastWrittenFrameITOW = -1;
     QPixmap* video_FrameBuffer = nullptr;
-    void handleVideoFrameRecording(void);
+    void handleVideoFrameRecording(qint64 uptime);
+    qint64 video_LastWrittenFrameUptime = 0;
+    int video_ClipIndex = 0;
+    double video_FPS = 30;
+    qint64 video_ClipBaseTime = 0;
+    double video_ClipDoubleTimer = 0;
+
+    DistanceItem lastDistanceItemIncludingInvalid;          //!< Last distance received
+    DistanceItem lastValidDistanceItem;                     //!< Last valid distance received
+    QElapsedTimer lastValidDistanceItemTimer;               //!< Started when valid distance received
+    QElapsedTimer lastDistanceItemTimerIncludingInvalid;    //!< Started when any distance received
 };
 
 #endif // ESSENTIALSFORM_H

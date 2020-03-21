@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Essentials</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,2">
+  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,3">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_Left">
      <item>
@@ -226,131 +226,220 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,2,1">
-     <item>
-      <layout class="QGridLayout" name="gridLayout_3" columnstretch="2,1">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_StylusTipDistanceFromRoverA">
-         <property name="text">
-          <string>Stylus tip distance from RoverA (m):</string>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Tab 1</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,1">
+         <property name="spacing">
+          <number>6</number>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_StylusTipDistanceFromRoverA">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-10.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.900000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_FluctuationHistoryLength">
-         <property name="text">
-          <string>Fluctuation history length (samples):</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QSpinBox" name="spinBox_FluctuationHistoryLength">
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>6000</number>
-         </property>
-         <property name="value">
-          <number>10</number>
-         </property>
-        </widget>
+         <item>
+          <widget class="QTreeWidget" name="treeWidget">
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="itemsExpandable">
+            <bool>false</bool>
+           </property>
+           <property name="headerHidden">
+            <bool>false</bool>
+           </property>
+           <property name="expandsOnDoubleClick">
+            <bool>false</bool>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <attribute name="headerDefaultSectionSize">
+            <number>200</number>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string notr="true">Value</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_MouseButtonTag">
+           <property name="title">
+            <string>Mouse button tagging</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="RightClickPushButton" name="pushButton_MouseTag">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>20</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Click to tag 
+LMB, RMB or MMB</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QTreeWidget" name="treeWidget">
-       <property name="autoFillBackground">
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Tab 2</string>
+      </attribute>
+      <widget class="QCheckBox" name="checkBox_PlaySound">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>110</y>
+         <width>328</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Play sound effects</string>
+       </property>
+       <property name="checked">
         <bool>false</bool>
        </property>
-       <property name="itemsExpandable">
-        <bool>false</bool>
-       </property>
-       <property name="headerHidden">
-        <bool>false</bool>
-       </property>
-       <property name="expandsOnDoubleClick">
-        <bool>false</bool>
-       </property>
-       <property name="columnCount">
-        <number>2</number>
-       </property>
-       <attribute name="headerDefaultSectionSize">
-        <number>200</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string notr="true">Name</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string notr="true">Value</string>
-        </property>
-       </column>
       </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="groupBox_MouseButtonTag">
-       <property name="title">
-        <string>Mouse button tagging</string>
+      <widget class="QScrollBar" name="horizontalScrollBar_Volume_MouseButtonTagging">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>40</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="1" column="0">
-         <widget class="RightClickPushButton" name="pushButton_MouseTag">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>20</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Click to tag 
-LMB, RMB or MMB</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QCheckBox" name="checkBox_MouseButtonTaggingSound">
-          <property name="text">
-           <string>Play sound effects</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
       </widget>
-     </item>
-    </layout>
+      <widget class="QLabel" name="label_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>47</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="horizontalScrollBar_Volume_DistanceReceived">
+       <property name="geometry">
+        <rect>
+         <x>70</x>
+         <y>70</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_FluctuationHistoryLength">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>175</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Fluctuation history length (samples):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="spinBox_FluctuationHistoryLength">
+       <property name="geometry">
+        <rect>
+         <x>191</x>
+         <y>10</y>
+         <width>51</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>6000</number>
+       </property>
+       <property name="value">
+        <number>10</number>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>47</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>

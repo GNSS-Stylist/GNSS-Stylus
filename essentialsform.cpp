@@ -44,7 +44,6 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
 
     ui->lineEdit_LoggingDirectory->setText(settings.value("LoggingDirectory", "").toString());
     ui->lineEdit_LoggingFileNamePrefix->setText(settings.value("LoggingFileNamePrefix", "ublox").toString());
-    ui->doubleSpinBox_StylusTipDistanceFromRoverA->setValue(settings.value("StylusTipDistanceFromRoverA").toDouble());
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
 
     ui->comboBox_TagIdent->addItem("Suspend");
@@ -58,7 +57,14 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     soundEffect_LMB.setSource(QUrl::fromLocalFile(soundDir + "LeftMouseButton.wav"));
     soundEffect_RMB.setSource(QUrl::fromLocalFile(soundDir + "RightMouseButton.wav"));
     soundEffect_MMB.setSource(QUrl::fromLocalFile(soundDir + "MiddleMouseButton.wav"));
-    soundEffect_Error.setSource(QUrl::fromLocalFile(soundDir + "ErrorBeep.wav"));
+    soundEffect_MBError.setSource(QUrl::fromLocalFile(soundDir + "ErrorBeep.wav"));
+    soundEffect_Distance.setSource(QUrl::fromLocalFile(soundDir + "DistanceClick.wav"));
+
+    soundEffect_LMB.setMuted(true);
+    soundEffect_RMB.setMuted(true);
+    soundEffect_MMB.setMuted(true);
+    soundEffect_MBError.setMuted(true);
+    soundEffect_Distance.setMuted(true);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -66,7 +72,6 @@ EssentialsForm::~EssentialsForm()
     QSettings settings;
     settings.setValue("LoggingDirectory", ui->lineEdit_LoggingDirectory->text());
     settings.setValue("LoggingFileNamePrefix", ui->lineEdit_LoggingFileNamePrefix->text());
-    settings.setValue("StylusTipDistanceFromRoverA", ui->doubleSpinBox_StylusTipDistanceFromRoverA->value());
     settings.setValue("FluctuationHistoryLength", ui->spinBox_FluctuationHistoryLength->value());
 
     delete ui;
@@ -87,6 +92,9 @@ void EssentialsForm::closeAllLogFiles(void)
     logFile_RoverB_UBX.close();
     logFile_RoverB_RELPOSNED.close();
     logFile_Tags.close();
+    logFile_Distances.close();
+    logFile_Distances_Unfiltered.close();
+    logFile_Sync.close();
 }
 
 void EssentialsForm::on_pushButton_StartLogging_clicked()
@@ -121,6 +129,10 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
 
     logFile_Tags.setFileName(fileNameBeginning + "_tags.tags");
 
+    logFile_Distances.setFileName(fileNameBeginning + ".distances");
+    logFile_Distances_Unfiltered.setFileName(fileNameBeginning + "_Unfiltered.distances");
+    logFile_Sync.setFileName(fileNameBeginning + ".sync");
+
     QIODevice::OpenMode openMode = QIODevice::WriteOnly;
 
     if (logFile_Base_Raw.exists() ||
@@ -135,7 +147,10 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
             logFile_RoverB_NMEA.exists() ||
             logFile_RoverB_UBX.exists() ||
             logFile_RoverB_RELPOSNED.exists() ||
-            logFile_Tags.exists())
+            logFile_Tags.exists() ||
+            logFile_Distances.exists() ||
+            logFile_Distances_Unfiltered.exists() ||
+            logFile_Sync.exists())
     {
         QMessageBox msgBox;
         msgBox.setText("One or more of the files already exists.");
@@ -164,10 +179,28 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     }
 
     bool addTagFileHeader = true;
+    bool addDistanceFileHeader = true;
+    bool addDistanceFileHeader_Unfiltered = true;
+    bool addSyncFileHeader = true;
 
     if (logFile_Tags.exists() && (openMode == QIODevice::Append))
     {
         addTagFileHeader = false;
+    }
+
+    if (logFile_Distances.exists() && (openMode == QIODevice::Append))
+    {
+        addDistanceFileHeader = false;
+    }
+
+    if (logFile_Distances_Unfiltered.exists() && (openMode == QIODevice::Append))
+    {
+        addDistanceFileHeader_Unfiltered = false;
+    }
+
+    if (logFile_Sync.exists() && (openMode == QIODevice::Append))
+    {
+        addSyncFileHeader = false;
     }
 
     logFile_Base_Raw.open(openMode);
@@ -183,6 +216,9 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     logFile_RoverB_UBX.open(openMode);
     logFile_RoverB_RELPOSNED.open(openMode);
     logFile_Tags.open(openMode| QIODevice::Text);
+    logFile_Distances.open(openMode| QIODevice::Text);
+    logFile_Distances_Unfiltered.open(openMode| QIODevice::Text);
+    logFile_Sync.open(openMode| QIODevice::Text);
 
     if (!logFile_Base_Raw.isOpen() ||
             !logFile_Base_NMEA.isOpen() ||
@@ -196,7 +232,10 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
             !logFile_RoverB_NMEA.isOpen() ||
             !logFile_RoverB_UBX.isOpen() ||
             !logFile_RoverB_RELPOSNED.isOpen() ||
-            !logFile_Tags.isOpen())
+            !logFile_Tags.isOpen() ||
+            !logFile_Distances.isOpen() ||
+            !logFile_Distances_Unfiltered.isOpen() ||
+            !logFile_Sync.isOpen())
     {
         QMessageBox msgBox;
         msgBox.setText("One or more of the files can't be opened.");
@@ -211,7 +250,40 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     {
         QTextStream textStream(&logFile_Tags);
 
-        textStream << "Time\tiTOW\tTag\tText\n";
+        textStream << "Time\tiTOW\tTag\tText\tUptime\n";
+    }
+
+    if (addDistanceFileHeader)
+    {
+        QTextStream textStream(&logFile_Distances);
+
+        textStream << "Time\tDistance\tType\tUptime(Start)\tFrame time\n";
+    }
+
+    if (addDistanceFileHeader_Unfiltered)
+    {
+        QTextStream textStream(&logFile_Distances_Unfiltered);
+
+        textStream << "Time\tDistance\tType\tUptime(Start)\tFrame time\n";
+    }
+
+    if (lastValidDistanceItem.type != DistanceItem::Type::UNKNOWN)
+    {
+        // Log "fallback" item to the start of the file
+
+        DistanceItem dItem = lastValidDistanceItem;
+
+        dItem.frameStartTime = 0;
+        dItem.frameEndTime = 0;
+
+        addDistanceLogItem(dItem);
+    }
+
+    if (addSyncFileHeader)
+    {
+        QTextStream textStream(&logFile_Sync);
+
+        textStream << "Time\tSource\tType\tiTOW\tUptime(Start)\tFrame time\n";
     }
 
     loggingActive = true;
@@ -245,11 +317,11 @@ void EssentialsForm::dataReceived_Base(const QByteArray& bytes)
     }
 }
 
-void EssentialsForm::nmeaSentenceReceived_Base(const QByteArray& nmeaSentence)
+void EssentialsForm::nmeaSentenceReceived_Base(const NMEAMessage& nmeaMessage)
 {
     if (loggingActive)
     {
-        logFile_Base_NMEA.write(nmeaSentence);
+        logFile_Base_NMEA.write(nmeaMessage.rawMessage);
     }
 }
 
@@ -277,11 +349,11 @@ void EssentialsForm::serialDataReceived_RoverA(const QByteArray& bytes)
     }
 }
 
-void EssentialsForm::nmeaSentenceReceived_RoverA(const QByteArray& nmeaSentence)
+void EssentialsForm::nmeaSentenceReceived_RoverA(const NMEAMessage& nmeaMessage)
 {
     if (loggingActive)
     {
-        logFile_RoverA_NMEA.write(nmeaSentence);
+        logFile_RoverA_NMEA.write(nmeaMessage.rawMessage);
     }
 }
 
@@ -302,11 +374,14 @@ void EssentialsForm::ubxMessageReceived_RoverA(const UBXMessage& ubxMessage)
         distanceBetweenFarthestCoordinates_RoverA = calcDistanceBetweenFarthestCoordinates(positionHistory_RoverA, ui->spinBox_FluctuationHistoryLength->value());
 
         messageQueue_RELPOSNED_RoverA.enqueue(relposned);
+
+        handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
+
         handleRELPOSNEDQueues();
 
         updateTreeItems();
 
-        handleVideoFrameRecording();
+//        handleVideoFrameRecording(ubxMessage.messageEndTime);
     }
 
     if (loggingActive)
@@ -316,6 +391,13 @@ void EssentialsForm::ubxMessageReceived_RoverA(const UBXMessage& ubxMessage)
         if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
         {
             logFile_RoverA_RELPOSNED.write(ubxMessage.rawMessage);
+
+            QTextStream textStream(&logFile_Sync);
+
+            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
+                          "Rover A\tRELPOSNED\t" << QString::number(relposned.iTOW) <<
+                          "\t" << QString::number(ubxMessage.messageStartTime) << "\t" <<
+                          QString::number(ubxMessage.messageEndTime - ubxMessage.messageStartTime) << "\n";
         }
     }
 }
@@ -328,11 +410,11 @@ void EssentialsForm::serialDataReceived_RoverB(const QByteArray& bytes)
     }
 }
 
-void EssentialsForm::nmeaSentenceReceived_RoverB(const QByteArray& nmeaSentence)
+void EssentialsForm::nmeaSentenceReceived_RoverB(const NMEAMessage& nmeaMessage)
 {
     if (loggingActive)
     {
-        logFile_RoverB_NMEA.write(nmeaSentence);
+        logFile_RoverB_NMEA.write(nmeaMessage.rawMessage);
     }
 }
 
@@ -354,11 +436,14 @@ void EssentialsForm::ubxMessageReceived_RoverB(const UBXMessage& ubxMessage)
         distanceBetweenFarthestCoordinates_RoverB = calcDistanceBetweenFarthestCoordinates(positionHistory_RoverB, ui->spinBox_FluctuationHistoryLength->value());
 
         messageQueue_RELPOSNED_RoverB.enqueue(relposned);
+
+        handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
+
         handleRELPOSNEDQueues();
 
         updateTreeItems();
 
-        handleVideoFrameRecording();
+//        handleVideoFrameRecording(ubxMessage.messageEndTime);
     }
 
     if (loggingActive)
@@ -368,33 +453,73 @@ void EssentialsForm::ubxMessageReceived_RoverB(const UBXMessage& ubxMessage)
         if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
         {
             logFile_RoverB_RELPOSNED.write(ubxMessage.rawMessage);
+
+            QTextStream textStream(&logFile_Sync);
+
+            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
+                          "Rover B\tRELPOSNED\t" << QString::number(relposned.iTOW) <<
+                          "\t" << QString::number(ubxMessage.messageStartTime) << "\t" <<
+                          QString::number(ubxMessage.messageEndTime - ubxMessage.messageStartTime) << "\n";
         }
     }
 }
 
-void EssentialsForm::postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag& tag)
+void EssentialsForm::postProcessingTagReceived(const qint64 uptime, const PostProcessingForm::Tag& tag)
 {
+    handleVideoFrameRecording(uptime - 1);
+
     if (tag.ident == "LMB")
     {
-        on_pushButton_MouseTag_clicked();
+        addMouseButtonTag("LMB", soundEffect_LMB, uptime);
+        stylusTipPosition_LMB = lastStylusTipPosition;
     }
     else if (tag.ident == "MMB")
     {
-        on_pushButton_MouseTag_middleClicked();
+        addMouseButtonTag("MMB", soundEffect_MMB, uptime);
+        stylusTipPosition_MMB = lastStylusTipPosition;
     }
     else if (tag.ident == "RMB")
     {
-        on_pushButton_MouseTag_rightClicked();
+        addMouseButtonTag("RMB", soundEffect_RMB, uptime);
+        stylusTipPosition_RMB = lastStylusTipPosition;
     }
     else
     {
         ui->comboBox_TagIdent->setEditText(tag.ident);
         ui->lineEdit_TagText->setText(tag.text);
-
-        on_pushButton_AddTag_clicked();
+        addTextTag(uptime);
     }
+//    handleVideoFrameRecording(uptime);
 }
 
+void EssentialsForm::postProcessingDistanceReceived(const qint64 uptime, const PostProcessingForm::DistanceItem& ppDistanceItem)
+{
+    handleVideoFrameRecording(uptime - 1);
+
+    DistanceItem localdistanceItem;
+
+    localdistanceItem.distance = ppDistanceItem.distance;
+
+    switch (ppDistanceItem.type)
+    {
+    case PostProcessingForm::DistanceItem::CONSTANT:
+        localdistanceItem.type = DistanceItem::CONSTANT;
+        break;
+    case PostProcessingForm::DistanceItem::MEASURED:
+        localdistanceItem.type = DistanceItem::MEASURED;
+        break;
+    default:
+        localdistanceItem.type = DistanceItem::UNKNOWN;
+        break;
+    }
+
+    localdistanceItem.frameStartTime = uptime;
+    localdistanceItem.frameEndTime = uptime + ppDistanceItem.frameDuration;
+
+    on_distanceReceived(localdistanceItem);
+
+//    handleVideoFrameRecording(uptime);
+}
 
 void EssentialsForm::connectSerialThreadSlots_Base(SerialThread* serThread)
 {
@@ -422,10 +547,10 @@ void EssentialsForm::disconnectNTRIPThreadSlots_Base(NTRIPThread* ntripThread)
 
 void EssentialsForm::connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_Base(const QByteArray&)));
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_Base(const NMEAMessage&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
 
     QObject::connect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
@@ -434,10 +559,10 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamPr
 
 void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_Base(const QByteArray&)));
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_Base(const NMEAMessage&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
 
     QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
@@ -458,19 +583,19 @@ void EssentialsForm::disconnectSerialThreadSlots_RoverA(SerialThread* serThread)
 
 void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_RoverA(const QByteArray&)));
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_RoverA(const NMEAMessage&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
 }
 
 void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_RoverA(const QByteArray&)));
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_RoverA(const NMEAMessage&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
 }
 
@@ -488,19 +613,19 @@ void EssentialsForm::disconnectSerialThreadSlots_RoverB(SerialThread* serThread)
 
 void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_RoverB(const QByteArray&)));
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_RoverB(const NMEAMessage&)));
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 }
 
 void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const QByteArray&)),
-                     this, SLOT(nmeaSentenceReceived_RoverB(const QByteArray&)));
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
+                     this, SLOT(nmeaSentenceReceived_RoverB(const NMEAMessage&)));
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&, qint64, qint64)),
+    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 }
 
@@ -512,8 +637,11 @@ void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessi
     QObject::connect(postProcessingForm, SIGNAL(replayData_RoverB(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Tag(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag&)),
-                     this, SLOT(postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag&)));
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
+                     this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
+
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
+                     this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
 }
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
@@ -524,109 +652,117 @@ void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProce
     QObject::disconnect(postProcessingForm, SIGNAL(replayData_RoverB(const UBXMessage&)),
                      this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
 
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Tag(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag&)),
-                     this, SLOT(postProcessingTagReceived(const UBXMessage_RELPOSNED::ITOW&, const PostProcessingForm::Tag&)));
+    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
+                     this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
+
+    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
+                     this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
 }
 
-void EssentialsForm::on_pushButton_AddTag_clicked()
+void EssentialsForm::connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
 {
+    QObject::connect(distanceThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
+                     this, SLOT(on_measuredDistanceReceived(const double&, qint64, qint64)));
+}
+
+void EssentialsForm::disconnectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
+{
+    QObject::disconnect(distanceThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
+                     this, SLOT(on_measuredDistanceReceived(const double&, qint64, qint64)));
+}
+
+void EssentialsForm::addTextTag(qint64 uptime)
+{
+    handleVideoFrameRecording(uptime - 1);
     if (loggingActive)
     {
-        if (lastMatchingRELPOSNEDiTOW != lastTaggedRELPOSNEDiTOW)
+        QTextStream textStream(&logFile_Tags);
+
+        if (uptime < 0)
         {
-            // Only allow single tag for any iTOW
-            // TODO: This could be removed if post-processing is modified to allow multiple tags with the same iTOW (QMap -> QMultiMap there?)
-
-            QTextStream textStream(&logFile_Tags);
-
-            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" << QString::number(lastMatchingRELPOSNEDiTOW) << "\t"
-                       << ui->comboBox_TagIdent->lineEdit()->text() << "\t" << ui->lineEdit_TagText->text() << "\n";
-
-            treeItem_LastTag->setText(1, ui->comboBox_TagIdent->lineEdit()->text() +  "; " + ui->lineEdit_TagText->text());
-
-            lastTaggedRELPOSNEDiTOW = lastMatchingRELPOSNEDiTOW;
+            QElapsedTimer uptimeTimer;
+            uptimeTimer.start();
+            uptime = uptimeTimer.msecsSinceReference();
         }
-        else
-        {
-            QMessageBox msgBox;
-            msgBox.setText("Tag not added. Only one tag allowed for any iTOW.");
 
-            msgBox.exec();
-        }
+        textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" << QString::number(lastMatchingRELPOSNEDiTOW) << "\t"
+                   << ui->comboBox_TagIdent->lineEdit()->text() << "\t" << ui->lineEdit_TagText->text() << "\t"
+                   << QString::number(uptime) << "\n";
+
+        treeItem_LastTag->setText(1, ui->comboBox_TagIdent->lineEdit()->text() +  "; " + ui->lineEdit_TagText->text());
+
+        lastTaggedRELPOSNEDiTOW = lastMatchingRELPOSNEDiTOW;
     }
     else
     {
         treeItem_LastTag->setText(1, "Logging not active!");
     }
+//    handleVideoFrameRecording(uptime);
+}
+
+void EssentialsForm::on_pushButton_AddTag_clicked()
+{
+    addTextTag();
 }
 
 void EssentialsForm::on_pushButton_MouseTag_clicked()
 {
     addMouseButtonTag("LMB", soundEffect_LMB);
+    stylusTipPosition_LMB = lastStylusTipPosition;
 }
 
 void EssentialsForm::on_pushButton_MouseTag_rightClicked()
 {
     addMouseButtonTag("RMB", soundEffect_RMB);
+    stylusTipPosition_RMB = lastStylusTipPosition;
 }
 
 void EssentialsForm::on_pushButton_MouseTag_middleClicked()
 {
     addMouseButtonTag("MMB", soundEffect_MMB);
+    stylusTipPosition_MMB = lastStylusTipPosition;
 }
 
-void EssentialsForm::addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect)
+void EssentialsForm::addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect, qint64 uptime)
 {
+    handleVideoFrameRecording(uptime - 1);
     if (loggingActive)
     {
         treeItem_LastTag->setText(1, tagtext);
 
-        if (lastMatchingRELPOSNEDiTOW != lastTaggedRELPOSNEDiTOW)
+        QTextStream textStream(&logFile_Tags);
+
+        if (uptime < 0)
         {
-            // Only allow single tag for any iTOW
-            // TODO: This could be removed if post-processing is modified to allow multiple tags with the same iTOW (QMap -> QMultiMap there?)
-
-            QTextStream textStream(&logFile_Tags);
-
-            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" << QString::number(lastMatchingRELPOSNEDiTOW) << "\t"
-                       << tagtext << "\t" << "" << "\n";
-
-            if (ui->checkBox_MouseButtonTaggingSound->isChecked())
-            {
-                soundEffect.play();
-            }
-
-            ui->pushButton_MouseTag->setText("Tagged " + tagtext);
-            lastTaggedRELPOSNEDiTOW = lastMatchingRELPOSNEDiTOW;
+            QElapsedTimer uptimeTimer;
+            uptimeTimer.start();
+            uptime = uptimeTimer.msecsSinceReference();
         }
-        else
-        {
-            if (ui->checkBox_MouseButtonTaggingSound->isChecked())
-            {
-                soundEffect_Error.play();
-            }
-            ui->pushButton_MouseTag->setText("Same ITOW!");
-        }
+
+        textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" << QString::number(lastMatchingRELPOSNEDiTOW) << "\t"
+                   << tagtext << "\t" << "" << "\t"
+                   << QString::number(uptime) << "\n";
+
+        soundEffect.play();
+
+        ui->pushButton_MouseTag->setText("Tagged " + tagtext);
+        lastTaggedRELPOSNEDiTOW = lastMatchingRELPOSNEDiTOW;
     }
     else
     {
-        if (ui->checkBox_MouseButtonTaggingSound->isChecked())
-        {
-            soundEffect_Error.play();
-        }
+        soundEffect_MBError.play();
+
         ui->pushButton_MouseTag->setText("Logging not active!");
 
         treeItem_LastTag->setText(1, "Logging not active!");
     }
+//    handleVideoFrameRecording(uptime);
 }
 
 
 void EssentialsForm::handleRELPOSNEDQueues(void)
 {
     bool matchingiTOWFound = false;
-
-    UBXMessage_RELPOSNED lastMatchingRoverARELPOSNED;
-    UBXMessage_RELPOSNED lastMatchingRoverBRELPOSNED;
 
     while ((!messageQueue_RELPOSNED_RoverA.isEmpty()) &&
             (!messageQueue_RELPOSNED_RoverB.isEmpty()))
@@ -661,52 +797,12 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
 
                 lastMatchingRELPOSNEDiTOW = static_cast<int>(roverARELPOSNED.iTOW);
                 matchingiTOWFound = true;
+                lastMatchingRELPOSNEDiTOWTimer.start();
 
                 lastMatchingRoverARELPOSNED = roverARELPOSNED;
                 lastMatchingRoverBRELPOSNED = roverBRELPOSNED;
 
-                // Vector pointing from rover B to A
-                double diffN = roverARELPOSNED.relPosN - roverBRELPOSNED.relPosN;
-                double diffE = roverARELPOSNED.relPosE - roverBRELPOSNED.relPosE;
-                double diffD = roverARELPOSNED.relPosD - roverBRELPOSNED.relPosD;
-
-                double vectorLength = sqrt(diffN * diffN + diffE * diffE + diffD * diffD);
-
-                // Unit vector based on the rover B->A-vector
-                double unitVecN = diffN / vectorLength;
-                double unitVecE = diffE / vectorLength;
-                double unitVecD = diffD / vectorLength;
-
-                NEDPoint stylusTipPosition;
-
-                double tipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA->value();
-
-                stylusTipPosition.iTOW = lastMatchingRELPOSNEDiTOW;
-
-                // Vector pointing from rover A to tip
-                stylusTipPosition.n = unitVecN * tipDistanceFromRoverA;
-                stylusTipPosition.e = unitVecE * tipDistanceFromRoverA;
-                stylusTipPosition.d = unitVecD * tipDistanceFromRoverA;
-
-                // Add rover A position to stylus tip position vector to get final position
-                stylusTipPosition.n += roverARELPOSNED.relPosN;
-                stylusTipPosition.e += roverARELPOSNED.relPosE;
-                stylusTipPosition.d += roverARELPOSNED.relPosD;
-
-                // Stylus tip accuracy is now the same as rover A's
-                // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined vlaue)
-                stylusTipPosition.accN = roverARELPOSNED.accN;
-                stylusTipPosition.accE = roverARELPOSNED.accE;
-                stylusTipPosition.accD = roverARELPOSNED.accD;
-
-                positionHistory_StylusTip.append(stylusTipPosition);
-
-                while (positionHistory_StylusTip.size() > maxPositionHistoryLength)
-                {
-                    positionHistory_StylusTip.removeFirst();
-                }
-
-                distanceBetweenFarthestCoordinates_StylusTip = calcDistanceBetweenFarthestCoordinates(positionHistory_StylusTip, ui->spinBox_FluctuationHistoryLength->value());
+                updateTipData();
             }
         }
     }
@@ -765,7 +861,9 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
 
 EssentialsForm::NEDPoint::NEDPoint(const UBXMessage_RELPOSNED relposnedMessage)
 {
+    this->valid = true;
     this->iTOW = static_cast<int>(relposnedMessage.iTOW);
+    this->uptime = relposnedMessage.messageStartTime;
 
     this->n = relposnedMessage.relPosN;
     this->e = relposnedMessage.relPosE;
@@ -775,6 +873,16 @@ EssentialsForm::NEDPoint::NEDPoint(const UBXMessage_RELPOSNED relposnedMessage)
     this->accE = relposnedMessage.accE;
     this->accD = relposnedMessage.accD;
 }
+
+double EssentialsForm::NEDPoint::getDistanceTo(const NEDPoint &other)
+{
+    double nDiff = this->n - other.n;
+    double eDiff = this->e - other.e;
+    double dDiff = this->d - other.d;
+
+    return (sqrt(nDiff * nDiff + eDiff * eDiff + dDiff * dDiff));
+}
+
 
 double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& positionHistory, int samples)
 {
@@ -920,17 +1028,8 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_RoverBSolution = new QTreeWidgetItem(ui->treeWidget);
         treeItem_RoverBSolution->setText(0, "Rover B solution status");
 
-        treeItem_StylusTipNED = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_StylusTipNED->setText(0, "Tip NED");
-
-        treeItem_StylusTipXYZ = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_StylusTipXYZ->setText(0, "Tip XYZ");
-
         treeItem_StylusTipAccNED = new QTreeWidgetItem(ui->treeWidget);
         treeItem_StylusTipAccNED->setText(0, "Tip AccNED");
-
-        treeItem_StylusTipAccXYZ = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_StylusTipAccXYZ->setText(0, "Tip AccXYZ");
 
         treeItem_RoverADiffSoln = new QTreeWidgetItem(ui->treeWidget);
         treeItem_RoverADiffSoln->setText(0, "Rover A differential corr");
@@ -953,6 +1052,27 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_LastTag = new QTreeWidgetItem(ui->treeWidget);
         treeItem_LastTag->setText(0, "Last tag");
 
+        treeItem_StylusTipNED = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_StylusTipNED->setText(0, "Tip NED");
+
+        treeItem_LMBNED = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_LMBNED->setText(0, "LMB NED");
+
+        treeItem_RMBNED = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_RMBNED->setText(0, "RMB NED");
+
+        treeItem_Distance_TipToLMB = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_Distance_TipToLMB->setText(0, "Distance tip<->LMB");
+
+        treeItem_Distance_TipToRMB = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_Distance_TipToRMB->setText(0, "Distance tip<->RMB");
+
+        treeItem_Distance_LMBToRMB = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_Distance_LMBToRMB->setText(0, "Distance LMB<->RMB");
+
+        treeItem_Distance_RoverAToTip = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_Distance_RoverAToTip->setText(0, "Distance RoverA<->Tip");
+
         treeItemsCreated = true;
     }
 
@@ -961,22 +1081,21 @@ void EssentialsForm::updateTreeItems(void)
     treeItem_DistanceBetweenFarthestCoordinates_StylusTip->setText(1, QString::number(distanceBetweenFarthestCoordinates_StylusTip, 'f', 3));
     treeItem_DistanceBetweenRovers->setText(1, QString::number(distanceBetweenRovers, 'f', 3));
 
-    if (positionHistory_StylusTip.isEmpty())
+    treeItem_StylusTipNED->setText(1, QString::number(lastStylusTipPosition.n, 'f', 3) + ", " + QString::number(lastStylusTipPosition.e, 'f', 3) + ", " + QString::number(lastStylusTipPosition.d, 'f', 3));
+    treeItem_StylusTipAccNED->setText(1, QString::number(lastStylusTipPosition.accN, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accE, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accD, 'f', 3));
+
+    const QColor positionValidColor = QColor(128,255,128);
+    const QColor positionInvalidColor = QColor(255,128,128);
+
+    if (lastStylusTipPosition.valid)
     {
-        treeItem_StylusTipNED->setText(1, "N/A");
-        treeItem_StylusTipXYZ->setText(1, "N/A");
-        treeItem_StylusTipAccNED->setText(1, "N/A");
-        treeItem_StylusTipAccXYZ->setText(1, "N/A");
+        treeItem_StylusTipNED->setBackgroundColor(1, positionValidColor);
+        treeItem_StylusTipAccNED->setBackgroundColor(1, positionValidColor);
     }
     else
     {
-        NEDPoint tip = positionHistory_StylusTip.last();
-
-        treeItem_StylusTipNED->setText(1, QString::number(tip.n, 'f', 3) + ", " + QString::number(tip.e, 'f', 3) + ", " + QString::number(tip.d, 'f', 3));
-        treeItem_StylusTipXYZ->setText(1, QString::number(tip.e, 'f', 3) + ", " + QString::number(tip.d, 'f', 3) + ", " + QString::number(-tip.n, 'f', 3));
-
-        treeItem_StylusTipAccNED->setText(1, QString::number(tip.accN, 'f', 3) + ", " + QString::number(tip.accE, 'f', 3) + ", " + QString::number(tip.accD, 'f', 3));
-        treeItem_StylusTipAccXYZ->setText(1, QString::number(tip.accE, 'f', 3) + ", " + QString::number(tip.accD, 'f', 3) + ", " + QString::number(tip.accN, 'f', 3));
+        treeItem_StylusTipNED->setBackgroundColor(1, positionInvalidColor);
+        treeItem_StylusTipAccNED->setBackgroundColor(1, positionInvalidColor);
     }
 
     const QColor solutionColors[4] =
@@ -1023,6 +1142,88 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_RoverBDiffSoln->setText(1, QString::number(roverB.flag_diffSoln));
     }
 
+    treeItem_LMBNED->setText(1, QString::number(stylusTipPosition_LMB.n, 'f', 3) + ", " + QString::number(stylusTipPosition_LMB.e, 'f', 3) + ", " + QString::number(stylusTipPosition_LMB.d, 'f', 3));
+
+    if (stylusTipPosition_LMB.valid)
+    {
+        treeItem_LMBNED->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_LMBNED->setBackgroundColor(1, positionInvalidColor);
+    }
+
+    treeItem_RMBNED->setText(1, QString::number(stylusTipPosition_RMB.n, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.e, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.d, 'f', 3));
+
+    if (stylusTipPosition_RMB.valid)
+    {
+        treeItem_RMBNED->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_RMBNED->setBackgroundColor(1, positionInvalidColor);
+    }
+
+    double distanceTipToLMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_LMB);
+
+    treeItem_Distance_TipToLMB->setText(1, QString::number(distanceTipToLMB, 'f', 3));
+
+    if ((stylusTipPosition_LMB.valid) && (lastStylusTipPosition.valid))
+    {
+        treeItem_Distance_TipToLMB->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_Distance_TipToLMB->setBackgroundColor(1, positionInvalidColor);
+    }
+
+    double distanceTipToRMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_RMB);
+
+    treeItem_Distance_TipToRMB->setText(1, QString::number(distanceTipToRMB, 'f', 3));
+
+    if ((stylusTipPosition_RMB.valid) && (lastStylusTipPosition.valid))
+    {
+        treeItem_Distance_TipToRMB->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_Distance_TipToRMB->setBackgroundColor(1, positionInvalidColor);
+    }
+
+    double distanceLMBToRMB = stylusTipPosition_LMB.getDistanceTo(stylusTipPosition_RMB);
+
+    treeItem_Distance_LMBToRMB->setText(1, QString::number(distanceLMBToRMB, 'f', 3));
+
+    if ((stylusTipPosition_LMB.valid) && (stylusTipPosition_RMB.valid))
+    {
+        treeItem_Distance_LMBToRMB->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_Distance_LMBToRMB->setBackgroundColor(1, positionInvalidColor);
+    }
+
+    bool roverAToTipDistanceValid = true;
+
+    if (((lastValidDistanceItem.type == DistanceItem::Type::MEASURED) &&
+            (!lastValidDistanceItemTimer.isValid() ||
+                (lastValidDistanceItemTimer.elapsed() > 500))) ||
+            (lastValidDistanceItem.type == DistanceItem::Type::UNKNOWN))
+
+    {
+        roverAToTipDistanceValid = false;
+    }
+
+    treeItem_Distance_RoverAToTip->setText(1, QString::number(lastValidDistanceItem.distance, 'f', 3));
+
+    if (roverAToTipDistanceValid)
+    {
+        treeItem_Distance_RoverAToTip->setBackgroundColor(1, positionValidColor);
+    }
+    else
+    {
+        treeItem_Distance_RoverAToTip->setBackgroundColor(1, positionInvalidColor);
+    }
 }
 
 
@@ -1032,6 +1233,7 @@ void EssentialsForm::on_spinBox_FluctuationHistoryLength_valueChanged(int)
     updateTreeItems();
 }
 
+#if 0
 void EssentialsForm::handleVideoFrameRecording(void)
 {
     if ((video_FileNameBeginning.length() != 0) && (lastMatchingRELPOSNEDiTOW != -1) && (
@@ -1081,6 +1283,286 @@ void EssentialsForm::handleVideoFrameRecording(void)
         }
     }
 }
+#endif
+
+void EssentialsForm::handleVideoFrameRecording(qint64 uptime)
+{
+    if (video_FileNameBeginning.length() && video_WriteFrames)
+    {
+        // This block is really ugly. Sorry!
+        // Just want to make video "recording" possible quickly...
+
+        bool startNewClip = false;
+
+        if (!video_FrameBuffer)
+        {
+            // Framebuffer is defined in class-level so that the same frame can be output several
+            // times in the case of RELPOSNED "frame drops".
+            video_FrameBuffer = new QPixmap(this->size());  // Will not be explicitly deleted, but who cares?
+
+            startNewClip = true;
+        }
+        else if (uptime < video_LastWrittenFrameUptime)
+        {
+            // End video frame writing when older than last uptime is given
+//            video_WriteFrames = false;
+//            return;
+        }
+        else if ((uptime - video_LastWrittenFrameUptime) > 1000)
+        {
+            // Too long skip between frames -> Start new clip
+            startNewClip = true;
+        }
+
+        if (startNewClip)
+        {
+            video_ClipIndex++;
+            video_FrameCounter = 1;
+
+            repaint();  // To be sure that rover data shown in window is in sync (does render force repaint?)
+            render(video_FrameBuffer);
+            QString fileName = video_FileNameBeginning + QString::number(video_ClipIndex) + "_" + QString("%1").arg(video_FrameCounter, 5, 10, QChar('0')) + + ".png";
+            video_FrameBuffer->save(fileName);
+            video_LastWrittenFrameUptime = uptime;
+            video_ClipBaseTime = uptime;
+            video_ClipDoubleTimer = 0;
+        }
+        else
+        {
+            qint64 msecTimeDiff = uptime - video_ClipBaseTime;
+
+            bool renderFrame = true;
+
+            while (video_ClipDoubleTimer <= msecTimeDiff)
+            {
+                if (renderFrame)
+                {
+                    repaint();  // To be sure that rover data shown in window is in sync (does render force repaint?)
+                    render(video_FrameBuffer);
+                    renderFrame = false;
+                }
+
+                video_FrameCounter++;
+                QString fileName = video_FileNameBeginning + QString::number(video_ClipIndex) + "_" + QString("%1").arg(video_FrameCounter, 5, 10, QChar('0')) + + ".png";
+                video_FrameBuffer->save(fileName);
+                video_ClipDoubleTimer += (1000. / video_FPS);
+            }
+            video_LastWrittenFrameUptime = uptime;
+        }
+    }
+}
+
+
+void EssentialsForm::on_distanceReceived(const EssentialsForm::DistanceItem& distanceItem)
+{
+    // This "distanceValid"-handling is just to get rid of the ridicilous
+    // invalid values returned from
+    // "20hz high Accuracy 80m Laser Sensor Range finder Distance measuring module TTL interface ardunio".
+    // TODO: This shouldn't actually be here but in the handling thread instead
+    // as this is really a problem with the module itself.
+    // At least make this optional when time allows...
+
+    bool distanceValid = true;
+
+    if (distanceItem.type == DistanceItem::MEASURED)
+    {
+        // "Disqualification rules" defined here separately to make them easier to modify
+        // (module works a bit erratically to say the least so trying to find some way to filter the measurements).
+
+        if ((distanceItem.frameStartTime - lastDistanceItemIncludingInvalid.frameStartTime) > 500)
+        {
+            // Module seems to think it needs to give some "valid" measurements
+            // now and then when they definitely can NOT be valid
+            // -> Discard measurements that are too far (in time) from the last one.
+
+            distanceValid = false;
+        }
+        else if (fabs(distanceItem.distance - lastDistanceItemIncludingInvalid.distance) <= 0.001)
+        {
+            // If the laser is pointing in the sky or somewhere far away the module
+            // seems to stay stuck to _about_ the same value it lastly was able to measure.
+            // -> Discard measurements too close to the previous one
+
+            distanceValid = false;
+        }
+        else if (fabs(distanceItem.distance - lastDistanceItemIncludingInvalid.distance) >= 0.01)
+        {
+            // Sometimes the module just returns insane values between valid ones
+            // -> Discard measurements that differ too much from the previous one.
+
+            distanceValid = false;
+        }
+    }
+
+    if (distanceValid)
+    {
+        handleVideoFrameRecording(distanceItem.frameStartTime - 1);
+        addDistanceLogItem(distanceItem);
+
+        lastValidDistanceItem = distanceItem;
+        lastValidDistanceItemTimer.start();
+
+        soundEffect_Distance.play();
+    }
+
+    addDistanceLogItem_Unfiltered(distanceItem);
+
+    lastDistanceItemIncludingInvalid = distanceItem;
+    lastDistanceItemTimerIncludingInvalid.start();
+
+//    handleVideoFrameRecording(distanceItem.frameStartTime);
+}
+
+void EssentialsForm::on_measuredDistanceReceived(const double& distance, qint64 frameStartTime, qint64 frameEndTime)
+{
+    DistanceItem distanceItem;
+
+    distanceItem.type = DistanceItem::MEASURED;
+    distanceItem.distance = distance;
+    distanceItem.frameStartTime = frameStartTime;
+    distanceItem.frameEndTime = frameEndTime;
+
+    on_distanceReceived(distanceItem);
+}
+
+void EssentialsForm::addDistanceLogItem(const DistanceItem& item)
+{
+    if (logFile_Distances.isOpen())
+    {
+        QTextStream textStream(&logFile_Distances);
+
+        QString distanceTypeString = "Unknown";
+
+        if (item.type == DistanceItem::Type::CONSTANT)
+        {
+            distanceTypeString = "constant";
+        }
+        else if (item.type == DistanceItem::Type::MEASURED)
+        {
+            distanceTypeString = "measured";
+        }
+
+        // header = "Distance\tType\tUptime(Start)\tFrame time\n";
+        textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
+                      QString::number(item.distance, 'g', 4) << "\t" <<
+                      distanceTypeString << "\t" <<
+                      QString::number(item.frameStartTime) << "\t" <<
+                      QString::number(item.frameEndTime- item.frameStartTime) << "\n";
+    }
+}
+
+void EssentialsForm::addDistanceLogItem_Unfiltered(const DistanceItem& item)
+{
+    if (logFile_Distances_Unfiltered.isOpen())
+    {
+        QTextStream textStream(&logFile_Distances_Unfiltered);
+
+        QString distanceTypeString = "Unknown";
+
+        if (item.type == DistanceItem::Type::CONSTANT)
+        {
+            distanceTypeString = "constant";
+        }
+        else if (item.type == DistanceItem::Type::MEASURED)
+        {
+            distanceTypeString = "measured";
+        }
+
+        // header = "Distance\tType\tUptime(Start)\tFrame time\n";
+        textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
+                      QString::number(item.distance, 'g', 4) << "\t" <<
+                      distanceTypeString << "\t" <<
+                      QString::number(item.frameStartTime) << "\t" <<
+                      QString::number(item.frameEndTime- item.frameStartTime) << "\n";
+    }
+}
+
+
+void EssentialsForm::updateTipData(void)
+{
+    // Vector pointing from rover B to A
+    double diffN = lastMatchingRoverARELPOSNED.relPosN - lastMatchingRoverBRELPOSNED.relPosN;
+    double diffE = lastMatchingRoverARELPOSNED.relPosE - lastMatchingRoverBRELPOSNED.relPosE;
+    double diffD = lastMatchingRoverARELPOSNED.relPosD - lastMatchingRoverBRELPOSNED.relPosD;
+
+    double vectorLength = sqrt(diffN * diffN + diffE * diffE + diffD * diffD);
+
+    // Unit vector based on the rover B->A-vector
+    double unitVecN = diffN / vectorLength;
+    double unitVecE = diffE / vectorLength;
+    double unitVecD = diffD / vectorLength;
+
+    NEDPoint stylusTipPosition;
+
+    double tipDistanceFromRoverA = lastValidDistanceItem.distance;
+
+    stylusTipPosition.iTOW = lastMatchingRELPOSNEDiTOW;
+
+    // Vector pointing from rover A to tip
+    stylusTipPosition.n = unitVecN * tipDistanceFromRoverA;
+    stylusTipPosition.e = unitVecE * tipDistanceFromRoverA;
+    stylusTipPosition.d = unitVecD * tipDistanceFromRoverA;
+
+    // Add rover A position to stylus tip position vector to get final position
+    stylusTipPosition.n += lastMatchingRoverARELPOSNED.relPosN;
+    stylusTipPosition.e += lastMatchingRoverARELPOSNED.relPosE;
+    stylusTipPosition.d += lastMatchingRoverARELPOSNED.relPosD;
+
+    // Stylus tip accuracy is now the same as rover A's
+    // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined vlaue)
+    stylusTipPosition.accN = lastMatchingRoverARELPOSNED.accN;
+    stylusTipPosition.accE = lastMatchingRoverARELPOSNED.accE;
+    stylusTipPosition.accD = lastMatchingRoverARELPOSNED.accD;
+
+    bool valid = true;
+
+    if (((lastValidDistanceItem.type == DistanceItem::Type::MEASURED) &&
+            (!lastValidDistanceItemTimer.isValid() ||
+                (lastValidDistanceItemTimer.elapsed() > 500))) ||
+            (lastMatchingRELPOSNEDiTOW == -1) ||
+            ((!lastMatchingRELPOSNEDiTOWTimer.isValid()) ||
+                (lastMatchingRELPOSNEDiTOWTimer.elapsed() > 500)))
+    {
+        valid = false;
+    }
+
+    stylusTipPosition.valid = valid;
+
+    lastStylusTipPosition = stylusTipPosition;
+
+    positionHistory_StylusTip.append(stylusTipPosition);
+
+    while (positionHistory_StylusTip.size() > maxPositionHistoryLength)
+    {
+        positionHistory_StylusTip.removeFirst();
+    }
+
+    distanceBetweenFarthestCoordinates_StylusTip =
+            calcDistanceBetweenFarthestCoordinates(positionHistory_StylusTip, ui->spinBox_FluctuationHistoryLength->value());
+}
 
 
 
+void EssentialsForm::on_horizontalScrollBar_Volume_MouseButtonTagging_valueChanged(int value)
+{
+    soundEffect_LMB.setVolume(value/100.);
+    soundEffect_RMB.setVolume(value/100.);
+    soundEffect_MMB.setVolume(value/100.);
+    soundEffect_MBError.setVolume(value/100.);
+    soundEffect_LMB.play();
+}
+
+void EssentialsForm::on_horizontalScrollBar_Volume_DistanceReceived_valueChanged(int value)
+{
+    soundEffect_Distance.setVolume(value/100.);
+    soundEffect_Distance.play();
+}
+
+void EssentialsForm::on_checkBox_PlaySound_stateChanged(int arg1)
+{
+    soundEffect_LMB.setMuted(!arg1);
+    soundEffect_MMB.setMuted(!arg1);
+    soundEffect_RMB.setMuted(!arg1);
+    soundEffect_MBError.setMuted(!arg1);
+    soundEffect_Distance.setMuted(!arg1);
+}

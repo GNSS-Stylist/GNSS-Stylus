@@ -87,7 +87,7 @@ private slots:
     void commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString& errorMessage);
     void commThread_LaserRangeFinder20HzV2_WarningMessage(const QString& warningMessage);
     void commThread_LaserRangeFinder20HzV2_InfoMessage(const QString& infoMessage);
-    void commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance);
+    void commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance, qint64, qint64);
     void commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString);
     void commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data);
 
@@ -168,6 +168,11 @@ private slots:
     void on_pushButton_TerminateThread_LaserDist_clicked();
 
     void on_MainWindow_destroyed();
+
+    void on_doubleSpinBox_Distance_Constant_valueChanged(double arg1);
+
+signals:
+    void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 
 private:
     Ui::MainWindow *ui;
