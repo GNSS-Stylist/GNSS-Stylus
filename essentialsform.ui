@@ -226,19 +226,19 @@
     </layout>
    </item>
    <item>
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QTabWidget" name="tabWidget_Right">
      <property name="autoFillBackground">
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="tab_Data">
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
       <attribute name="title">
-       <string>Tab 1</string>
+       <string>Data</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
@@ -310,86 +310,13 @@ LMB, RMB or MMB</string>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
+     <widget class="QWidget" name="tab__Settings">
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
       <attribute name="title">
-       <string>Tab 2</string>
+       <string>Settings</string>
       </attribute>
-      <widget class="QCheckBox" name="checkBox_PlaySound">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>110</y>
-         <width>328</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Play sound effects</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QScrollBar" name="horizontalScrollBar_Volume_MouseButtonTagging">
-       <property name="geometry">
-        <rect>
-         <x>70</x>
-         <y>40</y>
-         <width>261</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="singleStep">
-        <number>10</number>
-       </property>
-       <property name="value">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>70</y>
-         <width>47</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-      <widget class="QScrollBar" name="horizontalScrollBar_Volume_DistanceReceived">
-       <property name="geometry">
-        <rect>
-         <x>70</x>
-         <y>70</y>
-         <width>261</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="singleStep">
-        <number>10</number>
-       </property>
-       <property name="value">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_FluctuationHistoryLength">
        <property name="geometry">
         <rect>
@@ -425,18 +352,113 @@ LMB, RMB or MMB</string>
         <number>10</number>
        </property>
       </widget>
-      <widget class="QLabel" name="label">
+      <widget class="QGroupBox" name="groupBox_Sounds">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>40</y>
-         <width>47</width>
-         <height>16</height>
+         <width>331</width>
+         <height>121</height>
         </rect>
        </property>
-       <property name="text">
-        <string>TextLabel</string>
+       <property name="title">
+        <string>Sounds</string>
        </property>
+       <widget class="QCheckBox" name="checkBox_PlaySound">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>301</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Play sound effects</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QScrollBar" name="horizontalScrollBar_Volume_DistanceReceived">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>80</y>
+          <width>231</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_Volume_Tagging">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>71</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Vol-tagging:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QScrollBar" name="horizontalScrollBar_Volume_MouseButtonTagging">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>50</y>
+          <width>231</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="invertedAppearance">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_Volume_Distance">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>80</y>
+          <width>71</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Vol-distance:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
       </widget>
      </widget>
     </widget>
