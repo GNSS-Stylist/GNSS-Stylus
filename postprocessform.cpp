@@ -1072,15 +1072,15 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                             if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
                                 (relposIterator_RoverB != relposIterator_RoverB_EndTag))
                             {
-                                Eigen::Vector3d roverAPosNED;
-                                roverAPosNED << relposIterator_RoverA.value().relPosN,
+                                Eigen::Vector3d roverAPosNED(
+                                        relposIterator_RoverA.value().relPosN,
                                         relposIterator_RoverA.value().relPosE,
-                                        relposIterator_RoverA.value().relPosD;
+                                        relposIterator_RoverA.value().relPosD);
 
-                                Eigen::Vector3d roverBPosNED;
-                                roverBPosNED << relposIterator_RoverB.value().relPosN,
+                                Eigen::Vector3d roverBPosNED(
+                                        relposIterator_RoverB.value().relPosN,
                                         relposIterator_RoverB.value().relPosE,
-                                        relposIterator_RoverB.value().relPosD;
+                                        relposIterator_RoverB.value().relPosD);
 
                                 Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
                                 Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
