@@ -46,6 +46,9 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     ui->lineEdit_LoggingDirectory->setText(settings.value("LoggingDirectory", "").toString());
     ui->lineEdit_LoggingFileNamePrefix->setText(settings.value("LoggingFileNamePrefix", "ublox").toString());
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
+    ui->checkBox_PlaySound->setChecked(settings.value("PlaySound").toBool());
+    ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
+    ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
 
     ui->comboBox_TagIdent->addItem("Suspend");
     ui->comboBox_TagIdent->addItem("Resume");
@@ -74,6 +77,10 @@ EssentialsForm::~EssentialsForm()
     settings.setValue("LoggingDirectory", ui->lineEdit_LoggingDirectory->text());
     settings.setValue("LoggingFileNamePrefix", ui->lineEdit_LoggingFileNamePrefix->text());
     settings.setValue("FluctuationHistoryLength", ui->spinBox_FluctuationHistoryLength->value());
+
+    settings.setValue("PlaySound", ui->checkBox_PlaySound->isChecked());
+    settings.setValue("Volume_MouseButtonTagging", ui->horizontalScrollBar_Volume_MouseButtonTagging->value());
+    settings.setValue("Volume_DistanceReceived", ui->horizontalScrollBar_Volume_DistanceReceived->value());
 
     delete ui;
 }
