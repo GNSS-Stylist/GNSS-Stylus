@@ -31,6 +31,7 @@
 
 #include "essentialsform.h"
 #include "ui_essentialsform.h"
+#include "Eigen/Geometry"
 
 EssentialsForm::EssentialsForm(QWidget *parent) :
     QWidget(parent),
@@ -1480,36 +1481,32 @@ void EssentialsForm::addDistanceLogItem_Unfiltered(const DistanceItem& item)
 
 void EssentialsForm::updateTipData(void)
 {
-    // Vector pointing from rover B to A
-    double diffN = lastMatchingRoverARELPOSNED.relPosN - lastMatchingRoverBRELPOSNED.relPosN;
-    double diffE = lastMatchingRoverARELPOSNED.relPosE - lastMatchingRoverBRELPOSNED.relPosE;
-    double diffD = lastMatchingRoverARELPOSNED.relPosD - lastMatchingRoverBRELPOSNED.relPosD;
-
-    double vectorLength = sqrt(diffN * diffN + diffE * diffE + diffD * diffD);
-
-    // Unit vector based on the rover B->A-vector
-    double unitVecN = diffN / vectorLength;
-    double unitVecE = diffE / vectorLength;
-    double unitVecD = diffD / vectorLength;
-
     NEDPoint stylusTipPosition;
 
     double tipDistanceFromRoverA = lastValidDistanceItem.distance;
 
     stylusTipPosition.iTOW = lastMatchingRELPOSNEDiTOW;
 
-    // Vector pointing from rover A to tip
-    stylusTipPosition.n = unitVecN * tipDistanceFromRoverA;
-    stylusTipPosition.e = unitVecE * tipDistanceFromRoverA;
-    stylusTipPosition.d = unitVecD * tipDistanceFromRoverA;
+    Eigen::Vector3d roverAPosNED(
+            lastMatchingRoverARELPOSNED.relPosN,
+            lastMatchingRoverARELPOSNED.relPosE,
+            lastMatchingRoverARELPOSNED.relPosD);
 
-    // Add rover A position to stylus tip position vector to get final position
-    stylusTipPosition.n += lastMatchingRoverARELPOSNED.relPosN;
-    stylusTipPosition.e += lastMatchingRoverARELPOSNED.relPosE;
-    stylusTipPosition.d += lastMatchingRoverARELPOSNED.relPosD;
+    Eigen::Vector3d roverBPosNED(
+            lastMatchingRoverBRELPOSNED.relPosN,
+            lastMatchingRoverBRELPOSNED.relPosE,
+            lastMatchingRoverBRELPOSNED.relPosD);
+
+    Eigen::Vector3d roverBToANED = roverAPosNED - roverBPosNED;
+    Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
+    Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * tipDistanceFromRoverA;
+
+    stylusTipPosition.n = stylusTipPosNED(0);
+    stylusTipPosition.e = stylusTipPosNED(1);
+    stylusTipPosition.d = stylusTipPosNED(2);
 
     // Stylus tip accuracy is now the same as rover A's
-    // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined vlaue)
+    // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined value)
     stylusTipPosition.accN = lastMatchingRoverARELPOSNED.accN;
     stylusTipPosition.accE = lastMatchingRoverARELPOSNED.accE;
     stylusTipPosition.accD = lastMatchingRoverARELPOSNED.accD;
