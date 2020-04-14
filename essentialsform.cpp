@@ -1044,7 +1044,7 @@ void EssentialsForm::updateTreeItems(void)
 
         treeItem_RoverBDiffSoln = new QTreeWidgetItem(ui->treeWidget);
         treeItem_RoverBDiffSoln->setText(0, "Rover B differential corr");
-
+/*
         treeItem_DistanceBetweenFarthestCoordinates_RoverA = new QTreeWidgetItem(ui->treeWidget);
         treeItem_DistanceBetweenFarthestCoordinates_RoverA->setText(0, "Pos fluctuation Rover A");
 
@@ -1053,7 +1053,7 @@ void EssentialsForm::updateTreeItems(void)
 
         treeItem_DistanceBetweenFarthestCoordinates_StylusTip = new QTreeWidgetItem(ui->treeWidget);
         treeItem_DistanceBetweenFarthestCoordinates_StylusTip->setText(0, "Pos fluctuation Stylus tip");
-
+*/
         treeItem_DistanceBetweenRovers = new QTreeWidgetItem(ui->treeWidget);
         treeItem_DistanceBetweenRovers->setText(0, "Distance between rovers");
 
@@ -1083,10 +1083,11 @@ void EssentialsForm::updateTreeItems(void)
 
         treeItemsCreated = true;
     }
-
+/*
     treeItem_DistanceBetweenFarthestCoordinates_RoverA->setText(1, QString::number(distanceBetweenFarthestCoordinates_RoverA, 'f', 3));
     treeItem_DistanceBetweenFarthestCoordinates_RoverB->setText(1, QString::number(distanceBetweenFarthestCoordinates_RoverB, 'f', 3));
     treeItem_DistanceBetweenFarthestCoordinates_StylusTip->setText(1, QString::number(distanceBetweenFarthestCoordinates_StylusTip, 'f', 3));
+*/
     treeItem_DistanceBetweenRovers->setText(1, QString::number(distanceBetweenRovers, 'f', 3));
 
     treeItem_StylusTipNED->setText(1, QString::number(lastStylusTipPosition.n, 'f', 3) + ", " + QString::number(lastStylusTipPosition.e, 'f', 3) + ", " + QString::number(lastStylusTipPosition.d, 'f', 3));
@@ -1385,7 +1386,7 @@ void EssentialsForm::on_distanceReceived(const EssentialsForm::DistanceItem& dis
 
             distanceValid = false;
         }
-        else if (fabs(distanceItem.distance - lastDistanceItemIncludingInvalid.distance) <= 0.001)
+        else if (fabs(distanceItem.distance - lastValidDistanceItem.distance) <= 0.001)
         {
             // If the laser is pointing in the sky or somewhere far away the module
             // seems to stay stuck to _about_ the same value it lastly was able to measure.

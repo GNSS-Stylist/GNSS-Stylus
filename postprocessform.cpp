@@ -1262,6 +1262,21 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
 
                                 stylusTipDistanceFromRoverA = distIter.value().distance;
 
+                                // TODO: Refine this quick hack or at least make the distance configurable!
+                                // Skip distances that are too far away
+                                // (measurement module seems to emit "outliers" now and then)
+                                if (stylusTipDistanceFromRoverA > 2)
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Distance between RoverA and tip too high (" +
+                                               QString::number(stylusTipDistanceFromRoverA) +
+                                               " m). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
+
                                 Eigen::Vector3d roverAPosNED(
                                         interpolated_RoverA.relPosN,
                                         interpolated_RoverA.relPosE,
@@ -2233,6 +2248,21 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                 }
 
                                 stylusTipDistanceFromRoverA = distIter.value().distance;
+
+                                // TODO: Refine this quick hack or at least make the distance configurable!
+                                // Skip distances that are too far away
+                                // (measurement module seems to emit "outliers" now and then)
+                                if (stylusTipDistanceFromRoverA > 2)
+                                {
+                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                               QString::number(distIter.value().sourceFileLine)+
+                                               ", uptime " + QString::number(distIter.key()) +
+                                               ": Distance between RoverA and tip too high (" +
+                                               QString::number(stylusTipDistanceFromRoverA) +
+                                               " m). Skipped.");
+                                    distIter++;
+                                    continue;
+                                }
 
                                 Eigen::Vector3d roverAPosNED(
                                         interpolated_RoverA.relPosN,
