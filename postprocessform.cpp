@@ -719,7 +719,7 @@ void PostProcessingForm::addTagData(const QStringList& fileNames)
 
                 if (tags.find(uptime) != tags.end())
                 {
-                    QList simultaneousItems = tags.values(uptime);
+                    QList<Tag> simultaneousItems = tags.values(uptime);
 
                     bool skip = false;
 

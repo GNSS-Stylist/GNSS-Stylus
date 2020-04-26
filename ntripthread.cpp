@@ -51,7 +51,7 @@
   #include <winsock.h>
   typedef SOCKET sockettype;
   typedef u_long in_addr_t;
-  typedef size_t socklen_t;
+  typedef int socklen_t;
 #else
   typedef int sockettype;
   #include <signal.h>
@@ -440,9 +440,9 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
     setbuf(stdin, nullptr);
     setbuf(stderr, nullptr);
 #ifndef WINDOWSVERSION
-    signal(SIGALRM,sighandler_alarm);
-    signal(SIGINT,sighandler_int);
-    alarm(ALARMTIME);
+//    signal(SIGALRM,sighandler_alarm);
+//    signal(SIGINT,sighandler_int);
+//    alarm(ALARMTIME);
 #else
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(1,1),&wsaData))
@@ -916,7 +916,7 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                             myperror("bind");
                             error = 1;
                         }
-                        else if((::getsockname(sockudp, (struct sockaddr*)&local, (int *)&len)) == -1)
+                        else if((::getsockname(sockudp, (struct sockaddr*)&local, &len)) == -1)
                         {
                             myperror("local access failed");
                             error = 1;
@@ -1127,7 +1127,7 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                                                 continue;
                                             }
                                             i = ::recvfrom(sockudp, rtpbuffer, sizeof(rtpbuffer), 0,
-                                                         (struct sockaddr*) &addrRTP, (int *)&len);
+                                                         (struct sockaddr*) &addrRTP, &len);
 #ifndef WINDOWSVERSION
                                             alarm(ALARMTIME);
 #endif
@@ -1706,5 +1706,9 @@ NTRIPThread::~NTRIPThread()
 
 void NTRIPThread::myperror(const char *s)
 {
+#ifdef WINDOWSVERSION
   fprintf(stderr, "%s: %d\n", s, WSAGetLastError());
+#else
+  perror(s);
+#endif
 }
