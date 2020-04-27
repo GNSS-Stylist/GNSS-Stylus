@@ -1093,26 +1093,26 @@ void EssentialsForm::updateTreeItems(void)
     treeItem_StylusTipNED->setText(1, QString::number(lastStylusTipPosition.n, 'f', 3) + ", " + QString::number(lastStylusTipPosition.e, 'f', 3) + ", " + QString::number(lastStylusTipPosition.d, 'f', 3));
     treeItem_StylusTipAccNED->setText(1, QString::number(lastStylusTipPosition.accN, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accE, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accD, 'f', 3));
 
-    const QColor positionValidColor = QColor(128,255,128);
-    const QColor positionInvalidColor = QColor(255,128,128);
+    const QBrush positionValidBrush = QBrush(QColor(128,255,128));
+    const QBrush positionInvalidBrush = QBrush(QColor(255,128,128));
 
     if (lastStylusTipPosition.valid)
     {
-        treeItem_StylusTipNED->setBackgroundColor(1, positionValidColor);
-        treeItem_StylusTipAccNED->setBackgroundColor(1, positionValidColor);
+        treeItem_StylusTipNED->setBackground(1, positionValidBrush);
+        treeItem_StylusTipAccNED->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_StylusTipNED->setBackgroundColor(1, positionInvalidColor);
-        treeItem_StylusTipAccNED->setBackgroundColor(1, positionInvalidColor);
+        treeItem_StylusTipNED->setBackground(1, positionInvalidBrush);
+        treeItem_StylusTipAccNED->setBackground(1, positionInvalidBrush);
     }
 
-    const QColor solutionColors[4] =
+    const QBrush solutionBrushes[4] =
     {
-        QColor(255,128,128),
-        QColor(255,255,0),
-        QColor(128,255,128),
-        QColor(255,128,128)
+        QBrush(QColor(255,128,128)),
+        QBrush(QColor(255,255,0)),
+        QBrush(QColor(128,255,128)),
+        QBrush(QColor(255,128,128))
     };
 
     if (positionHistory_RoverA.isEmpty())
@@ -1120,7 +1120,7 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_RoverAITOW->setText(1, "N/A");
         treeItem_RoverASolution->setText(1, "N/A");
         treeItem_RoverADiffSoln->setText(1, "N/A");
-        treeItem_RoverASolution->setBackgroundColor(1, solutionColors[UBXMessage_RELPOSNED::UNDEFINED]);
+        treeItem_RoverASolution->setBackground(1, solutionBrushes[UBXMessage_RELPOSNED::UNDEFINED]);
         treeItem_RoverASolution->setText(1, "N/A");
     }
     else
@@ -1128,7 +1128,7 @@ void EssentialsForm::updateTreeItems(void)
         UBXMessage_RELPOSNED roverA = positionHistory_RoverA.last();
 
         treeItem_RoverAITOW->setText(1, QString::number(roverA.iTOW));
-        treeItem_RoverASolution->setBackgroundColor(1, solutionColors[roverA.flag_carrSoln % 4]);
+        treeItem_RoverASolution->setBackground(1, solutionBrushes[roverA.flag_carrSoln % 4]);
         treeItem_RoverASolution->setText(1, roverA.getCarrSolnString());
         treeItem_RoverADiffSoln->setText(1, QString::number(roverA.flag_diffSoln));
     }
@@ -1138,7 +1138,7 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_RoverBITOW->setText(1, "N/A");
         treeItem_RoverBSolution->setText(1, "N/A");
         treeItem_RoverBDiffSoln->setText(1, "N/A");
-        treeItem_RoverBSolution->setBackgroundColor(1, solutionColors[UBXMessage_RELPOSNED::UNDEFINED]);
+        treeItem_RoverBSolution->setBackground(1, solutionBrushes[UBXMessage_RELPOSNED::UNDEFINED]);
         treeItem_RoverBSolution->setText(1, "N/A");
     }
     else
@@ -1146,7 +1146,7 @@ void EssentialsForm::updateTreeItems(void)
         UBXMessage_RELPOSNED roverB = positionHistory_RoverB.last();
 
         treeItem_RoverBITOW->setText(1, QString::number(roverB.iTOW));
-        treeItem_RoverBSolution->setBackgroundColor(1, solutionColors[roverB.flag_carrSoln % 4]);
+        treeItem_RoverBSolution->setBackground(1, solutionBrushes[roverB.flag_carrSoln % 4]);
         treeItem_RoverBSolution->setText(1, roverB.getCarrSolnString());
         treeItem_RoverBDiffSoln->setText(1, QString::number(roverB.flag_diffSoln));
     }
@@ -1155,22 +1155,22 @@ void EssentialsForm::updateTreeItems(void)
 
     if (stylusTipPosition_LMB.valid)
     {
-        treeItem_LMBNED->setBackgroundColor(1, positionValidColor);
+        treeItem_LMBNED->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_LMBNED->setBackgroundColor(1, positionInvalidColor);
+        treeItem_LMBNED->setBackground(1, positionInvalidBrush);
     }
 
     treeItem_RMBNED->setText(1, QString::number(stylusTipPosition_RMB.n, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.e, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.d, 'f', 3));
 
     if (stylusTipPosition_RMB.valid)
     {
-        treeItem_RMBNED->setBackgroundColor(1, positionValidColor);
+        treeItem_RMBNED->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_RMBNED->setBackgroundColor(1, positionInvalidColor);
+        treeItem_RMBNED->setBackground(1, positionInvalidBrush);
     }
 
     double distanceTipToLMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_LMB);
@@ -1179,11 +1179,11 @@ void EssentialsForm::updateTreeItems(void)
 
     if ((stylusTipPosition_LMB.valid) && (lastStylusTipPosition.valid))
     {
-        treeItem_Distance_TipToLMB->setBackgroundColor(1, positionValidColor);
+        treeItem_Distance_TipToLMB->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_Distance_TipToLMB->setBackgroundColor(1, positionInvalidColor);
+        treeItem_Distance_TipToLMB->setBackground(1, positionInvalidBrush);
     }
 
     double distanceTipToRMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_RMB);
@@ -1192,11 +1192,11 @@ void EssentialsForm::updateTreeItems(void)
 
     if ((stylusTipPosition_RMB.valid) && (lastStylusTipPosition.valid))
     {
-        treeItem_Distance_TipToRMB->setBackgroundColor(1, positionValidColor);
+        treeItem_Distance_TipToRMB->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_Distance_TipToRMB->setBackgroundColor(1, positionInvalidColor);
+        treeItem_Distance_TipToRMB->setBackground(1, positionInvalidBrush);
     }
 
     double distanceLMBToRMB = stylusTipPosition_LMB.getDistanceTo(stylusTipPosition_RMB);
@@ -1205,11 +1205,11 @@ void EssentialsForm::updateTreeItems(void)
 
     if ((stylusTipPosition_LMB.valid) && (stylusTipPosition_RMB.valid))
     {
-        treeItem_Distance_LMBToRMB->setBackgroundColor(1, positionValidColor);
+        treeItem_Distance_LMBToRMB->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_Distance_LMBToRMB->setBackgroundColor(1, positionInvalidColor);
+        treeItem_Distance_LMBToRMB->setBackground(1, positionInvalidBrush);
     }
 
     bool roverAToTipDistanceValid = true;
@@ -1227,11 +1227,11 @@ void EssentialsForm::updateTreeItems(void)
 
     if (roverAToTipDistanceValid)
     {
-        treeItem_Distance_RoverAToTip->setBackgroundColor(1, positionValidColor);
+        treeItem_Distance_RoverAToTip->setBackground(1, positionValidBrush);
     }
     else
     {
-        treeItem_Distance_RoverAToTip->setBackgroundColor(1, positionInvalidColor);
+        treeItem_Distance_RoverAToTip->setBackground(1, positionInvalidBrush);
     }
 }
 
