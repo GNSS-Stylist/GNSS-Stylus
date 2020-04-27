@@ -133,92 +133,92 @@ void RELPOSNEDForm::updateFields(const UBXMessage_RELPOSNED& relposnedMessage)
     treeItem_flag_refObsMiss->setText(1, QString::number(relposnedMessage.flag_refObsMiss));
     treeItem_flag_relPosHeadingValid->setText(1, QString::number(relposnedMessage.flag_relPosHeadingValid));
 
-    const QColor okColor(128,255,128);
-    const QColor errorColor(255,128,128);
-    const QColor warningColor(255,255,0);
+    const QBrush okBrush(QColor(128,255,128));
+    const QBrush errorBrush(QColor(255,128,128));
+    const QBrush warningBrush(QColor(255,255,0));
 
     if (relposnedMessage.flag_gnssFixOK)
     {
-        treeItem_flag_gnssFixOK->setBackgroundColor(1, okColor);
+        treeItem_flag_gnssFixOK->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_gnssFixOK->setBackgroundColor(1, errorColor);
+        treeItem_flag_gnssFixOK->setBackground(1, errorBrush);
     }
 
     if (relposnedMessage.flag_diffSoln)
     {
-        treeItem_flag_diffSoln->setBackgroundColor(1, okColor);
+        treeItem_flag_diffSoln->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_diffSoln->setBackgroundColor(1, errorColor);
+        treeItem_flag_diffSoln->setBackground(1, errorBrush);
     }
 
     if (relposnedMessage.flag_relPosValid)
     {
-        treeItem_flag_relPosValid->setBackgroundColor(1, okColor);
+        treeItem_flag_relPosValid->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_relPosValid->setBackgroundColor(1, errorColor);
+        treeItem_flag_relPosValid->setBackground(1, errorBrush);
     }
 
     if (relposnedMessage.flag_carrSoln == UBXMessage_RELPOSNED::NO_SOLUTION)
     {
         treeItem_flag_carrSoln->setText(1, "0 (No sol)");
-        treeItem_flag_carrSoln->setBackgroundColor(1, errorColor);
+        treeItem_flag_carrSoln->setBackground(1, errorBrush);
     }
     else if (relposnedMessage.flag_carrSoln == UBXMessage_RELPOSNED::FLOATING)
     {
         treeItem_flag_carrSoln->setText(1, "1 (Float)");
-        treeItem_flag_carrSoln->setBackgroundColor(1, warningColor);
+        treeItem_flag_carrSoln->setBackground(1, warningBrush);
     }
     else if (relposnedMessage.flag_carrSoln == UBXMessage_RELPOSNED::FIXED)
     {
         treeItem_flag_carrSoln->setText(1, "2 (Fixed)");
-        treeItem_flag_carrSoln->setBackgroundColor(1, okColor);
+        treeItem_flag_carrSoln->setBackground(1, okBrush);
     }
     else
     {
         treeItem_flag_carrSoln->setText(1, "3 (Error)");
-        treeItem_flag_carrSoln->setBackgroundColor(1, errorColor);
+        treeItem_flag_carrSoln->setBackground(1, errorBrush);
     }
 
     if (!relposnedMessage.flag_isMoving)
     {
-        treeItem_flag_isMoving->setBackgroundColor(1, okColor);
+        treeItem_flag_isMoving->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_isMoving->setBackgroundColor(1, warningColor);
+        treeItem_flag_isMoving->setBackground(1, warningBrush);
     }
 
     if (!relposnedMessage.flag_refPosMiss)
     {
-        treeItem_flag_refPosMiss->setBackgroundColor(1, okColor);
+        treeItem_flag_refPosMiss->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_refPosMiss->setBackgroundColor(1, warningColor);
+        treeItem_flag_refPosMiss->setBackground(1, warningBrush);
     }
 
     if (!relposnedMessage.flag_refObsMiss)
     {
-        treeItem_flag_refObsMiss->setBackgroundColor(1, okColor);
+        treeItem_flag_refObsMiss->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_refObsMiss->setBackgroundColor(1, warningColor);
+        treeItem_flag_refObsMiss->setBackground(1, warningBrush);
     }
 
     if (relposnedMessage.flag_relPosHeadingValid)
     {
-        treeItem_flag_relPosHeadingValid->setBackgroundColor(1, okColor);
+        treeItem_flag_relPosHeadingValid->setBackground(1, okBrush);
     }
     else
     {
-        treeItem_flag_relPosHeadingValid->setBackgroundColor(1, warningColor);
+        treeItem_flag_relPosHeadingValid->setBackground(1, warningBrush);
     }
 
 }
