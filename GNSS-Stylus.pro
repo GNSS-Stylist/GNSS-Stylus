@@ -28,7 +28,7 @@ CONFIG += c++17
 
 win32:LIBS += -l"ws2_32"
 
-QMAKE_CXXFLAGS += -Wno-deprecated-copy
+# for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
     laserrangefinder20hzv2messagemonitorform.cpp \

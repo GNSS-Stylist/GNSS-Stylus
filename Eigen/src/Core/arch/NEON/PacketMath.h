@@ -36,22 +36,6 @@ namespace internal {
 #endif
 #endif
 
-template<typename T,int unique_id>
-struct eigen_packet_wrapper
-{
-  operator T&() { return m_val; }
-  operator const T&() const { return m_val; }
-  eigen_packet_wrapper() {}
-  eigen_packet_wrapper(const T &v) : m_val(v) {}
-  eigen_packet_wrapper& operator=(const T &v)
-  {
-    m_val = v;
-    return *this;
-  }
-
-  T m_val;
-};
-
 #if EIGEN_COMP_MSVC
 
 // In MSVC's arm_neon.h header file, all NEON vector types
@@ -60,12 +44,12 @@ struct eigen_packet_wrapper
 // (See also bug 1428)
 typedef eigen_packet_wrapper<float32x2_t,0>  Packet2f;
 typedef eigen_packet_wrapper<float32x4_t,1>  Packet4f;
-typedef eigen_packet_wrapper<int32_t    ,2>  Packet8c;
+typedef eigen_packet_wrapper<int32_t    ,2>  Packet4c;
 typedef eigen_packet_wrapper<int8x8_t   ,3>  Packet8c;
 typedef eigen_packet_wrapper<int8x16_t  ,4>  Packet16c;
-typedef eigen_packet_wrapper<uint32_t   ,5>  Packet8us;
-typedef eigen_packet_wrapper<uint8x8_t  ,6>  Packet8us;
-typedef eigen_packet_wrapper<uint8x16_t ,7>  Packet16us;
+typedef eigen_packet_wrapper<uint32_t   ,5>  Packet4uc;
+typedef eigen_packet_wrapper<uint8x8_t  ,6>  Packet8uc;
+typedef eigen_packet_wrapper<uint8x16_t ,7>  Packet16uc;
 typedef eigen_packet_wrapper<int16x4_t  ,8>  Packet4s;
 typedef eigen_packet_wrapper<int16x8_t  ,9>  Packet8s;
 typedef eigen_packet_wrapper<uint16x4_t ,10> Packet4us;
@@ -139,17 +123,18 @@ struct packet_traits<float> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 1,
     HasAbs       = 1,
     HasArg       = 0,
     HasAbs2      = 1,
+    HasAbsDiff   = 1,
     HasMin       = 1,
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
     HasBlend     = 0,
-    HasReduxp    = 1,
 
     HasDiv   = 1,
     HasFloor = 1,
@@ -178,17 +163,18 @@ struct packet_traits<int8_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 1,
     HasAbs       = 1,
+    HasAbsDiff   = 1,
     HasArg       = 0,
     HasAbs2      = 1,
     HasMin       = 1,
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
-    HasBlend     = 0,
-    HasReduxp    = 1
+    HasBlend     = 0
   };
 };
 
@@ -206,9 +192,11 @@ struct packet_traits<uint8_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 0,
     HasAbs       = 1,
+    HasAbsDiff   = 1,
     HasArg       = 0,
     HasAbs2      = 1,
     HasMin       = 1,
@@ -216,7 +204,8 @@ struct packet_traits<uint8_t> : default_packet_traits
     HasConj      = 1,
     HasSetLinear = 0,
     HasBlend     = 0,
-    HasReduxp    = 1
+
+    HasSqrt = 1
   };
 };
 
@@ -234,17 +223,18 @@ struct packet_traits<int16_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 1,
     HasAbs       = 1,
+    HasAbsDiff   = 1,
     HasArg       = 0,
     HasAbs2      = 1,
     HasMin       = 1,
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
-    HasBlend     = 0,
-    HasReduxp    = 1
+    HasBlend     = 0
   };
 };
 
@@ -262,9 +252,11 @@ struct packet_traits<uint16_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 0,
     HasAbs       = 0,
+    HasAbsDiff   = 1,
     HasArg       = 0,
     HasAbs2      = 1,
     HasMin       = 1,
@@ -272,7 +264,7 @@ struct packet_traits<uint16_t> : default_packet_traits
     HasConj      = 1,
     HasSetLinear = 0,
     HasBlend     = 0,
-    HasReduxp    = 1
+    HasSqrt = 1
   };
 };
 
@@ -290,17 +282,18 @@ struct packet_traits<int32_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 1,
     HasAbs       = 1,
     HasArg       = 0,
     HasAbs2      = 1,
+    HasAbsDiff   = 1,
     HasMin       = 1,
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
-    HasBlend     = 0,
-    HasReduxp    = 1
+    HasBlend     = 0
   };
 };
 
@@ -318,17 +311,20 @@ struct packet_traits<uint32_t> : default_packet_traits
 
     HasAdd       = 1,
     HasSub       = 1,
+    HasShift     = 1,
     HasMul       = 1,
     HasNegate    = 0,
     HasAbs       = 0,
     HasArg       = 0,
     HasAbs2      = 1,
+    HasAbsDiff   = 1,
     HasMin       = 1,
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
     HasBlend     = 0,
-    HasReduxp    = 1
+
+    HasSqrt = 1
   };
 };
 
@@ -342,9 +338,8 @@ struct packet_traits<int64_t> : default_packet_traits
     Vectorizable = 1,
     AlignedOnScalar = 1,
     size = 2,
-    HasHalfPacket = 1,
+    HasHalfPacket = 0,
 
-    HasCast      = 1,
     HasCmp       = 1,
     HasAdd       = 1,
     HasSub       = 1,
@@ -359,9 +354,7 @@ struct packet_traits<int64_t> : default_packet_traits
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
-    HasBlend     = 0,
-    HasInsert    = 1,
-    HasReduxp    = 1
+    HasBlend     = 0
   };
 };
 
@@ -375,9 +368,8 @@ struct packet_traits<uint64_t> : default_packet_traits
     Vectorizable = 1,
     AlignedOnScalar = 1,
     size = 2,
-    HasHalfPacket = 1,
+    HasHalfPacket = 0,
 
-    HasCast      = 1,
     HasCmp       = 1,
     HasAdd       = 1,
     HasSub       = 1,
@@ -392,14 +384,12 @@ struct packet_traits<uint64_t> : default_packet_traits
     HasMax       = 1,
     HasConj      = 1,
     HasSetLinear = 0,
-    HasBlend     = 0,
-    HasInsert    = 1,
-    HasReduxp    = 1
+    HasBlend     = 0
   };
 };
 
 #if EIGEN_GNUC_AT_MOST(4, 4) && !EIGEN_COMP_LLVM
-// workaround gcc 4.2, 4.3 and 4.4 compilatin issue
+// workaround gcc 4.2, 4.3 and 4.4 compilation issue
 EIGEN_STRONG_INLINE float32x4_t vld1q_f32(const float* x) { return ::vld1q_f32((const float32_t*)x); }
 EIGEN_STRONG_INLINE float32x2_t vld1_f32(const float* x) { return ::vld1_f32 ((const float32_t*)x); }
 EIGEN_STRONG_INLINE float32x2_t vld1_dup_f32(const float* x) { return ::vld1_dup_f32 ((const float32_t*)x); }
@@ -877,6 +867,16 @@ template<> EIGEN_STRONG_INLINE Packet2i pmul<Packet2i>(const Packet2i& a, const 
 template<> EIGEN_STRONG_INLINE Packet4i pmul<Packet4i>(const Packet4i& a, const Packet4i& b) { return vmulq_s32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet2ui pmul<Packet2ui>(const Packet2ui& a, const Packet2ui& b) { return vmul_u32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4ui pmul<Packet4ui>(const Packet4ui& a, const Packet4ui& b) { return vmulq_u32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2l pmul<Packet2l>(const Packet2l& a, const Packet2l& b) {
+  return vcombine_s64(
+    vdup_n_s64(vgetq_lane_s64(a, 0)*vgetq_lane_s64(b, 0)),
+    vdup_n_s64(vgetq_lane_s64(a, 1)*vgetq_lane_s64(b, 1)));
+}
+template<> EIGEN_STRONG_INLINE Packet2ul pmul<Packet2ul>(const Packet2ul& a, const Packet2ul& b) {
+  return vcombine_u64(
+    vdup_n_u64(vgetq_lane_u64(a, 0)*vgetq_lane_u64(b, 0)),
+    vdup_n_u64(vgetq_lane_u64(a, 1)*vgetq_lane_u64(b, 1)));
+}
 
 template<> EIGEN_STRONG_INLINE Packet2f pdiv<Packet2f>(const Packet2f& a, const Packet2f& b)
 {
@@ -1023,6 +1023,8 @@ template<> EIGEN_STRONG_INLINE Packet2ul pdiv<Packet2ul>(const Packet2ul& /*a*/,
 // MLA: 10 GFlop/s ; FMA: 12 GFlops/s.
 template<> EIGEN_STRONG_INLINE Packet4f pmadd(const Packet4f& a, const Packet4f& b, const Packet4f& c)
 { return vfmaq_f32(c,a,b); }
+template<> EIGEN_STRONG_INLINE Packet2f pmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c)
+{ return vfma_f32(c,a,b); }
 #else
 template<> EIGEN_STRONG_INLINE Packet4f pmadd(const Packet4f& a, const Packet4f& b, const Packet4f& c)
 {
@@ -1045,6 +1047,10 @@ template<> EIGEN_STRONG_INLINE Packet4f pmadd(const Packet4f& a, const Packet4f&
 #else
   return vmlaq_f32(c,a,b);
 #endif
+}
+template<> EIGEN_STRONG_INLINE Packet2f pmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c)
+{
+  return vmla_f32(c,a,b);
 }
 #endif
 
@@ -1087,6 +1093,47 @@ template<> EIGEN_STRONG_INLINE Packet2ui pmadd(const Packet2ui& a, const Packet2
 { return vmla_u32(c,a,b); }
 template<> EIGEN_STRONG_INLINE Packet4ui pmadd(const Packet4ui& a, const Packet4ui& b, const Packet4ui& c)
 { return vmlaq_u32(c,a,b); }
+
+template<> EIGEN_STRONG_INLINE Packet2f pabsdiff<Packet2f>(const Packet2f& a, const Packet2f& b)
+{ return vabd_f32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4f pabsdiff<Packet4f>(const Packet4f& a, const Packet4f& b)
+{ return vabdq_f32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4c pabsdiff<Packet4c>(const Packet4c& a, const Packet4c& b)
+{
+  return vget_lane_s32(vreinterpret_s32_s8(vabd_s8(
+      vreinterpret_s8_s32(vdup_n_s32(a)),
+      vreinterpret_s8_s32(vdup_n_s32(b)))), 0);
+}
+template<> EIGEN_STRONG_INLINE Packet8c pabsdiff<Packet8c>(const Packet8c& a, const Packet8c& b)
+{ return vabd_s8(a,b); }
+template<> EIGEN_STRONG_INLINE Packet16c pabsdiff<Packet16c>(const Packet16c& a, const Packet16c& b)
+{ return vabdq_s8(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4uc pabsdiff<Packet4uc>(const Packet4uc& a, const Packet4uc& b)
+{
+  return vget_lane_u32(vreinterpret_u32_u8(vabd_u8(
+      vreinterpret_u8_u32(vdup_n_u32(a)),
+      vreinterpret_u8_u32(vdup_n_u32(b)))), 0);
+}
+template<> EIGEN_STRONG_INLINE Packet8uc pabsdiff<Packet8uc>(const Packet8uc& a, const Packet8uc& b)
+{ return vabd_u8(a,b); }
+template<> EIGEN_STRONG_INLINE Packet16uc pabsdiff<Packet16uc>(const Packet16uc& a, const Packet16uc& b)
+{ return vabdq_u8(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4s pabsdiff<Packet4s>(const Packet4s& a, const Packet4s& b)
+{ return vabd_s16(a,b); }
+template<> EIGEN_STRONG_INLINE Packet8s pabsdiff<Packet8s>(const Packet8s& a, const Packet8s& b)
+{ return vabdq_s16(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4us pabsdiff<Packet4us>(const Packet4us& a, const Packet4us& b)
+{ return vabd_u16(a,b); }
+template<> EIGEN_STRONG_INLINE Packet8us pabsdiff<Packet8us>(const Packet8us& a, const Packet8us& b)
+{ return vabdq_u16(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2i pabsdiff<Packet2i>(const Packet2i& a, const Packet2i& b)
+{ return vabd_s32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4i pabsdiff<Packet4i>(const Packet4i& a, const Packet4i& b)
+{ return vabdq_s32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2ui pabsdiff<Packet2ui>(const Packet2ui& a, const Packet2ui& b)
+{ return vabd_u32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4ui pabsdiff<Packet4ui>(const Packet4ui& a, const Packet4ui& b)
+{ return vabdq_u32(a,b); }
 
 template<> EIGEN_STRONG_INLINE Packet2f pmin<Packet2f>(const Packet2f& a, const Packet2f& b) { return vmin_f32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4f pmin<Packet4f>(const Packet4f& a, const Packet4f& b) { return vminq_f32(a,b); }
@@ -1202,6 +1249,26 @@ template<> EIGEN_STRONG_INLINE Packet2ui pcmp_le<Packet2ui>(const Packet2ui& a, 
 { return vcle_u32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4ui pcmp_le<Packet4ui>(const Packet4ui& a, const Packet4ui& b)
 { return vcleq_u32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2l pcmp_le<Packet2l>(const Packet2l& a, const Packet2l& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vreinterpretq_s64_u64(vcleq_s64(a,b));
+#else
+  return vcombine_s64(
+      vdup_n_s64(vgetq_lane_s64(a, 0) <= vgetq_lane_s64(b, 0) ? numext::int64_t(-1) : 0),
+      vdup_n_s64(vgetq_lane_s64(a, 1) <= vgetq_lane_s64(b, 1) ? numext::int64_t(-1) : 0));
+#endif
+}
+template<> EIGEN_STRONG_INLINE Packet2ul pcmp_le<Packet2ul>(const Packet2ul& a, const Packet2ul& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vcleq_u64(a,b);
+#else
+  return vcombine_u64(
+      vdup_n_u64(vgetq_lane_u64(a, 0) <= vgetq_lane_u64(b, 0) ? numext::uint64_t(-1) : 0),
+      vdup_n_u64(vgetq_lane_u64(a, 1) <= vgetq_lane_u64(b, 1) ? numext::uint64_t(-1) : 0));
+#endif
+}
 
 template<> EIGEN_STRONG_INLINE Packet2f pcmp_lt<Packet2f>(const Packet2f& a, const Packet2f& b)
 { return vreinterpret_f32_u32(vclt_f32(a,b)); }
@@ -1243,6 +1310,26 @@ template<> EIGEN_STRONG_INLINE Packet2ui pcmp_lt<Packet2ui>(const Packet2ui& a, 
 { return vclt_u32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4ui pcmp_lt<Packet4ui>(const Packet4ui& a, const Packet4ui& b)
 { return vcltq_u32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2l pcmp_lt<Packet2l>(const Packet2l& a, const Packet2l& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vreinterpretq_s64_u64(vcltq_s64(a,b));
+#else
+  return vcombine_s64(
+      vdup_n_s64(vgetq_lane_s64(a, 0) < vgetq_lane_s64(b, 0) ? numext::int64_t(-1) : 0),
+      vdup_n_s64(vgetq_lane_s64(a, 1) < vgetq_lane_s64(b, 1) ? numext::int64_t(-1) : 0));
+#endif
+}
+template<> EIGEN_STRONG_INLINE Packet2ul pcmp_lt<Packet2ul>(const Packet2ul& a, const Packet2ul& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vcltq_u64(a,b);
+#else
+  return vcombine_u64(
+      vdup_n_u64(vgetq_lane_u64(a, 0) < vgetq_lane_u64(b, 0) ? numext::uint64_t(-1) : 0),
+      vdup_n_u64(vgetq_lane_u64(a, 1) < vgetq_lane_u64(b, 1) ? numext::uint64_t(-1) : 0));
+#endif
+}
 
 template<> EIGEN_STRONG_INLINE Packet2f pcmp_eq<Packet2f>(const Packet2f& a, const Packet2f& b)
 { return vreinterpret_f32_u32(vceq_f32(a,b)); }
@@ -1284,6 +1371,26 @@ template<> EIGEN_STRONG_INLINE Packet2ui pcmp_eq<Packet2ui>(const Packet2ui& a, 
 { return vceq_u32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4ui pcmp_eq<Packet4ui>(const Packet4ui& a, const Packet4ui& b)
 { return vceqq_u32(a,b); }
+template<> EIGEN_STRONG_INLINE Packet2l pcmp_eq<Packet2l>(const Packet2l& a, const Packet2l& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vreinterpretq_s64_u64(vceqq_s64(a,b));
+#else
+  return vcombine_s64(
+      vdup_n_s64(vgetq_lane_s64(a, 0) == vgetq_lane_s64(b, 0) ? numext::int64_t(-1) : 0),
+      vdup_n_s64(vgetq_lane_s64(a, 1) == vgetq_lane_s64(b, 1) ? numext::int64_t(-1) : 0));
+#endif
+}
+template<> EIGEN_STRONG_INLINE Packet2ul pcmp_eq<Packet2ul>(const Packet2ul& a, const Packet2ul& b)
+{
+#if EIGEN_ARCH_ARM64
+  return vceqq_u64(a,b);
+#else
+  return vcombine_u64(
+      vdup_n_u64(vgetq_lane_u64(a, 0) == vgetq_lane_u64(b, 0) ? numext::uint64_t(-1) : 0),
+      vdup_n_u64(vgetq_lane_u64(a, 1) == vgetq_lane_u64(b, 1) ? numext::uint64_t(-1) : 0));
+#endif
+}
 
 template<> EIGEN_STRONG_INLINE Packet2f pcmp_lt_or_nan<Packet2f>(const Packet2f& a, const Packet2f& b)
 { return vreinterpret_f32_u32(vmvn_u32(vcge_f32(a,b))); }
@@ -1448,43 +1555,70 @@ template<> EIGEN_STRONG_INLINE Packet2l pandnot<Packet2l>(const Packet2l& a, con
 template<> EIGEN_STRONG_INLINE Packet2ul pandnot<Packet2ul>(const Packet2ul& a, const Packet2ul& b)
 { return vbicq_u64(a,b); }
 
-template<int N> EIGEN_STRONG_INLINE Packet4c pshiftright(Packet4c& a)
-{ return vget_lane_s32(vreinterpret_s32_s8(vshr_n_s8(vreinterpret_s8_s32(vdup_n_s32(a)), N)), 0); }
-template<int N> EIGEN_STRONG_INLINE Packet8c pshiftright(Packet8c a) { return vshr_n_s8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet16c pshiftright(Packet16c a) { return vshrq_n_s8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4uc pshiftright(Packet4uc& a)
-{ return vget_lane_u32(vreinterpret_u32_u8(vshr_n_u8(vreinterpret_u8_u32(vdup_n_u32(a)), N)), 0); }
-template<int N> EIGEN_STRONG_INLINE Packet8uc pshiftright(Packet8uc a) { return vshr_n_u8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet16uc pshiftright(Packet16uc a) { return vshrq_n_u8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4s pshiftright(Packet4s a) { return vshr_n_s16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet8s pshiftright(Packet8s a) { return vshrq_n_s16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4us pshiftright(Packet4us a) { return vshr_n_u16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet8us pshiftright(Packet8us a) { return vshrq_n_u16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2i pshiftright(Packet2i a) { return vshr_n_s32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4i pshiftright(Packet4i a) { return vshrq_n_s32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2ui pshiftright(Packet2ui a) { return vshr_n_u32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4ui pshiftright(Packet4ui a) { return vshrq_n_u32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2l pshiftright(Packet2l a) { return vshrq_n_s64(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2ul pshiftright(Packet2ul a) { return vshrq_n_u64(a,N); }
 
-template<int N> EIGEN_STRONG_INLINE Packet4c pshiftleft(Packet4c& a)
+template<int N> EIGEN_STRONG_INLINE Packet4c parithmetic_shift_right(Packet4c& a)
+{ return vget_lane_s32(vreinterpret_s32_s8(vshr_n_s8(vreinterpret_s8_s32(vdup_n_s32(a)), N)), 0); }
+template<int N> EIGEN_STRONG_INLINE Packet8c parithmetic_shift_right(Packet8c a) { return vshr_n_s8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet16c parithmetic_shift_right(Packet16c a) { return vshrq_n_s8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4uc parithmetic_shift_right(Packet4uc& a)
+{ return vget_lane_u32(vreinterpret_u32_u8(vshr_n_u8(vreinterpret_u8_u32(vdup_n_u32(a)), N)), 0); }
+template<int N> EIGEN_STRONG_INLINE Packet8uc parithmetic_shift_right(Packet8uc a) { return vshr_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet16uc parithmetic_shift_right(Packet16uc a) { return vshrq_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4s parithmetic_shift_right(Packet4s a) { return vshr_n_s16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8s parithmetic_shift_right(Packet8s a) { return vshrq_n_s16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4us parithmetic_shift_right(Packet4us a) { return vshr_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8us parithmetic_shift_right(Packet8us a) { return vshrq_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2i parithmetic_shift_right(Packet2i a) { return vshr_n_s32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4i parithmetic_shift_right(Packet4i a) { return vshrq_n_s32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2ui parithmetic_shift_right(Packet2ui a) { return vshr_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4ui parithmetic_shift_right(Packet4ui a) { return vshrq_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2l parithmetic_shift_right(Packet2l a) { return vshrq_n_s64(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2ul parithmetic_shift_right(Packet2ul a) { return vshrq_n_u64(a,N); }
+
+template<int N> EIGEN_STRONG_INLINE Packet4c plogical_shift_right(Packet4c& a)
+{ return vget_lane_s32(vreinterpret_s32_u8(vshr_n_u8(vreinterpret_u8_s32(vdup_n_s32(a)), N)), 0); }
+template<int N> EIGEN_STRONG_INLINE Packet8c plogical_shift_right(Packet8c a)
+{ return vreinterpret_s8_u8(vshr_n_u8(vreinterpret_u8_s8(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet16c plogical_shift_right(Packet16c a)
+{ return vreinterpretq_s8_u8(vshrq_n_u8(vreinterpretq_u8_s8(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet4uc plogical_shift_right(Packet4uc& a)
+{ return vget_lane_u32(vreinterpret_u32_s8(vshr_n_s8(vreinterpret_s8_u32(vdup_n_u32(a)), N)), 0); }
+template<int N> EIGEN_STRONG_INLINE Packet8uc plogical_shift_right(Packet8uc a) { return vshr_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet16uc plogical_shift_right(Packet16uc a) { return vshrq_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4s plogical_shift_right(Packet4s a)
+{ return vreinterpret_s16_u16(vshr_n_u16(vreinterpret_u16_s16(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet8s plogical_shift_right(Packet8s a)
+{ return vreinterpretq_s16_u16(vshrq_n_u16(vreinterpretq_u16_s16(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet4us plogical_shift_right(Packet4us a) { return vshr_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8us plogical_shift_right(Packet8us a) { return vshrq_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2i plogical_shift_right(Packet2i a)
+{ return vreinterpret_s32_u32(vshr_n_u32(vreinterpret_u32_s32(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet4i plogical_shift_right(Packet4i a)
+{ return vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet2ui plogical_shift_right(Packet2ui a) { return vshr_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4ui plogical_shift_right(Packet4ui a) { return vshrq_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2l plogical_shift_right(Packet2l a)
+{ return vreinterpretq_s64_u64(vshrq_n_u64(vreinterpretq_u64_s64(a),N)); }
+template<int N> EIGEN_STRONG_INLINE Packet2ul plogical_shift_right(Packet2ul a) { return vshrq_n_u64(a,N); }
+
+template<int N> EIGEN_STRONG_INLINE Packet4c plogical_shift_left(Packet4c& a)
 { return vget_lane_s32(vreinterpret_s32_s8(vshl_n_s8(vreinterpret_s8_s32(vdup_n_s32(a)), N)), 0); }
-template<int N> EIGEN_STRONG_INLINE Packet8c pshiftleft(Packet8c a) { return vshl_n_s8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet16c pshiftleft(Packet16c a) { return vshlq_n_s8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4uc pshiftleft(Packet4uc& a)
+template<int N> EIGEN_STRONG_INLINE Packet8c plogical_shift_left(Packet8c a) { return vshl_n_s8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet16c plogical_shift_left(Packet16c a) { return vshlq_n_s8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4uc plogical_shift_left(Packet4uc& a)
 { return vget_lane_u32(vreinterpret_u32_u8(vshl_n_u8(vreinterpret_u8_u32(vdup_n_u32(a)), N)), 0); }
-template<int N> EIGEN_STRONG_INLINE Packet8uc pshiftleft(Packet8uc a) { return vshl_n_u8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet16uc pshiftleft(Packet16uc a) { return vshlq_n_u8(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4s pshiftleft(Packet4s a) { return vshl_n_s16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet8s pshiftleft(Packet8s a) { return vshlq_n_s16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4us pshiftleft(Packet4us a) { return vshl_n_u16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet8us pshiftleft(Packet8us a) { return vshlq_n_u16(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2i pshiftleft(Packet2i a) { return vshl_n_s32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4i pshiftleft(Packet4i a) { return vshlq_n_s32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2ui pshiftleft(Packet2ui a) { return vshl_n_u32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet4ui pshiftleft(Packet4ui a) { return vshlq_n_u32(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2l pshiftleft(Packet2l a) { return vshlq_n_s64(a,N); }
-template<int N> EIGEN_STRONG_INLINE Packet2ul pshiftleft(Packet2ul a) { return vshlq_n_u64(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8uc plogical_shift_left(Packet8uc a) { return vshl_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet16uc plogical_shift_left(Packet16uc a) { return vshlq_n_u8(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4s plogical_shift_left(Packet4s a) { return vshl_n_s16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8s plogical_shift_left(Packet8s a) { return vshlq_n_s16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4us plogical_shift_left(Packet4us a) { return vshl_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet8us plogical_shift_left(Packet8us a) { return vshlq_n_u16(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2i plogical_shift_left(Packet2i a) { return vshl_n_s32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4i plogical_shift_left(Packet4i a) { return vshlq_n_s32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2ui plogical_shift_left(Packet2ui a) { return vshl_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet4ui plogical_shift_left(Packet4ui a) { return vshlq_n_u32(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2l plogical_shift_left(Packet2l a) { return vshlq_n_s64(a,N); }
+template<int N> EIGEN_STRONG_INLINE Packet2ul plogical_shift_left(Packet2ul a) { return vshlq_n_u64(a,N); }
 
 template<> EIGEN_STRONG_INLINE Packet2f pload<Packet2f>(const float* from)
 { EIGEN_DEBUG_ALIGNED_LOAD return vld1_f32(from); }
@@ -2300,281 +2434,6 @@ template<> EIGEN_STRONG_INLINE int64_t predux<Packet2l>(const Packet2l& a)
 template<> EIGEN_STRONG_INLINE uint64_t predux<Packet2ul>(const Packet2ul& a)
 { return vgetq_lane_u64(a, 0) + vgetq_lane_u64(a, 1); }
 
-template<> EIGEN_STRONG_INLINE Packet2f preduxp<Packet2f>(const Packet2f* vecs)
-{
-  const float32x2x2_t vtrn = vzip_f32(vecs[0], vecs[1]);
-  return vadd_f32(vtrn.val[0], vtrn.val[1]);
-}
-template<> EIGEN_STRONG_INLINE Packet4f preduxp<Packet4f>(const Packet4f* vecs)
-{
-  const float32x4x2_t vtrn1 = vzipq_f32(vecs[0], vecs[2]);
-  const float32x4x2_t vtrn2 = vzipq_f32(vecs[1], vecs[3]);
-  const float32x4x2_t res1 = vzipq_f32(vtrn1.val[0], vtrn2.val[0]);
-  const float32x4x2_t res2 = vzipq_f32(vtrn1.val[1], vtrn2.val[1]);
-  return vaddq_f32(vaddq_f32(res1.val[0], res1.val[1]), vaddq_f32(res2.val[0], res2.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet4c preduxp<Packet4c>(const Packet4c* vecs)
-{
-  const int8x8x2_t zip8 = vzip_s8(
-      vreinterpret_s8_s32(vset_lane_s32(vecs[2], vdup_n_s32(vecs[0]), 1)),
-      vreinterpret_s8_s32(vset_lane_s32(vecs[3], vdup_n_s32(vecs[1]), 1)));
-  const uint16x4x2_t zip16 = vzip_u16(
-      vreinterpret_u16_s8(zip8.val[0]),
-      vreinterpret_u16_s8(zip8.val[1]));
-  const int8x8_t sum = vadd_s8(
-      vreinterpret_s8_u16(zip16.val[0]),
-      vreinterpret_s8_u16(zip16.val[1]));
-  return vget_lane_s32(vreinterpret_s32_s8(vadd_s8(sum,
-      vreinterpret_s8_s32(vrev64_s32(vreinterpret_s32_s8(sum))))), 0);
-}
-template<> EIGEN_STRONG_INLINE Packet8c preduxp<Packet8c>(const Packet8c* vecs)
-{
-  int8x8_t sum[4];
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 4; i++)
-  {
-    const int8x8x2_t z = vzip_s8(vecs[i*2], vecs[i*2+1]);
-    sum[i] = vadd_s8(z.val[0], z.val[1]);
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 2; i++)
-  {
-    const uint16x4x2_t z = vzip_u16(vreinterpret_u16_s8(sum[i*2]), vreinterpret_u16_s8(sum[i*2+1]));
-    sum[i] = vadd_s8(vreinterpret_s8_u16(z.val[0]), vreinterpret_s8_u16(z.val[1]));
-  }
-
-  const uint32x2x2_t z = vzip_u32(vreinterpret_u32_s8(sum[0]), vreinterpret_u32_s8(sum[1]));
-  return vadd_s8(vreinterpret_s8_u32(z.val[0]), vreinterpret_s8_u32(z.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet16c preduxp<Packet16c>(const Packet16c* vecs)
-{
-  int8x16_t sum[8];
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 8; i++)
-  {
-    const int8x16x2_t z = vzipq_s8(vecs[i*2], vecs[i*2+1]);
-    sum[i] = vaddq_s8(z.val[0], z.val[1]);
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 4; i++)
-  {
-    const uint16x8x2_t z = vzipq_u16(vreinterpretq_u16_s8(sum[i*2]), vreinterpretq_u16_s8(sum[i*2+1]));
-    sum[i] = vaddq_s8(vreinterpretq_s8_u16(z.val[0]), vreinterpretq_s8_u16(z.val[1]));
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 2; i++)
-  {
-    const uint32x4x2_t z = vzipq_u32(vreinterpretq_u32_s8(sum[i*2]), vreinterpretq_u32_s8(sum[i*2+1]));
-    sum[i] = vaddq_s8(vreinterpretq_s8_u32(z.val[0]), vreinterpretq_s8_u32(z.val[1]));
-  }
-
-  return vcombine_s8(
-      vadd_s8(vget_low_s8(sum[0]), vget_high_s8(sum[0])),
-      vadd_s8(vget_low_s8(sum[1]), vget_high_s8(sum[1])));
-}
-template<> EIGEN_STRONG_INLINE Packet4uc preduxp<Packet4uc>(const Packet4uc* vecs)
-{
-  const uint8x8x2_t zip8 = vzip_u8(
-      vreinterpret_u8_u32(vset_lane_u32(vecs[2], vdup_n_u32(vecs[0]), 1)),
-      vreinterpret_u8_u32(vset_lane_u32(vecs[3], vdup_n_u32(vecs[1]), 1)));
-  const uint16x4x2_t zip16 = vzip_u16(
-      vreinterpret_u16_u8(zip8.val[0]),
-      vreinterpret_u16_u8(zip8.val[1]));
-  const uint8x8_t sum = vadd_u8(
-      vreinterpret_u8_u16(zip16.val[0]),
-      vreinterpret_u8_u16(zip16.val[1]));
-  return vget_lane_u32(vreinterpret_u32_u8(vadd_u8(sum,
-      vreinterpret_u8_u32(vrev64_u32(vreinterpret_u32_u8(sum))))), 0);
-}
-template<> EIGEN_STRONG_INLINE Packet8uc preduxp<Packet8uc>(const Packet8uc* vecs)
-{
-  uint8x8_t sum[4];
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 4; i++)
-  {
-    const uint8x8x2_t z = vzip_u8(vecs[i*2], vecs[i*2+1]);
-    sum[i] = vadd_u8(z.val[0], z.val[1]);
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 2; i++)
-  {
-    const uint16x4x2_t z = vzip_u16(vreinterpret_u16_u8(sum[i*2]), vreinterpret_u16_u8(sum[i*2+1]));
-    sum[i] = vadd_u8(vreinterpret_u8_u16(z.val[0]), vreinterpret_u8_u16(z.val[1]));
-  }
-
-  const uint32x2x2_t z = vzip_u32(vreinterpret_u32_u8(sum[0]), vreinterpret_u32_u8(sum[1]));
-  return vadd_u8(vreinterpret_u8_u32(z.val[0]), vreinterpret_u8_u32(z.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet16uc preduxp<Packet16uc>(const Packet16uc* vecs)
-{
-  uint8x16_t sum[8];
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 8; i++)
-  {
-    const uint8x16x2_t z = vzipq_u8(vecs[i*2], vecs[i*2+1]);
-    sum[i] = vaddq_u8(z.val[0], z.val[1]);
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 4; i++)
-  {
-    const uint16x8x2_t z = vzipq_u16(vreinterpretq_u16_u8(sum[i*2]), vreinterpretq_u16_u8(sum[i*2+1]));
-    sum[i] = vaddq_u8(vreinterpretq_u8_u16(z.val[0]), vreinterpretq_u8_u16(z.val[1]));
-  }
-
-  EIGEN_UNROLL_LOOP
-  for (int i = 0; i != 2; i++)
-  {
-    const uint32x4x2_t z = vzipq_u32(vreinterpretq_u32_u8(sum[i*2]), vreinterpretq_u32_u8(sum[i*2+1]));
-    sum[i] = vaddq_u8(vreinterpretq_u8_u32(z.val[0]), vreinterpretq_u8_u32(z.val[1]));
-  }
-
-  return vcombine_u8(
-      vadd_u8(vget_low_u8(sum[0]), vget_high_u8(sum[0])),
-      vadd_u8(vget_low_u8(sum[1]), vget_high_u8(sum[1])));
-}
-template<> EIGEN_STRONG_INLINE Packet4s preduxp<Packet4s>(const Packet4s* vecs)
-{
-  int16x4x2_t zip16;
-  int32x2x2_t zip32;
-  int16x4_t sum1, sum2;
-
-  zip16 = vzip_s16(vecs[0], vecs[1]);
-  sum1 = vadd_s16(zip16.val[0], zip16.val[1]);
-  zip16 = vzip_s16(vecs[2], vecs[3]);
-  sum2 = vadd_s16(zip16.val[0], zip16.val[1]);
-
-  zip32 = vzip_s32(vreinterpret_s32_s16(sum1), vreinterpret_s32_s16(sum2));
-  return vadd_s16(vreinterpret_s16_s32(zip32.val[0]), vreinterpret_s16_s32(zip32.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet8s preduxp<Packet8s>(const Packet8s* vecs)
-{
-  int16x8x2_t zip16;
-  int32x4x2_t zip32;
-  int16x8_t sum1, sum2, sum3, sum4;
-
-  zip16 = vzipq_s16(vecs[0], vecs[1]);
-  sum1 = vaddq_s16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_s16(vecs[2], vecs[3]);
-  sum2 = vaddq_s16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_s16(vecs[4], vecs[5]);
-  sum3 = vaddq_s16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_s16(vecs[6], vecs[7]);
-  sum4 = vaddq_s16(zip16.val[0], zip16.val[1]);
-
-  zip32 = vzipq_s32(vreinterpretq_s32_s16(sum1), vreinterpretq_s32_s16(sum2));
-  sum1 = vaddq_s16(vreinterpretq_s16_s32(zip32.val[0]), vreinterpretq_s16_s32(zip32.val[1]));
-  zip32 = vzipq_s32(vreinterpretq_s32_s16(sum3), vreinterpretq_s32_s16(sum4));
-  sum2 = vaddq_s16(vreinterpretq_s16_s32(zip32.val[0]), vreinterpretq_s16_s32(zip32.val[1]));
-
-  return vcombine_s16(
-      vadd_s16(vget_low_s16(sum1), vget_high_s16(sum1)),
-      vadd_s16(vget_low_s16(sum2), vget_high_s16(sum2)));
-}
-template<> EIGEN_STRONG_INLINE Packet4us preduxp<Packet4us>(const Packet4us* vecs)
-{
-  uint16x4x2_t zip16;
-  uint32x2x2_t zip32;
-  uint16x4_t sum1, sum2;
-
-  zip16 = vzip_u16(vecs[0], vecs[1]);
-  sum1 = vadd_u16(zip16.val[0], zip16.val[1]);
-  zip16 = vzip_u16(vecs[2], vecs[3]);
-  sum2 = vadd_u16(zip16.val[0], zip16.val[1]);
-
-  zip32 = vzip_u32(vreinterpret_u32_u16(sum1), vreinterpret_u32_u16(sum2));
-  return vadd_u16(vreinterpret_u16_u32(zip32.val[0]), vreinterpret_u16_u32(zip32.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet8us preduxp<Packet8us>(const Packet8us* vecs)
-{
-  uint16x8x2_t zip16;
-  uint32x4x2_t zip32;
-  uint16x8_t sum1, sum2, sum3, sum4;
-
-  zip16 = vzipq_u16(vecs[0], vecs[1]);
-  sum1 = vaddq_u16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_u16(vecs[2], vecs[3]);
-  sum2 = vaddq_u16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_u16(vecs[4], vecs[5]);
-  sum3 = vaddq_u16(zip16.val[0], zip16.val[1]);
-  zip16 = vzipq_u16(vecs[6], vecs[7]);
-  sum4 = vaddq_u16(zip16.val[0], zip16.val[1]);
-
-  zip32 = vzipq_u32(vreinterpretq_u32_u16(sum1), vreinterpretq_u32_u16(sum2));
-  sum1 = vaddq_u16(vreinterpretq_u16_u32(zip32.val[0]), vreinterpretq_u16_u32(zip32.val[1]));
-  zip32 = vzipq_u32(vreinterpretq_u32_u16(sum3), vreinterpretq_u32_u16(sum4));
-  sum2 = vaddq_u16(vreinterpretq_u16_u32(zip32.val[0]), vreinterpretq_u16_u32(zip32.val[1]));
-
-  return vcombine_u16(
-      vadd_u16(vget_low_u16(sum1), vget_high_u16(sum1)),
-      vadd_u16(vget_low_u16(sum2), vget_high_u16(sum2)));
-}
-template<> EIGEN_STRONG_INLINE Packet2i preduxp<Packet2i>(const Packet2i* vecs)
-{
-  const int32x2x2_t vtrn = vzip_s32(vecs[0], vecs[1]);
-  return vadd_s32(vtrn.val[0], vtrn.val[1]);
-}
-template<> EIGEN_STRONG_INLINE Packet4i preduxp<Packet4i>(const Packet4i* vecs)
-{
-  const int32x4x2_t vtrn1 = vzipq_s32(vecs[0], vecs[2]);
-  const int32x4x2_t vtrn2 = vzipq_s32(vecs[1], vecs[3]);
-  const int32x4x2_t res1 = vzipq_s32(vtrn1.val[0], vtrn2.val[0]);
-  const int32x4x2_t res2 = vzipq_s32(vtrn1.val[1], vtrn2.val[1]);
-  return vaddq_s32(vaddq_s32(res1.val[0], res1.val[1]), vaddq_s32(res2.val[0], res2.val[1]));
-}
-template<> EIGEN_STRONG_INLINE Packet2ui preduxp<Packet2ui>(const Packet2ui* vecs)
-{
-  const uint32x2x2_t vtrn = vzip_u32(vecs[0], vecs[1]);
-  return vadd_u32(vtrn.val[0], vtrn.val[1]);
-}
-template<> EIGEN_STRONG_INLINE Packet4ui preduxp<Packet4ui>(const Packet4ui* vecs)
-{
-  uint32x4x2_t vtrn1, vtrn2, res1, res2;
-  Packet4ui sum1, sum2, sum;
-
-  // NEON zip performs interleaving of the supplied vectors.
-  // We perform two interleaves in a row to acquire the transposed vector
-  vtrn1 = vzipq_u32(vecs[0], vecs[2]);
-  vtrn2 = vzipq_u32(vecs[1], vecs[3]);
-  res1 = vzipq_u32(vtrn1.val[0], vtrn2.val[0]);
-  res2 = vzipq_u32(vtrn1.val[1], vtrn2.val[1]);
-
-  // Do the addition of the resulting vectors
-  sum1 = vaddq_u32(res1.val[0], res1.val[1]);
-  sum2 = vaddq_u32(res2.val[0], res2.val[1]);
-  sum = vaddq_u32(sum1, sum2);
-
-  return sum;
-}
-template<> EIGEN_STRONG_INLINE Packet2l preduxp<Packet2l>(const Packet2l* vecs)
-{
-  return vsetq_lane_s64(
-      vget_lane_s64(vget_low_s64(vecs[0]), 0) +
-        vget_lane_s64(vget_high_s64(vecs[0]), 0),
-      vdupq_n_s64(
-        vget_lane_s64(vget_low_s64(vecs[1]), 0) +
-          vget_lane_s64(vget_high_s64(vecs[1]), 0)),
-      0);
-}
-template<> EIGEN_STRONG_INLINE Packet2ul preduxp<Packet2ul>(const Packet2ul* vecs)
-{
-  return vsetq_lane_u64(
-      vget_lane_u64(vget_low_u64(vecs[0]), 0) +
-        vget_lane_u64(vget_high_u64(vecs[0]), 0),
-      vdupq_n_u64(
-        vget_lane_u64(vget_low_u64(vecs[1]), 0) +
-          vget_lane_u64(vget_high_u64(vecs[1]), 0)),
-      0);
-}
-
 template<> EIGEN_DEVICE_FUNC inline Packet4c predux_half_dowto4(const Packet8c& a)
 {
   return vget_lane_s32(vreinterpret_s32_s8(vadd_s8(a,
@@ -2870,147 +2729,6 @@ template<> EIGEN_STRONG_INLINE bool predux_any(const Packet4f& x)
   return vget_lane_u32(vpmax_u32(tmp, tmp), 0);
 }
 
-// this PALIGN_NEON business is to work around a bug in LLVM Clang 3.0 causing incorrect compilation errors,
-// see bug 347 and this LLVM bug: http://llvm.org/bugs/show_bug.cgi?id=11074
-#define PALIGN_NEON(Offset,Type,Command) \
-template<>\
-struct palign_impl<Offset,Type>\
-{\
-    EIGEN_STRONG_INLINE static void run(Type& first, const Type& second)\
-    {\
-        if (Offset!=0)\
-            first = Command(first, second, Offset);\
-    }\
-};\
-
-template<typename T>
-EIGEN_STRONG_INLINE T palign_4c(const T& first, const T &second, const int n)
-{
-  return static_cast<T>((static_cast<uint32_t>(second) << (32 - n * 8)) | (static_cast<uint32_t>(first) >> (n * 8)));
-}
-
-PALIGN_NEON(0, Packet2f, vext_f32)
-PALIGN_NEON(1, Packet2f, vext_f32)
-
-PALIGN_NEON(0, Packet4f, vextq_f32)
-PALIGN_NEON(1, Packet4f, vextq_f32)
-PALIGN_NEON(2, Packet4f, vextq_f32)
-PALIGN_NEON(3, Packet4f, vextq_f32)
-
-PALIGN_NEON(0, Packet4c, palign_4c)
-PALIGN_NEON(1, Packet4c, palign_4c)
-PALIGN_NEON(2, Packet4c, palign_4c)
-PALIGN_NEON(3, Packet4c, palign_4c)
-
-PALIGN_NEON(0, Packet8c, vext_s8)
-PALIGN_NEON(1, Packet8c, vext_s8)
-PALIGN_NEON(2, Packet8c, vext_s8)
-PALIGN_NEON(3, Packet8c, vext_s8)
-PALIGN_NEON(4, Packet8c, vext_s8)
-PALIGN_NEON(5, Packet8c, vext_s8)
-PALIGN_NEON(6, Packet8c, vext_s8)
-PALIGN_NEON(7, Packet8c, vext_s8)
-
-PALIGN_NEON(0, Packet16c, vextq_s8)
-PALIGN_NEON(1, Packet16c, vextq_s8)
-PALIGN_NEON(2, Packet16c, vextq_s8)
-PALIGN_NEON(3, Packet16c, vextq_s8)
-PALIGN_NEON(4, Packet16c, vextq_s8)
-PALIGN_NEON(5, Packet16c, vextq_s8)
-PALIGN_NEON(6, Packet16c, vextq_s8)
-PALIGN_NEON(7, Packet16c, vextq_s8)
-PALIGN_NEON(8, Packet16c, vextq_s8)
-PALIGN_NEON(9, Packet16c, vextq_s8)
-PALIGN_NEON(10, Packet16c, vextq_s8)
-PALIGN_NEON(11, Packet16c, vextq_s8)
-PALIGN_NEON(12, Packet16c, vextq_s8)
-PALIGN_NEON(13, Packet16c, vextq_s8)
-PALIGN_NEON(14, Packet16c, vextq_s8)
-PALIGN_NEON(15, Packet16c, vextq_s8)
-
-PALIGN_NEON(0, Packet4uc, palign_4c)
-PALIGN_NEON(1, Packet4uc, palign_4c)
-PALIGN_NEON(2, Packet4uc, palign_4c)
-PALIGN_NEON(3, Packet4uc, palign_4c)
-
-PALIGN_NEON(0, Packet8uc, vext_u8)
-PALIGN_NEON(1, Packet8uc, vext_u8)
-PALIGN_NEON(2, Packet8uc, vext_u8)
-PALIGN_NEON(3, Packet8uc, vext_u8)
-PALIGN_NEON(4, Packet8uc, vext_u8)
-PALIGN_NEON(5, Packet8uc, vext_u8)
-PALIGN_NEON(6, Packet8uc, vext_u8)
-PALIGN_NEON(7, Packet8uc, vext_u8)
-
-PALIGN_NEON(0, Packet16uc, vextq_u8)
-PALIGN_NEON(1, Packet16uc, vextq_u8)
-PALIGN_NEON(2, Packet16uc, vextq_u8)
-PALIGN_NEON(3, Packet16uc, vextq_u8)
-PALIGN_NEON(4, Packet16uc, vextq_u8)
-PALIGN_NEON(5, Packet16uc, vextq_u8)
-PALIGN_NEON(6, Packet16uc, vextq_u8)
-PALIGN_NEON(7, Packet16uc, vextq_u8)
-PALIGN_NEON(8, Packet16uc, vextq_u8)
-PALIGN_NEON(9, Packet16uc, vextq_u8)
-PALIGN_NEON(10, Packet16uc, vextq_u8)
-PALIGN_NEON(11, Packet16uc, vextq_u8)
-PALIGN_NEON(12, Packet16uc, vextq_u8)
-PALIGN_NEON(13, Packet16uc, vextq_u8)
-PALIGN_NEON(14, Packet16uc, vextq_u8)
-PALIGN_NEON(15, Packet16uc, vextq_u8)
-
-PALIGN_NEON(0, Packet4s, vext_s16)
-PALIGN_NEON(1, Packet4s, vext_s16)
-PALIGN_NEON(2, Packet4s, vext_s16)
-PALIGN_NEON(3, Packet4s, vext_s16)
-
-PALIGN_NEON(0, Packet8s, vextq_s16)
-PALIGN_NEON(1, Packet8s, vextq_s16)
-PALIGN_NEON(2, Packet8s, vextq_s16)
-PALIGN_NEON(3, Packet8s, vextq_s16)
-PALIGN_NEON(4, Packet8s, vextq_s16)
-PALIGN_NEON(5, Packet8s, vextq_s16)
-PALIGN_NEON(6, Packet8s, vextq_s16)
-PALIGN_NEON(7, Packet8s, vextq_s16)
-
-PALIGN_NEON(0, Packet4us, vext_u16)
-PALIGN_NEON(1, Packet4us, vext_u16)
-PALIGN_NEON(2, Packet4us, vext_u16)
-PALIGN_NEON(3, Packet4us, vext_u16)
-
-PALIGN_NEON(0, Packet8us, vextq_u16)
-PALIGN_NEON(1, Packet8us, vextq_u16)
-PALIGN_NEON(2, Packet8us, vextq_u16)
-PALIGN_NEON(3, Packet8us, vextq_u16)
-PALIGN_NEON(4, Packet8us, vextq_u16)
-PALIGN_NEON(5, Packet8us, vextq_u16)
-PALIGN_NEON(6, Packet8us, vextq_u16)
-PALIGN_NEON(7, Packet8us, vextq_u16)
-
-PALIGN_NEON(0, Packet2i, vext_s32)
-PALIGN_NEON(1, Packet2i, vext_s32)
-
-PALIGN_NEON(0, Packet4i, vextq_s32)
-PALIGN_NEON(1, Packet4i, vextq_s32)
-PALIGN_NEON(2, Packet4i, vextq_s32)
-PALIGN_NEON(3, Packet4i, vextq_s32)
-
-PALIGN_NEON(0, Packet2ui, vext_u32)
-PALIGN_NEON(1, Packet2ui, vext_u32)
-
-PALIGN_NEON(0, Packet4ui, vextq_u32)
-PALIGN_NEON(1, Packet4ui, vextq_u32)
-PALIGN_NEON(2, Packet4ui, vextq_u32)
-PALIGN_NEON(3, Packet4ui, vextq_u32)
-
-PALIGN_NEON(0, Packet2l, vextq_s64)
-PALIGN_NEON(1, Packet2l, vextq_s64)
-
-PALIGN_NEON(0, Packet2ul, vextq_u64)
-PALIGN_NEON(1, Packet2ul, vextq_u64)
-
-#undef PALIGN_NEON
-
 EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet2f, 2>& kernel)
 {
   const float32x2x2_t z = vzip_f32(kernel.packet[0], kernel.packet[1]);
@@ -3218,6 +2936,35 @@ EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet4s, 4>& kernel)
   kernel.packet[2] = vreinterpret_s16_u32(zip32_2.val[0]);
   kernel.packet[3] = vreinterpret_s16_u32(zip32_2.val[1]);
 }
+
+EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet8s, 4>& kernel)
+{
+  const int16x8x2_t zip16_1 = vzipq_s16(kernel.packet[0], kernel.packet[1]);
+  const int16x8x2_t zip16_2 = vzipq_s16(kernel.packet[2], kernel.packet[3]);
+
+  const uint32x4x2_t zip32_1 = vzipq_u32(vreinterpretq_u32_s16(zip16_1.val[0]), vreinterpretq_u32_s16(zip16_2.val[0]));
+  const uint32x4x2_t zip32_2 = vzipq_u32(vreinterpretq_u32_s16(zip16_1.val[1]), vreinterpretq_u32_s16(zip16_2.val[1]));
+
+  kernel.packet[0] = vreinterpretq_s16_u32(zip32_1.val[0]);
+  kernel.packet[1] = vreinterpretq_s16_u32(zip32_1.val[1]);
+  kernel.packet[2] = vreinterpretq_s16_u32(zip32_2.val[0]);
+  kernel.packet[3] = vreinterpretq_s16_u32(zip32_2.val[1]);
+}
+
+EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet16uc, 4>& kernel)
+{
+  const uint8x16x2_t zip8_1 = vzipq_u8(kernel.packet[0], kernel.packet[1]);
+  const uint8x16x2_t zip8_2 = vzipq_u8(kernel.packet[2], kernel.packet[3]);
+
+  const uint16x8x2_t zip16_1 = vzipq_u16(vreinterpretq_u16_u8(zip8_1.val[0]), vreinterpretq_u16_u8(zip8_2.val[0]));
+  const uint16x8x2_t zip16_2 = vzipq_u16(vreinterpretq_u16_u8(zip8_1.val[1]), vreinterpretq_u16_u8(zip8_2.val[1]));
+
+  kernel.packet[0] = vreinterpretq_u8_u16(zip16_1.val[0]);
+  kernel.packet[1] = vreinterpretq_u8_u16(zip16_1.val[1]);
+  kernel.packet[2] = vreinterpretq_u8_u16(zip16_2.val[0]);
+  kernel.packet[3] = vreinterpretq_u8_u16(zip16_2.val[1]);
+}
+
 EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet8s, 8>& kernel)
 {
   const int16x8x2_t zip16_1 = vzipq_s16(kernel.packet[0], kernel.packet[1]);
@@ -3344,6 +3091,130 @@ ptranspose(PacketBlock<Packet2ul, 2>& kernel)
 #endif
 }
 
+template<> EIGEN_DEVICE_FUNC inline Packet2f pselect( const Packet2f& mask, const Packet2f& a, const Packet2f& b)
+{ return vbsl_f32(vreinterpret_u32_f32(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet4f pselect(const Packet4f& mask, const Packet4f& a, const Packet4f& b)
+{ return vbslq_f32(vreinterpretq_u32_f32(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet8c pselect(const Packet8c& mask, const Packet8c& a, const Packet8c& b)
+{ return vbsl_s8(vreinterpret_u8_s8(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet16c pselect(const Packet16c& mask, const Packet16c& a, const Packet16c& b)
+{ return vbslq_s8(vreinterpretq_u8_s8(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet8uc pselect(const Packet8uc& mask, const Packet8uc& a, const Packet8uc& b)
+{ return vbsl_u8(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet16uc pselect(const Packet16uc& mask, const Packet16uc& a, const Packet16uc& b)
+{ return vbslq_u8(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet4s pselect(const Packet4s& mask, const Packet4s& a, const Packet4s& b)
+{ return vbsl_s16(vreinterpret_u16_s16(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet8s pselect(const Packet8s& mask, const Packet8s& a, const Packet8s& b)
+{ return vbslq_s16(vreinterpretq_u16_s16(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet4us pselect(const Packet4us& mask, const Packet4us& a, const Packet4us& b)
+{ return vbsl_u16(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet8us pselect(const Packet8us& mask, const Packet8us& a, const Packet8us& b)
+{ return vbslq_u16(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet2i pselect(const Packet2i& mask, const Packet2i& a, const Packet2i& b)
+{ return vbsl_s32(vreinterpret_u32_s32(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet4i pselect(const Packet4i& mask, const Packet4i& a, const Packet4i& b)
+{ return vbslq_s32(vreinterpretq_u32_s32(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet2ui pselect(const Packet2ui& mask, const Packet2ui& a, const Packet2ui& b)
+{ return vbsl_u32(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet4ui pselect(const Packet4ui& mask, const Packet4ui& a, const Packet4ui& b)
+{ return vbslq_u32(mask, a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet2l pselect(const Packet2l& mask, const Packet2l& a, const Packet2l& b)
+{ return vbslq_s64(vreinterpretq_u64_s64(mask), a, b); }
+template<> EIGEN_DEVICE_FUNC inline Packet2ul pselect(const Packet2ul& mask, const Packet2ul& a, const Packet2ul& b)
+{ return vbslq_u64(mask, a, b); }
+
+/**
+ * Computes the integer square root
+ * @remarks The calculation is performed using an algorithm which iterates through each binary digit of the result
+ *   and tests whether setting that digit to 1 would cause the square of the value to be greater than the argument
+ *   value. The algorithm is described in detail here: http://ww1.microchip.com/downloads/en/AppNotes/91040a.pdf .
+ */
+template<> EIGEN_STRONG_INLINE Packet4uc psqrt(const Packet4uc& a) {
+  uint8x8_t x = vreinterpret_u8_u32(vdup_n_u32(a));
+  uint8x8_t res = vdup_n_u8(0);
+  uint8x8_t add = vdup_n_u8(0x8);
+  for (int i = 0; i < 4; i++)
+  {
+    const uint8x8_t temp = vorr_u8(res, add);
+    res = vbsl_u8(vcge_u8(x, vmul_u8(temp, temp)), temp, res);
+    add = vshr_n_u8(add, 1);
+  }
+  return vget_lane_u32(vreinterpret_u32_u8(res), 0);
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet8uc psqrt(const Packet8uc& a) {
+  uint8x8_t res = vdup_n_u8(0);
+  uint8x8_t add = vdup_n_u8(0x8);
+  for (int i = 0; i < 4; i++)
+  {
+    const uint8x8_t temp = vorr_u8(res, add);
+    res = vbsl_u8(vcge_u8(a, vmul_u8(temp, temp)), temp, res);
+    add = vshr_n_u8(add, 1);
+  }
+  return res;
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet16uc psqrt(const Packet16uc& a) {
+  uint8x16_t res = vdupq_n_u8(0);
+  uint8x16_t add = vdupq_n_u8(0x8);
+  for (int i = 0; i < 4; i++)
+  {
+    const uint8x16_t temp = vorrq_u8(res, add);
+    res = vbslq_u8(vcgeq_u8(a, vmulq_u8(temp, temp)), temp, res);
+    add = vshrq_n_u8(add, 1);
+  }
+  return res;
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet4us psqrt(const Packet4us& a) {
+  uint16x4_t res = vdup_n_u16(0);
+  uint16x4_t add = vdup_n_u16(0x80);
+  for (int i = 0; i < 8; i++)
+  {
+    const uint16x4_t temp = vorr_u16(res, add);
+    res = vbsl_u16(vcge_u16(a, vmul_u16(temp, temp)), temp, res);
+    add = vshr_n_u16(add, 1);
+  }
+  return res;
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet8us psqrt(const Packet8us& a) {
+  uint16x8_t res = vdupq_n_u16(0);
+  uint16x8_t add = vdupq_n_u16(0x80);
+  for (int i = 0; i < 8; i++)
+  {
+    const uint16x8_t temp = vorrq_u16(res, add);
+    res = vbslq_u16(vcgeq_u16(a, vmulq_u16(temp, temp)), temp, res);
+    add = vshrq_n_u16(add, 1);
+  }
+  return res;
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet2ui psqrt(const Packet2ui& a) {
+  uint32x2_t res = vdup_n_u32(0);
+  uint32x2_t add = vdup_n_u32(0x8000);
+  for (int i = 0; i < 16; i++)
+  {
+    const uint32x2_t temp = vorr_u32(res, add);
+    res = vbsl_u32(vcge_u32(a, vmul_u32(temp, temp)), temp, res);
+    add = vshr_n_u32(add, 1);
+  }
+  return res;
+}
+/// @copydoc Eigen::internal::psqrt(const Packet4uc& a)
+template<> EIGEN_STRONG_INLINE Packet4ui psqrt(const Packet4ui& a) {
+  uint32x4_t res = vdupq_n_u32(0);
+  uint32x4_t add = vdupq_n_u32(0x8000);
+  for (int i = 0; i < 16; i++)
+  {
+    const uint32x4_t temp = vorrq_u32(res, add);
+    res = vbslq_u32(vcgeq_u32(a, vmulq_u32(temp, temp)), temp, res);
+    add = vshrq_n_u32(add, 1);
+  }
+  return res;
+}
+
 //---------- double ----------
 
 // Clang 3.5 in the iOS toolchain has an ICE triggered by NEON intrisics for double.
@@ -3381,7 +3252,6 @@ template<> struct packet_traits<double>  : default_packet_traits
     size = 2,
     HasHalfPacket = 0,
 
-    HasCast      = 1,
     HasCmp       = 1,
     HasAdd       = 1,
     HasSub       = 1,
@@ -3397,11 +3267,9 @@ template<> struct packet_traits<double>  : default_packet_traits
     HasConj      = 1,
     HasSetLinear = 0,
     HasBlend     = 0,
-    HasInsert    = 1,
-    HasReduxp    = 1,
 
     HasDiv   = 1,
-    HasFloor = 0,
+    HasFloor = 1,
 
     HasSin  = 0,
     HasCos  = 0,
@@ -3460,6 +3328,18 @@ template<> EIGEN_STRONG_INLINE Packet2d pmadd(const Packet2d& a, const Packet2d&
 template<> EIGEN_STRONG_INLINE Packet2d pmin<Packet2d>(const Packet2d& a, const Packet2d& b) { return vminq_f64(a,b); }
 
 template<> EIGEN_STRONG_INLINE Packet2d pmax<Packet2d>(const Packet2d& a, const Packet2d& b) { return vmaxq_f64(a,b); }
+
+template<> EIGEN_STRONG_INLINE Packet2d pfloor<Packet2d>(const Packet2d& a)
+{
+  const Packet2d cst_1 = pset1<Packet2d>(1.0);
+  /* perform a floorf */
+  const Packet2d tmp = vcvtq_f64_s64(vcvtq_s64_f64(a));
+
+  /* if greater, substract 1 */
+  uint64x2_t mask = vcgtq_f64(tmp, a);
+  mask = vandq_u64(mask, vreinterpretq_u64_f64(cst_1));
+  return vsubq_f64(tmp, vreinterpretq_f64_u64(mask));
+}
 
 // Logical Operations are not supported for float, so we have to reinterpret casts using NEON intrinsics
 template<> EIGEN_STRONG_INLINE Packet2d pand<Packet2d>(const Packet2d& a, const Packet2d& b)
@@ -3529,10 +3409,6 @@ template<> EIGEN_STRONG_INLINE double predux<Packet2d>(const Packet2d& a)
 { return vget_lane_f64(vget_low_f64(a) + vget_high_f64(a), 0); }
 #endif
 
-template<> EIGEN_STRONG_INLINE Packet2d preduxp<Packet2d>(const Packet2d* vecs)
-{
-  return vaddq_f64(vzip1q_f64(vecs[0], vecs[1]), vzip2q_f64(vecs[0], vecs[1]));
-}
 // Other reduction functions:
 // mul
 #if EIGEN_COMP_CLANG && defined(__apple_build_version__)
@@ -3551,22 +3427,6 @@ template<> EIGEN_STRONG_INLINE double predux_min<Packet2d>(const Packet2d& a)
 template<> EIGEN_STRONG_INLINE double predux_max<Packet2d>(const Packet2d& a)
 { return vgetq_lane_f64(vpmaxq_f64(a,a), 0); }
 
-// this PALIGN_NEON business is to work around a bug in LLVM Clang 3.0 causing incorrect compilation errors,
-// see bug 347 and this LLVM bug: http://llvm.org/bugs/show_bug.cgi?id=11074
-#define PALIGN_NEON(Offset,Type,Command) \
-template<>\
-struct palign_impl<Offset,Type>\
-{\
-    EIGEN_STRONG_INLINE static void run(Type& first, const Type& second)\
-    {\
-        if (Offset!=0)\
-            first = Command(first, second, Offset);\
-    }\
-};\
-
-PALIGN_NEON(0, Packet2d, vextq_f64)
-PALIGN_NEON(1, Packet2d, vextq_f64)
-#undef PALIGN_NEON
 
 EIGEN_DEVICE_FUNC inline void
 ptranspose(PacketBlock<Packet2d, 2>& kernel)
@@ -3577,6 +3437,10 @@ ptranspose(PacketBlock<Packet2d, 2>& kernel)
   kernel.packet[0] = tmp1;
   kernel.packet[1] = tmp2;
 }
+
+template<> EIGEN_DEVICE_FUNC inline Packet2d pselect( const Packet2d& mask, const Packet2d& a, const Packet2d& b)
+{ return vbslq_f64(vreinterpretq_u64_f64(mask), a, b); }
+
 #endif // EIGEN_ARCH_ARM64
 
 } // end namespace internal

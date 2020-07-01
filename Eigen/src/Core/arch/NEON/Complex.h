@@ -99,6 +99,11 @@ template<> struct unpacket_traits<Packet2cf>
   };
 };
 
+template<> EIGEN_STRONG_INLINE Packet1cf pcast<float,Packet1cf>(const float& a)
+{ return Packet1cf(vset_lane_f32(a, vdup_n_f32(0.f), 0)); }
+template<> EIGEN_STRONG_INLINE Packet2cf pcast<Packet2f,Packet2cf>(const Packet2f& a)
+{ return Packet2cf(vreinterpretq_f32_u64(vmovl_u32(vreinterpret_u32_f32(a)))); }
+
 template<> EIGEN_STRONG_INLINE Packet1cf pset1<Packet1cf>(const std::complex<float>& from)
 { return Packet1cf(vld1_f32(reinterpret_cast<const float*>(&from))); }
 template<> EIGEN_STRONG_INLINE Packet2cf pset1<Packet2cf>(const std::complex<float>& from)
@@ -302,14 +307,6 @@ template<> EIGEN_STRONG_INLINE std::complex<float> predux<Packet2cf>(const Packe
   return s;
 }
 
-template<> EIGEN_STRONG_INLINE Packet1cf preduxp<Packet1cf>(const Packet1cf* vecs) { return vecs[0]; }
-template<> EIGEN_STRONG_INLINE Packet2cf preduxp<Packet2cf>(const Packet2cf* vecs)
-{
-  const Packet4f sum1 = vcombine_f32(vget_low_f32(vecs[0].v), vget_low_f32(vecs[1].v));
-  const Packet4f sum2 = vcombine_f32(vget_high_f32(vecs[0].v), vget_high_f32(vecs[1].v));
-  return Packet2cf(vaddq_f32(sum1, sum2));
-}
-
 template<> EIGEN_STRONG_INLINE std::complex<float> predux_mul<Packet1cf>(const Packet1cf& a)
 {
   std::complex<float> s;
@@ -342,16 +339,6 @@ template<> EIGEN_STRONG_INLINE std::complex<float> predux_mul<Packet2cf>(const P
 
   return s;
 }
-
-template<int Offset>
-struct palign_impl<Offset,Packet2cf>
-{
-  EIGEN_STRONG_INLINE static void run(Packet2cf& first, const Packet2cf& second)
-  {
-    if (Offset == 1)
-      first.v = vextq_f32(first.v, second.v, 2);
-  }
-};
 
 template<> struct conj_helper<Packet1cf,Packet1cf,false,true>
 {
@@ -603,19 +590,7 @@ template<> EIGEN_STRONG_INLINE Packet1cd preverse(const Packet1cd& a) { return a
 
 template<> EIGEN_STRONG_INLINE std::complex<double> predux<Packet1cd>(const Packet1cd& a) { return pfirst(a); }
 
-template<> EIGEN_STRONG_INLINE Packet1cd preduxp<Packet1cd>(const Packet1cd* vecs) { return vecs[0]; }
-
 template<> EIGEN_STRONG_INLINE std::complex<double> predux_mul<Packet1cd>(const Packet1cd& a) { return pfirst(a); }
-
-template<int Offset>
-struct palign_impl<Offset,Packet1cd>
-{
-  static EIGEN_STRONG_INLINE void run(Packet1cd& /*first*/, const Packet1cd& /*second*/)
-  {
-    // FIXME is it sure we never have to align a Packet1cd?
-    // Even though a std::complex<double> has 16 bytes, it is not necessarily aligned on a 16 bytes boundary...
-  }
-};
 
 template<> struct conj_helper<Packet1cd, Packet1cd, false,true>
 {
