@@ -46,7 +46,6 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     ui->lineEdit_LoggingDirectory->setText(settings.value("LoggingDirectory", "").toString());
     ui->lineEdit_LoggingFileNamePrefix->setText(settings.value("LoggingFileNamePrefix", "ublox").toString());
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
-    ui->checkBox_PlaySound->setChecked(settings.value("PlaySound").toBool());
     ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
     ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
 
@@ -64,11 +63,17 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     soundEffect_MBError.setSource(QUrl::fromLocalFile(soundDir + "ErrorBeep.wav"));
     soundEffect_Distance.setSource(QUrl::fromLocalFile(soundDir + "DistanceClick.wav"));
 
-    soundEffect_LMB.setMuted(true);
-    soundEffect_RMB.setMuted(true);
-    soundEffect_MMB.setMuted(true);
-    soundEffect_MBError.setMuted(true);
-    soundEffect_Distance.setMuted(true);
+    qreal volume = ui->horizontalScrollBar_Volume_MouseButtonTagging->value() / 100.;
+    soundEffect_LMB.setVolume(volume);
+    soundEffect_RMB.setVolume(volume);
+    soundEffect_MMB.setVolume(volume);
+    soundEffect_MBError.setVolume(volume);
+
+    volume = ui->horizontalScrollBar_Volume_DistanceReceived->value() / 100.;
+    soundEffect_Distance.setVolume(volume);
+
+    ui->checkBox_PlaySound->setChecked(settings.value("PlaySound").toBool());
+    on_checkBox_PlaySound_stateChanged(ui->checkBox_PlaySound->checkState());
 }
 
 EssentialsForm::~EssentialsForm()
