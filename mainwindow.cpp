@@ -31,8 +31,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QCoreApplication::setApplicationName("GNSSStylus");
 
     serialThread_Base = nullptr;
-    serialThread_RoverA = nullptr;
-    serialThread_RoverB = nullptr;
     ntripThread = nullptr;
     serialThread_LaserDist = nullptr;
 
@@ -44,33 +42,83 @@ MainWindow::MainWindow(QWidget *parent) :
     messageMonitorForm_Base_NTRIP = new MessageMonitorForm(parent, "Message monitor (Base, NTRIP)");
     messageMonitorForm_Base_NTRIP->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_Base_NTRIP);
 
-    messageMonitorForm_RoverA = new MessageMonitorForm(parent, "Message monitor (Rover A)");
-    messageMonitorForm_RoverA->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_RoverA);
-    relposnedForm_RoverA = new RELPOSNEDForm(parent, "RELPOSNED (Rover A)");
+    for (unsigned int roverIndex = 0; roverIndex < sizeof(rovers) / sizeof(rovers[0]); roverIndex++)
+    {
+        // Initialize for safety
+        rovers[roverIndex] = 0;
+    }
 
-    messageMonitorForm_RoverB = new MessageMonitorForm(parent, "Message monitor (Rover B)");
-    messageMonitorForm_RoverB->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor_RoverB);
-    relposnedForm_RoverB = new RELPOSNEDForm(parent, "RELPOSNED (Rover B)");
+    essentialsForm = new EssentialsForm(parent);
+
+    // This way to handle multiple rover "UI-instances" isn't pretty
+    // and should be refactored somehow. Not learning new Qt-tricks needed for this now
+    // (give me VCL's TFrame, please)...
+
+    MainWinRover::ExtUIThings roverAUIThings;
+
+    roverAUIThings.lineEdit_SerialPort = ui->lineEdit_SerialPort_RoverA;
+    roverAUIThings.spinBox_SerialSpeed = ui->spinBox_SerialSpeed_RoverA;
+    roverAUIThings.pushButton_StartThread = ui->pushButton_StartThread_RoverA;
+    roverAUIThings.pushButton_TerminateThread = ui->pushButton_TerminateThread_RoverA;
+
+    roverAUIThings.pushButton_ShowMessageWindow = ui->pushButton_ShowMessageWindow_RoverA;
+    roverAUIThings.pushButton_ShowRELPOSNEDWindow = ui->pushButton_ShowRELPOSNEDForm_RoverA;
+    roverAUIThings.checkBox_SuspendThread = ui->checkBox_SuspendThread_RoverA;
+
+    roverAUIThings.label_RELPOSNEDMessageCount = ui->label_RELPOSNEDMessageCount_RoverA;
+    roverAUIThings.pushButton_ClearRELPOSNEDCounter = ui->pushButton_ClearRELPOSNEDCounter_RoverA;
+    roverAUIThings.label_LastErrorMessage = ui->label_LastErrorMessage_RoverA;
+    roverAUIThings.pushButton_ClearErrorMessage = ui->pushButton_ClearErrorMessage_RoverA;
+    roverAUIThings.label_LastWarningMessage = ui->label_LastWarningMessage_RoverA;
+    roverAUIThings.pushButton_ClearWarningMessage = ui->pushButton_ClearWarningMessage_RoverA;
+    roverAUIThings.label_LastInfoMessage = ui->label_LastInfoMessage_RoverA;
+    roverAUIThings.pushButton_ClearInfoMessage = ui->pushButton_ClearInfoMessage_RoverA;
+
+    roverAUIThings.essentialsForm = essentialsForm;
+
+    rovers[0] = new MainWinRover(parent, 0, roverAUIThings);
+
+    MainWinRover::ExtUIThings roverBUIThings;
+
+    roverBUIThings.lineEdit_SerialPort = ui->lineEdit_SerialPort_RoverB;
+    roverBUIThings.spinBox_SerialSpeed = ui->spinBox_SerialSpeed_RoverB;
+    roverBUIThings.pushButton_StartThread = ui->pushButton_StartThread_RoverB;
+    roverBUIThings.pushButton_TerminateThread = ui->pushButton_TerminateThread_RoverB;
+
+    roverBUIThings.pushButton_ShowMessageWindow = ui->pushButton_ShowMessageWindow_RoverB;
+    roverBUIThings.pushButton_ShowRELPOSNEDWindow = ui->pushButton_ShowRELPOSNEDForm_RoverB;
+    roverBUIThings.checkBox_SuspendThread = ui->checkBox_SuspendThread_RoverB;
+
+    roverBUIThings.label_RELPOSNEDMessageCount = ui->label_RELPOSNEDMessageCount_RoverB;
+    roverBUIThings.pushButton_ClearRELPOSNEDCounter = ui->pushButton_ClearRELPOSNEDCounter_RoverB;
+    roverBUIThings.label_LastErrorMessage = ui->label_LastErrorMessage_RoverB;
+    roverBUIThings.pushButton_ClearErrorMessage = ui->pushButton_ClearErrorMessage_RoverB;
+    roverBUIThings.label_LastWarningMessage = ui->label_LastWarningMessage_RoverB;
+    roverBUIThings.pushButton_ClearWarningMessage = ui->pushButton_ClearWarningMessage_RoverB;
+    roverBUIThings.label_LastInfoMessage = ui->label_LastInfoMessage_RoverB;
+    roverBUIThings.pushButton_ClearInfoMessage = ui->pushButton_ClearInfoMessage_RoverB;
+
+    roverBUIThings.essentialsForm = essentialsForm;
+
+    rovers[1] = new MainWinRover(parent, 1, roverBUIThings);
+
 
     messageMonitorForm_LaserDist = new LaserRangeFinder20HzV2MessageMonitorForm(parent, "Message monitor (\"Laser distance meter 20Hz V2\")");
 
-    essentialsForm = new EssentialsForm(parent);
     essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_Serial);
     essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_NTRIP);
 
-    essentialsForm->connectUBloxDataStreamProcessorSlots_RoverA(&ubloxDataStreamProcessor_RoverA);
-    essentialsForm->connectUBloxDataStreamProcessorSlots_RoverB(&ubloxDataStreamProcessor_RoverB);
+    essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[0]->ubloxDataStreamProcessor, 0);
+    essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[1]->ubloxDataStreamProcessor, 1);
+    // TODO: Add third rover here (and probably refactor EssentialsForm)
 
     QObject::connect(this, SIGNAL(distanceChanged(const EssentialsForm::DistanceItem&)),
                      essentialsForm, SLOT(on_distanceReceived(const EssentialsForm::DistanceItem&)));
 
     postProcessingForm = new PostProcessingForm(parent);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_RoverA(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&)));
-
-    QObject::connect(postProcessingForm, SIGNAL(replayData_RoverB(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&)));
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
+                     this, SLOT(ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int)));
 
     essentialsForm->connectPostProcessingSlots(postProcessingForm);
 
@@ -79,12 +127,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(&ubloxDataStreamProcessor_Base_NTRIP, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
                      this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&)));
-
-    QObject::connect(&ubloxDataStreamProcessor_RoverA, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&)));
-
-    QObject::connect(&ubloxDataStreamProcessor_RoverB, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&)));
 
     QSettings settings;
 
@@ -119,10 +161,11 @@ MainWindow::~MainWindow()
 
     delete messageMonitorForm_Base_Serial;
     delete messageMonitorForm_Base_NTRIP;
-    delete messageMonitorForm_RoverA;
-    delete relposnedForm_RoverA;
-    delete messageMonitorForm_RoverB;
-    delete relposnedForm_RoverB;
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        delete rovers[i];
+        rovers[i] = nullptr;
+    }
     delete essentialsForm;
     delete postProcessingForm;
 
@@ -133,11 +176,12 @@ void MainWindow::closeEvent (QCloseEvent *event)
 {
     messageMonitorForm_Base_Serial->close();
     messageMonitorForm_Base_NTRIP->close();
-    messageMonitorForm_RoverA->close();
-    relposnedForm_RoverA->close();
 
-    messageMonitorForm_RoverB->close();
-    relposnedForm_RoverB->close();
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        rovers[i]->messageMonitorForm->close();
+        rovers[i]->relposnedForm->close();
+    }
 
     essentialsForm->close();
     postProcessingForm->close();
@@ -145,6 +189,14 @@ void MainWindow::closeEvent (QCloseEvent *event)
     messageMonitorForm_LaserDist->close();
 
     event->accept();
+}
+
+void MainWindow::ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage& ubxMessage, const unsigned int roverId)
+{
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        rovers[roverId]->on_ubloxProcessor_ubxMessageReceived(ubxMessage);
+    }
 }
 
 void MainWindow::commThread_Base_InfoMessage(const QString& infoMessage)
@@ -182,14 +234,12 @@ void MainWindow::ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessag
     messageCounter_RTCM_Base_Serial++;
     ui->label_RTCMMessageCount_Base_Serial->setText(QString::number(messageCounter_RTCM_Base_Serial));
 
-    if (serialThread_RoverA)
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
-        serialThread_RoverA->addToSendQueue(rtcmMessage.rawMessage);
-    }
-
-    if (serialThread_RoverB)
-    {
-        serialThread_RoverB->addToSendQueue(rtcmMessage.rawMessage);
+        if (rovers[i]->serialThread)
+        {
+            rovers[i]->serialThread->addToSendQueue(rtcmMessage.rawMessage);
+        }
     }
 }
 
@@ -315,352 +365,6 @@ void MainWindow::on_pushButton_ClearInfoMessage_Base_Serial_clicked()
     ui->label_LastInfoMessage_Base_Serial->setText("");
 }
 
-void MainWindow::on_pushButton_StartThread_RoverA_clicked()
-{
-    if (!serialThread_RoverA)
-    {
-        serialThread_RoverA = new SerialThread(ui->lineEdit_SerialPort_RoverA->text(), 20, 1, ui->spinBox_SerialSpeed_RoverA->value());
-        if (ui->checkBox_SuspendThread_RoverA->isChecked())
-        {
-            serialThread_RoverA->suspend();
-        }
-
-        QObject::connect(serialThread_RoverA, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_InfoMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverA, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_WarningMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_RoverA_DataReceived(const QByteArray&, qint64, qint64)));
-
-        QObject::connect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_RoverA_SerialTimeout(void)));
-
-        messageMonitorForm_RoverA->connectSerialThreadSlots(serialThread_RoverA);
-        essentialsForm->connectSerialThreadSlots_RoverA(serialThread_RoverA);
-
-        serialThread_RoverA->start();
-
-        ui->lineEdit_SerialPort_RoverA->setEnabled(false);
-        ui->spinBox_SerialSpeed_RoverA->setEnabled(false);
-        ui->pushButton_StartThread_RoverA->setEnabled(false);
-        ui->pushButton_TerminateThread_RoverA->setEnabled(true);
-
-        messageCounter_RELPOSNED_RoverA = 0;
-        ui->label_RELPOSNEDMessageCount_RoverA->setText(QString::number(messageCounter_RELPOSNED_RoverA));
-        ui->label_LastInfoMessage_RoverA->setText("");
-        ui->label_LastWarningMessage_RoverA->setText("");
-        ui->label_LastErrorMessage_RoverA->setText("");
-    }
-
-}
-
-void MainWindow::on_pushButton_TerminateThread_RoverA_clicked()
-{
-    if (serialThread_RoverA)
-    {
-        serialThread_RoverA->requestTerminate();
-        serialThread_RoverA->wait(5000);
-
-        QObject::disconnect(serialThread_RoverA, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_InfoMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverA, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_WarningMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverA, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_RoverA_ErrorMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverA, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_RoverA_DataReceived(const QByteArray&, qint64, qint64)));
-
-        QObject::disconnect(serialThread_RoverA, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_RoverA_SerialTimeout(void)));
-
-        messageMonitorForm_RoverA->disconnectSerialThreadSlots(serialThread_RoverA);
-        essentialsForm->disconnectSerialThreadSlots_RoverA(serialThread_RoverA);
-
-        delete serialThread_RoverA;
-        serialThread_RoverA = nullptr;
-
-        ui->lineEdit_SerialPort_RoverA->setEnabled(true);
-        ui->spinBox_SerialSpeed_RoverA->setEnabled(true);
-        ui->pushButton_StartThread_RoverA->setEnabled(true);
-        ui->pushButton_TerminateThread_RoverA->setEnabled(false);
-    }
-
-}
-
-void MainWindow::on_pushButton_ShowMessageWindow_RoverA_clicked()
-{
-    messageMonitorForm_RoverA->show();
-    messageMonitorForm_RoverA->raise();
-    messageMonitorForm_RoverA->activateWindow();
-}
-
-void MainWindow::on_checkBox_SuspendThread_RoverA_stateChanged(int arg1)
-{
-    if (arg1 == Qt::Checked)
-    {
-        serialThread_RoverA->suspend();
-    }
-    else
-    {
-        serialThread_RoverA->resume();
-    }
-}
-
-
-
-void MainWindow::on_pushButton_ClearRTCMCounter_RoverA_clicked()
-{
-    messageCounter_RELPOSNED_RoverA = 0;
-    ui->label_RELPOSNEDMessageCount_RoverA->setText(QString::number(messageCounter_RELPOSNED_RoverA));
-}
-
-void MainWindow::on_pushButton_ClearErrorMessage_RoverA_clicked()
-{
-    ui->label_LastErrorMessage_RoverA->setText("");
-}
-
-void MainWindow::on_pushButton_ClearWarningMessage_RoverA_clicked()
-{
-    ui->label_LastWarningMessage_RoverA->setText("");
-}
-
-void MainWindow::on_pushButton_ClearInfoMessage_RoverA_clicked()
-{
-    ui->label_LastInfoMessage_RoverA->setText("");
-}
-
-void MainWindow::on_pushButton_ShowRELPOSNEDForm_RoverA_clicked()
-{
-    relposnedForm_RoverA->show();
-    relposnedForm_RoverA->raise();
-    relposnedForm_RoverA->activateWindow();
-}
-
-
-void MainWindow::commThread_RoverA_InfoMessage(const QString& infoMessage)
-{
-    ui->label_LastInfoMessage_RoverA->setText(infoMessage);
-}
-
-void MainWindow::commThread_RoverA_ErrorMessage(const QString& errorMessage)
-{
-    ui->label_LastErrorMessage_RoverA->setText(errorMessage);
-}
-
-void MainWindow::commThread_RoverA_WarningMessage(const QString& warningMessage)
-{
-    ui->label_LastWarningMessage_RoverA->setText(warningMessage);
-}
-
-void MainWindow::commThread_RoverA_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime)
-{
-    ubloxDataStreamProcessor_RoverA.process(data, firstCharTime, lastCharTime);
-}
-
-void MainWindow::commThread_RoverA_SerialTimeout(void)
-{
-    if (ubloxDataStreamProcessor_RoverA.getNumOfUnprocessedBytes() != 0)
-    {
-        ui->label_LastWarningMessage_RoverA->setText(QString("Warning: discarded ") + QString::number(ubloxDataStreamProcessor_RoverA.getNumOfUnprocessedBytes()) + " unprocessed bytes due to serial timeout.");
-    }
-
-    ubloxDataStreamProcessor_RoverA.flushInputBuffer();
-}
-
-
-void MainWindow::ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage& ubxMessage)
-{
-    UBXMessage_RELPOSNED relposned(ubxMessage);
-
-    if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
-    {
-        messageCounter_RELPOSNED_RoverA++;
-        ui->label_RELPOSNEDMessageCount_RoverA->setText(QString::number(messageCounter_RELPOSNED_RoverA));
-
-        relposnedForm_RoverA->updateFields(relposned);
-    }
-}
-
-
-void MainWindow::on_pushButton_StartThread_RoverB_clicked()
-{
-    if (!serialThread_RoverB)
-    {
-        serialThread_RoverB = new SerialThread(ui->lineEdit_SerialPort_RoverB->text(), 20, 1, ui->spinBox_SerialSpeed_RoverB->value());
-        if (ui->checkBox_SuspendThread_RoverB->isChecked())
-        {
-            serialThread_RoverB->suspend();
-        }
-
-        QObject::connect(serialThread_RoverB, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_InfoMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverB, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_WarningMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
-
-        QObject::connect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_RoverB_DataReceived(const QByteArray&, qint64, qint64)));
-
-        QObject::connect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_RoverB_SerialTimeout(void)));
-
-        messageMonitorForm_RoverB->connectSerialThreadSlots(serialThread_RoverB);
-        essentialsForm->connectSerialThreadSlots_RoverB(serialThread_RoverB);
-
-        serialThread_RoverB->start();
-
-        ui->lineEdit_SerialPort_RoverB->setEnabled(false);
-        ui->spinBox_SerialSpeed_RoverB->setEnabled(false);
-        ui->pushButton_StartThread_RoverB->setEnabled(false);
-        ui->pushButton_TerminateThread_RoverB->setEnabled(true);
-
-        messageCounter_RELPOSNED_RoverB = 0;
-        ui->label_RELPOSNEDMessageCount_RoverB->setText(QString::number(messageCounter_RELPOSNED_RoverB));
-        ui->label_LastInfoMessage_RoverB->setText("");
-        ui->label_LastWarningMessage_RoverB->setText("");
-        ui->label_LastErrorMessage_RoverB->setText("");
-    }
-
-}
-
-void MainWindow::on_pushButton_TerminateThread_RoverB_clicked()
-{
-    if (serialThread_RoverB)
-    {
-        serialThread_RoverB->requestTerminate();
-        serialThread_RoverB->wait(5000);
-
-        QObject::disconnect(serialThread_RoverB, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_InfoMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverB, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_WarningMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverB, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_RoverB_ErrorMessage(const QString&)));
-
-        QObject::disconnect(serialThread_RoverB, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_RoverB_DataReceived(const QByteArray&, qint64, qint64)));
-
-        QObject::disconnect(serialThread_RoverB, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_RoverB_SerialTimeout(void)));
-
-        messageMonitorForm_RoverB->disconnectSerialThreadSlots(serialThread_RoverB);
-        essentialsForm->disconnectSerialThreadSlots_RoverB(serialThread_RoverB);
-
-        delete serialThread_RoverB;
-        serialThread_RoverB = nullptr;
-
-        ui->lineEdit_SerialPort_RoverB->setEnabled(true);
-        ui->spinBox_SerialSpeed_RoverB->setEnabled(true);
-        ui->pushButton_StartThread_RoverB->setEnabled(true);
-        ui->pushButton_TerminateThread_RoverB->setEnabled(false);
-    }
-}
-
-void MainWindow::on_pushButton_ShowMessageWindow_RoverB_clicked()
-{
-    messageMonitorForm_RoverB->show();
-    messageMonitorForm_RoverB->raise();
-    messageMonitorForm_RoverB->activateWindow();
-}
-
-void MainWindow::on_pushButton_ShowRELPOSNEDForm_RoverB_clicked()
-{
-    relposnedForm_RoverB->show();
-    relposnedForm_RoverB->raise();
-    relposnedForm_RoverB->activateWindow();
-}
-
-void MainWindow::on_checkBox_SuspendThread_RoverB_stateChanged(int arg1)
-{
-    if (arg1 == Qt::Checked)
-    {
-        serialThread_RoverB->suspend();
-    }
-    else
-    {
-        serialThread_RoverB->resume();
-    }
-}
-
-void MainWindow::on_pushButton_ClearRTCMCounter_RoverB_clicked()
-{
-    messageCounter_RELPOSNED_RoverB = 0;
-    ui->label_RELPOSNEDMessageCount_RoverB->setText(QString::number(messageCounter_RELPOSNED_RoverB));
-}
-
-void MainWindow::on_pushButton_ClearErrorMessage_RoverB_clicked()
-{
-    ui->label_LastErrorMessage_RoverB->setText("");
-}
-
-void MainWindow::on_pushButton_ClearWarningMessage_RoverB_clicked()
-{
-    ui->label_LastWarningMessage_RoverB->setText("");
-}
-
-void MainWindow::on_pushButton_ClearInfoMessage_RoverB_clicked()
-{
-    ui->label_LastInfoMessage_RoverB->setText("");
-}
-
-void MainWindow::commThread_RoverB_InfoMessage(const QString& infoMessage)
-{
-    ui->label_LastInfoMessage_RoverB->setText(infoMessage);
-}
-
-void MainWindow::commThread_RoverB_ErrorMessage(const QString& errorMessage)
-{
-    ui->label_LastErrorMessage_RoverB->setText(errorMessage);
-}
-
-void MainWindow::commThread_RoverB_WarningMessage(const QString& warningMessage)
-{
-    ui->label_LastWarningMessage_RoverB->setText(warningMessage);
-}
-
-void MainWindow::commThread_RoverB_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime)
-{
-    ubloxDataStreamProcessor_RoverB.process(data, firstCharTime, lastCharTime);
-}
-
-void MainWindow::commThread_RoverB_SerialTimeout(void)
-{
-    if (ubloxDataStreamProcessor_RoverB.getNumOfUnprocessedBytes() != 0)
-    {
-        ui->label_LastWarningMessage_RoverB->setText(QString("Warning: discarded ") + QString::number(ubloxDataStreamProcessor_RoverB.getNumOfUnprocessedBytes()) + " unprocessed bytes due to serial timeout.");
-    }
-
-    ubloxDataStreamProcessor_RoverB.flushInputBuffer();
-}
-
-
-void MainWindow::ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage& ubxMessage)
-{
-    UBXMessage_RELPOSNED relposned(ubxMessage);
-
-    if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
-    {
-        messageCounter_RELPOSNED_RoverB++;
-        ui->label_RELPOSNEDMessageCount_RoverB->setText(QString::number(messageCounter_RELPOSNED_RoverB));
-
-        relposnedForm_RoverB->updateFields(relposned);
-    }
-}
-
-
 void MainWindow::on_pushButton_ShowEssentialsWindow_clicked()
 {
     essentialsForm->show();
@@ -750,14 +454,12 @@ void MainWindow::ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage
     messageCounter_RTCM_Base_NTRIP++;
     ui->label_RTCMMessageCount_Base_NTRIP->setText(QString::number(messageCounter_RTCM_Base_NTRIP));
 
-    if (serialThread_RoverA)
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
-        serialThread_RoverA->addToSendQueue(rtcmMessage.rawMessage);
-    }
-
-    if (serialThread_RoverB)
-    {
-        serialThread_RoverB->addToSendQueue(rtcmMessage.rawMessage);
+        if (rovers[i]->serialThread)
+        {
+            rovers[i]->serialThread->addToSendQueue(rtcmMessage.rawMessage);
+        }
     }
 }
 
@@ -1029,3 +731,247 @@ void MainWindow::on_doubleSpinBox_Distance_Constant_valueChanged(double distance
         emit distanceChanged(distanceItem);
     }
 }
+
+MainWinRover::MainWinRover(QWidget *parent, const int index, const ExtUIThings& uiThings)
+{
+    this->index = index;    
+    this->extUIThings = uiThings;
+
+    QString roverString = "Rover " + getRoverIdentString(index);
+
+    messageMonitorForm = new MessageMonitorForm(parent, "Message monitor (" + roverString + ")");
+    messageMonitorForm->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor);
+    relposnedForm = new RELPOSNEDForm(parent, "RELPOSNED (" + roverString + ")");
+
+    QObject::connect(&ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
+                     this, SLOT(on_ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
+
+    QObject::connect(extUIThings.pushButton_StartThread, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_StartThread_clicked()));
+
+    QObject::connect(extUIThings.pushButton_TerminateThread, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_TerminateThread_clicked()));
+
+    QObject::connect(extUIThings.pushButton_ShowMessageWindow, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ShowMessageWindow_clicked()));
+
+    QObject::connect(extUIThings.pushButton_ShowRELPOSNEDWindow, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ShowRELPOSNEDWindow_clicked()));
+
+    QObject::connect(extUIThings.checkBox_SuspendThread, SIGNAL(stateChanged(int)),
+                     this, SLOT(on_checkBox_SuspendThread_stateChanged(int)));
+
+
+    QObject::connect(extUIThings.pushButton_ClearRELPOSNEDCounter, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ClearRELPOSNEDCounter_clicked()));
+
+    QObject::connect(extUIThings.pushButton_ClearErrorMessage, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ClearErrorMessage_clicked()));
+
+    QObject::connect(extUIThings.pushButton_ClearWarningMessage, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ClearWarningMessage_clicked()));
+
+    QObject::connect(extUIThings.pushButton_ClearInfoMessage, SIGNAL(clicked(bool)),
+                     this, SLOT(on_pushButton_ClearInfoMessage_clicked()));
+
+
+}
+
+MainWinRover::~MainWinRover()
+{
+    delete messageMonitorForm;
+    delete relposnedForm;
+}
+
+void MainWinRover::startSerialThread(void)
+{
+    if (!serialThread)
+    {
+        serialThread = new SerialThread(extUIThings.lineEdit_SerialPort->text(), 20, 1, extUIThings.spinBox_SerialSpeed->value());
+        if (extUIThings.checkBox_SuspendThread->isChecked())
+        {
+            serialThread->suspend();
+        }
+
+        QObject::connect(serialThread, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(on_commThread_InfoMessage(const QString&)));
+
+        QObject::connect(serialThread, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(on_commThread_WarningMessage(const QString&)));
+
+        QObject::connect(serialThread, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(on_commThread_ErrorMessage(const QString&)));
+
+        QObject::connect(serialThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
+                         this, SLOT(on_commThread_DataReceived(const QByteArray&, qint64, qint64)));
+
+        QObject::connect(serialThread, SIGNAL(serialTimeout(void)),
+                         this, SLOT(on_commThread_SerialTimeout(void)));
+
+        messageMonitorForm->connectSerialThreadSlots(serialThread);
+
+        extUIThings.lineEdit_SerialPort->setEnabled(false);
+        extUIThings.spinBox_SerialSpeed->setEnabled(false);
+        extUIThings.pushButton_StartThread->setEnabled(false);
+        extUIThings.pushButton_TerminateThread->setEnabled(true);
+
+        messageCounter_RELPOSNED = 0;
+        extUIThings.label_RELPOSNEDMessageCount->setText(QString::number(messageCounter_RELPOSNED));
+        extUIThings.label_LastInfoMessage->setText("");
+        extUIThings.label_LastWarningMessage->setText("");
+        extUIThings.label_LastErrorMessage->setText("");
+
+        serialThread->start();
+    }
+}
+
+void MainWinRover::terminateSerialThread(void)
+{
+    if (serialThread)
+    {
+        serialThread->requestTerminate();
+        serialThread->wait(5000);
+
+        QObject::disconnect(serialThread, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(on_commThread_InfoMessage(const QString&)));
+
+        QObject::disconnect(serialThread, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(on_commThread_WarningMessage(const QString&)));
+
+        QObject::disconnect(serialThread, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(on_commThread_ErrorMessage(const QString&)));
+
+        QObject::disconnect(serialThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
+                         this, SLOT(on_commThread_DataReceived(const QByteArray&, qint64, qint64)));
+
+        QObject::disconnect(serialThread, SIGNAL(serialTimeout(void)),
+                         this, SLOT(on_commThread_SerialTimeout(void)));
+
+        messageMonitorForm->disconnectSerialThreadSlots(serialThread);
+
+        delete serialThread;
+        serialThread = nullptr;
+
+        extUIThings.lineEdit_SerialPort->setEnabled(true);
+        extUIThings.spinBox_SerialSpeed->setEnabled(true);
+        extUIThings.pushButton_StartThread->setEnabled(true);
+        extUIThings.pushButton_TerminateThread->setEnabled(false);
+    }
+}
+
+void MainWinRover::on_commThread_InfoMessage(const QString& infoMessage)
+{
+    extUIThings.label_LastInfoMessage->setText(infoMessage);
+}
+
+void MainWinRover::on_commThread_ErrorMessage(const QString& errorMessage)
+{
+    extUIThings.label_LastErrorMessage->setText(errorMessage);
+}
+
+void MainWinRover::on_commThread_WarningMessage(const QString& warningMessage)
+{
+    extUIThings.label_LastWarningMessage->setText(warningMessage);
+}
+
+void MainWinRover::on_commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime)
+{
+    ubloxDataStreamProcessor.process(data, firstCharTime, lastCharTime);
+}
+
+void MainWinRover::on_commThread_SerialTimeout(void)
+{
+    if (ubloxDataStreamProcessor.getNumOfUnprocessedBytes() != 0)
+    {
+        extUIThings.label_LastWarningMessage->setText(QString("Warning: discarded ") + QString::number(ubloxDataStreamProcessor.getNumOfUnprocessedBytes()) + " unprocessed bytes due to serial timeout.");
+    }
+
+    ubloxDataStreamProcessor.flushInputBuffer();
+}
+
+
+void MainWinRover::on_ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage)
+{
+    UBXMessage_RELPOSNED relposned(ubxMessage);
+
+    if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
+    {
+        messageCounter_RELPOSNED++;
+        extUIThings.label_RELPOSNEDMessageCount->setText(QString::number(messageCounter_RELPOSNED));
+
+        relposnedForm->updateFields(relposned);
+    }
+}
+
+QString MainWinRover::getRoverIdentString(const unsigned int roverId)
+{
+    if (roverId < ('X' - 'A'))
+    {
+        return QString(char('A' + (char)roverId));
+    }
+    else
+    {
+        // Should not happen
+        return("X");
+    }
+}
+
+void MainWinRover::on_pushButton_StartThread_clicked()
+{
+    startSerialThread();
+    extUIThings.essentialsForm->connectSerialThreadSlots_Rover(serialThread, index);
+}
+
+void MainWinRover::on_pushButton_TerminateThread_clicked()
+{
+    terminateSerialThread();
+    extUIThings.essentialsForm->disconnectSerialThreadSlots_Rover(serialThread, index);
+}
+
+void MainWinRover::on_pushButton_ShowMessageWindow_clicked()
+{
+    messageMonitorForm->show();
+    messageMonitorForm->raise();
+    messageMonitorForm->activateWindow();
+}
+
+void MainWinRover::on_pushButton_ShowRELPOSNEDWindow_clicked()
+{
+    relposnedForm->show();
+    relposnedForm->raise();
+    relposnedForm->activateWindow();
+}
+
+void MainWinRover::on_checkBox_SuspendThread_stateChanged(int arg1)
+{
+    if (arg1 == Qt::Checked)
+    {
+        serialThread->suspend();
+    }
+    else
+    {
+        serialThread->resume();
+    }
+}
+
+void MainWinRover::on_pushButton_ClearRELPOSNEDCounter_clicked()
+{
+    messageCounter_RELPOSNED = 0;
+    extUIThings.label_RELPOSNEDMessageCount->setText(QString::number(messageCounter_RELPOSNED));
+}
+
+void MainWinRover::on_pushButton_ClearErrorMessage_clicked()
+{
+    extUIThings.label_LastErrorMessage->setText("");
+}
+
+void MainWinRover::on_pushButton_ClearWarningMessage_clicked()
+{
+    extUIThings.label_LastWarningMessage->setText("");
+}
+
+void MainWinRover::on_pushButton_ClearInfoMessage_clicked()
+{
+    extUIThings.label_LastInfoMessage->setText("");
+}
+

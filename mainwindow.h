@@ -26,6 +26,9 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
+#include <QSpinBox>
+#include <QLabel>
+#include <QCheckBox>
 
 #include "serialthread.h"
 #include "ntripthread.h"
@@ -36,6 +39,76 @@
 #include "postprocessform.h"
 #include "laserrangefinder20hzv2messagemonitorform.h"
 #include "laserrangefinder20hzv2serialthread.h"
+
+class MainWinRover : public QObject
+{
+    // "Correct" place for this would be inside MainWindow, but "Meta object features are not supported for nested classes".
+    Q_OBJECT
+
+public:
+
+    class ExtUIThings
+    {
+    public:
+        QLineEdit* lineEdit_SerialPort = nullptr;
+        QSpinBox* spinBox_SerialSpeed = nullptr;
+        QPushButton* pushButton_StartThread = nullptr;
+        QPushButton* pushButton_TerminateThread = nullptr;
+        QPushButton* pushButton_ShowMessageWindow = nullptr;
+        QPushButton* pushButton_ShowRELPOSNEDWindow = nullptr;
+        QCheckBox* checkBox_SuspendThread = nullptr;
+
+        QLabel* label_RELPOSNEDMessageCount = nullptr;
+        QPushButton* pushButton_ClearRELPOSNEDCounter = nullptr;
+        QLabel* label_LastErrorMessage = nullptr;
+        QPushButton* pushButton_ClearErrorMessage = nullptr;
+        QLabel* label_LastWarningMessage = nullptr;
+        QPushButton* pushButton_ClearWarningMessage = nullptr;
+        QLabel* label_LastInfoMessage = nullptr;
+        QPushButton* pushButton_ClearInfoMessage = nullptr;
+
+        EssentialsForm* essentialsForm = nullptr;
+
+    };
+
+    MainWinRover(QWidget *parent, const int index, const ExtUIThings& uiThings);
+    ~MainWinRover();
+
+    void startSerialThread(void);
+    void terminateSerialThread(void);
+    QString getRoverIdentString(const unsigned int roverId);
+
+    int index = 0;
+
+    MessageMonitorForm* messageMonitorForm = nullptr;
+    SerialThread* serialThread = nullptr;
+    UBloxDataStreamProcessor ubloxDataStreamProcessor;
+    int messageCounter_RELPOSNED = 0;
+    RELPOSNEDForm* relposnedForm = nullptr;
+
+    ExtUIThings extUIThings;
+
+
+private slots:
+    void on_commThread_ErrorMessage(const QString& errorMessage);
+    void on_commThread_WarningMessage(const QString& warningMessage);
+    void on_commThread_InfoMessage(const QString& infoMessage);
+    void on_commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
+    void on_commThread_SerialTimeout(void);
+    void on_ubloxProcessor_ubxMessageReceived(const UBXMessage&);
+
+    void on_pushButton_StartThread_clicked();
+    void on_pushButton_TerminateThread_clicked();
+    void on_pushButton_ShowMessageWindow_clicked();
+    void on_checkBox_SuspendThread_stateChanged(int arg1);
+    void on_pushButton_ClearRELPOSNEDCounter_clicked();
+    void on_pushButton_ClearErrorMessage_clicked();
+    void on_pushButton_ClearWarningMessage_clicked();
+    void on_pushButton_ClearInfoMessage_clicked();
+    void on_pushButton_ShowRELPOSNEDWindow_clicked();
+
+    friend class MainWindow;
+};
 
 namespace Ui {
 class MainWindow;
@@ -62,20 +135,6 @@ private slots:
     void commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
     void commThread_Base_SerialTimeout(void);
     void ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&);
-
-    void commThread_RoverA_ErrorMessage(const QString& errorMessage);
-    void commThread_RoverA_WarningMessage(const QString& warningMessage);
-    void commThread_RoverA_InfoMessage(const QString& infoMessage);
-    void commThread_RoverA_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
-    void commThread_RoverA_SerialTimeout(void);
-    void ubloxProcessor_RoverA_ubxMessageReceived(const UBXMessage&);
-
-    void commThread_RoverB_ErrorMessage(const QString& errorMessage);
-    void commThread_RoverB_WarningMessage(const QString& warningMessage);
-    void commThread_RoverB_InfoMessage(const QString& infoMessage);
-    void commThread_RoverB_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
-    void commThread_RoverB_SerialTimeout(void);
-    void ubloxProcessor_RoverB_ubxMessageReceived(const UBXMessage&);
 
     void ntripThread_Base_ErrorMessage(const QString& errorMessage);
     void ntripThread_Base_WarningMessage(const QString& warningMessage);
@@ -107,42 +166,6 @@ private slots:
 
     void on_pushButton_ClearInfoMessage_Base_Serial_clicked();
 
-    void on_pushButton_StartThread_RoverA_clicked();
-
-    void on_pushButton_TerminateThread_RoverA_clicked();
-
-    void on_pushButton_ShowMessageWindow_RoverA_clicked();
-
-    void on_checkBox_SuspendThread_RoverA_stateChanged(int arg1);
-
-    void on_pushButton_ClearRTCMCounter_RoverA_clicked();
-
-    void on_pushButton_ClearErrorMessage_RoverA_clicked();
-
-    void on_pushButton_ClearWarningMessage_RoverA_clicked();
-
-    void on_pushButton_ClearInfoMessage_RoverA_clicked();
-
-    void on_pushButton_ShowRELPOSNEDForm_RoverA_clicked();
-
-    void on_pushButton_StartThread_RoverB_clicked();
-
-    void on_pushButton_TerminateThread_RoverB_clicked();
-
-    void on_pushButton_ShowMessageWindow_RoverB_clicked();
-
-    void on_pushButton_ShowRELPOSNEDForm_RoverB_clicked();
-
-    void on_checkBox_SuspendThread_RoverB_stateChanged(int arg1);
-
-    void on_pushButton_ClearRTCMCounter_RoverB_clicked();
-
-    void on_pushButton_ClearErrorMessage_RoverB_clicked();
-
-    void on_pushButton_ClearWarningMessage_RoverB_clicked();
-
-    void on_pushButton_ClearInfoMessage_RoverB_clicked();
-
     void on_pushButton_ShowEssentialsWindow_clicked();
 
     void on_pushButton_ShowPostProcessingWindow_clicked();
@@ -171,10 +194,15 @@ private slots:
 
     void on_doubleSpinBox_Distance_Constant_valueChanged(double arg1);
 
+    void ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int roverId);
+
 signals:
     void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 
 private:
+
+    MainWinRover* rovers[2];
+
     Ui::MainWindow *ui;
 
     MessageMonitorForm* messageMonitorForm_Base_Serial;
@@ -186,18 +214,6 @@ private:
     NTRIPThread* ntripThread;
     UBloxDataStreamProcessor ubloxDataStreamProcessor_Base_NTRIP;
     int messageCounter_RTCM_Base_NTRIP;
-
-    MessageMonitorForm* messageMonitorForm_RoverA;
-    SerialThread* serialThread_RoverA;
-    UBloxDataStreamProcessor ubloxDataStreamProcessor_RoverA;
-    int messageCounter_RELPOSNED_RoverA;
-    RELPOSNEDForm* relposnedForm_RoverA;
-
-    MessageMonitorForm* messageMonitorForm_RoverB;
-    SerialThread* serialThread_RoverB;
-    UBloxDataStreamProcessor ubloxDataStreamProcessor_RoverB;
-    int messageCounter_RELPOSNED_RoverB;
-    RELPOSNEDForm* relposnedForm_RoverB;
 
     LaserRangeFinder20HzV2MessageMonitorForm* messageMonitorForm_LaserDist;
     LaserRangeFinder20HzV2SerialThread* serialThread_LaserDist;

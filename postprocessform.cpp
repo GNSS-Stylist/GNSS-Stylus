@@ -273,17 +273,15 @@ void PostProcessingForm::addLogLine(const QString& line)
     QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-//#include "geodetic_conv.hpp"
-
 void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverA_clicked()
 {
-    relposnedMessages_RoverA.clear();
+    rovers[0].relposnedMessages.clear();
     addLogLine("Rover A RELPOSNED-data cleared.");
 }
 
 void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverB_clicked()
 {
-    relposnedMessages_RoverB.clear();
+    rovers[1].relposnedMessages.clear();
     addLogLine("Rover B RELPOSNED-data cleared.");
 }
 
@@ -293,56 +291,47 @@ void PostProcessingForm::on_pushButton_ClearTagData_clicked()
     addLogLine("Tag data cleared.");
 }
 
-void PostProcessingForm::addRELPOSNEDData_RoverA(const QStringList& fileNames)
+void PostProcessingForm::addRELPOSNEDData_Rover(const unsigned int roverId)
 {
-    addLogLine("Reading files into rover A relposned-data...");
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        if (fileDialog_UBX.exec())
+        {
+            QStringList fileNames = fileDialog_UBX.selectedFiles();
 
-    currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverA;
+            if (fileNames.size() != 0)
+            {
+                fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
+            }
 
-    addRELPOSNEDFileData(fileNames);
+            addRELPOSNEDData_Rover(fileNames, roverId);
+        }
+    }
+}
 
-    currentRELPOSNEDReadingData.relposnedMessages = nullptr;
+void PostProcessingForm::addRELPOSNEDData_Rover(const QStringList fileNames, const unsigned int roverId)
+{
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        addLogLine("Reading files into rover " + getRoverIdentString(roverId) + " relposned-data...");
+
+        currentRELPOSNEDReadingData.relposnedMessages =  &rovers[roverId].relposnedMessages;
+
+        addRELPOSNEDFileData(fileNames);
+
+        currentRELPOSNEDReadingData.relposnedMessages = nullptr;
+    }
 }
 
 void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverA_clicked()
 {
-    if (fileDialog_UBX.exec())
-    {
-        QStringList fileNames = fileDialog_UBX.selectedFiles();
-
-        if (fileNames.size() != 0)
-        {
-            fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
-        }
-
-        addRELPOSNEDData_RoverA(fileNames);
-    }
+    addRELPOSNEDData_Rover(0);
 }
 
-void PostProcessingForm::addRELPOSNEDData_RoverB(const QStringList& fileNames)
-{
-    addLogLine("Reading files into rover B relposned-data...");
-
-    currentRELPOSNEDReadingData.relposnedMessages = &relposnedMessages_RoverB;
-
-    addRELPOSNEDFileData(fileNames);
-
-    currentRELPOSNEDReadingData.relposnedMessages = nullptr;
-}
 
 void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverB_clicked()
 {
-    if (fileDialog_UBX.exec())
-    {
-        QStringList fileNames = fileDialog_UBX.selectedFiles();
-
-        if (fileNames.size() != 0)
-        {
-            fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
-        }
-
-        addRELPOSNEDData_RoverB(fileNames);
-    }
+    addRELPOSNEDData_Rover(1);
 }
 
 
@@ -1044,11 +1033,11 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                             stylusTipDistanceFromRoverA = distIter.value().distance;
                         }
 
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(beginningTag.iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(beginningTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = rovers[0].relposnedMessages.upperBound(beginningTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = rovers[1].relposnedMessages.upperBound(beginningTag.iTOW);
 
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTag.iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = rovers[0].relposnedMessages.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = rovers[1].relposnedMessages.upperBound(currentTag.iTOW);
 
                         while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
                             (relposIterator_RoverB != relposIterator_RoverB_EndTag))
@@ -1146,15 +1135,15 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                 qint64 distanceUptime = distIter.key();
                                 // TODO: Add/subtract fine tune sync value here if needed
 
-                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = roverSyncData_RoverA.lowerBound(distanceUptime);
+                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = rovers[0].roverSyncData.lowerBound(distanceUptime);
                                 UBXMessage_RELPOSNED interpolated_RoverA;
 
-                                if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                if (roverAUptimeIter != rovers[0].roverSyncData.end())
                                 {
                                     const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
                                     RoverSyncItem lowerSyncItem;
                                     roverAUptimeIter--;
-                                    if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                    if (roverAUptimeIter != rovers[0].roverSyncData.end())
                                     {
                                         lowerSyncItem = roverAUptimeIter.value();
                                     }
@@ -1168,7 +1157,7 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverA.find(upperSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    if (rovers[0].relposnedMessages.find(upperSyncItem.iTOW) == rovers[0].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -1178,7 +1167,7 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverA.find(lowerSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    if (rovers[0].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[0].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -1190,8 +1179,8 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
 
                                     qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
 
-                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverA.find(lowerSyncItem.iTOW).value(),
-                                                            relposnedMessages_RoverA.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[0].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                            rovers[0].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
                                 }
                                 else
                                 {
@@ -1203,15 +1192,15 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                     continue;
                                 }
 
-                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = roverSyncData_RoverB.lowerBound(distanceUptime);
+                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = rovers[1].roverSyncData.lowerBound(distanceUptime);
                                 UBXMessage_RELPOSNED interpolated_RoverB;
 
-                                if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                if (roverBUptimeIter != rovers[1].roverSyncData.end())
                                 {
                                     const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
                                     RoverSyncItem lowerSyncItem;
                                     roverBUptimeIter--;
-                                    if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                    if (roverBUptimeIter != rovers[1].roverSyncData.end())
                                     {
                                         lowerSyncItem = roverBUptimeIter.value();
                                     }
@@ -1225,7 +1214,7 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverB.find(upperSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    if (rovers[1].relposnedMessages.find(upperSyncItem.iTOW) == rovers[1].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -1235,7 +1224,7 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverB.find(lowerSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    if (rovers[1].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[1].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -1247,8 +1236,8 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
 
                                     qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
 
-                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverB.find(lowerSyncItem.iTOW).value(),
-                                                            relposnedMessages_RoverB.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[1].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                            rovers[1].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
                                 }
                                 else
                                 {
@@ -1454,15 +1443,15 @@ void PostProcessingForm::handleReplay(bool firstRound)
     {
 //        qint64 nextUptime = getNextUptime(lastReplayedUptime);
 
-        if ((!roverSyncData_RoverA.empty()) && (roverSyncData_RoverA.upperBound(lastReplayedUptime_ms) != roverSyncData_RoverA.end()))
+        if ((!rovers[0].roverSyncData.empty()) && (rovers[0].roverSyncData.upperBound(lastReplayedUptime_ms) != rovers[0].roverSyncData.end()))
         {
-            nextUptime_ms = roverSyncData_RoverA.upperBound(lastReplayedUptime_ms).key();
+            nextUptime_ms = rovers[0].roverSyncData.upperBound(lastReplayedUptime_ms).key();
         }
 
-        if ((!roverSyncData_RoverB.empty()) && (roverSyncData_RoverB.upperBound(lastReplayedUptime_ms) != roverSyncData_RoverB.end()) &&
-                (roverSyncData_RoverB.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
+        if ((!rovers[1].roverSyncData.empty()) && (rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms) != rovers[1].roverSyncData.end()) &&
+                (rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
         {
-            nextUptime_ms = roverSyncData_RoverB.upperBound(lastReplayedUptime_ms).key();
+            nextUptime_ms = rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms).key();
         }
 
         if ((!tags.empty()) && (tags.upperBound(lastReplayedUptime_ms) != tags.end()) &&
@@ -1477,20 +1466,20 @@ void PostProcessingForm::handleReplay(bool firstRound)
             nextUptime_ms = distances.upperBound(lastReplayedUptime_ms).key();
         }
 
-        if (roverSyncData_RoverA.find(nextUptime_ms) != roverSyncData_RoverA.end())
+        if (rovers[0].roverSyncData.find(nextUptime_ms) != rovers[0].roverSyncData.end())
         {
-            RoverSyncItem syncItem = roverSyncData_RoverA[nextUptime_ms];
+            RoverSyncItem syncItem = rovers[0].roverSyncData[nextUptime_ms];
 
-            if (relposnedMessages_RoverA.find(syncItem.iTOW) != relposnedMessages_RoverA.end())
+            if (rovers[0].relposnedMessages.find(syncItem.iTOW) != rovers[0].relposnedMessages.end())
             {
                 // Make local copy to add time stamp / frame duration.
 
-                UBXMessage_RELPOSNED relposnedMessage = relposnedMessages_RoverA[syncItem.iTOW];
+                UBXMessage_RELPOSNED relposnedMessage = rovers[0].relposnedMessages[syncItem.iTOW];
 
                 relposnedMessage.messageStartTime = nextUptime_ms;
                 relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
 
-                emit replayData_RoverA(relposnedMessage);
+                emit replayData_Rover(relposnedMessage, 0);
             }
             else
             {
@@ -1502,20 +1491,20 @@ void PostProcessingForm::handleReplay(bool firstRound)
             }
         }
 
-        if (roverSyncData_RoverB.find(nextUptime_ms) != roverSyncData_RoverB.end())
+        if (rovers[1].roverSyncData.find(nextUptime_ms) != rovers[1].roverSyncData.end())
         {
-            RoverSyncItem syncItem = roverSyncData_RoverB[nextUptime_ms];
+            RoverSyncItem syncItem = rovers[1].roverSyncData[nextUptime_ms];
 
-            if (relposnedMessages_RoverB.find(syncItem.iTOW) != relposnedMessages_RoverB.end())
+            if (rovers[1].relposnedMessages.find(syncItem.iTOW) != rovers[1].relposnedMessages.end())
             {
                 // Make local copy to add time stamp / frame duration.
 
-                UBXMessage_RELPOSNED relposnedMessage = relposnedMessages_RoverB[syncItem.iTOW];
+                UBXMessage_RELPOSNED relposnedMessage = rovers[1].relposnedMessages[syncItem.iTOW];
 
                 relposnedMessage.messageStartTime = nextUptime_ms;
                 relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
 
-                emit replayData_RoverB(relposnedMessage);
+                emit replayData_Rover(relposnedMessage, 1);
             }
             else
             {
@@ -1679,14 +1668,14 @@ qint64 PostProcessingForm::getFirstUptime()
 {
     qint64 firstUptime = std::numeric_limits<qint64>::max();
 
-    if ((!roverSyncData_RoverA.isEmpty()) && (roverSyncData_RoverA.firstKey() < firstUptime))
+    if ((!rovers[0].roverSyncData.isEmpty()) && (rovers[0].roverSyncData.firstKey() < firstUptime))
     {
-        firstUptime = roverSyncData_RoverA.firstKey();
+        firstUptime = rovers[0].roverSyncData.firstKey();
     }
 
-    if ((!roverSyncData_RoverB.isEmpty()) && (roverSyncData_RoverB.firstKey() < firstUptime))
+    if ((!rovers[1].roverSyncData.isEmpty()) && (rovers[1].roverSyncData.firstKey() < firstUptime))
     {
-        firstUptime = roverSyncData_RoverB.firstKey();
+        firstUptime = rovers[1].roverSyncData.firstKey();
     }
 
     if ((!distances.isEmpty()) && (distances.firstKey() < firstUptime))
@@ -1711,14 +1700,14 @@ qint64 PostProcessingForm::getLastUptime()
 {
     qint64 lastUptime = -1;
 
-    if ((!roverSyncData_RoverA.isEmpty()) && (roverSyncData_RoverA.lastKey() > lastUptime))
+    if ((!rovers[0].roverSyncData.isEmpty()) && (rovers[0].roverSyncData.lastKey() > lastUptime))
     {
-        lastUptime = roverSyncData_RoverA.lastKey();
+        lastUptime = rovers[0].roverSyncData.lastKey();
     }
 
-    if ((!roverSyncData_RoverB.isEmpty()) && (roverSyncData_RoverB.lastKey() > lastUptime))
+    if ((!rovers[1].roverSyncData.isEmpty()) && (rovers[1].roverSyncData.lastKey() > lastUptime))
     {
-        lastUptime = roverSyncData_RoverB.lastKey();
+        lastUptime = rovers[1].roverSyncData.lastKey();
     }
 
     if ((!distances.isEmpty()) && (distances.lastKey() > lastUptime))
@@ -1738,16 +1727,16 @@ qint64 PostProcessingForm::getNextUptime(const qint64 uptime)
 {
     qint64 nextUptime = std::numeric_limits<qint64>::max();
 
-    if ((!roverSyncData_RoverA.empty()) && (roverSyncData_RoverA.upperBound(uptime) != roverSyncData_RoverA.end()) &&
-            (roverSyncData_RoverA.upperBound(uptime).key() < nextUptime))
+    if ((!rovers[0].roverSyncData.empty()) && (rovers[0].roverSyncData.upperBound(uptime) != rovers[0].roverSyncData.end()) &&
+            (rovers[0].roverSyncData.upperBound(uptime).key() < nextUptime))
     {
-        nextUptime = roverSyncData_RoverA.upperBound(uptime).key();
+        nextUptime = rovers[0].roverSyncData.upperBound(uptime).key();
     }
 
-    if ((!roverSyncData_RoverB.empty()) && (roverSyncData_RoverB.upperBound(uptime) != roverSyncData_RoverB.end()) &&
-            (roverSyncData_RoverB.upperBound(uptime).key() < nextUptime))
+    if ((!rovers[1].roverSyncData.empty()) && (rovers[1].roverSyncData.upperBound(uptime) != rovers[1].roverSyncData.end()) &&
+            (rovers[1].roverSyncData.upperBound(uptime).key() < nextUptime))
     {
-        nextUptime = roverSyncData_RoverB.upperBound(uptime).key();
+        nextUptime = rovers[1].roverSyncData.upperBound(uptime).key();
     }
 
     if ((!tags.empty()) && (tags.upperBound(uptime) != tags.end()) &&
@@ -2020,11 +2009,11 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                             stylusTipDistanceFromRoverA = distIter.value().distance;
                         }
 
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.upperBound(roverSyncData_RoverA.upperBound(beginningUptime).value().iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.upperBound(roverSyncData_RoverB.upperBound(beginningUptime).value().iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = rovers[0].relposnedMessages.upperBound(rovers[0].relposnedMessages.upperBound(beginningUptime).value().iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = rovers[1].relposnedMessages.upperBound(rovers[1].relposnedMessages.upperBound(beginningUptime).value().iTOW);
 
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = relposnedMessages_RoverA.upperBound(currentTag.iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = relposnedMessages_RoverB.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = rovers[0].relposnedMessages.upperBound(currentTag.iTOW);
+                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = rovers[1].relposnedMessages.upperBound(currentTag.iTOW);
 
                         while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
                             (relposIterator_RoverB != relposIterator_RoverB_EndTag))
@@ -2133,15 +2122,15 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                 qint64 distanceUptime = distIter.key();
                                 // TODO: Add/subtract fine tune sync value here if needed
 
-                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = roverSyncData_RoverA.lowerBound(distanceUptime);
+                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = rovers[0].roverSyncData.lowerBound(distanceUptime);
                                 UBXMessage_RELPOSNED interpolated_RoverA;
 
-                                if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                if (roverAUptimeIter != rovers[0].roverSyncData.end())
                                 {
                                     const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
                                     RoverSyncItem lowerSyncItem;
                                     roverAUptimeIter--;
-                                    if (roverAUptimeIter != roverSyncData_RoverA.end())
+                                    if (roverAUptimeIter != rovers[0].roverSyncData.end())
                                     {
                                         lowerSyncItem = roverAUptimeIter.value();
                                     }
@@ -2155,7 +2144,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverA.find(upperSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    if (rovers[0].relposnedMessages.find(upperSyncItem.iTOW) == rovers[0].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -2165,7 +2154,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverA.find(lowerSyncItem.iTOW) == relposnedMessages_RoverA.end())
+                                    if (rovers[0].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[0].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -2177,8 +2166,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
                                     qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
 
-                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverA.find(lowerSyncItem.iTOW).value(),
-                                                            relposnedMessages_RoverA.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[0].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                            rovers[0].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
                                 }
                                 else
                                 {
@@ -2190,15 +2179,15 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                     continue;
                                 }
 
-                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = roverSyncData_RoverB.lowerBound(distanceUptime);
+                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = rovers[1].roverSyncData.lowerBound(distanceUptime);
                                 UBXMessage_RELPOSNED interpolated_RoverB;
 
-                                if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                if (roverBUptimeIter != rovers[1].roverSyncData.end())
                                 {
                                     const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
                                     RoverSyncItem lowerSyncItem;
                                     roverBUptimeIter--;
-                                    if (roverBUptimeIter != roverSyncData_RoverB.end())
+                                    if (roverBUptimeIter != rovers[1].roverSyncData.end())
                                     {
                                         lowerSyncItem = roverBUptimeIter.value();
                                     }
@@ -2212,7 +2201,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverB.find(upperSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    if (rovers[1].relposnedMessages.find(upperSyncItem.iTOW) == rovers[1].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -2222,7 +2211,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                                         continue;
                                     }
 
-                                    if (relposnedMessages_RoverB.find(lowerSyncItem.iTOW) == relposnedMessages_RoverB.end())
+                                    if (rovers[1].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[1].relposnedMessages.end())
                                     {
                                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                                    QString::number(distIter.value().sourceFileLine)+
@@ -2234,8 +2223,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
                                     qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
 
-                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(relposnedMessages_RoverB.find(lowerSyncItem.iTOW).value(),
-                                                            relposnedMessages_RoverB.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[1].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                            rovers[1].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
                                 }
                                 else
                                 {
@@ -2334,7 +2323,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     {
                         addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
                                    QString::number(beginningTag.sourceFileLine) +
-                                   ", iTOW " + QString::number(roverSyncData_RoverA.upperBound(beginningUptime).value().iTOW) + ", ending tag line " +
+                                   ", iTOW " + QString::number(rovers[0].roverSyncData.upperBound(beginningUptime).value().iTOW) + ", ending tag line " +
                                    QString::number(endingTag.sourceFileLine) +
                                    ", iTOW " + QString::number(currentTag.iTOW) +
                                    ", File \"" + endingTag.sourceFile + "\""
@@ -2375,8 +2364,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
         iTOWRange_Script_Min -= iTOWRange_Script_Min % expectedITOWAlignment; // Round to previous aligned ITOW
 
-        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = relposnedMessages_RoverA.lowerBound(iTOWRange_Script_Min);
-        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = relposnedMessages_RoverB.lowerBound(iTOWRange_Script_Min);
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = rovers[0].relposnedMessages.lowerBound(iTOWRange_Script_Min);
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = rovers[1].relposnedMessages.lowerBound(iTOWRange_Script_Min);
 
         UBXMessage_RELPOSNED::ITOW startingITOW = (relposIterator_RoverA.value().iTOW > relposIterator_RoverB.value().iTOW) ?
                     relposIterator_RoverA.value().iTOW : relposIterator_RoverB.value().iTOW;
@@ -2400,8 +2389,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         UBXMessage_RELPOSNED::ITOW lastRoverBNagITOW = -1;
 
         while ((iTOW <= iTOWRange_Script_Max) &&
-               (relposnedMessages_RoverA.upperBound(iTOW) != relposnedMessages_RoverA.end()) &&
-               (relposnedMessages_RoverB.upperBound(iTOW) != relposnedMessages_RoverB.end()))
+               (rovers[0].relposnedMessages.upperBound(iTOW) != rovers[0].relposnedMessages.end()) &&
+               (rovers[1].relposnedMessages.upperBound(iTOW) != rovers[1].relposnedMessages.end()))
         {
             QString frameType;
 
@@ -2410,17 +2399,17 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
             qint64 uptime = -1;
 
-            if ((relposnedMessages_RoverA.find(iTOW) != relposnedMessages_RoverA.end()) &&
-                    (relposnedMessages_RoverB.find(iTOW) != relposnedMessages_RoverB.end()))
+            if ((rovers[0].relposnedMessages.find(iTOW) != rovers[0].relposnedMessages.end()) &&
+                    (rovers[1].relposnedMessages.find(iTOW) != rovers[1].relposnedMessages.end()))
             {
                 frameType = "F_Key";
-                relposned_RoverA = relposnedMessages_RoverA.find(iTOW).value();
-                relposned_RoverB = relposnedMessages_RoverB.find(iTOW).value();
+                relposned_RoverA = rovers[0].relposnedMessages.find(iTOW).value();
+                relposned_RoverB = rovers[1].relposnedMessages.find(iTOW).value();
 
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA = reverseSync_RoverA.find(iTOW);
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB = reverseSync_RoverB.find(iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA = rovers[0].reverseSync.find(iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB = rovers[1].reverseSync.find(iTOW);
 
-                if ((reverseIter_RoverA == reverseSync_RoverA.end()) &&
+                if ((reverseIter_RoverA == rovers[0].reverseSync.end()) &&
                         (lastRoverANagITOW != iTOW))
                 {
                     addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(iTOW) +
@@ -2429,7 +2418,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverANagITOW = iTOW;
                 }
 
-                if ((reverseIter_RoverB == reverseSync_RoverB.end()) &&
+                if ((reverseIter_RoverB == rovers[1].reverseSync.end()) &&
                         (lastRoverBNagITOW != iTOW))
                 {
                     addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(iTOW) +
@@ -2438,8 +2427,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverBNagITOW = iTOW;
                 }
 
-                if ((reverseIter_RoverA != reverseSync_RoverA.end()) &&
-                        (reverseIter_RoverB != reverseSync_RoverB.end()))
+                if ((reverseIter_RoverA != rovers[0].reverseSync.end()) &&
+                        (reverseIter_RoverB != rovers[1].reverseSync.end()))
                 {
                     uptime = (reverseIter_RoverA.value() + reverseIter_RoverB.value()) / 2;
                 }
@@ -2448,22 +2437,22 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
             {
                 frameType = "F_Interp";
 
-                UBXMessage_RELPOSNED interpAStart = (relposnedMessages_RoverA.upperBound(iTOW) - 1).value();
-                UBXMessage_RELPOSNED interpAEnd = relposnedMessages_RoverA.upperBound(iTOW).value();
+                UBXMessage_RELPOSNED interpAStart = (rovers[0].relposnedMessages.upperBound(iTOW) - 1).value();
+                UBXMessage_RELPOSNED interpAEnd = rovers[0].relposnedMessages.upperBound(iTOW).value();
 
-                UBXMessage_RELPOSNED interpBStart = (relposnedMessages_RoverB.upperBound(iTOW) - 1).value();
-                UBXMessage_RELPOSNED interpBEnd = relposnedMessages_RoverB.upperBound(iTOW).value();
+                UBXMessage_RELPOSNED interpBStart = (rovers[1].relposnedMessages.upperBound(iTOW) - 1).value();
+                UBXMessage_RELPOSNED interpBEnd = rovers[1].relposnedMessages.upperBound(iTOW).value();
 
                 relposned_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(interpAStart, interpAEnd, iTOW);
                 relposned_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(interpBStart, interpBEnd, iTOW);
 
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_Start = reverseSync_RoverA.find(interpAStart.iTOW);
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_End = reverseSync_RoverA.find(interpAEnd.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_Start = rovers[0].reverseSync.find(interpAStart.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverA_End = rovers[0].reverseSync.find(interpAEnd.iTOW);
 
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_Start = reverseSync_RoverB.find(interpBStart.iTOW);
-                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_End = reverseSync_RoverB.find(interpBEnd.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_Start = rovers[1].reverseSync.find(interpBStart.iTOW);
+                QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator reverseIter_RoverB_End = rovers[1].reverseSync.find(interpBEnd.iTOW);
 
-                if ((reverseIter_RoverA_Start == reverseSync_RoverA.end()) &&
+                if ((reverseIter_RoverA_Start == rovers[0].reverseSync.end()) &&
                         (lastRoverANagITOW != interpAStart.iTOW))
                 {
                     addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(interpAStart.iTOW) +
@@ -2472,7 +2461,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverANagITOW = interpAStart.iTOW;
                 }
 
-                if ((reverseIter_RoverA_End == reverseSync_RoverA.end()) &&
+                if ((reverseIter_RoverA_End == rovers[0].reverseSync.end()) &&
                         (lastRoverANagITOW != interpAEnd.iTOW))
                 {
                     addLogLine("Warning: Uptime for rover A iTOW \"" + QString::number(interpAEnd.iTOW) +
@@ -2481,7 +2470,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverANagITOW = interpAEnd.iTOW;
                 }
 
-                if ((reverseIter_RoverB_Start == reverseSync_RoverB.end()) &&
+                if ((reverseIter_RoverB_Start == rovers[1].reverseSync.end()) &&
                         (lastRoverBNagITOW != interpBStart.iTOW))
                 {
                     addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(interpBStart.iTOW) +
@@ -2490,7 +2479,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverBNagITOW = interpBStart.iTOW;
                 }
 
-                if ((reverseIter_RoverB_End == reverseSync_RoverB.end()) &&
+                if ((reverseIter_RoverB_End == rovers[1].reverseSync.end()) &&
                         (lastRoverBNagITOW != interpBEnd.iTOW))
                 {
                     addLogLine("Warning: Uptime for rover B iTOW \"" + QString::number(interpBEnd.iTOW) +
@@ -2499,10 +2488,10 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     lastRoverBNagITOW = interpBEnd.iTOW;
                 }
 
-                if ((reverseIter_RoverA_Start != reverseSync_RoverA.end()) &&
-                        (reverseIter_RoverA_End != reverseSync_RoverA.end()) &&
-                        (reverseIter_RoverB_Start != reverseSync_RoverB.end()) &&
-                        (reverseIter_RoverB_End != reverseSync_RoverB.end()))
+                if ((reverseIter_RoverA_Start != rovers[0].reverseSync.end()) &&
+                        (reverseIter_RoverA_End != rovers[0].reverseSync.end()) &&
+                        (reverseIter_RoverB_Start != rovers[1].reverseSync.end()) &&
+                        (reverseIter_RoverB_End != rovers[1].reverseSync.end()))
                 {
                     double startITOWAvg = (interpAStart.iTOW + interpBStart.iTOW) / 2;
                     double endITOWAvg = (interpAEnd.iTOW + interpBEnd.iTOW) / 2;
@@ -2859,11 +2848,11 @@ void PostProcessingForm::on_pushButton_AddDistanceData_clicked()
 
 void PostProcessingForm::on_pushButton_ClearSyncData_clicked()
 {
-    roverSyncData_RoverA.clear();
-    roverSyncData_RoverB.clear();
+    rovers[0].roverSyncData.clear();
+    rovers[1].roverSyncData.clear();
 
-    reverseSync_RoverA.clear();
-    reverseSync_RoverB.clear();
+    rovers[0].reverseSync.clear();
+    rovers[1].reverseSync.clear();
 
     addLogLine("Sync data cleared.");
 }
@@ -2931,13 +2920,13 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
 
                 if (!subItems[1].compare("rover a", Qt::CaseInsensitive))
                 {
-                    roverContainer = &roverSyncData_RoverA;
-                    reverseContainer = &reverseSync_RoverA;
+                    roverContainer = &rovers[0].roverSyncData;
+                    reverseContainer = &rovers[0].reverseSync;
                 }
                 else if (!subItems[1].compare("rover b", Qt::CaseInsensitive))
                 {
-                    roverContainer = &roverSyncData_RoverB;
-                    reverseContainer = &reverseSync_RoverB;
+                    roverContainer = &rovers[1].roverSyncData;
+                    reverseContainer = &rovers[1].reverseSync;
                 }
                 else
                 {
@@ -3059,18 +3048,18 @@ void PostProcessingForm::on_pushButton_AddSyncData_clicked()
 
 void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
 {
-    roverSyncData_RoverA.clear();
-    roverSyncData_RoverB.clear();
+    rovers[0].roverSyncData.clear();
+    rovers[1].roverSyncData.clear();
 
-    reverseSync_RoverA.clear();
-    reverseSync_RoverB.clear();
+    rovers[0].reverseSync.clear();
+    rovers[1].reverseSync.clear();
 
     addLogLine("Previous sync data cleared.");
 
     int itemCount = 0;
     int lineNumber = 2; // Header at first line
 
-    for (const auto& relposnedData : relposnedMessages_RoverA)
+    for (const auto& relposnedData : rovers[0].relposnedMessages)
     {
         RoverSyncItem fakeSyncItem;
 
@@ -3079,8 +3068,8 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
         fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
         fakeSyncItem.iTOW = relposnedData.iTOW;
         fakeSyncItem.frameTime = 0;
-        roverSyncData_RoverA.insert(fakeSyncItem.iTOW, fakeSyncItem);
-        reverseSync_RoverA.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
+        rovers[0].roverSyncData.insert(fakeSyncItem.iTOW, fakeSyncItem);
+        rovers[0].reverseSync.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
 
         lineNumber += 2;    // "Interleaved" data
         itemCount++;
@@ -3088,7 +3077,7 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
 
     lineNumber = 3; // "Interleaved" data
 
-    for (const auto& relposnedData : relposnedMessages_RoverB)
+    for (const auto& relposnedData : rovers[1].relposnedMessages)
     {
         RoverSyncItem fakeSyncItem;
 
@@ -3097,8 +3086,8 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
         fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
         fakeSyncItem.iTOW = relposnedData.iTOW;
         fakeSyncItem.frameTime = 0;
-        roverSyncData_RoverB.insertMulti(fakeSyncItem.iTOW, fakeSyncItem);
-        reverseSync_RoverB.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
+        rovers[1].roverSyncData.insertMulti(fakeSyncItem.iTOW, fakeSyncItem);
+        rovers[1].reverseSync.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
 
         lineNumber += 2;    // "Interleaved" data
         itemCount++;
@@ -3234,10 +3223,10 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
         }
 
         QStringList fileNames = getAppendedFileNames(baseFileNames, "_RoverA_RELPOSNED.ubx");
-        addRELPOSNEDData_RoverA(fileNames);
+        addRELPOSNEDData_Rover(fileNames, 0);
 
         fileNames = getAppendedFileNames(baseFileNames, "_RoverB_RELPOSNED.ubx");
-        addRELPOSNEDData_RoverB(fileNames);
+        addRELPOSNEDData_Rover(fileNames, 1);
 
         fileNames = getAppendedFileNames(baseFileNames, "_tags.tags");
         addTagData(fileNames);
@@ -3482,5 +3471,18 @@ void PostProcessingForm::on_pushButton_Preset_clicked()
         }
 
         ui->tableWidget_TransformationMatrix->item(3, 3)->setText(QString::number(transformationPresets[presetIndex].values[3][3]));
+    }
+}
+
+QString PostProcessingForm::getRoverIdentString(const unsigned int roverId)
+{
+    if (roverId < ('X' - 'A'))
+    {
+        return QString(char('A' + (char)roverId));
+    }
+    else
+    {
+        // Should not happen
+        return("X");
     }
 }

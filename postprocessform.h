@@ -179,8 +179,6 @@ private:
 
     Ui::PostProcessingForm *ui;
 
-    QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages_RoverA;    //!< RELPOSNED-data for rover A
-    QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages_RoverB;    //!< RELPOSNED-data for rover B
     QMultiMap<qint64, Tag> tags;     //!< Tags read from a file
 
     QMap<qint64, DistanceItem> distances;
@@ -201,11 +199,15 @@ private:
         qint64 frameTime = 0;
     };
 
-    QMap<qint64, RoverSyncItem> roverSyncData_RoverA;
-    QMap<qint64, RoverSyncItem> roverSyncData_RoverB;
+    class Rover
+    {
+    public:
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages;
+        QMap<qint64, RoverSyncItem> roverSyncData;
+        QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync;
+    };
 
-    QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync_RoverA;
-    QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync_RoverB;
+    Rover rovers[2];
 
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;
@@ -227,8 +229,8 @@ private:
     bool stopReplayRequest = false;
 
     void addLogLine(const QString& line);
-    void addRELPOSNEDData_RoverA(const QStringList& fileNames);
-    void addRELPOSNEDData_RoverB(const QStringList& fileNames);
+    void addRELPOSNEDData_Rover(const unsigned int roverId);
+    void addRELPOSNEDData_Rover(const QStringList fileNames, const unsigned int roverId);
     void addRELPOSNEDFileData(const QStringList& fileNames);
     void handleReplay(bool firstRound);
 
@@ -248,9 +250,10 @@ private:
 
     bool generateTransformationMatrix(Eigen::Matrix4d& outputMatrix);
 
+    QString getRoverIdentString(const unsigned int roverId);
+
 signals:
-    void replayData_RoverA(const UBXMessage&);  //!< New data for rover A
-    void replayData_RoverB(const UBXMessage&);  //!< New data for rover B
+    void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
 
     // QT's signals and slots need to be defined exactly the same way, therefore PostProcessingForm::Tag
     void replayData_Tag(const qint64, const PostProcessingForm::Tag&); //!< New tag

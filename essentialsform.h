@@ -77,15 +77,10 @@ public:
     void connectNTRIPThreadSlots_Base(NTRIPThread* serThread); //!< Connects signals from NTRIPThread
     void disconnectNTRIPThreadSlots_Base(NTRIPThread* serThread); //!< Disconnects signals from NTRIPThread
 
-    void connectSerialThreadSlots_RoverA(SerialThread* serThread); //!< Connects signals from SerialThread (rover A)
-    void disconnectSerialThreadSlots_RoverA(SerialThread* serThread); //!< Disconnects signals from SerialThread (rover A)
-    void connectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Connects signals from UBloxDataStreamProcessor (rover A)
-    void disconnectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Disconnects signals from UBloxDataStreamProcessor (rover A)
-
-    void connectSerialThreadSlots_RoverB(SerialThread* serThread); //!< Connects signals from SerialThread (rover B)
-    void disconnectSerialThreadSlots_RoverB(SerialThread* serThread); //!< Disconnects signals from SerialThread (rover B)
-    void connectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Connects signals from UBloxDataStreamProcessor (rover B)
-    void disconnectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor); //!< Disconnects signals from UBloxDataStreamProcessor (rover B)
+    void connectSerialThreadSlots_Rover(SerialThread* serThread, const unsigned int roverId); //!< Connects signals from SerialThread
+    void disconnectSerialThreadSlots_Rover(SerialThread* serThread, const unsigned int roverId); //!< Disconnects signals from SerialThread
+    void connectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamProcessor* ubloxDataStreamProcessor, const unsigned int roverId); //!< Connects signals from UBloxDataStreamProcessor
+    void disconnectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamProcessor* ubloxDataStreamProcessor, const unsigned int roverId); //!< Disconnects signals from UBloxDataStreamProcessor
 
     void connectPostProcessingSlots(PostProcessingForm* postProcessingForm); //!< Connects signals from PostProcessingForm
     void disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm); //!< Disconnects signals from PostProcessingForm
@@ -106,14 +101,9 @@ private slots:
     void ubxMessageReceived_Base(const UBXMessage& ubxMessage);
     void rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage);
 
-    void serialDataReceived_RoverA(const QByteArray& bytes);
-    void nmeaSentenceReceived_RoverA(const NMEAMessage& nmeaSentence);
-    void ubxMessageReceived_RoverA(const UBXMessage& ubxMessage);
-
-    void serialDataReceived_RoverB(const QByteArray& bytes);
-    void nmeaSentenceReceived_RoverB(const NMEAMessage& nmeaSentence);
-    void ubxMessageReceived_RoverB(const UBXMessage& ubxMessage);
-
+    void serialDataReceived_Rover(const QByteArray& bytes, const unsigned int roverId);
+    void nmeaSentenceReceived_Rover(const NMEAMessage& nmeaSentence, const unsigned int roverId);
+    void ubxMessageReceived_Rover(const UBXMessage& ubxMessage, const unsigned int roverId);
     void postProcessingTagReceived(const qint64 uptime, const PostProcessingForm::Tag& tag);
     void postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&);
 
@@ -135,6 +125,28 @@ protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
 
 private:
+
+    class Rover
+    {
+    public:
+        QFile logFile_Raw;       //!< Log file for all serial data
+        QFile logFile_NMEA;      //!< Log file for NMEA serial data
+        QFile logFile_UBX;       //!< Log file for UBX serial data
+        QFile logFile_RELPOSNED; //!< Log file for UBX-RELPOSNED serial data
+
+        QMultiMap<SerialThread*, QMetaObject::Connection> serialThreadConnections;
+        QMultiMap<UBloxDataStreamProcessor*, QMetaObject::Connection> ubloxDataStreamProcessorConnections;
+
+        QQueue<UBXMessage_RELPOSNED> messageQueue_RELPOSNED; //!< Message queue for RELPOSNED-messages (used to sync rovers)
+
+        UBXMessage_RELPOSNED lastMatchingRoverRELPOSNED;   //!< Last RELPOSNED-message with a matching iTOW with other rovers
+
+        QList<UBXMessage_RELPOSNED> positionHistory;         //!< Used to calculate fluctuation of rover's position
+        double distanceBetweenFarthestCoordinates = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength
+    };
+
+    Rover rovers[2];
+
     /**
      * @brief Small helper class to store coordinates, accuracies and ITOW/uptime
      */
@@ -168,16 +180,6 @@ private:
     QFile logFile_Base_UBX;         //!< Log file for UBX serial data (base)
     QFile logFile_Base_RTCM;        //!< Log file for RTCM serial data (base)
 
-    QFile logFile_RoverA_Raw;       //!< Log file for all serial data (rover A)
-    QFile logFile_RoverA_NMEA;      //!< Log file for NMEA serial data (rover A)
-    QFile logFile_RoverA_UBX;       //!< Log file for UBX serial data (rover A)
-    QFile logFile_RoverA_RELPOSNED; //!< Log file for UBX-RELPOSNED serial data (rover A)
-
-    QFile logFile_RoverB_Raw;       //!< Log file for all serial data (rover B)
-    QFile logFile_RoverB_NMEA;      //!< Log file for NMEA serial data (rover B)
-    QFile logFile_RoverB_UBX;       //!< Log file for UBX serial data (rover B)
-    QFile logFile_RoverB_RELPOSNED; //!< Log file for UBX-RELPOSNED serial data (rover B)
-
     QFile logFile_Tags;             //!< Log file for tags
 
     QFile logFile_Distances;        //!< Log file for distance measurements
@@ -197,21 +199,11 @@ private:
     QSoundEffect soundEffect_MBError;   //!< Sound effect for mouse button tagging (Error)
     QSoundEffect soundEffect_Distance;  //!< Sound effect for new distance
 
-    QQueue<UBXMessage_RELPOSNED> messageQueue_RELPOSNED_RoverA; //!< Message queue for rover A RELPOSNED-messages (used to sync rovers)
-    QQueue<UBXMessage_RELPOSNED> messageQueue_RELPOSNED_RoverB; //!< Message queue for rover B RELPOSNED-messages (used to sync rovers)
-
-    UBXMessage_RELPOSNED lastMatchingRoverARELPOSNED;   //!< Last Rover A RELPOSNED-message with a matching Rover B iTOW
-    UBXMessage_RELPOSNED lastMatchingRoverBRELPOSNED;   //!< Last Rover B RELPOSNED-message with a matching Rover A iTOW
-
     const int maxPositionHistoryLength = 6000;                  //!< Maximum number of position history items to keep (used to calculate fluctuations)
 
-    QList<UBXMessage_RELPOSNED> positionHistory_RoverA;         //!< Used to calculate fluctuation of rover A's position
-    QList<UBXMessage_RELPOSNED> positionHistory_RoverB;         //!< Used to calculate fluctuation of rover A's position
     QList<NEDPoint> positionHistory_StylusTip;                  //!< Used to calculate fluctuation of stylus tip's position
     NEDPoint lastStylusTipPosition;
 
-    double distanceBetweenFarthestCoordinates_RoverA = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (rover A)
-    double distanceBetweenFarthestCoordinates_RoverB = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (rover B)
     double distanceBetweenFarthestCoordinates_StylusTip = nan("");  //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (stylus tip)
 
     double distanceBetweenRovers = 0;   //!< Euclidean distance between rovers (m)
@@ -220,8 +212,6 @@ private:
     NEDPoint stylusTipPosition_RMB;  //!< Stylus tip position when the Right Mouse Button was pressed last time
     NEDPoint stylusTipPosition_MMB;  //!< Stylus tip position when the Middle Mouse Button was pressed last time
 
-    QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_RoverA;
-    QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_RoverB;
     QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_StylusTip;
     QTreeWidgetItem *treeItem_DistanceBetweenRovers;
     QTreeWidgetItem *treeItem_LastTag;
@@ -257,6 +247,8 @@ private:
     void addDistanceLogItem(const DistanceItem& item);    //!< Adds distance to log file
     void addDistanceLogItem_Unfiltered(const DistanceItem& item);    //!< Adds distance to log file (unfiltered)
     void updateTipData(void);   //!< Updates tip-related fields
+
+    QString getRoverIdentString(const unsigned int roverId);
 
     // Settings for video frame writing (ugly I know, but this is just to make video "recording" possible)
     bool video_WriteFrames = false;

@@ -96,14 +96,15 @@ void EssentialsForm::closeAllLogFiles(void)
     logFile_Base_NMEA.close();
     logFile_Base_UBX.close();
     logFile_Base_RTCM.close();
-    logFile_RoverA_Raw.close();
-    logFile_RoverA_NMEA.close();
-    logFile_RoverA_UBX.close();
-    logFile_RoverA_RELPOSNED.close();
-    logFile_RoverB_Raw.close();
-    logFile_RoverB_NMEA.close();
-    logFile_RoverB_UBX.close();
-    logFile_RoverB_RELPOSNED.close();
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        rovers[i].logFile_Raw.close();
+        rovers[i].logFile_NMEA.close();
+        rovers[i].logFile_UBX.close();
+        rovers[i].logFile_RELPOSNED.close();
+    }
+
     logFile_Tags.close();
     logFile_Distances.close();
     logFile_Distances_Unfiltered.close();
@@ -130,15 +131,15 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     logFile_Base_UBX.setFileName(fileNameBeginning + "_base.ubx");
     logFile_Base_RTCM.setFileName(fileNameBeginning + "_base.RTCM");
 
-    logFile_RoverA_Raw.setFileName(fileNameBeginning + "_RoverA.raw");
-    logFile_RoverA_NMEA.setFileName(fileNameBeginning + "_RoverA.NMEA");
-    logFile_RoverA_UBX.setFileName(fileNameBeginning + "_RoverA.ubx");
-    logFile_RoverA_RELPOSNED.setFileName(fileNameBeginning + "_RoverA_RELPOSNED.ubx");
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        QString roverString = "_Rover" + getRoverIdentString(i);
 
-    logFile_RoverB_Raw.setFileName(fileNameBeginning + "_RoverB.raw");
-    logFile_RoverB_NMEA.setFileName(fileNameBeginning + "_RoverB.NMEA");
-    logFile_RoverB_UBX.setFileName(fileNameBeginning + "_RoverB.ubx");
-    logFile_RoverB_RELPOSNED.setFileName(fileNameBeginning + "_RoverB_RELPOSNED.ubx");
+        rovers[i].logFile_Raw.setFileName(fileNameBeginning + roverString + ".raw");
+        rovers[i].logFile_NMEA.setFileName(fileNameBeginning + roverString + ".NMEA");
+        rovers[i].logFile_UBX.setFileName(fileNameBeginning + roverString + ".ubx");
+        rovers[i].logFile_RELPOSNED.setFileName(fileNameBeginning + roverString + "_RELPOSNED.ubx");
+    }
 
     logFile_Tags.setFileName(fileNameBeginning + "_tags.tags");
 
@@ -148,18 +149,25 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
 
     QIODevice::OpenMode openMode = QIODevice::WriteOnly;
 
-    if (logFile_Base_Raw.exists() ||
+    bool roverFileExists = false;
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        if (    rovers[i].logFile_Raw.exists() ||
+                rovers[i].logFile_NMEA.exists() ||
+                rovers[i].logFile_UBX.exists() ||
+                rovers[i].logFile_RELPOSNED.exists())
+        {
+            roverFileExists = true;
+            break;
+        }
+    }
+
+    if (roverFileExists ||
+            logFile_Base_Raw.exists() ||
             logFile_Base_NMEA.exists() ||
             logFile_Base_UBX.exists() ||
             logFile_Base_RTCM.exists() ||
-            logFile_RoverA_Raw.exists() ||
-            logFile_RoverA_NMEA.exists() ||
-            logFile_RoverA_UBX.exists() ||
-            logFile_RoverA_RELPOSNED.exists() ||
-            logFile_RoverB_Raw.exists() ||
-            logFile_RoverB_NMEA.exists() ||
-            logFile_RoverB_UBX.exists() ||
-            logFile_RoverB_RELPOSNED.exists() ||
             logFile_Tags.exists() ||
             logFile_Distances.exists() ||
             logFile_Distances_Unfiltered.exists() ||
@@ -216,39 +224,27 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
         addSyncFileHeader = false;
     }
 
-    logFile_Base_Raw.open(openMode);
-    logFile_Base_NMEA.open(openMode);
-    logFile_Base_UBX.open(openMode);
-    logFile_Base_RTCM.open(openMode);
-    logFile_RoverA_Raw.open(openMode);
-    logFile_RoverA_NMEA.open(openMode);
-    logFile_RoverA_UBX.open(openMode);
-    logFile_RoverA_RELPOSNED.open(openMode);
-    logFile_RoverB_Raw.open(openMode);
-    logFile_RoverB_NMEA.open(openMode);
-    logFile_RoverB_UBX.open(openMode);
-    logFile_RoverB_RELPOSNED.open(openMode);
-    logFile_Tags.open(openMode| QIODevice::Text);
-    logFile_Distances.open(openMode| QIODevice::Text);
-    logFile_Distances_Unfiltered.open(openMode| QIODevice::Text);
-    logFile_Sync.open(openMode| QIODevice::Text);
+    bool logFilesOpen = true;
 
-    if (!logFile_Base_Raw.isOpen() ||
-            !logFile_Base_NMEA.isOpen() ||
-            !logFile_Base_UBX.isOpen() ||
-            !logFile_Base_RTCM.isOpen() ||
-            !logFile_RoverA_Raw.isOpen() ||
-            !logFile_RoverA_NMEA.isOpen() ||
-            !logFile_RoverA_UBX.isOpen() ||
-            !logFile_RoverA_RELPOSNED.isOpen() ||
-            !logFile_RoverB_Raw.isOpen() ||
-            !logFile_RoverB_NMEA.isOpen() ||
-            !logFile_RoverB_UBX.isOpen() ||
-            !logFile_RoverB_RELPOSNED.isOpen() ||
-            !logFile_Tags.isOpen() ||
-            !logFile_Distances.isOpen() ||
-            !logFile_Distances_Unfiltered.isOpen() ||
-            !logFile_Sync.isOpen())
+    logFilesOpen = logFilesOpen && logFile_Base_Raw.open(openMode);
+    logFilesOpen = logFilesOpen && logFile_Base_NMEA.open(openMode);
+    logFilesOpen = logFilesOpen && logFile_Base_UBX.open(openMode);
+    logFilesOpen = logFilesOpen && logFile_Base_RTCM.open(openMode);
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        logFilesOpen = logFilesOpen && rovers[i].logFile_Raw.open(openMode);
+        logFilesOpen = logFilesOpen && rovers[i].logFile_NMEA.open(openMode);
+        logFilesOpen = logFilesOpen && rovers[i].logFile_UBX.open(openMode);
+        logFilesOpen = logFilesOpen && rovers[i].logFile_RELPOSNED.open(openMode);
+    }
+
+    logFilesOpen = logFilesOpen && logFile_Tags.open(openMode| QIODevice::Text);
+    logFilesOpen = logFilesOpen && logFile_Distances.open(openMode| QIODevice::Text);
+    logFilesOpen = logFilesOpen && logFile_Distances_Unfiltered.open(openMode| QIODevice::Text);
+    logFilesOpen = logFilesOpen && logFile_Sync.open(openMode| QIODevice::Text);
+
+    if (!logFilesOpen)
     {
         QMessageBox msgBox;
         msgBox.setText("One or more of the files can't be opened.");
@@ -354,128 +350,72 @@ void EssentialsForm::rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage)
     }
 }
 
-void EssentialsForm::serialDataReceived_RoverA(const QByteArray& bytes)
+void EssentialsForm::serialDataReceived_Rover(const QByteArray& bytes, const unsigned int roverId)
 {
-    if (loggingActive)
+    if ((loggingActive) && (roverId < sizeof(rovers) / sizeof(rovers[0])))
     {
-        logFile_RoverA_Raw.write(bytes);
+        rovers[roverId].logFile_Raw.write(bytes);
     }
 }
 
-void EssentialsForm::nmeaSentenceReceived_RoverA(const NMEAMessage& nmeaMessage)
+void EssentialsForm::nmeaSentenceReceived_Rover(const NMEAMessage& nmeaMessage, const unsigned int roverId)
 {
-    if (loggingActive)
+    if ((loggingActive) && (roverId < sizeof(rovers) / sizeof(rovers[0])))
     {
-        logFile_RoverA_NMEA.write(nmeaMessage.rawMessage);
+        rovers[roverId].logFile_NMEA.write(nmeaMessage.rawMessage);
     }
 }
 
-void EssentialsForm::ubxMessageReceived_RoverA(const UBXMessage& ubxMessage)
+void EssentialsForm::ubxMessageReceived_Rover(const UBXMessage& ubxMessage, const unsigned int roverId)
 {
-    UBXMessage_RELPOSNED relposned(ubxMessage);
-
-    if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
     {
-        // "Casting" generic UBX-message to RELPOSNED was successful
-        positionHistory_RoverA.append(relposned);
-
-        while (positionHistory_RoverA.size() > maxPositionHistoryLength)
-        {
-            positionHistory_RoverA.removeFirst();
-        }
-
-        distanceBetweenFarthestCoordinates_RoverA = calcDistanceBetweenFarthestCoordinates(positionHistory_RoverA, ui->spinBox_FluctuationHistoryLength->value());
-
-        messageQueue_RELPOSNED_RoverA.enqueue(relposned);
-
-        handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
-
-        handleRELPOSNEDQueues();
-
-        updateTreeItems();
-
-//        handleVideoFrameRecording(ubxMessage.messageEndTime);
-    }
-
-    if (loggingActive)
-    {
-        logFile_RoverA_UBX.write(ubxMessage.rawMessage);
+        UBXMessage_RELPOSNED relposned(ubxMessage);
 
         if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
         {
-            logFile_RoverA_RELPOSNED.write(ubxMessage.rawMessage);
+            // "Casting" generic UBX-message to RELPOSNED was successful
+            rovers[roverId].positionHistory.append(relposned);
 
-            QTextStream textStream(&logFile_Sync);
+            while (rovers[roverId].positionHistory.size() > maxPositionHistoryLength)
+            {
+                rovers[roverId].positionHistory.removeFirst();
+            }
 
-            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
-                          "Rover A\tRELPOSNED\t" << QString::number(relposned.iTOW) <<
-                          "\t" << QString::number(ubxMessage.messageStartTime) << "\t" <<
-                          QString::number(ubxMessage.messageEndTime - ubxMessage.messageStartTime) << "\n";
+            rovers[roverId].distanceBetweenFarthestCoordinates = calcDistanceBetweenFarthestCoordinates(rovers[roverId].positionHistory, ui->spinBox_FluctuationHistoryLength->value());
+
+            rovers[roverId].messageQueue_RELPOSNED.enqueue(relposned);
+
+            handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
+
+            handleRELPOSNEDQueues();
+
+            updateTreeItems();
+
+    //        handleVideoFrameRecording(ubxMessage.messageEndTime);
         }
-    }
-}
 
-void EssentialsForm::serialDataReceived_RoverB(const QByteArray& bytes)
-{
-    if (loggingActive)
-    {
-        logFile_RoverB_Raw.write(bytes);
-    }
-}
-
-void EssentialsForm::nmeaSentenceReceived_RoverB(const NMEAMessage& nmeaMessage)
-{
-    if (loggingActive)
-    {
-        logFile_RoverB_NMEA.write(nmeaMessage.rawMessage);
-    }
-}
-
-void EssentialsForm::ubxMessageReceived_RoverB(const UBXMessage& ubxMessage)
-{
-    UBXMessage_RELPOSNED relposned(ubxMessage);
-
-    if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
-    {
-        // "Casting" generic UBX-message to RELPOSNED was successful
-
-        positionHistory_RoverB.append(relposned);
-
-        while (positionHistory_RoverB.size() > maxPositionHistoryLength)
+        if (loggingActive)
         {
-            positionHistory_RoverB.removeFirst();
-        }
+            rovers[roverId].logFile_UBX.write(ubxMessage.rawMessage);
 
-        distanceBetweenFarthestCoordinates_RoverB = calcDistanceBetweenFarthestCoordinates(positionHistory_RoverB, ui->spinBox_FluctuationHistoryLength->value());
+            if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
+            {
+                rovers[roverId].logFile_RELPOSNED.write(ubxMessage.rawMessage);
 
-        messageQueue_RELPOSNED_RoverB.enqueue(relposned);
+                QTextStream textStream(&logFile_Sync);
 
-        handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
+                QString roverString = "Rover " + getRoverIdentString(roverId);
 
-        handleRELPOSNEDQueues();
-
-        updateTreeItems();
-
-//        handleVideoFrameRecording(ubxMessage.messageEndTime);
-    }
-
-    if (loggingActive)
-    {
-        logFile_RoverB_UBX.write(ubxMessage.rawMessage);
-
-        if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
-        {
-            logFile_RoverB_RELPOSNED.write(ubxMessage.rawMessage);
-
-            QTextStream textStream(&logFile_Sync);
-
-            textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
-                          "Rover B\tRELPOSNED\t" << QString::number(relposned.iTOW) <<
-                          "\t" << QString::number(ubxMessage.messageStartTime) << "\t" <<
-                          QString::number(ubxMessage.messageEndTime - ubxMessage.messageStartTime) << "\n";
+                textStream << QTime::currentTime().toString("hh:mm:ss:zzz") << "\t" <<
+                              roverString << "\tRELPOSNED\t" << QString::number(relposned.iTOW) <<
+                              "\t" << QString::number(ubxMessage.messageStartTime) << "\t" <<
+                              QString::number(ubxMessage.messageEndTime - ubxMessage.messageStartTime) << "\n";
+            }
         }
     }
 }
+
 
 void EssentialsForm::postProcessingTagReceived(const qint64 uptime, const PostProcessingForm::Tag& tag)
 {
@@ -582,73 +522,81 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStrea
                      this, SLOT(rtcmMessageReceived_Base(const RTCMMessage&)));
 }
 
-void EssentialsForm::connectSerialThreadSlots_RoverA(SerialThread* serThread)
+
+
+
+
+void EssentialsForm::connectSerialThreadSlots_Rover(SerialThread* serThread, const unsigned int roverId)
 {
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(serialDataReceived_RoverA(const QByteArray&)));
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        rovers[roverId].serialThreadConnections.insert(serThread,
+            QObject::connect(serThread, &SerialThread::dataReceived,
+                this, [=](const QByteArray& bytes, qint64, qint64, const SerialThread::DataReceivedEmitReason&)
+                {
+                    serialDataReceived_Rover(bytes, roverId);
+                }
+            )
+        );
+    }
 }
 
-void EssentialsForm::disconnectSerialThreadSlots_RoverA(SerialThread* serThread)
+void EssentialsForm::disconnectSerialThreadSlots_Rover(SerialThread* serThread, const unsigned int roverId)
 {
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(serialDataReceived_RoverA(const QByteArray&)));
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        QList<QMetaObject::Connection> connections = rovers[roverId].serialThreadConnections.values(serThread);
+
+        for (int i = 0; i < connections.size(); i++)
+        {
+            QObject::disconnect(connections.at(i));
+        }
+        rovers[roverId].serialThreadConnections.remove(serThread);
+    }
 }
 
-void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
+void EssentialsForm::connectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamProcessor* ubloxDataStreamProcessor, const unsigned int roverId)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_RoverA(const NMEAMessage&)));
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        rovers[roverId].ubloxDataStreamProcessorConnections.insert(ubloxDataStreamProcessor,
+            QObject::connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                this, [=](const NMEAMessage& message)
+                {
+                    nmeaSentenceReceived_Rover(message, roverId);
+                }
+            )
+        );
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
+        rovers[roverId].ubloxDataStreamProcessorConnections.insert(ubloxDataStreamProcessor,
+            QObject::connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                this, [=](const UBXMessage& message)
+                {
+                    ubxMessageReceived_Rover(message, roverId);
+                }
+            )
+        );
+    }
 }
 
-void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverA(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
+void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamProcessor* ubloxDataStreamProcessor, const unsigned int roverId)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_RoverA(const NMEAMessage&)));
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    {
+        QList<QMetaObject::Connection> connections = rovers[roverId].ubloxDataStreamProcessorConnections.values(ubloxDataStreamProcessor);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
-}
-
-void EssentialsForm::connectSerialThreadSlots_RoverB(SerialThread* serThread)
-{
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(serialDataReceived_RoverB(const QByteArray&)));
-}
-
-void EssentialsForm::disconnectSerialThreadSlots_RoverB(SerialThread* serThread)
-{
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(serialDataReceived_RoverB(const QByteArray&)));
-}
-
-void EssentialsForm::connectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
-{
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_RoverB(const NMEAMessage&)));
-
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
-}
-
-void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_RoverB(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
-{
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_RoverB(const NMEAMessage&)));
-
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
+        for (int i = 0; i < connections.size(); i++)
+        {
+            QObject::disconnect(connections.at(i));
+        }
+        rovers[roverId].ubloxDataStreamProcessorConnections.remove(ubloxDataStreamProcessor);
+    }
 }
 
 void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::connect(postProcessingForm, SIGNAL(replayData_RoverA(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
-
-    QObject::connect(postProcessingForm, SIGNAL(replayData_RoverB(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
+                     this, SLOT(ubxMessageReceived_Rover(const UBXMessage&, const unsigned int)));
 
     QObject::connect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
                      this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
@@ -659,11 +607,8 @@ void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessi
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_RoverA(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverA(const UBXMessage&)));
-
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_RoverB(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_RoverB(const UBXMessage&)));
+    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
+                     this, SLOT(ubxMessageReceived_Rover(const UBXMessage&, const unsigned int)));
 
     QObject::disconnect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
                      this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
@@ -777,43 +722,45 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
 {
     bool matchingiTOWFound = false;
 
-    while ((!messageQueue_RELPOSNED_RoverA.isEmpty()) &&
-            (!messageQueue_RELPOSNED_RoverB.isEmpty()))
+    // TODO: Rewrite this...
+
+    while ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
+            (!rovers[1].messageQueue_RELPOSNED.isEmpty()))
     {
-        while ((!messageQueue_RELPOSNED_RoverA.isEmpty()) &&
-               (!messageQueue_RELPOSNED_RoverB.isEmpty()) &&
-               (messageQueue_RELPOSNED_RoverA.head().iTOW < messageQueue_RELPOSNED_RoverB.head().iTOW))
+        while ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
+               (!rovers[1].messageQueue_RELPOSNED.isEmpty()) &&
+               (rovers[0].messageQueue_RELPOSNED.head().iTOW < rovers[1].messageQueue_RELPOSNED.head().iTOW))
         {
             // Discard all rover A RELPOSNED-messages that are older (lower iTOW) than the first rover B message in queue
-            messageQueue_RELPOSNED_RoverA.dequeue();
+            rovers[0].messageQueue_RELPOSNED.dequeue();
         }
 
-        while ((!messageQueue_RELPOSNED_RoverB.isEmpty()) &&
-               (!messageQueue_RELPOSNED_RoverA.isEmpty()) &&
-               (messageQueue_RELPOSNED_RoverB.head().iTOW < messageQueue_RELPOSNED_RoverA.head().iTOW))
+        while ((!rovers[1].messageQueue_RELPOSNED.isEmpty()) &&
+               (!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
+               (rovers[1].messageQueue_RELPOSNED.head().iTOW < rovers[0].messageQueue_RELPOSNED.head().iTOW))
         {
             // Discard all rover B RELPOSNED-messages that are older (lower iTOW) than the first rover A message in queue
-            messageQueue_RELPOSNED_RoverB.dequeue();
+            rovers[1].messageQueue_RELPOSNED.dequeue();
         }
 
-        if ((!messageQueue_RELPOSNED_RoverA.isEmpty()) &&
-                (!messageQueue_RELPOSNED_RoverB.isEmpty()))
+        if ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
+                (!rovers[1].messageQueue_RELPOSNED.isEmpty()))
         {
-            UBXMessage_RELPOSNED roverARELPOSNED = messageQueue_RELPOSNED_RoverA.head();
-            UBXMessage_RELPOSNED roverBRELPOSNED = messageQueue_RELPOSNED_RoverB.head();
+            UBXMessage_RELPOSNED roverARELPOSNED = rovers[0].messageQueue_RELPOSNED.head();
+            UBXMessage_RELPOSNED roverBRELPOSNED = rovers[1].messageQueue_RELPOSNED.head();
 
             if (roverARELPOSNED.iTOW == roverBRELPOSNED.iTOW)
             {
                 // Queues are in sync -> process
-                messageQueue_RELPOSNED_RoverA.dequeue();
-                messageQueue_RELPOSNED_RoverB.dequeue();
+                rovers[0].messageQueue_RELPOSNED.dequeue();
+                rovers[1].messageQueue_RELPOSNED.dequeue();
 
                 lastMatchingRELPOSNEDiTOW = static_cast<int>(roverARELPOSNED.iTOW);
                 matchingiTOWFound = true;
                 lastMatchingRELPOSNEDiTOWTimer.start();
 
-                lastMatchingRoverARELPOSNED = roverARELPOSNED;
-                lastMatchingRoverBRELPOSNED = roverBRELPOSNED;
+                rovers[0].lastMatchingRoverRELPOSNED = roverARELPOSNED;
+                rovers[1].lastMatchingRoverRELPOSNED = roverBRELPOSNED;
 
                 updateTipData();
             }
@@ -821,29 +768,29 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
     }
 
     // Prevent groving queues too much if only one rover is sending RELPOSNEDS
-    while (messageQueue_RELPOSNED_RoverA.size() >= 100)
+    while (rovers[0].messageQueue_RELPOSNED.size() >= 100)
     {
-        messageQueue_RELPOSNED_RoverA.dequeue();
+        rovers[0].messageQueue_RELPOSNED.dequeue();
     }
-    while (messageQueue_RELPOSNED_RoverB.size() >= 100)
+    while (rovers[1].messageQueue_RELPOSNED.size() >= 100)
     {
-        messageQueue_RELPOSNED_RoverB.dequeue();
+        rovers[1].messageQueue_RELPOSNED.dequeue();
     }
 
     if (matchingiTOWFound)
     {
         ui->label_iTOW_BIG->setNum(lastMatchingRELPOSNEDiTOW);
 
-        if ((lastMatchingRoverARELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID) &&
-                (lastMatchingRoverBRELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID))
+        if ((rovers[0].lastMatchingRoverRELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID) &&
+                (rovers[1].lastMatchingRoverRELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID))
         {
-            double accuracy_RoverA = sqrt(lastMatchingRoverARELPOSNED.accN * lastMatchingRoverARELPOSNED.accN +
-                                          lastMatchingRoverARELPOSNED.accE * lastMatchingRoverARELPOSNED.accE +
-                                          lastMatchingRoverARELPOSNED.accD * lastMatchingRoverARELPOSNED.accD);
+            double accuracy_RoverA = sqrt(rovers[0].lastMatchingRoverRELPOSNED.accN * rovers[0].lastMatchingRoverRELPOSNED.accN +
+                                          rovers[0].lastMatchingRoverRELPOSNED.accE * rovers[0].lastMatchingRoverRELPOSNED.accE +
+                                          rovers[0].lastMatchingRoverRELPOSNED.accD * rovers[0].lastMatchingRoverRELPOSNED.accD);
 
-            double accuracy_RoverB = sqrt(lastMatchingRoverBRELPOSNED.accN * lastMatchingRoverBRELPOSNED.accN +
-                                          lastMatchingRoverBRELPOSNED.accE * lastMatchingRoverBRELPOSNED.accE +
-                                          lastMatchingRoverBRELPOSNED.accD * lastMatchingRoverBRELPOSNED.accD);
+            double accuracy_RoverB = sqrt(rovers[1].lastMatchingRoverRELPOSNED.accN * rovers[1].lastMatchingRoverRELPOSNED.accN +
+                                          rovers[1].lastMatchingRoverRELPOSNED.accE * rovers[1].lastMatchingRoverRELPOSNED.accE +
+                                          rovers[1].lastMatchingRoverRELPOSNED.accD * rovers[1].lastMatchingRoverRELPOSNED.accD);
 
             double worstAccuracy = accuracy_RoverA;
 
@@ -863,9 +810,9 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
 
             ui->progressBar_Accuracy->setValue(static_cast<int>(worstAccuracyInt));
 
-            double distN = lastMatchingRoverARELPOSNED.relPosN - lastMatchingRoverBRELPOSNED.relPosN;
-            double distE = lastMatchingRoverARELPOSNED.relPosE - lastMatchingRoverBRELPOSNED.relPosE;
-            double distD = lastMatchingRoverARELPOSNED.relPosD - lastMatchingRoverBRELPOSNED.relPosD;
+            double distN = rovers[0].lastMatchingRoverRELPOSNED.relPosN - rovers[1].lastMatchingRoverRELPOSNED.relPosN;
+            double distE = rovers[0].lastMatchingRoverRELPOSNED.relPosE - rovers[1].lastMatchingRoverRELPOSNED.relPosE;
+            double distD = rovers[0].lastMatchingRoverRELPOSNED.relPosD - rovers[1].lastMatchingRoverRELPOSNED.relPosD;
 
             distanceBetweenRovers = sqrt(distN * distN + distE * distE + distD * distD);
         }
@@ -1120,7 +1067,7 @@ void EssentialsForm::updateTreeItems(void)
         QBrush(QColor(255,128,128))
     };
 
-    if (positionHistory_RoverA.isEmpty())
+    if (rovers[0].positionHistory.isEmpty())
     {
         treeItem_RoverAITOW->setText(1, "N/A");
         treeItem_RoverASolution->setText(1, "N/A");
@@ -1130,7 +1077,7 @@ void EssentialsForm::updateTreeItems(void)
     }
     else
     {
-        UBXMessage_RELPOSNED roverA = positionHistory_RoverA.last();
+        UBXMessage_RELPOSNED roverA = rovers[0].positionHistory.last();
 
         treeItem_RoverAITOW->setText(1, QString::number(roverA.iTOW));
         treeItem_RoverASolution->setBackground(1, solutionBrushes[roverA.flag_carrSoln % 4]);
@@ -1138,7 +1085,7 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_RoverADiffSoln->setText(1, QString::number(roverA.flag_diffSoln));
     }
 
-    if (positionHistory_RoverB.isEmpty())
+    if (rovers[1].positionHistory.isEmpty())
     {
         treeItem_RoverBITOW->setText(1, "N/A");
         treeItem_RoverBSolution->setText(1, "N/A");
@@ -1148,7 +1095,7 @@ void EssentialsForm::updateTreeItems(void)
     }
     else
     {
-        UBXMessage_RELPOSNED roverB = positionHistory_RoverB.last();
+        UBXMessage_RELPOSNED roverB = rovers[1].positionHistory.last();
 
         treeItem_RoverBITOW->setText(1, QString::number(roverB.iTOW));
         treeItem_RoverBSolution->setBackground(1, solutionBrushes[roverB.flag_carrSoln % 4]);
@@ -1501,14 +1448,14 @@ void EssentialsForm::updateTipData(void)
     stylusTipPosition.iTOW = lastMatchingRELPOSNEDiTOW;
 
     Eigen::Vector3d roverAPosNED(
-            lastMatchingRoverARELPOSNED.relPosN,
-            lastMatchingRoverARELPOSNED.relPosE,
-            lastMatchingRoverARELPOSNED.relPosD);
+            rovers[0].lastMatchingRoverRELPOSNED.relPosN,
+            rovers[0].lastMatchingRoverRELPOSNED.relPosE,
+            rovers[0].lastMatchingRoverRELPOSNED.relPosD);
 
     Eigen::Vector3d roverBPosNED(
-            lastMatchingRoverBRELPOSNED.relPosN,
-            lastMatchingRoverBRELPOSNED.relPosE,
-            lastMatchingRoverBRELPOSNED.relPosD);
+            rovers[1].lastMatchingRoverRELPOSNED.relPosN,
+            rovers[1].lastMatchingRoverRELPOSNED.relPosE,
+            rovers[1].lastMatchingRoverRELPOSNED.relPosD);
 
     Eigen::Vector3d roverBToANED = roverAPosNED - roverBPosNED;
     Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
@@ -1520,9 +1467,9 @@ void EssentialsForm::updateTipData(void)
 
     // Stylus tip accuracy is now the same as rover A's
     // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined value)
-    stylusTipPosition.accN = lastMatchingRoverARELPOSNED.accN;
-    stylusTipPosition.accE = lastMatchingRoverARELPOSNED.accE;
-    stylusTipPosition.accD = lastMatchingRoverARELPOSNED.accD;
+    stylusTipPosition.accN = rovers[0].lastMatchingRoverRELPOSNED.accN;
+    stylusTipPosition.accE = rovers[0].lastMatchingRoverRELPOSNED.accE;
+    stylusTipPosition.accD = rovers[0].lastMatchingRoverRELPOSNED.accD;
 
     bool valid = true;
 
@@ -1575,4 +1522,17 @@ void EssentialsForm::on_checkBox_PlaySound_stateChanged(int arg1)
     soundEffect_RMB.setMuted(!arg1);
     soundEffect_MBError.setMuted(!arg1);
     soundEffect_Distance.setMuted(!arg1);
+}
+
+QString EssentialsForm::getRoverIdentString(const unsigned int roverId)
+{
+    if (roverId < ('X' - 'A'))
+    {
+        return QString(char('A' + (char)roverId));
+    }
+    else
+    {
+        // Should not happen
+        return("X");
+    }
 }

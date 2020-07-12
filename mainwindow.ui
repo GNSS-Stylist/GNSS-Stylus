@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>662</width>
+    <width>541</width>
     <height>939</height>
    </rect>
   </property>
@@ -25,7 +25,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>642</width>
+         <width>521</width>
          <height>919</height>
         </rect>
        </property>
@@ -583,7 +583,7 @@
               </widget>
              </item>
              <item row="0" column="2">
-              <widget class="QPushButton" name="pushButton_ClearRTCMCounter_RoverA">
+              <widget class="QPushButton" name="pushButton_ClearRELPOSNEDCounter_RoverA">
                <property name="text">
                 <string>Reset</string>
                </property>
@@ -826,7 +826,7 @@
               </widget>
              </item>
              <item row="0" column="2">
-              <widget class="QPushButton" name="pushButton_ClearRTCMCounter_RoverB">
+              <widget class="QPushButton" name="pushButton_ClearRELPOSNEDCounter_RoverB">
                <property name="text">
                 <string>Reset</string>
                </property>
