@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>541</width>
-    <height>939</height>
+    <width>571</width>
+    <height>696</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>521</width>
-         <height>919</height>
+         <width>534</width>
+         <height>1121</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -977,14 +977,257 @@
          </widget>
         </item>
         <item>
-         <widget class="QTabWidget" name="tabWidget">
+         <widget class="QGroupBox" name="groupBox_RoverC">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Rover C</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <property name="topMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>4</number>
+           </property>
+           <item row="3" column="0">
+            <layout class="QGridLayout" name="gridLayout_Messages_RoverC" columnstretch="0,1,0" columnminimumwidth="0,50,0">
+             <property name="leftMargin">
+              <number>8</number>
+             </property>
+             <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_LastWarningMessageLabel_RoverC">
+               <property name="text">
+                <string>Last warning message:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="pushButton_ClearInfoMessage_RoverC">
+               <property name="text">
+                <string>Clear</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="label_LastInfoMessage_RoverC">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="label_LastWarningMessage_RoverC">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_RELPOSNEDMessageCount_RoverC">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_RTCMMessageCountLabel_RoverC">
+               <property name="text">
+                <string>RELPOSNED-messages received:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QPushButton" name="pushButton_ClearRELPOSNEDCounter_RoverC">
+               <property name="text">
+                <string>Reset</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_LastInfoMessageLabel_RoverC">
+               <property name="text">
+                <string>Last info message:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="pushButton_ClearWarningMessage_RoverC">
+               <property name="text">
+                <string>Clear</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_LastErrorMessageLabel_RoverC">
+               <property name="text">
+                <string>Last error message:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_LastErrorMessage_RoverC">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QPushButton" name="pushButton_ClearErrorMessage_RoverC">
+               <property name="text">
+                <string>Clear</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="2" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_Middle_RoverC">
+             <item>
+              <widget class="QPushButton" name="pushButton_ShowMessageWindow_RoverC">
+               <property name="text">
+                <string>Show message window</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ShowRELPOSNEDForm_RoverC">
+               <property name="text">
+                <string>Show RELPOSNED-window</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="checkBox_SuspendThread_RoverC">
+               <property name="text">
+                <string>Suspended</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_Thread_RoverC">
+             <property name="leftMargin">
+              <number>8</number>
+             </property>
+             <property name="rightMargin">
+              <number>8</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label__SerialPort_RoverC">
+               <property name="text">
+                <string>Serial port:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_SerialPort_RoverC">
+               <property name="text">
+                <string>\\.\COM</string>
+               </property>
+               <property name="maxLength">
+                <number>256</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_SerSpeed_RoverC">
+               <property name="text">
+                <string>Bps:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spinBox_SerialSpeed_RoverC">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>300</number>
+               </property>
+               <property name="maximum">
+                <number>10000000</number>
+               </property>
+               <property name="value">
+                <number>115200</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_StartThread_RoverC">
+               <property name="text">
+                <string>Start thread</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_TerminateThread_RoverC">
+               <property name="text">
+                <string>Terminate thread</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTabWidget" name="tabWidget_DistanceProvider">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
           <property name="currentIndex">
            <number>0</number>
           </property>
-          <widget class="QWidget" name="tab">
+          <widget class="QWidget" name="tab_DistanceProvider_Constant">
            <property name="autoFillBackground">
             <bool>true</bool>
            </property>
@@ -1030,7 +1273,7 @@
             </property>
            </widget>
           </widget>
-          <widget class="QWidget" name="tab_3">
+          <widget class="QWidget" name="tab_DistanceProvider_20HzLaserRangeFinderModuleV2">
            <property name="autoFillBackground">
             <bool>true</bool>
            </property>
@@ -1039,7 +1282,7 @@
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_Thread_RoverA_2">
+             <layout class="QHBoxLayout" name="horizontalLayout_20HzLaserRangeFinderModuleV2_Top">
               <property name="leftMargin">
                <number>8</number>
               </property>
@@ -1103,7 +1346,25 @@
              </layout>
             </item>
             <item>
-             <layout class="QGridLayout" name="gridLayout_Messages_RoverA_2" columnstretch="0,1,0" columnminimumwidth="0,50,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_20HzLaserRangeFinderModuleV2_Middle">
+              <item>
+               <widget class="QPushButton" name="pushButton_ShowMessageWindow_LaserDist">
+                <property name="text">
+                 <string>Show message window</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_SuspendThread_LaserDist">
+                <property name="text">
+                 <string>Suspended</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_20HzLaserRangeFinderModuleV2_Bottom" columnstretch="0,1,0" columnminimumwidth="0,50,0">
               <property name="leftMargin">
                <number>8</number>
               </property>
@@ -1250,24 +1511,6 @@
                 </property>
                 <property name="text">
                  <string/>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_Middle_RoverA_2">
-              <item>
-               <widget class="QPushButton" name="pushButton_ShowMessageWindow_LaserDist">
-                <property name="text">
-                 <string>Show message window</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_SuspendThread_LaserDist">
-                <property name="text">
-                 <string>Suspended</string>
                 </property>
                </widget>
               </item>

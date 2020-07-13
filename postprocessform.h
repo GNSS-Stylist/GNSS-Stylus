@@ -1,6 +1,6 @@
 /*
     postprocessform.h (part of GNSS-Stylus)
-    Copyright (C) 2019 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -147,6 +147,10 @@ private slots:
 
     void on_pushButton_Preset_clicked();
 
+    void on_pushButton_ClearRELPOSNEDData_RoverC_clicked();
+
+    void on_pushButton_AddRELPOSNEDData_RoverC_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -207,7 +211,7 @@ private:
         QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync;
     };
 
-    Rover rovers[2];
+    Rover rovers[3];
 
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;

@@ -1,6 +1,6 @@
 /*
     postprocessform.cpp (part of GNSS-Stylus)
-    Copyright (C) 2019 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -285,6 +285,13 @@ void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverB_clicked()
     addLogLine("Rover B RELPOSNED-data cleared.");
 }
 
+void PostProcessingForm::on_pushButton_ClearRELPOSNEDData_RoverC_clicked()
+{
+    rovers[2].relposnedMessages.clear();
+    addLogLine("Rover C RELPOSNED-data cleared.");
+}
+
+
 void PostProcessingForm::on_pushButton_ClearTagData_clicked()
 {
     tags.clear();
@@ -328,12 +335,15 @@ void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverA_clicked()
     addRELPOSNEDData_Rover(0);
 }
 
-
 void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverB_clicked()
 {
     addRELPOSNEDData_Rover(1);
 }
 
+void PostProcessingForm::on_pushButton_AddRELPOSNEDData_RoverC_clicked()
+{
+    addRELPOSNEDData_Rover(2);
+}
 
 void PostProcessingForm::addRELPOSNEDFileData(const QStringList& fileNames)
 {
@@ -1441,78 +1451,31 @@ void PostProcessingForm::handleReplay(bool firstRound)
         stopReplayRequest = false;
     } else if ((nextUptime_ms >= 0) && (lastReplayedUptime_ms <= lastUptimeToReplay))
     {
-//        qint64 nextUptime = getNextUptime(lastReplayedUptime);
-
-        if ((!rovers[0].roverSyncData.empty()) && (rovers[0].roverSyncData.upperBound(lastReplayedUptime_ms) != rovers[0].roverSyncData.end()))
+        for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
         {
-            nextUptime_ms = rovers[0].roverSyncData.upperBound(lastReplayedUptime_ms).key();
-        }
-
-        if ((!rovers[1].roverSyncData.empty()) && (rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms) != rovers[1].roverSyncData.end()) &&
-                (rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
-        {
-            nextUptime_ms = rovers[1].roverSyncData.upperBound(lastReplayedUptime_ms).key();
-        }
-
-        if ((!tags.empty()) && (tags.upperBound(lastReplayedUptime_ms) != tags.end()) &&
-                (tags.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
-        {
-            nextUptime_ms = tags.upperBound(lastReplayedUptime_ms).key();
-        }
-
-        if ((!distances.empty()) && (distances.upperBound(lastReplayedUptime_ms) != distances.end()) &&
-                (distances.upperBound(lastReplayedUptime_ms).key() < nextUptime_ms))
-        {
-            nextUptime_ms = distances.upperBound(lastReplayedUptime_ms).key();
-        }
-
-        if (rovers[0].roverSyncData.find(nextUptime_ms) != rovers[0].roverSyncData.end())
-        {
-            RoverSyncItem syncItem = rovers[0].roverSyncData[nextUptime_ms];
-
-            if (rovers[0].relposnedMessages.find(syncItem.iTOW) != rovers[0].relposnedMessages.end())
+            if (rovers[i].roverSyncData.find(nextUptime_ms) != rovers[i].roverSyncData.end())
             {
-                // Make local copy to add time stamp / frame duration.
+                RoverSyncItem syncItem = rovers[i].roverSyncData[nextUptime_ms];
 
-                UBXMessage_RELPOSNED relposnedMessage = rovers[0].relposnedMessages[syncItem.iTOW];
+                if (rovers[i].relposnedMessages.find(syncItem.iTOW) != rovers[i].relposnedMessages.end())
+                {
+                    // Make local copy to add time stamp / frame duration.
 
-                relposnedMessage.messageStartTime = nextUptime_ms;
-                relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
+                    UBXMessage_RELPOSNED relposnedMessage = rovers[i].relposnedMessages[syncItem.iTOW];
 
-                emit replayData_Rover(relposnedMessage, 0);
-            }
-            else
-            {
-                addLogLine("Warning: File \"" + syncItem.sourceFile + "\", line " +
-                           QString::number(syncItem.sourceFileLine)+
-                           ",  uptime " + QString::number(nextUptime_ms) +
-                           ",  iTOW " + QString::number(syncItem.iTOW) +
-                           ": No matching rover A-data found. Skipped.");
-            }
-        }
+                    relposnedMessage.messageStartTime = nextUptime_ms;
+                    relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
 
-        if (rovers[1].roverSyncData.find(nextUptime_ms) != rovers[1].roverSyncData.end())
-        {
-            RoverSyncItem syncItem = rovers[1].roverSyncData[nextUptime_ms];
-
-            if (rovers[1].relposnedMessages.find(syncItem.iTOW) != rovers[1].relposnedMessages.end())
-            {
-                // Make local copy to add time stamp / frame duration.
-
-                UBXMessage_RELPOSNED relposnedMessage = rovers[1].relposnedMessages[syncItem.iTOW];
-
-                relposnedMessage.messageStartTime = nextUptime_ms;
-                relposnedMessage.messageEndTime = nextUptime_ms + syncItem.frameTime;
-
-                emit replayData_Rover(relposnedMessage, 1);
-            }
-            else
-            {
-                addLogLine("Warning: File \"" + syncItem.sourceFile + "\", line " +
-                           QString::number(syncItem.sourceFileLine)+
-                           ",  uptime " + QString::number(nextUptime_ms) +
-                           ",  iTOW " + QString::number(syncItem.iTOW) +
-                           ": No matching rover B-data found. Skipped.");
+                    emit replayData_Rover(relposnedMessage, i);
+                }
+                else
+                {
+                    addLogLine("Warning: File \"" + syncItem.sourceFile + "\", line " +
+                               QString::number(syncItem.sourceFileLine)+
+                               ",  uptime " + QString::number(nextUptime_ms) +
+                               ",  iTOW " + QString::number(syncItem.iTOW) +
+                               ": No matching rover " + getRoverIdentString(i) + "-data found. Skipped.");
+                }
             }
         }
 
@@ -1668,14 +1631,12 @@ qint64 PostProcessingForm::getFirstUptime()
 {
     qint64 firstUptime = std::numeric_limits<qint64>::max();
 
-    if ((!rovers[0].roverSyncData.isEmpty()) && (rovers[0].roverSyncData.firstKey() < firstUptime))
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
-        firstUptime = rovers[0].roverSyncData.firstKey();
-    }
-
-    if ((!rovers[1].roverSyncData.isEmpty()) && (rovers[1].roverSyncData.firstKey() < firstUptime))
-    {
-        firstUptime = rovers[1].roverSyncData.firstKey();
+        if ((!rovers[i].roverSyncData.isEmpty()) && (rovers[i].roverSyncData.firstKey() < firstUptime))
+        {
+            firstUptime = rovers[i].roverSyncData.firstKey();
+        }
     }
 
     if ((!distances.isEmpty()) && (distances.firstKey() < firstUptime))
@@ -1700,14 +1661,12 @@ qint64 PostProcessingForm::getLastUptime()
 {
     qint64 lastUptime = -1;
 
-    if ((!rovers[0].roverSyncData.isEmpty()) && (rovers[0].roverSyncData.lastKey() > lastUptime))
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
-        lastUptime = rovers[0].roverSyncData.lastKey();
-    }
-
-    if ((!rovers[1].roverSyncData.isEmpty()) && (rovers[1].roverSyncData.lastKey() > lastUptime))
-    {
-        lastUptime = rovers[1].roverSyncData.lastKey();
+        if ((!rovers[i].roverSyncData.isEmpty()) && (rovers[i].roverSyncData.lastKey() > lastUptime))
+        {
+            lastUptime = rovers[i].roverSyncData.lastKey();
+        }
     }
 
     if ((!distances.isEmpty()) && (distances.lastKey() > lastUptime))
@@ -1727,16 +1686,13 @@ qint64 PostProcessingForm::getNextUptime(const qint64 uptime)
 {
     qint64 nextUptime = std::numeric_limits<qint64>::max();
 
-    if ((!rovers[0].roverSyncData.empty()) && (rovers[0].roverSyncData.upperBound(uptime) != rovers[0].roverSyncData.end()) &&
-            (rovers[0].roverSyncData.upperBound(uptime).key() < nextUptime))
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
-        nextUptime = rovers[0].roverSyncData.upperBound(uptime).key();
-    }
-
-    if ((!rovers[1].roverSyncData.empty()) && (rovers[1].roverSyncData.upperBound(uptime) != rovers[1].roverSyncData.end()) &&
-            (rovers[1].roverSyncData.upperBound(uptime).key() < nextUptime))
-    {
-        nextUptime = rovers[1].roverSyncData.upperBound(uptime).key();
+        if ((!rovers[i].roverSyncData.empty()) && (rovers[i].roverSyncData.upperBound(uptime) != rovers[i].roverSyncData.end()) &&
+                (rovers[i].roverSyncData.upperBound(uptime).key() < nextUptime))
+        {
+            nextUptime = rovers[i].roverSyncData.upperBound(uptime).key();
+        }
     }
 
     if ((!tags.empty()) && (tags.upperBound(uptime) != tags.end()) &&
@@ -2848,11 +2804,11 @@ void PostProcessingForm::on_pushButton_AddDistanceData_clicked()
 
 void PostProcessingForm::on_pushButton_ClearSyncData_clicked()
 {
-    rovers[0].roverSyncData.clear();
-    rovers[1].roverSyncData.clear();
-
-    rovers[0].reverseSync.clear();
-    rovers[1].reverseSync.clear();
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        rovers[i].roverSyncData.clear();
+        rovers[i].reverseSync.clear();
+    }
 
     addLogLine("Sync data cleared.");
 }
@@ -2928,10 +2884,15 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
                     roverContainer = &rovers[1].roverSyncData;
                     reverseContainer = &rovers[1].reverseSync;
                 }
+                else if (!subItems[1].compare("rover c", Qt::CaseInsensitive))
+                {
+                    roverContainer = &rovers[2].roverSyncData;
+                    reverseContainer = &rovers[2].reverseSync;
+                }
                 else
                 {
                     discardedLines++;
-                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Source not either \"rover a\" nor \"rover b\". Line skipped");
+                    addLogLine("Warning: Line " + QString::number(lineNumber) + ": Source not either \"rover a\", \"rover b\" nor \"rover c\". Line skipped");
                     continue;
                 }
 
@@ -3048,49 +3009,37 @@ void PostProcessingForm::on_pushButton_AddSyncData_clicked()
 
 void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
 {
-    rovers[0].roverSyncData.clear();
-    rovers[1].roverSyncData.clear();
-
-    rovers[0].reverseSync.clear();
-    rovers[1].reverseSync.clear();
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        rovers[i].roverSyncData.clear();
+        rovers[i].reverseSync.clear();
+    }
 
     addLogLine("Previous sync data cleared.");
 
     int itemCount = 0;
-    int lineNumber = 2; // Header at first line
 
-    for (const auto& relposnedData : rovers[0].relposnedMessages)
+    unsigned int numofRovers = sizeof(rovers) / sizeof(rovers[0]);
+
+    for (unsigned int roverId = 0; roverId < numofRovers; roverId++)
     {
-        RoverSyncItem fakeSyncItem;
+        int lineNumber = roverId + roverId < numofRovers; // Header at first line
 
-        fakeSyncItem.sourceFile = "None";
-        fakeSyncItem.sourceFileLine = lineNumber;
-        fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
-        fakeSyncItem.iTOW = relposnedData.iTOW;
-        fakeSyncItem.frameTime = 0;
-        rovers[0].roverSyncData.insert(fakeSyncItem.iTOW, fakeSyncItem);
-        rovers[0].reverseSync.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
+        for (const auto& relposnedData : rovers[roverId].relposnedMessages)
+        {
+            RoverSyncItem fakeSyncItem;
 
-        lineNumber += 2;    // "Interleaved" data
-        itemCount++;
-    }
+            fakeSyncItem.sourceFile = "None";
+            fakeSyncItem.sourceFileLine = lineNumber;
+            fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
+            fakeSyncItem.iTOW = relposnedData.iTOW;
+            fakeSyncItem.frameTime = 0;
+            rovers[roverId].roverSyncData.insert(fakeSyncItem.iTOW, fakeSyncItem);
+            rovers[roverId].reverseSync.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
 
-    lineNumber = 3; // "Interleaved" data
-
-    for (const auto& relposnedData : rovers[1].relposnedMessages)
-    {
-        RoverSyncItem fakeSyncItem;
-
-        fakeSyncItem.sourceFile = "None";
-        fakeSyncItem.sourceFileLine = lineNumber;
-        fakeSyncItem.messageType = RoverSyncItem::MSGTYPE_UBX_RELPOSNED;
-        fakeSyncItem.iTOW = relposnedData.iTOW;
-        fakeSyncItem.frameTime = 0;
-        rovers[1].roverSyncData.insertMulti(fakeSyncItem.iTOW, fakeSyncItem);
-        rovers[1].reverseSync.insert(fakeSyncItem.iTOW, fakeSyncItem.iTOW);
-
-        lineNumber += 2;    // "Interleaved" data
-        itemCount++;
+            lineNumber += roverId < numofRovers;    // "Interleaved" data
+            itemCount++;
+        }
     }
 
     addLogLine(QString::number(itemCount) + " sync items created.");
@@ -3145,6 +3094,7 @@ void PostProcessingForm::on_pushButton_ClearAllFileData_clicked()
 {
     this->on_pushButton_ClearRELPOSNEDData_RoverA_clicked();
     this->on_pushButton_ClearRELPOSNEDData_RoverB_clicked();
+    this->on_pushButton_ClearRELPOSNEDData_RoverC_clicked();
     this->on_pushButton_ClearTagData_clicked();
     this->on_pushButton_ClearDistanceData_clicked();
     this->on_pushButton_ClearSyncData_clicked();
@@ -3185,6 +3135,11 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
                 { "_RoverB.raw", "raw (Rover B)" },
                 { "_RoverB.ubx", "ubx (Rover B)" },
                 { "_RoverB_RELPOSNED.ubx", "ubx (relposned, Rover B)" },
+
+                { "_RoverC.NMEA", "NMEA (Rover C)" },
+                { "_RoverC.raw", "raw (Rover C)" },
+                { "_RoverC.ubx", "ubx (Rover C)" },
+                { "_RoverC_RELPOSNED.ubx", "ubx (relposned, Rover C)" },
 
                 { "_tags.tags", "tags (""double extension""" },
                 { ".tags", "tags (""single extension""" },
@@ -3227,6 +3182,9 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
 
         fileNames = getAppendedFileNames(baseFileNames, "_RoverB_RELPOSNED.ubx");
         addRELPOSNEDData_Rover(fileNames, 1);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_RoverC_RELPOSNED.ubx");
+        addRELPOSNEDData_Rover(fileNames, 2);
 
         fileNames = getAppendedFileNames(baseFileNames, "_tags.tags");
         addTagData(fileNames);
@@ -3486,3 +3444,5 @@ QString PostProcessingForm::getRoverIdentString(const unsigned int roverId)
         return("X");
     }
 }
+
+

@@ -1,6 +1,6 @@
 /*
     mainwindow.cpp (part of GNSS-Stylus)
-    Copyright (C) 2019 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -102,6 +102,29 @@ MainWindow::MainWindow(QWidget *parent) :
 
     rovers[1] = new MainWinRover(parent, 1, roverBUIThings);
 
+    MainWinRover::ExtUIThings roverCUIThings;
+
+    roverCUIThings.lineEdit_SerialPort = ui->lineEdit_SerialPort_RoverC;
+    roverCUIThings.spinBox_SerialSpeed = ui->spinBox_SerialSpeed_RoverC;
+    roverCUIThings.pushButton_StartThread = ui->pushButton_StartThread_RoverC;
+    roverCUIThings.pushButton_TerminateThread = ui->pushButton_TerminateThread_RoverC;
+
+    roverCUIThings.pushButton_ShowMessageWindow = ui->pushButton_ShowMessageWindow_RoverC;
+    roverCUIThings.pushButton_ShowRELPOSNEDWindow = ui->pushButton_ShowRELPOSNEDForm_RoverC;
+    roverCUIThings.checkBox_SuspendThread = ui->checkBox_SuspendThread_RoverC;
+
+    roverCUIThings.label_RELPOSNEDMessageCount = ui->label_RELPOSNEDMessageCount_RoverC;
+    roverCUIThings.pushButton_ClearRELPOSNEDCounter = ui->pushButton_ClearRELPOSNEDCounter_RoverC;
+    roverCUIThings.label_LastErrorMessage = ui->label_LastErrorMessage_RoverC;
+    roverCUIThings.pushButton_ClearErrorMessage = ui->pushButton_ClearErrorMessage_RoverC;
+    roverCUIThings.label_LastWarningMessage = ui->label_LastWarningMessage_RoverC;
+    roverCUIThings.pushButton_ClearWarningMessage = ui->pushButton_ClearWarningMessage_RoverC;
+    roverCUIThings.label_LastInfoMessage = ui->label_LastInfoMessage_RoverC;
+    roverCUIThings.pushButton_ClearInfoMessage = ui->pushButton_ClearInfoMessage_RoverC;
+
+    roverCUIThings.essentialsForm = essentialsForm;
+
+    rovers[2] = new MainWinRover(parent, 2, roverCUIThings);
 
     messageMonitorForm_LaserDist = new LaserRangeFinder20HzV2MessageMonitorForm(parent, "Message monitor (\"Laser distance meter 20Hz V2\")");
 
@@ -110,7 +133,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[0]->ubloxDataStreamProcessor, 0);
     essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[1]->ubloxDataStreamProcessor, 1);
-    // TODO: Add third rover here (and probably refactor EssentialsForm)
+    essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[2]->ubloxDataStreamProcessor, 2);
 
     QObject::connect(this, SIGNAL(distanceChanged(const EssentialsForm::DistanceItem&)),
                      essentialsForm, SLOT(on_distanceReceived(const EssentialsForm::DistanceItem&)));
@@ -133,12 +156,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_SerialPort_Base->setText(settings.value("SerialPort_Base", "\\\\.\\COM").toString());
     ui->spinBox_SerialSpeed_Base->setValue(settings.value("SerialSpeed_Base", "115200").toInt());
 
-    ui->lineEdit_SerialPort_RoverA->setText(settings.value("SerialPort_RoverA", "\\\\.\\COM").toString());
-    ui->spinBox_SerialSpeed_RoverA->setValue(settings.value("SerialSpeed_RoverA", "115200").toInt());
-
-    ui->lineEdit_SerialPort_RoverB->setText(settings.value("SerialPort_RoverB", "\\\\.\\COM").toString());
-    ui->spinBox_SerialSpeed_RoverB->setValue(settings.value("SerialSpeed_RoverB", "115200").toInt());
-
     ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
 
     // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
@@ -150,12 +167,6 @@ MainWindow::~MainWindow()
     QSettings settings;
     settings.setValue("SerialPort_Base", ui->lineEdit_SerialPort_Base->text());
     settings.setValue("SerialSpeed_Base", ui->spinBox_SerialSpeed_Base->value());
-
-    settings.setValue("SerialPort_RoverA", ui->lineEdit_SerialPort_RoverA->text());
-    settings.setValue("SerialSpeed_RoverA", ui->spinBox_SerialSpeed_RoverA->value());
-
-    settings.setValue("SerialPort_RoverB", ui->lineEdit_SerialPort_RoverB->text());
-    settings.setValue("SerialSpeed_RoverB", ui->spinBox_SerialSpeed_RoverB->value());
 
     settings.setValue("Command_Base_NTRIP", ui->lineEdit_Command_Base_NTRIP->text());
 
@@ -737,11 +748,11 @@ MainWinRover::MainWinRover(QWidget *parent, const int index, const ExtUIThings& 
     this->index = index;    
     this->extUIThings = uiThings;
 
-    QString roverString = "Rover " + getRoverIdentString(index);
+    QString roverString = getRoverIdentString(index);
 
-    messageMonitorForm = new MessageMonitorForm(parent, "Message monitor (" + roverString + ")");
+    messageMonitorForm = new MessageMonitorForm(parent, "Message monitor (Rover " + roverString + ")");
     messageMonitorForm->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor);
-    relposnedForm = new RELPOSNEDForm(parent, "RELPOSNED (" + roverString + ")");
+    relposnedForm = new RELPOSNEDForm(parent, "RELPOSNED (Rover " + roverString + ")");
 
     QObject::connect(&ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
                      this, SLOT(on_ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
@@ -774,11 +785,19 @@ MainWinRover::MainWinRover(QWidget *parent, const int index, const ExtUIThings& 
     QObject::connect(extUIThings.pushButton_ClearInfoMessage, SIGNAL(clicked(bool)),
                      this, SLOT(on_pushButton_ClearInfoMessage_clicked()));
 
-
+    QSettings settings;
+    extUIThings.lineEdit_SerialPort->setText(settings.value("SerialPort_Rover" + roverString, "\\\\.\\COM").toString());
+    extUIThings.spinBox_SerialSpeed->setValue(settings.value("SerialSpeed_Rover" + roverString, "115200").toInt());
 }
 
 MainWinRover::~MainWinRover()
 {
+    QString roverString = getRoverIdentString(index);
+
+    QSettings settings;
+    settings.setValue("SerialPort_Rover" + roverString, extUIThings.lineEdit_SerialPort->text());
+    settings.setValue("SerialSpeed_Rover" + roverString, extUIThings.spinBox_SerialSpeed->value());
+
     delete messageMonitorForm;
     delete relposnedForm;
 }
