@@ -384,6 +384,16 @@ void EssentialsForm::ubxMessageReceived_Rover(const UBXMessage& ubxMessage, cons
 
             rovers[roverId].distanceBetweenFarthestCoordinates = calcDistanceBetweenFarthestCoordinates(rovers[roverId].positionHistory, ui->spinBox_FluctuationHistoryLength->value());
 
+            while ((!rovers[roverId].messageQueue_RELPOSNED.isEmpty()) && (rovers[roverId].messageQueue_RELPOSNED.head().iTOW > relposned.iTOW))
+            {
+                // Remove items from the queue that are from "the future".
+                // This is needed for a case when (re)replaying data that has RELPOSNED-items
+                // in the end of the logs (for example) for some rover(s) but not all
+                // (missing sync due to item from "the future" in the head of the queue
+                // -> queues fill up -> queues not handled in time).
+                rovers[roverId].messageQueue_RELPOSNED.dequeue();
+            }
+
             rovers[roverId].messageQueue_RELPOSNED.enqueue(relposned);
 
             handleVideoFrameRecording(ubxMessage.messageEndTime - 1);
