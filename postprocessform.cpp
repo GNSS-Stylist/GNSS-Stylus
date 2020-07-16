@@ -71,7 +71,9 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->checkBox_IncludeNormals->setChecked(settings.value("PostProcessing_IncludeNormals", false).toBool());
 
     ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "100").toInt());
+    ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", "0").toInt());
     ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Correction", "0").toDouble());
+    ui->checkBox_ReportITOWAutoAlign->setChecked(settings.value("PostProcessing_ReportITOWAutoAlign", false).toBool());
     ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", false).toBool());
     ui->checkBox_ReportUnalignedITOWS->setChecked(settings.value("PostProcessing_ReportUnalignedITOWS", false).toBool());
 
@@ -123,7 +125,9 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_IncludeNormals", ui->checkBox_IncludeNormals->isChecked());
 
     settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
+    settings.setValue("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value());
     settings.setValue("PostProcessing_StylusTipDistanceFromRoverA_Correction", ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->value());
+    settings.setValue("PostProcessing_ReportITOWAutoAlign", ui->checkBox_ReportITOWAutoAlign->isChecked());
     settings.setValue("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked());
     settings.setValue("PostProcessing_ReportUnalignedITOWS", ui->checkBox_ReportUnalignedITOWS->isChecked());
 
@@ -483,14 +487,51 @@ void PostProcessingForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
     {
         // Casting of UBX-message to RELPOSNED was successful
 
-        if ((ui->checkBox_ReportUnalignedITOWS->isChecked()) &&
-                ((currentRELPOSNEDReadingData.lastReadITOW != -1) && ((relposned.iTOW % expectedITOWAlignment) != 0)))
+        if ((currentRELPOSNEDReadingData.lastReadITOW != -1) && ((relposned.iTOW % expectedITOWAlignment) != 0))
         {
-            addLogLine("Warning: iTOW not aligned to expected interval (" +
-                       QString::number(expectedITOWAlignment) +" ms). iTOW: " + QString::number(relposned.iTOW) +
-                       ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
-                       "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
+            unsigned int iTOWautoAlignThreshold = ui->spinBox_ITOWAutoAlignThreshold->value();
+            int autoAlignedITOW = 0;
+            bool iTOWAutoAligned = false;
+
+            if ((relposned.iTOW % expectedITOWAlignment) <= iTOWautoAlignThreshold)
+            {
+                // Negative correction (f. exp 1001 > 1000)
+                autoAlignedITOW = relposned.iTOW - (relposned.iTOW % expectedITOWAlignment);
+                iTOWAutoAligned = true;
+            }
+            else if ((expectedITOWAlignment - (relposned.iTOW % expectedITOWAlignment)) <= iTOWautoAlignThreshold)
+            {
+                // Positive correction (f. exp 999 > 1000)
+                autoAlignedITOW = relposned.iTOW - (relposned.iTOW % expectedITOWAlignment) + expectedITOWAlignment;
+                iTOWAutoAligned = true;
+            }
+
+            if (iTOWAutoAligned)
+            {
+                if (ui->checkBox_ReportITOWAutoAlign->isChecked())
+                {
+                    addLogLine("Warning: iTOW auto-aligned to expected interval (" +
+                               QString::number(expectedITOWAlignment) +" ms). original iTOW: " + QString::number(relposned.iTOW) +
+                               ", auto-aligned: " + QString::number(autoAlignedITOW) +
+                               " (adjustment: " + QString::number(int(autoAlignedITOW) - int(relposned.iTOW)) + ")"
+                               ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
+                               "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
+                }
+
+                relposned.iTOW = autoAlignedITOW;
+            }
+            else
+            {
+                if (ui->checkBox_ReportUnalignedITOWS->isChecked())
+                {
+                    addLogLine("Warning: iTOW not aligned or auto-alignable to expected interval (" +
+                               QString::number(expectedITOWAlignment) +" ms). iTOW: " + QString::number(relposned.iTOW) +
+                               ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
+                               "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
+                }
+            }
         }
+
         if ((ui->checkBox_ReportMissingITOWs->isChecked()) &&
                 ((currentRELPOSNEDReadingData.lastReadITOW != -1) &&
                  (static_cast<unsigned int>(relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW) > expectedITOWAlignment)))

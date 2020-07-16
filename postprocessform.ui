@@ -170,13 +170,13 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>200</y>
+         <y>260</y>
          <width>571</width>
          <height>17</height>
         </rect>
        </property>
        <property name="text">
-        <string>Report unaligned RELPOSNED-messages (ITOWs not in expected alignment)</string>
+        <string>Report unaligned RELPOSNED-messages (ITOWs not in expected alignment after auto-align)</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -186,13 +186,13 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>230</y>
-         <width>571</width>
+         <y>290</y>
+         <width>601</width>
          <height>17</height>
         </rect>
        </property>
        <property name="text">
-        <string>Report missing RELPOSNED-messages (over expected alignment between messages, based on iTOWS)</string>
+        <string>Report missing RELPOSNED-messages (over expected alignment between messages, based on iTOWS, after auto-align)</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -237,7 +237,7 @@
        <property name="geometry">
         <rect>
          <x>490</x>
-         <y>160</y>
+         <y>190</y>
          <width>111</width>
          <height>22</height>
         </rect>
@@ -262,7 +262,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>160</y>
+         <y>190</y>
          <width>481</width>
          <height>20</height>
         </rect>
@@ -272,6 +272,57 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_AutoAlignITOWThreshold">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>160</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>ITOW auto-align threshold (ms):</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="spinBox_ITOWAutoAlignThreshold">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>160</y>
+         <width>111</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="maximum">
+        <number>1000</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBox_ReportITOWAutoAlign">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>230</y>
+         <width>571</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Report auto-aligned RELPOSNED-messages (subsequent ITOW differing less than auto-align threshold)</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
        </property>
       </widget>
      </widget>
