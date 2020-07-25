@@ -49,6 +49,27 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
     ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
 
+    // Just some valid values
+    const double defaultAntennaLocations[3][3] = {
+        { 1, 0, 0 },
+        { -1, -1, 0 },
+        { -1, 1, 0 }
+    };
+
+    for (int row = 0; row < 3; row++)
+    {
+        for (int column = 0; column < 3; column++)
+        {
+            QString settingKey = "Essentials_AntennaLocations_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            QString defaultValue = QString::number(defaultAntennaLocations[row][column], 'g', 3);
+
+            ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->setText(settings.value(settingKey, defaultValue).toString());
+        }
+    }
+
     ui->comboBox_TagIdent->addItem("Suspend");
     ui->comboBox_TagIdent->addItem("Resume");
     ui->comboBox_TagIdent->addItem("New object");
@@ -74,6 +95,21 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
 
     ui->checkBox_PlaySound->setChecked(settings.value("PlaySound").toBool());
     on_checkBox_PlaySound_stateChanged(ui->checkBox_PlaySound->checkState());
+
+    fileDialog_AntennaLocations_Load.setFileMode(QFileDialog::ExistingFile);
+
+    QStringList antennaLocationsFilters;
+
+    antennaLocationsFilters << "Antenna locations-files (*.AntennaLocations)"
+            << "Any files (*)";
+
+    fileDialog_AntennaLocations_Load.setNameFilters(antennaLocationsFilters);
+
+
+    fileDialog_AntennaLocations_Save.setFileMode(QFileDialog::AnyFile);
+    fileDialog_AntennaLocations_Save.setDefaultSuffix("AntennaLocations");
+
+    fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -86,6 +122,18 @@ EssentialsForm::~EssentialsForm()
     settings.setValue("PlaySound", ui->checkBox_PlaySound->isChecked());
     settings.setValue("Volume_MouseButtonTagging", ui->horizontalScrollBar_Volume_MouseButtonTagging->value());
     settings.setValue("Volume_DistanceReceived", ui->horizontalScrollBar_Volume_DistanceReceived->value());
+
+    for (int row = 0; row < 3; row++)
+    {
+        for (int column = 0; column < 3; column++)
+        {
+            QString settingKey = "Essentials_AntennaLocations_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            settings.setValue(settingKey, ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->text());
+        }
+    }
 
     delete ui;
 }
@@ -368,21 +416,21 @@ void EssentialsForm::nmeaSentenceReceived_Rover(const NMEAMessage& nmeaMessage, 
 
 void EssentialsForm::ubxMessageReceived_Rover(const UBXMessage& ubxMessage, const unsigned int roverId)
 {
-    if (roverId < sizeof(rovers) / sizeof(rovers[0]))
+    if (roverId < sizeof(rovers) / sizeof(rovers[0]) && (int(roverId) < ui->spinBox_NumberOfRovers->value()))
     {
         UBXMessage_RELPOSNED relposned(ubxMessage);
 
         if (relposned.messageDataStatus == UBXMessage::STATUS_VALID)
         {
             // "Casting" generic UBX-message to RELPOSNED was successful
-            rovers[roverId].positionHistory.append(relposned);
+            rovers[roverId].locationHistory.append(relposned);
 
-            while (rovers[roverId].positionHistory.size() > maxPositionHistoryLength)
+            while (rovers[roverId].locationHistory.size() > maxLocationHistoryLength)
             {
-                rovers[roverId].positionHistory.removeFirst();
+                rovers[roverId].locationHistory.removeFirst();
             }
 
-            rovers[roverId].distanceBetweenFarthestCoordinates = calcDistanceBetweenFarthestCoordinates(rovers[roverId].positionHistory, ui->spinBox_FluctuationHistoryLength->value());
+            rovers[roverId].distanceBetweenFarthestCoordinates = calcDistanceBetweenFarthestCoordinates(rovers[roverId].locationHistory, ui->spinBox_FluctuationHistoryLength->value());
 
             while ((!rovers[roverId].messageQueue_RELPOSNED.isEmpty()) && (rovers[roverId].messageQueue_RELPOSNED.head().iTOW > relposned.iTOW))
             {
@@ -434,17 +482,17 @@ void EssentialsForm::postProcessingTagReceived(const qint64 uptime, const PostPr
     if (tag.ident == "LMB")
     {
         addMouseButtonTag("LMB", soundEffect_LMB, uptime);
-        stylusTipPosition_LMB = lastStylusTipPosition;
+        stylusTipLocation_LMB = lastStylusTipLocation;
     }
     else if (tag.ident == "MMB")
     {
         addMouseButtonTag("MMB", soundEffect_MMB, uptime);
-        stylusTipPosition_MMB = lastStylusTipPosition;
+        stylusTipLocation_MMB = lastStylusTipLocation;
     }
     else if (tag.ident == "RMB")
     {
         addMouseButtonTag("RMB", soundEffect_RMB, uptime);
-        stylusTipPosition_RMB = lastStylusTipPosition;
+        stylusTipLocation_RMB = lastStylusTipLocation;
     }
     else
     {
@@ -657,14 +705,16 @@ void EssentialsForm::addTextTag(qint64 uptime)
                    << ui->comboBox_TagIdent->lineEdit()->text() << "\t" << ui->lineEdit_TagText->text() << "\t"
                    << QString::number(uptime) << "\n";
 
-        treeItem_LastTag->setText(1, ui->comboBox_TagIdent->lineEdit()->text() +  "; " + ui->lineEdit_TagText->text());
+        treeItem_LastTag_Stylus->setText(1, ui->comboBox_TagIdent->lineEdit()->text() +  "; " + ui->lineEdit_TagText->text());
 
         lastTaggedRELPOSNEDiTOW = lastMatchingRELPOSNEDiTOW;
     }
     else
     {
-        treeItem_LastTag->setText(1, "Logging not active!");
+        treeItem_LastTag_Stylus->setText(1, "Logging not active!");
     }
+
+    treeItem_LastTag_LOSolver->setText(1, treeItem_LastTag_Stylus->text(1));
 //    handleVideoFrameRecording(uptime);
 }
 
@@ -676,19 +726,19 @@ void EssentialsForm::on_pushButton_AddTag_clicked()
 void EssentialsForm::on_pushButton_MouseTag_clicked()
 {
     addMouseButtonTag("LMB", soundEffect_LMB);
-    stylusTipPosition_LMB = lastStylusTipPosition;
+    stylusTipLocation_LMB = lastStylusTipLocation;
 }
 
 void EssentialsForm::on_pushButton_MouseTag_rightClicked()
 {
     addMouseButtonTag("RMB", soundEffect_RMB);
-    stylusTipPosition_RMB = lastStylusTipPosition;
+    stylusTipLocation_RMB = lastStylusTipLocation;
 }
 
 void EssentialsForm::on_pushButton_MouseTag_middleClicked()
 {
     addMouseButtonTag("MMB", soundEffect_MMB);
-    stylusTipPosition_MMB = lastStylusTipPosition;
+    stylusTipLocation_MMB = lastStylusTipLocation;
 }
 
 void EssentialsForm::addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect, qint64 uptime)
@@ -696,7 +746,7 @@ void EssentialsForm::addMouseButtonTag(const QString& tagtext, QSoundEffect& sou
     handleVideoFrameRecording(uptime - 1);
     if (loggingActive)
     {
-        treeItem_LastTag->setText(1, tagtext);
+        treeItem_LastTag_Stylus->setText(1, tagtext);
 
         QTextStream textStream(&logFile_Tags);
 
@@ -722,109 +772,183 @@ void EssentialsForm::addMouseButtonTag(const QString& tagtext, QSoundEffect& sou
 
         ui->pushButton_MouseTag->setText("Logging not active!");
 
-        treeItem_LastTag->setText(1, "Logging not active!");
+        treeItem_LastTag_Stylus->setText(1, "Logging not active!");
     }
+
+    treeItem_LastTag_LOSolver->setText(1, treeItem_LastTag_Stylus->text(1));
+
 //    handleVideoFrameRecording(uptime);
 }
 
 
 void EssentialsForm::handleRELPOSNEDQueues(void)
 {
+    int numOfRovers = ui->spinBox_NumberOfRovers->value();
+
     bool matchingiTOWFound = false;
 
-    // TODO: Rewrite this...
-
-    while ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
-            (!rovers[1].messageQueue_RELPOSNED.isEmpty()))
+    while (1)
     {
-        while ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
-               (!rovers[1].messageQueue_RELPOSNED.isEmpty()) &&
-               (rovers[0].messageQueue_RELPOSNED.head().iTOW < rovers[1].messageQueue_RELPOSNED.head().iTOW))
+        bool someQueueEmpty = false;
+
+        for (int i = 0; i < numOfRovers; i++)
         {
-            // Discard all rover A RELPOSNED-messages that are older (lower iTOW) than the first rover B message in queue
-            rovers[0].messageQueue_RELPOSNED.dequeue();
+            someQueueEmpty = someQueueEmpty | rovers[i].messageQueue_RELPOSNED.isEmpty();
         }
 
-        while ((!rovers[1].messageQueue_RELPOSNED.isEmpty()) &&
-               (!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
-               (rovers[1].messageQueue_RELPOSNED.head().iTOW < rovers[0].messageQueue_RELPOSNED.head().iTOW))
+        if (someQueueEmpty)
         {
-            // Discard all rover B RELPOSNED-messages that are older (lower iTOW) than the first rover A message in queue
-            rovers[1].messageQueue_RELPOSNED.dequeue();
+            break;
         }
 
-        if ((!rovers[0].messageQueue_RELPOSNED.isEmpty()) &&
-                (!rovers[1].messageQueue_RELPOSNED.isEmpty()))
-        {
-            UBXMessage_RELPOSNED roverARELPOSNED = rovers[0].messageQueue_RELPOSNED.head();
-            UBXMessage_RELPOSNED roverBRELPOSNED = rovers[1].messageQueue_RELPOSNED.head();
+        // Highest ITOW value in handled rovers in the heads of the queues
+        UBXMessage_RELPOSNED::ITOW highestLowestITOW = 0;
 
-            if (roverARELPOSNED.iTOW == roverBRELPOSNED.iTOW)
+        for (int i = 0; i < numOfRovers; i++)
+        {
+            if (rovers[i].messageQueue_RELPOSNED.head().iTOW > highestLowestITOW)
             {
-                // Queues are in sync -> process
-                rovers[0].messageQueue_RELPOSNED.dequeue();
-                rovers[1].messageQueue_RELPOSNED.dequeue();
-
-                lastMatchingRELPOSNEDiTOW = static_cast<int>(roverARELPOSNED.iTOW);
-                matchingiTOWFound = true;
-                lastMatchingRELPOSNEDiTOWTimer.start();
-
-                rovers[0].lastMatchingRoverRELPOSNED = roverARELPOSNED;
-                rovers[1].lastMatchingRoverRELPOSNED = roverBRELPOSNED;
-
-                updateTipData();
+                highestLowestITOW = rovers[i].messageQueue_RELPOSNED.head().iTOW;
             }
         }
+
+        // Discard all RELPOSNED-messages that are older (lower iTOW) than the "highest lowest"
+        // (If time keeps running forward, they would never be handled).
+
+        for (int i = 0; i < numOfRovers; i++)
+        {
+            while ((!rovers[i].messageQueue_RELPOSNED.isEmpty()) &&
+                   (rovers[i].messageQueue_RELPOSNED.head().iTOW < highestLowestITOW))
+            {
+                rovers[i].messageQueue_RELPOSNED.dequeue();
+            }
+        }
+
+        for (int i = 0; i < numOfRovers; i++)
+        {
+            someQueueEmpty = someQueueEmpty | rovers[i].messageQueue_RELPOSNED.isEmpty();
+        }
+
+        if (someQueueEmpty)
+        {
+            break;
+        }
+
+        bool iTOWMismatch = false;
+
+        for (int i = 1; i < numOfRovers; i++)
+        {
+            if (rovers[0].messageQueue_RELPOSNED.head().iTOW != rovers[i].messageQueue_RELPOSNED.head().iTOW)
+            {
+                iTOWMismatch = true;
+                break;
+            }
+        }
+
+        if (iTOWMismatch)
+        {
+            // ITOW-values in the heads of the queues still doesn't match -> try again from start
+            continue;
+        }
+
+        // Queues are in sync -> process
+
+        lastMatchingRELPOSNEDiTOW = rovers[0].messageQueue_RELPOSNED.head().iTOW;
+        matchingiTOWFound = true;
+        lastMatchingRELPOSNEDiTOWTimer.start();
+
+        for (int i = 0; i < numOfRovers; i++)
+        {
+            rovers[i].lastMatchingRoverRELPOSNED = rovers[i].messageQueue_RELPOSNED.dequeue();
+        }
+
+        updateTipData();
     }
 
-    // Prevent groving queues too much if only one rover is sending RELPOSNEDS
-    while (rovers[0].messageQueue_RELPOSNED.size() >= 100)
+    // Prevent groving queues too much if not all rovers are sending RELPOSNEDS
+    for (int i = 0; i < numOfRovers; i++)
     {
-        rovers[0].messageQueue_RELPOSNED.dequeue();
-    }
-    while (rovers[1].messageQueue_RELPOSNED.size() >= 100)
-    {
-        rovers[1].messageQueue_RELPOSNED.dequeue();
+        while (rovers[i].messageQueue_RELPOSNED.size() > 100)
+        {
+            rovers[i].messageQueue_RELPOSNED.dequeue();
+        }
     }
 
     if (matchingiTOWFound)
     {
         ui->label_iTOW_BIG->setNum(lastMatchingRELPOSNEDiTOW);
 
-        if ((rovers[0].lastMatchingRoverRELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID) &&
-                (rovers[1].lastMatchingRoverRELPOSNED.messageDataStatus == UBXMessage::STATUS_VALID))
+        double worstAccuracy = 0;
+
+        for (int i = 0; i < numOfRovers; i++)
         {
-            double accuracy_RoverA = sqrt(rovers[0].lastMatchingRoverRELPOSNED.accN * rovers[0].lastMatchingRoverRELPOSNED.accN +
-                                          rovers[0].lastMatchingRoverRELPOSNED.accE * rovers[0].lastMatchingRoverRELPOSNED.accE +
-                                          rovers[0].lastMatchingRoverRELPOSNED.accD * rovers[0].lastMatchingRoverRELPOSNED.accD);
+            double accuracy = sqrt(rovers[i].lastMatchingRoverRELPOSNED.accN * rovers[i].lastMatchingRoverRELPOSNED.accN +
+                    rovers[i].lastMatchingRoverRELPOSNED.accE * rovers[i].lastMatchingRoverRELPOSNED.accE +
+                    rovers[i].lastMatchingRoverRELPOSNED.accD * rovers[i].lastMatchingRoverRELPOSNED.accD);
 
-            double accuracy_RoverB = sqrt(rovers[1].lastMatchingRoverRELPOSNED.accN * rovers[1].lastMatchingRoverRELPOSNED.accN +
-                                          rovers[1].lastMatchingRoverRELPOSNED.accE * rovers[1].lastMatchingRoverRELPOSNED.accE +
-                                          rovers[1].lastMatchingRoverRELPOSNED.accD * rovers[1].lastMatchingRoverRELPOSNED.accD);
-
-            double worstAccuracy = accuracy_RoverA;
-
-            if (accuracy_RoverB > worstAccuracy)
+            if (accuracy > worstAccuracy)
             {
-                worstAccuracy = accuracy_RoverB;
+                worstAccuracy = accuracy;
+            }
+        }
+
+        int worstAccuracyInt = static_cast<int>(worstAccuracy * 1000);
+
+        ui->label_WorstAccuracy->setText(QString::number(worstAccuracyInt) + " mm");
+
+        if (worstAccuracyInt > ui->progressBar_Accuracy->maximum())
+        {
+            worstAccuracyInt = ui->progressBar_Accuracy->maximum();
+        }
+
+        ui->progressBar_Accuracy->setValue(static_cast<int>(worstAccuracyInt));
+
+        double distN = rovers[0].lastMatchingRoverRELPOSNED.relPosN - rovers[1].lastMatchingRoverRELPOSNED.relPosN;
+        double distE = rovers[0].lastMatchingRoverRELPOSNED.relPosE - rovers[1].lastMatchingRoverRELPOSNED.relPosE;
+        double distD = rovers[0].lastMatchingRoverRELPOSNED.relPosD - rovers[1].lastMatchingRoverRELPOSNED.relPosD;
+
+        distanceBetweenRovers = sqrt(distN * distN + distE * distE + distD * distD);
+
+        if (numOfRovers == 3)
+        {
+            Eigen::Vector3d antennaLocations[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                antennaLocations[i](0) = rovers[i].lastMatchingRoverRELPOSNED.relPosN;
+                antennaLocations[i](1) = rovers[i].lastMatchingRoverRELPOSNED.relPosE;
+                antennaLocations[i](2) = rovers[i].lastMatchingRoverRELPOSNED.relPosD;
             }
 
-            int worstAccuracyInt = static_cast<int>(worstAccuracy * 1000);
+            loSolverLocationOrientation.iTOW = lastMatchingRELPOSNEDiTOW;
+            QElapsedTimer timer;
+            timer.start();
+            loSolverLocationOrientation.uptime = timer.msecsSinceReference();
 
-            ui->label_WorstAccuracy->setText(QString::number(worstAccuracyInt) + " mm");
+            Eigen::Vector3d origin;
 
-            if (worstAccuracyInt > ui->progressBar_Accuracy->maximum())
+            bool valid = true;
+            valid = valid && loSolver.setPoints(antennaLocations);
+            valid = valid && loSolver.getTransformMatrix(loSolverLocationOrientation.transform);
+            if (valid)
             {
-                worstAccuracyInt = ui->progressBar_Accuracy->maximum();
+                origin = loSolverLocationOrientation.transform * Eigen::Vector3d(0,0,0);
+            }
+            else
+            {
+                origin = Eigen::Vector3d(0,0,0);
             }
 
-            ui->progressBar_Accuracy->setValue(static_cast<int>(worstAccuracyInt));
+            loSolverLocationOrientation.n = origin(0);
+            loSolverLocationOrientation.e = origin(1);
+            loSolverLocationOrientation.d = origin(2);
 
-            double distN = rovers[0].lastMatchingRoverRELPOSNED.relPosN - rovers[1].lastMatchingRoverRELPOSNED.relPosN;
-            double distE = rovers[0].lastMatchingRoverRELPOSNED.relPosE - rovers[1].lastMatchingRoverRELPOSNED.relPosE;
-            double distD = rovers[0].lastMatchingRoverRELPOSNED.relPosD - rovers[1].lastMatchingRoverRELPOSNED.relPosD;
-
-            distanceBetweenRovers = sqrt(distN * distN + distE * distE + distD * distD);
+            valid = valid && loSolver.getYawPitchRollAngles(loSolverLocationOrientation.transform, loSolverLocationOrientation.heading, loSolverLocationOrientation.pitch, loSolverLocationOrientation.roll);
+            loSolverLocationOrientation.valid = valid;
+        }
+        else
+        {
+            loSolverLocationOrientation.valid = false;
         }
     }
 }
@@ -854,9 +978,9 @@ double EssentialsForm::NEDPoint::getDistanceTo(const NEDPoint &other)
 }
 
 
-double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& positionHistory, int samples)
+double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& locationHistory, qint64 time_ms)
 {
-    if (positionHistory.length() >= 2)
+    if (locationHistory.length() >= 2)
     {
         double highN = -1e12;
         double highE = -1e12;
@@ -866,7 +990,9 @@ double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoi
         double lowE = 1e12;
         double lowD = 1e12;
 
-        QList<NEDPoint>::const_iterator iter = positionHistory.end() - 1;
+        QList<NEDPoint>::const_iterator iter = locationHistory.end() - 1;
+
+        qint64 lastUpTime = iter->uptime;
 
         do
         {
@@ -896,8 +1022,7 @@ double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoi
                 highD = iter->d;
             }
             iter--;
-            samples--;
-        } while ((iter != positionHistory.begin()) && (samples >= 0));
+        } while ((iter != locationHistory.begin()) && ((lastUpTime - iter->uptime) < time_ms));
 
         double diffN = highN - lowN;
         double diffE = highE - lowE;
@@ -914,9 +1039,9 @@ double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<NEDPoi
 }
 
 
-double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<UBXMessage_RELPOSNED>& positionHistory, int samples)
+double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<UBXMessage_RELPOSNED>& locationHistory, qint64 time_ms)
 {
-    if (positionHistory.length() >= 2)
+    if (locationHistory.length() >= 2)
     {
         double highN = -1e12;
         double highE = -1e12;
@@ -926,7 +1051,9 @@ double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<UBXMes
         double lowE = 1e12;
         double lowD = 1e12;
 
-        QList<UBXMessage_RELPOSNED>::const_iterator iter = positionHistory.end() - 1;
+        QList<UBXMessage_RELPOSNED>::const_iterator iter = locationHistory.end() - 1;
+
+        qint64 lastUpTime = iter->messageStartTime;
 
         do
         {
@@ -957,8 +1084,7 @@ double EssentialsForm::calcDistanceBetweenFarthestCoordinates(const QList<UBXMes
             }
 
             iter--;
-            samples--;
-        } while ((iter != positionHistory.begin()) && (samples >= 0));
+        } while ((iter != locationHistory.begin()) && ((lastUpTime - iter->messageStartTime) < time_ms));
 
         double diffN = highN - lowN;
         double diffE = highE - lowE;
@@ -986,87 +1112,113 @@ void EssentialsForm::updateTreeItems(void)
     if (!treeItemsCreated)
     {
         // Can't create these on constructor -> Do it when running this function first time
-        treeItem_RoverAITOW = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverAITOW->setText(0, "Rover A ITOW");
+        treeItem_RoverAITOW_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_RoverAITOW_Stylus->setText(0, "Rover A ITOW");
 
-        treeItem_RoverBITOW = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverBITOW->setText(0, "Rover B ITOW");
+        treeItem_RoverBITOW_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_RoverBITOW_Stylus->setText(0, "Rover B ITOW");
 
-        treeItem_RoverASolution = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverASolution->setText(0, "Rover A solution status");
+        treeItem_RoverASolutionStatus_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_RoverASolutionStatus_Stylus->setText(0, "Rover A solution status");
 
-        treeItem_RoverBSolution = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverBSolution->setText(0, "Rover B solution status");
+        treeItem_RoverBSolutionStatus_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_RoverBSolutionStatus_Stylus->setText(0, "Rover B solution status");
 
-        treeItem_StylusTipAccNED = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_StylusTipAccNED->setText(0, "Tip AccNED");
+        treeItem_AccNED_StylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_AccNED_StylusTip->setText(0, "Tip AccNED");
 
-        treeItem_RoverADiffSoln = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverADiffSoln->setText(0, "Rover A differential corr");
-
-        treeItem_RoverBDiffSoln = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RoverBDiffSoln->setText(0, "Rover B differential corr");
 /*
-        treeItem_DistanceBetweenFarthestCoordinates_RoverA = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_DistanceBetweenFarthestCoordinates_RoverA = new QTreeWidgetItem(ui->treeWidget_Stylus);
         treeItem_DistanceBetweenFarthestCoordinates_RoverA->setText(0, "Pos fluctuation Rover A");
 
-        treeItem_DistanceBetweenFarthestCoordinates_RoverB = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_DistanceBetweenFarthestCoordinates_RoverB = new QTreeWidgetItem(ui->treeWidget_Stylus);
         treeItem_DistanceBetweenFarthestCoordinates_RoverB->setText(0, "Pos fluctuation Rover B");
 
-        treeItem_DistanceBetweenFarthestCoordinates_StylusTip = new QTreeWidgetItem(ui->treeWidget);
+        treeItem_DistanceBetweenFarthestCoordinates_StylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
         treeItem_DistanceBetweenFarthestCoordinates_StylusTip->setText(0, "Pos fluctuation Stylus tip");
 */
-        treeItem_DistanceBetweenRovers = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_DistanceBetweenRovers->setText(0, "Distance between rovers");
+        treeItem_DistanceBetweenRovers_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_DistanceBetweenRovers_Stylus->setText(0, "Distance between rovers");
 
-        treeItem_LastTag = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_LastTag->setText(0, "Last tag");
+        treeItem_LastTag_Stylus = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_LastTag_Stylus->setText(0, "Last tag");
 
-        treeItem_StylusTipNED = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_StylusTipNED->setText(0, "Tip NED");
+        treeItem_NED_StylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_NED_StylusTip->setText(0, "Tip NED");
 
-        treeItem_LMBNED = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_LMBNED->setText(0, "LMB NED");
+        treeItem_NED_LMB_StylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_NED_LMB_StylusTip->setText(0, "LMB NED");
 
-        treeItem_RMBNED = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_RMBNED->setText(0, "RMB NED");
+        treeItem_NED_RMB_StylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_NED_RMB_StylusTip->setText(0, "RMB NED");
 
-        treeItem_Distance_TipToLMB = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_Distance_TipToLMB->setText(0, "Distance tip<->LMB");
+        treeItem_Distance_StylusTipToLMB = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_Distance_StylusTipToLMB->setText(0, "Distance tip<->LMB");
 
-        treeItem_Distance_TipToRMB = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_Distance_TipToRMB->setText(0, "Distance tip<->RMB");
+        treeItem_Distance_StylusTipToRMB = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_Distance_StylusTipToRMB->setText(0, "Distance tip<->RMB");
 
-        treeItem_Distance_LMBToRMB = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_Distance_LMBToRMB->setText(0, "Distance LMB<->RMB");
+        treeItem_Distance_StylusTip_LMBToRMB = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_Distance_StylusTip_LMBToRMB->setText(0, "Distance LMB<->RMB");
 
-        treeItem_Distance_RoverAToTip = new QTreeWidgetItem(ui->treeWidget);
-        treeItem_Distance_RoverAToTip->setText(0, "Distance RoverA<->Tip");
+        treeItem_Distance_RoverAToStylusTip = new QTreeWidgetItem(ui->treeWidget_Stylus);
+        treeItem_Distance_RoverAToStylusTip->setText(0, "Distance RoverA<->Tip");
+
+
+        treeItem_RoverAITOW_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverAITOW_LOSolver->setText(0, "Rover A ITOW");
+        treeItem_RoverBITOW_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverBITOW_LOSolver->setText(0, "Rover B ITOW");
+        treeItem_RoverCITOW_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverCITOW_LOSolver->setText(0, "Rover C ITOW");
+
+        treeItem_RoverASolutionStatus_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverASolutionStatus_LOSolver->setText(0, "Rover A solution status");
+        treeItem_RoverBSolutionStatus_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverBSolutionStatus_LOSolver->setText(0, "Rover B solution status");
+        treeItem_RoverCSolutionStatus_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RoverCSolutionStatus_LOSolver->setText(0, "Rover C solution status");
+
+        treeItem_LastTag_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_LastTag_LOSolver->setText(0, "Last tag");
+
+        treeItem_NED_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_NED_LOSolver->setText(0, "Location (NED)");
+
+        treeItem_Heading_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_Heading_LOSolver->setText(0, "Heading");
+
+        treeItem_Pitch_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_Pitch_LOSolver->setText(0, "Pitch");
+
+        treeItem_Roll_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_Roll_LOSolver->setText(0, "Roll");
 
         treeItemsCreated = true;
     }
+
 /*
     treeItem_DistanceBetweenFarthestCoordinates_RoverA->setText(1, QString::number(distanceBetweenFarthestCoordinates_RoverA, 'f', 3));
     treeItem_DistanceBetweenFarthestCoordinates_RoverB->setText(1, QString::number(distanceBetweenFarthestCoordinates_RoverB, 'f', 3));
     treeItem_DistanceBetweenFarthestCoordinates_StylusTip->setText(1, QString::number(distanceBetweenFarthestCoordinates_StylusTip, 'f', 3));
 */
-    treeItem_DistanceBetweenRovers->setText(1, QString::number(distanceBetweenRovers, 'f', 3));
+    treeItem_DistanceBetweenRovers_Stylus->setText(1, QString::number(distanceBetweenRovers, 'f', 3));
 
-    treeItem_StylusTipNED->setText(1, QString::number(lastStylusTipPosition.n, 'f', 3) + ", " + QString::number(lastStylusTipPosition.e, 'f', 3) + ", " + QString::number(lastStylusTipPosition.d, 'f', 3));
-    treeItem_StylusTipAccNED->setText(1, QString::number(lastStylusTipPosition.accN, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accE, 'f', 3) + ", " + QString::number(lastStylusTipPosition.accD, 'f', 3));
+    treeItem_NED_StylusTip->setText(1, QString::number(lastStylusTipLocation.n, 'f', 3) + ", " + QString::number(lastStylusTipLocation.e, 'f', 3) + ", " + QString::number(lastStylusTipLocation.d, 'f', 3));
+    treeItem_AccNED_StylusTip->setText(1, QString::number(lastStylusTipLocation.accN, 'f', 3) + ", " + QString::number(lastStylusTipLocation.accE, 'f', 3) + ", " + QString::number(lastStylusTipLocation.accD, 'f', 3));
 
-    const QBrush positionValidBrush = QBrush(QColor(128,255,128));
-    const QBrush positionInvalidBrush = QBrush(QColor(255,128,128));
+    const QBrush brush_Valid = QBrush(QColor(128,255,128));
+    const QBrush brush_Invalid = QBrush(QColor(255,128,128));
 
-    if (lastStylusTipPosition.valid)
+    if (lastStylusTipLocation.valid)
     {
-        treeItem_StylusTipNED->setBackground(1, positionValidBrush);
-        treeItem_StylusTipAccNED->setBackground(1, positionValidBrush);
+        treeItem_NED_StylusTip->setBackground(1, brush_Valid);
+        treeItem_AccNED_StylusTip->setBackground(1, brush_Valid);
     }
     else
     {
-        treeItem_StylusTipNED->setBackground(1, positionInvalidBrush);
-        treeItem_StylusTipAccNED->setBackground(1, positionInvalidBrush);
+        treeItem_NED_StylusTip->setBackground(1, brush_Invalid);
+        treeItem_AccNED_StylusTip->setBackground(1, brush_Invalid);
     }
 
     const QBrush solutionBrushes[4] =
@@ -1077,101 +1229,127 @@ void EssentialsForm::updateTreeItems(void)
         QBrush(QColor(255,128,128))
     };
 
-    if (rovers[0].positionHistory.isEmpty())
+    struct
     {
-        treeItem_RoverAITOW->setText(1, "N/A");
-        treeItem_RoverASolution->setText(1, "N/A");
-        treeItem_RoverADiffSoln->setText(1, "N/A");
-        treeItem_RoverASolution->setBackground(1, solutionBrushes[UBXMessage_RELPOSNED::UNDEFINED]);
-        treeItem_RoverASolution->setText(1, "N/A");
+        QTreeWidgetItem* treeItem_ITOW[2];
+        QTreeWidgetItem* treeItem_SolutionStatus[2];
+    } roverItems[3] =
+    {
+        {
+            { treeItem_RoverAITOW_Stylus, treeItem_RoverAITOW_LOSolver },
+            { treeItem_RoverASolutionStatus_Stylus, treeItem_RoverASolutionStatus_LOSolver }
+        },
+        {
+            { treeItem_RoverBITOW_Stylus, treeItem_RoverBITOW_LOSolver },
+            { treeItem_RoverBSolutionStatus_Stylus, treeItem_RoverBSolutionStatus_LOSolver }
+        },
+        {
+            { nullptr, treeItem_RoverCITOW_LOSolver },
+            { nullptr, treeItem_RoverCSolutionStatus_LOSolver }
+        },
+    };
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        if (rovers[i].locationHistory.isEmpty())
+        {
+            for (unsigned int ii = 0; ii < sizeof(roverItems[i].treeItem_ITOW) / sizeof(roverItems[i].treeItem_ITOW[0]); ii++)
+            {
+                if (roverItems[i].treeItem_ITOW[ii])
+                {
+                    roverItems[i].treeItem_ITOW[ii]->setText(1, "N/A");
+                }
+            }
+            for (unsigned int ii = 0; ii < sizeof(roverItems[i].treeItem_SolutionStatus) / sizeof(roverItems[i].treeItem_SolutionStatus[0]); ii++)
+            {
+                if (roverItems[i].treeItem_SolutionStatus[ii])
+                {
+                    roverItems[i].treeItem_SolutionStatus[ii]->setText(1, "N/A");
+                    roverItems[i].treeItem_SolutionStatus[ii]->setBackground(1, solutionBrushes[UBXMessage_RELPOSNED::UNDEFINED]);
+                }
+            }
+        }
+        else
+        {
+            UBXMessage_RELPOSNED relposned = rovers[i].locationHistory.last();
+
+            for (unsigned int ii = 0; ii < sizeof(roverItems[i].treeItem_ITOW) / sizeof(roverItems[i].treeItem_ITOW[0]); ii++)
+            {
+                if (roverItems[i].treeItem_ITOW[ii])
+                {
+                    roverItems[i].treeItem_ITOW[ii]->setText(1, QString::number(relposned.iTOW));
+                }
+            }
+            for (unsigned int ii = 0; ii < sizeof(roverItems[i].treeItem_SolutionStatus) / sizeof(roverItems[i].treeItem_SolutionStatus[0]); ii++)
+            {
+                if (roverItems[i].treeItem_SolutionStatus[ii])
+                {
+                    roverItems[i].treeItem_SolutionStatus[ii]->setText(1, relposned.getCarrSolnString());
+                    roverItems[i].treeItem_SolutionStatus[ii]->setBackground(1, solutionBrushes[relposned.flag_carrSoln % 4]);
+                }
+            }
+        }
+    }
+
+    treeItem_NED_LMB_StylusTip->setText(1, QString::number(stylusTipLocation_LMB.n, 'f', 3) + ", " + QString::number(stylusTipLocation_LMB.e, 'f', 3) + ", " + QString::number(stylusTipLocation_LMB.d, 'f', 3));
+
+    if (stylusTipLocation_LMB.valid)
+    {
+        treeItem_NED_LMB_StylusTip->setBackground(1, brush_Valid);
     }
     else
     {
-        UBXMessage_RELPOSNED roverA = rovers[0].positionHistory.last();
-
-        treeItem_RoverAITOW->setText(1, QString::number(roverA.iTOW));
-        treeItem_RoverASolution->setBackground(1, solutionBrushes[roverA.flag_carrSoln % 4]);
-        treeItem_RoverASolution->setText(1, roverA.getCarrSolnString());
-        treeItem_RoverADiffSoln->setText(1, QString::number(roverA.flag_diffSoln));
+        treeItem_NED_LMB_StylusTip->setBackground(1, brush_Invalid);
     }
 
-    if (rovers[1].positionHistory.isEmpty())
+    treeItem_NED_RMB_StylusTip->setText(1, QString::number(stylusTipLocation_RMB.n, 'f', 3) + ", " + QString::number(stylusTipLocation_RMB.e, 'f', 3) + ", " + QString::number(stylusTipLocation_RMB.d, 'f', 3));
+
+    if (stylusTipLocation_RMB.valid)
     {
-        treeItem_RoverBITOW->setText(1, "N/A");
-        treeItem_RoverBSolution->setText(1, "N/A");
-        treeItem_RoverBDiffSoln->setText(1, "N/A");
-        treeItem_RoverBSolution->setBackground(1, solutionBrushes[UBXMessage_RELPOSNED::UNDEFINED]);
-        treeItem_RoverBSolution->setText(1, "N/A");
+        treeItem_NED_RMB_StylusTip->setBackground(1, brush_Valid);
     }
     else
     {
-        UBXMessage_RELPOSNED roverB = rovers[1].positionHistory.last();
-
-        treeItem_RoverBITOW->setText(1, QString::number(roverB.iTOW));
-        treeItem_RoverBSolution->setBackground(1, solutionBrushes[roverB.flag_carrSoln % 4]);
-        treeItem_RoverBSolution->setText(1, roverB.getCarrSolnString());
-        treeItem_RoverBDiffSoln->setText(1, QString::number(roverB.flag_diffSoln));
+        treeItem_NED_RMB_StylusTip->setBackground(1, brush_Invalid);
     }
 
-    treeItem_LMBNED->setText(1, QString::number(stylusTipPosition_LMB.n, 'f', 3) + ", " + QString::number(stylusTipPosition_LMB.e, 'f', 3) + ", " + QString::number(stylusTipPosition_LMB.d, 'f', 3));
+    double distanceTipToLMB = lastStylusTipLocation.getDistanceTo(stylusTipLocation_LMB);
 
-    if (stylusTipPosition_LMB.valid)
+    treeItem_Distance_StylusTipToLMB->setText(1, QString::number(distanceTipToLMB, 'f', 3));
+
+    if ((stylusTipLocation_LMB.valid) && (lastStylusTipLocation.valid))
     {
-        treeItem_LMBNED->setBackground(1, positionValidBrush);
+        treeItem_Distance_StylusTipToLMB->setBackground(1, brush_Valid);
     }
     else
     {
-        treeItem_LMBNED->setBackground(1, positionInvalidBrush);
+        treeItem_Distance_StylusTipToLMB->setBackground(1, brush_Invalid);
     }
 
-    treeItem_RMBNED->setText(1, QString::number(stylusTipPosition_RMB.n, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.e, 'f', 3) + ", " + QString::number(stylusTipPosition_RMB.d, 'f', 3));
+    double distanceTipToRMB = lastStylusTipLocation.getDistanceTo(stylusTipLocation_RMB);
 
-    if (stylusTipPosition_RMB.valid)
+    treeItem_Distance_StylusTipToRMB->setText(1, QString::number(distanceTipToRMB, 'f', 3));
+
+    if ((stylusTipLocation_RMB.valid) && (lastStylusTipLocation.valid))
     {
-        treeItem_RMBNED->setBackground(1, positionValidBrush);
-    }
-    else
-    {
-        treeItem_RMBNED->setBackground(1, positionInvalidBrush);
-    }
-
-    double distanceTipToLMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_LMB);
-
-    treeItem_Distance_TipToLMB->setText(1, QString::number(distanceTipToLMB, 'f', 3));
-
-    if ((stylusTipPosition_LMB.valid) && (lastStylusTipPosition.valid))
-    {
-        treeItem_Distance_TipToLMB->setBackground(1, positionValidBrush);
+        treeItem_Distance_StylusTipToRMB->setBackground(1, brush_Valid);
     }
     else
     {
-        treeItem_Distance_TipToLMB->setBackground(1, positionInvalidBrush);
+        treeItem_Distance_StylusTipToRMB->setBackground(1, brush_Invalid);
     }
 
-    double distanceTipToRMB = lastStylusTipPosition.getDistanceTo(stylusTipPosition_RMB);
+    double distanceLMBToRMB = stylusTipLocation_LMB.getDistanceTo(stylusTipLocation_RMB);
 
-    treeItem_Distance_TipToRMB->setText(1, QString::number(distanceTipToRMB, 'f', 3));
+    treeItem_Distance_StylusTip_LMBToRMB->setText(1, QString::number(distanceLMBToRMB, 'f', 3));
 
-    if ((stylusTipPosition_RMB.valid) && (lastStylusTipPosition.valid))
+    if ((stylusTipLocation_LMB.valid) && (stylusTipLocation_RMB.valid))
     {
-        treeItem_Distance_TipToRMB->setBackground(1, positionValidBrush);
-    }
-    else
-    {
-        treeItem_Distance_TipToRMB->setBackground(1, positionInvalidBrush);
-    }
-
-    double distanceLMBToRMB = stylusTipPosition_LMB.getDistanceTo(stylusTipPosition_RMB);
-
-    treeItem_Distance_LMBToRMB->setText(1, QString::number(distanceLMBToRMB, 'f', 3));
-
-    if ((stylusTipPosition_LMB.valid) && (stylusTipPosition_RMB.valid))
-    {
-        treeItem_Distance_LMBToRMB->setBackground(1, positionValidBrush);
+        treeItem_Distance_StylusTip_LMBToRMB->setBackground(1, brush_Valid);
     }
     else
     {
-        treeItem_Distance_LMBToRMB->setBackground(1, positionInvalidBrush);
+        treeItem_Distance_StylusTip_LMBToRMB->setBackground(1, brush_Invalid);
     }
 
     bool roverAToTipDistanceValid = true;
@@ -1185,15 +1363,51 @@ void EssentialsForm::updateTreeItems(void)
         roverAToTipDistanceValid = false;
     }
 
-    treeItem_Distance_RoverAToTip->setText(1, QString::number(lastValidDistanceItem.distance, 'f', 3));
+    treeItem_Distance_RoverAToStylusTip->setText(1, QString::number(lastValidDistanceItem.distance, 'f', 3));
 
     if (roverAToTipDistanceValid)
     {
-        treeItem_Distance_RoverAToTip->setBackground(1, positionValidBrush);
+        treeItem_Distance_RoverAToStylusTip->setBackground(1, brush_Valid);
     }
     else
     {
-        treeItem_Distance_RoverAToTip->setBackground(1, positionInvalidBrush);
+        treeItem_Distance_RoverAToStylusTip->setBackground(1, brush_Invalid);
+    }
+
+    if (loSolverLocationOrientation.valid)
+    {
+        treeItem_NED_LOSolver->setText(1, QString::number(loSolverLocationOrientation.n, 'f', 3) + ", " + QString::number(loSolverLocationOrientation.e, 'f', 3) + ", " + QString::number(loSolverLocationOrientation.d, 'f', 3));
+
+        if (loSolverLocationOrientation.heading > 0)
+        {
+            treeItem_Heading_LOSolver->setText(1, QString::number(fmod((loSolverLocationOrientation.heading * 360 / (2. * M_PI) + 360), 360), 'f', 3));
+        }
+        else
+        {
+            treeItem_Heading_LOSolver->setText(1, QString::number(fmod((loSolverLocationOrientation.heading * 360 / (2. * M_PI) + 360), 360), 'f', 3) + " (" +
+                                               QString::number(loSolverLocationOrientation.heading * 360 / (2. * M_PI), 'f', 3) + ")");
+        }
+
+        treeItem_Pitch_LOSolver->setText(1, QString::number(loSolverLocationOrientation.pitch * 360 / (2. * M_PI), 'f', 3));
+        treeItem_Roll_LOSolver->setText(1, QString::number(loSolverLocationOrientation.roll * 360 / (2. * M_PI), 'f', 3));
+
+        treeItem_NED_LOSolver->setBackground(1, brush_Valid);
+        treeItem_Heading_LOSolver->setBackground(1, brush_Valid);
+        treeItem_Pitch_LOSolver->setBackground(1, brush_Valid);
+        treeItem_Roll_LOSolver->setBackground(1, brush_Valid);
+    }
+    else
+    {
+        treeItem_NED_LOSolver->setText(1, "N/A");
+        treeItem_Heading_LOSolver->setText(1, "N/A");
+        treeItem_Pitch_LOSolver->setText(1, "N/A");
+        treeItem_Roll_LOSolver->setText(1, "N/A");
+
+        treeItem_NED_LOSolver->setBackground(1, brush_Invalid);
+        treeItem_Heading_LOSolver->setBackground(1, brush_Invalid);
+        treeItem_Pitch_LOSolver->setBackground(1, brush_Invalid);
+        treeItem_Roll_LOSolver->setBackground(1, brush_Invalid);
+
     }
 }
 
@@ -1451,11 +1665,11 @@ void EssentialsForm::addDistanceLogItem_Unfiltered(const DistanceItem& item)
 
 void EssentialsForm::updateTipData(void)
 {
-    NEDPoint stylusTipPosition;
+    NEDPoint stylusTipLocation;
 
     double tipDistanceFromRoverA = lastValidDistanceItem.distance;
 
-    stylusTipPosition.iTOW = lastMatchingRELPOSNEDiTOW;
+    stylusTipLocation.iTOW = lastMatchingRELPOSNEDiTOW;
 
     Eigen::Vector3d roverAPosNED(
             rovers[0].lastMatchingRoverRELPOSNED.relPosN,
@@ -1471,15 +1685,15 @@ void EssentialsForm::updateTipData(void)
     Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
     Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * tipDistanceFromRoverA;
 
-    stylusTipPosition.n = stylusTipPosNED(0);
-    stylusTipPosition.e = stylusTipPosNED(1);
-    stylusTipPosition.d = stylusTipPosNED(2);
+    stylusTipLocation.n = stylusTipPosNED(0);
+    stylusTipLocation.e = stylusTipPosNED(1);
+    stylusTipLocation.d = stylusTipPosNED(2);
 
     // Stylus tip accuracy is now the same as rover A's
     // TODO: Could be calculated based on both rovers somehow ("worst case"/some combined value)
-    stylusTipPosition.accN = rovers[0].lastMatchingRoverRELPOSNED.accN;
-    stylusTipPosition.accE = rovers[0].lastMatchingRoverRELPOSNED.accE;
-    stylusTipPosition.accD = rovers[0].lastMatchingRoverRELPOSNED.accD;
+    stylusTipLocation.accN = rovers[0].lastMatchingRoverRELPOSNED.accN;
+    stylusTipLocation.accE = rovers[0].lastMatchingRoverRELPOSNED.accE;
+    stylusTipLocation.accD = rovers[0].lastMatchingRoverRELPOSNED.accD;
 
     bool valid = true;
 
@@ -1493,19 +1707,19 @@ void EssentialsForm::updateTipData(void)
         valid = false;
     }
 
-    stylusTipPosition.valid = valid;
+    stylusTipLocation.valid = valid;
 
-    lastStylusTipPosition = stylusTipPosition;
+    lastStylusTipLocation = stylusTipLocation;
 
-    positionHistory_StylusTip.append(stylusTipPosition);
+    locationHistory_StylusTip.append(stylusTipLocation);
 
-    while (positionHistory_StylusTip.size() > maxPositionHistoryLength)
+    while (locationHistory_StylusTip.size() > maxLocationHistoryLength)
     {
-        positionHistory_StylusTip.removeFirst();
+        locationHistory_StylusTip.removeFirst();
     }
 
     distanceBetweenFarthestCoordinates_StylusTip =
-            calcDistanceBetweenFarthestCoordinates(positionHistory_StylusTip, ui->spinBox_FluctuationHistoryLength->value());
+            calcDistanceBetweenFarthestCoordinates(locationHistory_StylusTip, ui->spinBox_FluctuationHistoryLength->value());
 }
 
 
@@ -1545,4 +1759,210 @@ QString EssentialsForm::getRoverIdentString(const unsigned int roverId)
         // Should not happen
         return("X");
     }
+}
+
+void EssentialsForm::on_tableWidget_AntennaLocations_LOSolver_cellChanged(int row, int column)
+{
+    (void) row;
+    (void) column;
+
+    updateLOSolverReferencePointLocations();
+}
+
+
+bool EssentialsForm::updateLOSolverReferencePointLocations(void)
+{
+    Eigen::Vector3d antennaLocations[3];
+
+    for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+    {
+        bool ok;
+        for (int valueIndex = 0; valueIndex < 3; valueIndex++)
+        {
+            antennaLocations[roverIndex](valueIndex) = ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, valueIndex)->text().toDouble(&ok);
+
+            if (!ok)
+            {
+                loSolver.init();
+                return false;
+            }
+        }
+    }
+
+    if (!loSolver.setReferencePoints(antennaLocations))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+static QString getAntennaLocationsFileHeaderLine(void)
+{
+    QString line = "Rover\tCoord_N\tCoord_E\tCoord_D";
+    return line;
+}
+
+void EssentialsForm::loadAntennaLocations(const QString fileName)
+{
+    QMessageBox msgBox;
+    QFileInfo fileInfo(fileName);
+
+    QFile antennaLocationsFile;
+    antennaLocationsFile.setFileName(fileName);
+    if (antennaLocationsFile.open(QIODevice::ReadOnly))
+    {
+        QTextStream textStream(&antennaLocationsFile);
+
+        QString headerLine = textStream.readLine();
+
+        if (headerLine.compare(getAntennaLocationsFileHeaderLine(), Qt::CaseInsensitive))
+        {
+            msgBox.setText("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Data not read.");
+            msgBox.exec();
+            antennaLocationsFile.close();
+            return;
+        }
+
+        QString coordItems[3][3];
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            QString dataLine = textStream.readLine();
+
+            QStringList dataLineItems = dataLine.split("\t");
+
+            if (dataLineItems.count() != (1 + 3))
+            {
+                msgBox.setText("Error: File's \"" + fileInfo.fileName() + "\" line " + QString::number(roverIndex + 1) +
+                           " doesn't have correct number of items (4). Data not read.");
+                msgBox.exec();
+
+                antennaLocationsFile.close();
+                return;
+            }
+            else
+            {
+                QString expectedRoverIdent = "Rover " + getRoverIdentString(roverIndex);
+
+                if (expectedRoverIdent.compare(dataLineItems[0], Qt::CaseInsensitive))
+                {
+                    msgBox.setText("Error: File's \"" + fileInfo.fileName() + "\" line " + QString::number(roverIndex + 1) +
+                               " Rover ident string error. Data not read.");
+                    msgBox.exec();
+
+                    return;
+                }
+
+                for (int i = 0; i < 3; i++)
+                {
+                    coordItems[roverIndex][i] = dataLineItems[i + 1];
+                }
+            }
+        }
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            for (int coordIndex = 0; coordIndex < 3; coordIndex++)
+            {
+                ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, coordIndex)->setText(coordItems[roverIndex][coordIndex]);
+            }
+        }
+    }
+    else
+    {
+        msgBox.setText("Error: can't open file \"" + fileInfo.fileName() + "\". Data not read.");
+        msgBox.exec();
+    }
+}
+
+
+void EssentialsForm::on_pushButton_LoadAntennaLocations_clicked()
+{
+    QMessageBox msgBox;
+
+    if (fileDialog_AntennaLocations_Load.exec())
+    {
+        QStringList fileNames = fileDialog_AntennaLocations_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_AntennaLocations_Load.setDirectory(QFileInfo(fileNames[0]).path());
+
+            loadAntennaLocations(fileNames[0]);
+        }
+        else
+        {
+            msgBox.setText("Warning: No antenna locations file selected. Data not read.");
+            msgBox.exec();
+        }
+    }
+}
+
+void EssentialsForm::on_pushButton_SaveAntennaLocations_clicked()
+{
+    QMessageBox msgBox;
+
+    if (fileDialog_AntennaLocations_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_AntennaLocations_Save.selectedFiles();
+
+        if (fileNameList.length() != 1)
+        {
+            msgBox.setText("Error: Multiple file selection not supported. Antenna locations not saved.");
+            msgBox.exec();
+            return;
+        }
+
+        QFile antennaLocationsFile;
+
+        antennaLocationsFile.setFileName(fileNameList[0]);
+
+        if (antennaLocationsFile.exists())
+        {
+            QMessageBox overwriteMsgBox;
+            overwriteMsgBox.setText("File already exists.");
+            overwriteMsgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = overwriteMsgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = overwriteMsgBox.addButton(QMessageBox::Cancel);
+
+            overwriteMsgBox.setDefaultButton(cancelButton);
+
+            overwriteMsgBox.exec();
+
+            if (overwriteMsgBox.clickedButton() != overwriteButton)
+            {
+                // msgBox.setText("Antenna locations not saved.");
+                // msgBox.exec();
+                return;
+            }
+        }
+
+        if (!antennaLocationsFile.open(QIODevice::WriteOnly))
+        {
+            msgBox.setText("Error: Can't open antenna locations file.");
+            msgBox.exec();
+            return;
+        }
+
+        QTextStream textStream(&antennaLocationsFile);
+
+        textStream << getAntennaLocationsFileHeaderLine() << "\n";
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            QString expectedRoverIdent = "Rover " + getRoverIdentString(roverIndex);
+
+            textStream << expectedRoverIdent;
+
+            for (int i = 0; i < 3; i++)
+            {
+                textStream << "\t" << ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, i)->text();
+            }
+
+            textStream << "\n";
+        }
+    }
+
 }

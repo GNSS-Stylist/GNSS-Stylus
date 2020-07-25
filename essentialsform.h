@@ -37,6 +37,7 @@
 #include "gnssmessage.h"
 #include "postprocessform.h"
 #include "laserrangefinder20hzv2serialthread.h"
+#include "losolver.h"
 
 namespace Ui {
 class EssentialsForm;
@@ -121,6 +122,12 @@ private slots:
 
     void on_checkBox_PlaySound_stateChanged(int arg1);
 
+    void on_tableWidget_AntennaLocations_LOSolver_cellChanged(int row, int column);
+
+    void on_pushButton_LoadAntennaLocations_clicked();
+
+    void on_pushButton_SaveAntennaLocations_clicked();
+
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
 
@@ -141,7 +148,7 @@ private:
 
         UBXMessage_RELPOSNED lastMatchingRoverRELPOSNED;   //!< Last RELPOSNED-message with a matching iTOW with other rovers
 
-        QList<UBXMessage_RELPOSNED> positionHistory;         //!< Used to calculate fluctuation of rover's position
+        QList<UBXMessage_RELPOSNED> locationHistory;         //!< Used to calculate fluctuation of rover's locations
         double distanceBetweenFarthestCoordinates = nan("");     //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength
     };
 
@@ -173,6 +180,33 @@ private:
         double getDistanceTo(const NEDPoint& other);
     };
 
+    class LocationOrientation
+    {
+    public:
+        bool valid = false;
+
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
+        Eigen::Transform<double, 3, Eigen::Affine> transform;  //!< As filled by LOSOlver::getTransformMatrix
+
+        UBXMessage_RELPOSNED::ITOW iTOW = -1;   //!< GNSS Time Of Week (-1 if not applicable)
+        qint64 uptime = 0;                      //!< Uptime (QElapsedTimer->msecsSinceReference())
+
+        double n = 0;       //!< North (m)
+        double e = 0;       //!< East (m)
+        double d = 0;       //!< Down (m)
+
+        double heading = 0;
+        double pitch = 0;
+        double roll = 0;
+
+        // TODO: Add these and accuracies for orientation when/if figured out how to calculate these
+        /*
+        double accN = -1;   //!< Accuracy of North-component (m)
+        double accE = -1;   //!< Accuracy of North-component (m)
+        double accD = -1;   //!< Accuracy of North-component (m)
+        */
+    };
+
     Ui::EssentialsForm *ui;
 
     QFile logFile_Base_Raw;         //!< Log file for all serial data (base)
@@ -199,56 +233,72 @@ private:
     QSoundEffect soundEffect_MBError;   //!< Sound effect for mouse button tagging (Error)
     QSoundEffect soundEffect_Distance;  //!< Sound effect for new distance
 
-    const int maxPositionHistoryLength = 6000;                  //!< Maximum number of position history items to keep (used to calculate fluctuations)
+    const int maxLocationHistoryLength = 6000;                  //!< Maximum number of location history items to keep (used to calculate fluctuations)
 
-    QList<NEDPoint> positionHistory_StylusTip;                  //!< Used to calculate fluctuation of stylus tip's position
-    NEDPoint lastStylusTipPosition;
+    QList<NEDPoint> locationHistory_StylusTip;                  //!< Used to calculate fluctuation of stylus tip's location
+    NEDPoint lastStylusTipLocation;
 
     double distanceBetweenFarthestCoordinates_StylusTip = nan("");  //!< Distance calculated between min/max coordinate values for all NED-axes during spinBox_FluctuationHistoryLength (stylus tip)
 
     double distanceBetweenRovers = 0;   //!< Euclidean distance between rovers (m)
 
-    NEDPoint stylusTipPosition_LMB;  //!< Stylus tip position when the Left Mouse Button was pressed last time
-    NEDPoint stylusTipPosition_RMB;  //!< Stylus tip position when the Right Mouse Button was pressed last time
-    NEDPoint stylusTipPosition_MMB;  //!< Stylus tip position when the Middle Mouse Button was pressed last time
+    NEDPoint stylusTipLocation_LMB;  //!< Stylus tip location when the Left Mouse Button was pressed last time
+    NEDPoint stylusTipLocation_RMB;  //!< Stylus tip location when the Right Mouse Button was pressed last time
+    NEDPoint stylusTipLocation_MMB;  //!< Stylus tip location when the Middle Mouse Button was pressed last time
 
     QTreeWidgetItem *treeItem_DistanceBetweenFarthestCoordinates_StylusTip;
-    QTreeWidgetItem *treeItem_DistanceBetweenRovers;
-    QTreeWidgetItem *treeItem_LastTag;
+    QTreeWidgetItem *treeItem_DistanceBetweenRovers_Stylus;
+    QTreeWidgetItem *treeItem_LastTag_Stylus;
 
-    QTreeWidgetItem *treeItem_StylusTipNED;
+    QTreeWidgetItem *treeItem_NED_StylusTip;
 
-    QTreeWidgetItem *treeItem_StylusTipAccNED;
+    QTreeWidgetItem *treeItem_AccNED_StylusTip;
 
-    QTreeWidgetItem *treeItem_RoverAITOW;
-    QTreeWidgetItem *treeItem_RoverBITOW;
+    QTreeWidgetItem *treeItem_RoverAITOW_Stylus;
+    QTreeWidgetItem *treeItem_RoverBITOW_Stylus;
 
-    QTreeWidgetItem *treeItem_RoverASolution;
-    QTreeWidgetItem *treeItem_RoverBSolution;
+    QTreeWidgetItem *treeItem_RoverASolutionStatus_Stylus;
+    QTreeWidgetItem *treeItem_RoverBSolutionStatus_Stylus;
 
-    QTreeWidgetItem *treeItem_RoverADiffSoln;
-    QTreeWidgetItem *treeItem_RoverBDiffSoln;
+    QTreeWidgetItem *treeItem_NED_LMB_StylusTip;
+    QTreeWidgetItem *treeItem_NED_RMB_StylusTip;
 
-    QTreeWidgetItem *treeItem_LMBNED;
-    QTreeWidgetItem *treeItem_RMBNED;
+    QTreeWidgetItem *treeItem_Distance_StylusTipToLMB;
+    QTreeWidgetItem *treeItem_Distance_StylusTipToRMB;
+    QTreeWidgetItem *treeItem_Distance_StylusTip_LMBToRMB;
+    QTreeWidgetItem *treeItem_Distance_RoverAToStylusTip;
 
-    QTreeWidgetItem *treeItem_Distance_TipToLMB;
-    QTreeWidgetItem *treeItem_Distance_TipToRMB;
-    QTreeWidgetItem *treeItem_Distance_LMBToRMB;
-    QTreeWidgetItem *treeItem_Distance_RoverAToTip;
+
+    QTreeWidgetItem *treeItem_RoverAITOW_LOSolver;
+    QTreeWidgetItem *treeItem_RoverBITOW_LOSolver;
+    QTreeWidgetItem *treeItem_RoverCITOW_LOSolver;
+
+    QTreeWidgetItem *treeItem_RoverASolutionStatus_LOSolver;
+    QTreeWidgetItem *treeItem_RoverBSolutionStatus_LOSolver;
+    QTreeWidgetItem *treeItem_RoverCSolutionStatus_LOSolver;
+
+    QTreeWidgetItem *treeItem_LastTag_LOSolver;
+
+    QTreeWidgetItem *treeItem_NED_LOSolver;
+    QTreeWidgetItem *treeItem_Heading_LOSolver;
+    QTreeWidgetItem *treeItem_Pitch_LOSolver;
+    QTreeWidgetItem *treeItem_Roll_LOSolver;
+
 
     void handleRELPOSNEDQueues(void);   //!< Handles also syncing of rover RELPOSNED-messages
     void closeAllLogFiles(void);
-    double calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& positionHistory, int samples); //!< Calculates distance between min/max coordinate values for all NED-axes of last n samples
-    double calcDistanceBetweenFarthestCoordinates(const QList<UBXMessage_RELPOSNED>& positionHistory, int samples); //!< Calculates distance between min/max coordinate values for all NED-axes of last n samples
+    double calcDistanceBetweenFarthestCoordinates(const QList<NEDPoint>& locationHistory, qint64 time_ms); //!< Calculates distance between min/max coordinate values for all NED-axes of last n milliseconds
+    double calcDistanceBetweenFarthestCoordinates(const QList<UBXMessage_RELPOSNED>& locationHistory, qint64 time_ms); //!< Calculates distance between min/max coordinate values for all NED-axes of last n milliseconds
     void updateTreeItems(void);
     void addMouseButtonTag(const QString& tagtext, QSoundEffect& soundEffect, qint64 uptime = -1);  //!< Adds mouse button tag to log file and plays soundEffect if successful
     void addTextTag(qint64 uptime = -1);
     void addDistanceLogItem(const DistanceItem& item);    //!< Adds distance to log file
     void addDistanceLogItem_Unfiltered(const DistanceItem& item);    //!< Adds distance to log file (unfiltered)
     void updateTipData(void);   //!< Updates tip-related fields
+    void loadAntennaLocations(const QString fileName);
 
     QString getRoverIdentString(const unsigned int roverId);
+    bool updateLOSolverReferencePointLocations(void);
 
     // Settings for video frame writing (ugly I know, but this is just to make video "recording" possible)
     bool video_WriteFrames = false;
@@ -262,10 +312,17 @@ private:
     qint64 video_ClipBaseTime = 0;
     double video_ClipDoubleTimer = 0;
 
+    QFileDialog fileDialog_AntennaLocations_Load;
+    QFileDialog fileDialog_AntennaLocations_Save;
+
     DistanceItem lastDistanceItemIncludingInvalid;          //!< Last distance received
     DistanceItem lastValidDistanceItem;                     //!< Last valid distance received
     QElapsedTimer lastValidDistanceItemTimer;               //!< Started when valid distance received
     QElapsedTimer lastDistanceItemTimerIncludingInvalid;    //!< Started when any distance received
+
+    LOSolver loSolver;
+
+    LocationOrientation loSolverLocationOrientation;
 };
 
 #endif // ESSENTIALSFORM_H

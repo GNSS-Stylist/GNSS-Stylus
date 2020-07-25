@@ -33,6 +33,7 @@ win32:LIBS += -l"ws2_32"
 SOURCES += \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
+    losolver.cpp \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
@@ -48,6 +49,7 @@ SOURCES += \
 HEADERS += \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
+    losolver.h \
         mainwindow.h \
     gnssmessage.h \
     ntripthread.h \

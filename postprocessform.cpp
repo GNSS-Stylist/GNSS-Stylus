@@ -108,6 +108,28 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
         }
     }
 
+    // Just some valid values
+    const double defaultAntennaLocations[3][3] = {
+        { 1, 0, 0 },
+        { -1, -1, 0 },
+        { -1, 1, 0 }
+    };
+
+    for (int row = 0; row < 3; row++)
+    {
+        for (int column = 0; column < 3; column++)
+        {
+            QString settingKey = "PostProcessing_AntennaLocations_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            QString defaultValue = QString::number(defaultAntennaLocations[row][column], 'g', 3);
+
+            ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->setText(settings.value(settingKey, defaultValue).toString());
+        }
+    }
+
+
     ui->doubleSpinBox_Movie_FPS->setValue(settings.value("PostProcessing_FPS", "30").toDouble());
 }
 
@@ -151,14 +173,19 @@ PostProcessingForm::~PostProcessingForm()
                     QString::number(row) + "_Column" +
                     QString::number(column);
 
-            QString defaultValue = "0";
-
-            if (row == column)
-            {
-                defaultValue = "1";
-            }
-
             settings.setValue(settingKey, ui->tableWidget_TransformationMatrix->item(row, column)->text());
+        }
+    }
+
+    for (int row = 0; row < 3; row++)
+    {
+        for (int column = 0; column < 3; column++)
+        {
+            QString settingKey = "PostProcessing_AntennaLocations_Row" +
+                    QString::number(row) + "_Column" +
+                    QString::number(column);
+
+            settings.setValue(settingKey, ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->text());
         }
     }
 
@@ -253,6 +280,23 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_Transformation_Save.setDefaultSuffix("Transformation");
 
         fileDialog_Transformation_Save.setNameFilters(transformationFilters);
+
+
+        fileDialog_AntennaLocations_Load.setFileMode(QFileDialog::ExistingFile);
+
+        QStringList antennaLocationsFilters;
+
+        antennaLocationsFilters << "Antenna locations-files (*.AntennaLocations)"
+                << "Any files (*)";
+
+        fileDialog_AntennaLocations_Load.setNameFilters(antennaLocationsFilters);
+
+
+        fileDialog_AntennaLocations_Save.setFileMode(QFileDialog::AnyFile);
+        fileDialog_AntennaLocations_Save.setDefaultSuffix("AntennaLocations");
+
+        fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
+
 
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
@@ -2614,15 +2658,15 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
 
             Eigen::Vector3d lookAtPosXYZ = transform * lookAtPosNED;
 
-            QString stylusTipPositionValidityString;
+            QString *stylusTipLocationValidityString = new QString;
 
             if (distanceValid)
             {
-                stylusTipPositionValidityString = "Valid";
+                *stylusTipLocationValidityString = "Valid";
             }
             else
             {
-                stylusTipPositionValidityString = "Invalid";
+                *stylusTipLocationValidityString = "Invalid";
             }
 
             QString lineOut =
@@ -2652,7 +2696,7 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                     "\t" + QString::number(lookAtPosXYZ(0), 'f', 4) +
                     "\t" + QString::number(lookAtPosXYZ(1), 'f', 4) +
                     "\t" + QString::number(lookAtPosXYZ(2), 'f', 4) +
-                    "\t" + stylusTipPositionValidityString;
+                    "\t" + *stylusTipLocationValidityString;
 
             textStream << (lineOut + "\n");
 
@@ -3486,4 +3530,210 @@ QString PostProcessingForm::getRoverIdentString(const unsigned int roverId)
     }
 }
 
+static QString getAntennaLocationsFileHeaderLine(void)
+{
+    QString line = "Rover\tCoord_N\tCoord_E\tCoord_D";
+    return line;
+}
 
+void PostProcessingForm::loadAntennaLocations(const QString fileName)
+{
+    QFileInfo fileInfo(fileName);
+    addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+    QFile antennaLocationsFile;
+    antennaLocationsFile.setFileName(fileName);
+    if (antennaLocationsFile.open(QIODevice::ReadOnly))
+    {
+        QTextStream textStream(&antennaLocationsFile);
+
+        QString headerLine = textStream.readLine();
+
+        if (headerLine.compare(getAntennaLocationsFileHeaderLine(), Qt::CaseInsensitive))
+        {
+            addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Data not read.");
+            antennaLocationsFile.close();
+            return;
+        }
+
+        QString coordItems[3][3];
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            QString dataLine = textStream.readLine();
+
+            QStringList dataLineItems = dataLine.split("\t");
+
+            if (dataLineItems.count() != (1 + 3))
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" line " + QString::number(roverIndex + 1) +
+                           " doesn't have correct number of items (4). Data not read.");
+
+                antennaLocationsFile.close();
+                return;
+            }
+            else
+            {
+                QString expectedRoverIdent = "Rover " + getRoverIdentString(roverIndex);
+
+                if (expectedRoverIdent.compare(dataLineItems[0], Qt::CaseInsensitive))
+                {
+                    addLogLine("Error: File's \"" + fileInfo.fileName() + "\" line " + QString::number(roverIndex + 1) +
+                               " Rover ident string error. Data not read.");
+
+                    return;
+                }
+
+                for (int i = 0; i < 3; i++)
+                {
+                    coordItems[roverIndex][i] = dataLineItems[i + 1];
+                }
+            }
+        }
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            for (int coordIndex = 0; coordIndex < 3; coordIndex++)
+            {
+                ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, coordIndex)->setText(coordItems[roverIndex][coordIndex]);
+            }
+        }
+    }
+    else
+    {
+        addLogLine("Error: can't open file \"" + fileInfo.fileName() + "\". Data not read.");
+    }
+}
+
+void PostProcessingForm::on_pushButton_LoadAntennaLocations_clicked()
+{
+    if (fileDialog_AntennaLocations_Load.exec())
+    {
+        QStringList fileNames = fileDialog_AntennaLocations_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_AntennaLocations_Load.setDirectory(QFileInfo(fileNames[0]).path());
+
+            loadAntennaLocations(fileNames[0]);
+        }
+        else
+        {
+            addLogLine("Warning: No antenna locations file selected. Data not read.");
+        }
+    }
+}
+
+void PostProcessingForm::on_pushButton_SaveAntennaLocations_clicked()
+{
+    if (fileDialog_AntennaLocations_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_AntennaLocations_Save.selectedFiles();
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Error: Multiple file selection not supported. Antenna locations not saved.");
+            return;
+        }
+
+        QFile antennaLocationsFile;
+
+        antennaLocationsFile.setFileName(fileNameList[0]);
+
+        if (antennaLocationsFile.exists())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Antenna locations not saved.");
+                return;
+            }
+        }
+
+        if (!antennaLocationsFile.open(QIODevice::WriteOnly))
+        {
+            addLogLine("Error: Can't open antenna locations file.");
+            return;
+        }
+
+        QTextStream textStream(&antennaLocationsFile);
+
+        textStream << getAntennaLocationsFileHeaderLine() << "\n";
+
+        for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+        {
+            QString expectedRoverIdent = "Rover " + getRoverIdentString(roverIndex);
+
+            textStream << expectedRoverIdent;
+
+            for (int i = 0; i < 3; i++)
+            {
+                textStream << "\t" << ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, i)->text();
+            }
+
+            textStream << "\n";
+        }
+    }
+}
+
+bool PostProcessingForm::updateLOSolverReferencePointLocations(LOSolver& loSolver)
+{
+    Eigen::Vector3d antennaLocations[3];
+
+    for (int roverIndex = 0; roverIndex < 3; roverIndex++)
+    {
+        bool ok;
+        for (int valueIndex = 0; valueIndex < 3; valueIndex++)
+        {
+            antennaLocations[roverIndex](valueIndex) = ui->tableWidget_AntennaLocations_LOSolver->item(roverIndex, valueIndex)->text().toDouble(&ok);
+
+            if (!ok)
+            {
+                addLogLine("Error: Row " + QString::number(roverIndex + 1) +
+                           ", column " + QString::number(valueIndex + 1) +
+                           " of reference point (=antenna) locations not convertible to a (double precision) floating point value. "
+                           "Unable to update reference point locations.");
+
+                return false;
+            }
+        }
+    }
+
+    if (!loSolver.setReferencePoints(antennaLocations))
+    {
+        addLogLine("Error: Can not set reference point (=antenna) locations, error code: " + QString::number(loSolver.getLastError()));
+
+        return false;
+    }
+
+    return true;
+}
+
+void PostProcessingForm::on_pushButton_ValidateAntennaLocations_clicked()
+{
+    QMessageBox msgBox;
+
+    LOSolver loSolver;
+
+    if (updateLOSolverReferencePointLocations(loSolver))
+    {
+        msgBox.setText("Reference point (=antenna) locations valid.");
+    }
+    else
+    {
+        msgBox.setText("Reference point (=antenna) locations not valid.");
+        msgBox.setInformativeText("See log for more info.");
+    }
+
+    msgBox.exec();
+}

@@ -35,6 +35,7 @@
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
 #include "Eigen/Geometry"
+#include "losolver.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -151,6 +152,12 @@ private slots:
 
     void on_pushButton_AddRELPOSNEDData_RoverC_clicked();
 
+    void on_pushButton_LoadAntennaLocations_clicked();
+
+    void on_pushButton_SaveAntennaLocations_clicked();
+
+    void on_pushButton_ValidateAntennaLocations_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -223,6 +230,8 @@ private:
     QFileDialog fileDialog_All;
     QFileDialog fileDialog_Transformation_Load;
     QFileDialog fileDialog_Transformation_Save;
+    QFileDialog fileDialog_AntennaLocations_Load;
+    QFileDialog fileDialog_AntennaLocations_Save;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;
@@ -247,7 +256,6 @@ private:
 
     QStringList getAppendedFileNames(const QStringList& fileNames, const QString appendix);
 
-
     qint64 getNextUptime(const qint64 uptime);
     qint64 getFirstUptime();
     qint64 getLastUptime();
@@ -255,6 +263,10 @@ private:
     bool generateTransformationMatrix(Eigen::Matrix4d& outputMatrix);
 
     QString getRoverIdentString(const unsigned int roverId);
+
+    void loadAntennaLocations(const QString fileName);
+
+    bool updateLOSolverReferencePointLocations(LOSolver& loSolver);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover

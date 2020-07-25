@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Essentials</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,3">
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_Left">
      <item>
@@ -226,28 +226,25 @@
     </layout>
    </item>
    <item>
-    <widget class="QTabWidget" name="tabWidget_Right">
-     <property name="autoFillBackground">
-      <bool>true</bool>
-     </property>
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="tab_Data">
-      <property name="autoFillBackground">
-       <bool>true</bool>
-      </property>
-      <attribute name="title">
-       <string>Data</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,1">
-         <property name="spacing">
-          <number>6</number>
-         </property>
+    <layout class="QVBoxLayout" name="verticalLayout_Right" stretch="20,1">
+     <item>
+      <widget class="QTabWidget" name="tabWidget_Right">
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
+       <property name="currentIndex">
+        <number>2</number>
+       </property>
+       <widget class="QWidget" name="tab_StylusData">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Stylus</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
-          <widget class="QTreeWidget" name="treeWidget">
+          <widget class="QTreeWidget" name="treeWidget_Stylus">
            <property name="autoFillBackground">
             <bool>false</bool>
            </property>
@@ -278,190 +275,415 @@
            </column>
           </widget>
          </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_LOSolverData">
+        <attribute name="title">
+         <string>Location/orientation</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QGroupBox" name="groupBox_MouseButtonTag">
-           <property name="title">
-            <string>Mouse button tagging</string>
+          <widget class="QTreeWidget" name="treeWidget_LOSolver">
+           <property name="autoFillBackground">
+            <bool>false</bool>
            </property>
-           <layout class="QGridLayout" name="gridLayout">
-            <item row="0" column="0">
-             <widget class="RightClickPushButton" name="pushButton_MouseTag">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>20</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Click to tag 
-LMB, RMB or MMB</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <property name="itemsExpandable">
+            <bool>false</bool>
+           </property>
+           <property name="headerHidden">
+            <bool>false</bool>
+           </property>
+           <property name="expandsOnDoubleClick">
+            <bool>false</bool>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <attribute name="headerDefaultSectionSize">
+            <number>200</number>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string notr="true">Value</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab__Settings">
-      <property name="autoFillBackground">
-       <bool>true</bool>
-      </property>
-      <attribute name="title">
-       <string>Settings</string>
-      </attribute>
-      <widget class="QLabel" name="label_FluctuationHistoryLength">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>175</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Fluctuation history length (samples):</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
+       </widget>
+       <widget class="QWidget" name="tab__Settings_General">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Settings</string>
+        </attribute>
+        <widget class="QLabel" name="label_FluctuationHistoryLength">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>40</y>
+           <width>175</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Fluctuation history length (ms):</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="spinBox_FluctuationHistoryLength">
+         <property name="geometry">
+          <rect>
+           <x>280</x>
+           <y>40</y>
+           <width>51</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>600000</number>
+         </property>
+         <property name="value">
+          <number>10</number>
+         </property>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_Sounds">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>70</y>
+           <width>341</width>
+           <height>121</height>
+          </rect>
+         </property>
+         <property name="title">
+          <string>Sounds</string>
+         </property>
+         <widget class="QCheckBox" name="checkBox_PlaySound">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>20</y>
+            <width>301</width>
+            <height>17</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Play sound effects</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+         <widget class="QScrollBar" name="horizontalScrollBar_Volume_DistanceReceived">
+          <property name="geometry">
+           <rect>
+            <x>90</x>
+            <y>80</y>
+            <width>231</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="singleStep">
+           <number>10</number>
+          </property>
+          <property name="value">
+           <number>100</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Volume_Tagging">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>50</y>
+            <width>71</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Vol-tagging:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QScrollBar" name="horizontalScrollBar_Volume_MouseButtonTagging">
+          <property name="geometry">
+           <rect>
+            <x>90</x>
+            <y>50</y>
+            <width>231</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="singleStep">
+           <number>10</number>
+          </property>
+          <property name="value">
+           <number>100</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="invertedAppearance">
+           <bool>false</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Volume_Distance">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>80</y>
+            <width>71</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Vol-distance:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_AntennaPositions">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>190</y>
+           <width>341</width>
+           <height>191</height>
+          </rect>
+         </property>
+         <property name="title">
+          <string>Reference point (=antenna) locations for location/orientation</string>
+         </property>
+         <widget class="QTableWidget" name="tableWidget_AntennaLocations_LOSolver">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>20</y>
+            <width>321</width>
+            <height>131</height>
+           </rect>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>false</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+          <property name="cornerButtonEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="rowCount">
+           <number>3</number>
+          </property>
+          <property name="columnCount">
+           <number>3</number>
+          </property>
+          <attribute name="horizontalHeaderCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="horizontalHeaderDefaultSectionSize">
+           <number>85</number>
+          </attribute>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="verticalHeaderCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
+          <row>
+           <property name="text">
+            <string>Rover A</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>Rover B</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>Rover C</string>
+           </property>
+          </row>
+          <column>
+           <property name="text">
+            <string>N (=Forward)</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>E (=Right)</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>D (=Down)</string>
+           </property>
+          </column>
+          <item row="0" column="0">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="0" column="1">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="0" column="2">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="1" column="0">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="1" column="1">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="1" column="2">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="2" column="0">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="2" column="1">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+          <item row="2" column="2">
+           <property name="text">
+            <string>0</string>
+           </property>
+          </item>
+         </widget>
+         <widget class="QPushButton" name="pushButton_SaveAntennaLocations">
+          <property name="geometry">
+           <rect>
+            <x>140</x>
+            <y>160</y>
+            <width>121</width>
+            <height>23</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Save to file...</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_LoadAntennaLocations">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>160</y>
+            <width>121</width>
+            <height>23</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Load from file...</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QLabel" name="label_FluctuationHistoryLength_2">
+         <property name="geometry">
+          <rect>
+           <x>9</x>
+           <y>10</y>
+           <width>261</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Number of rovers:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="spinBox_NumberOfRovers">
+         <property name="geometry">
+          <rect>
+           <x>280</x>
+           <y>10</y>
+           <width>51</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>3</number>
+         </property>
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </widget>
       </widget>
-      <widget class="QSpinBox" name="spinBox_FluctuationHistoryLength">
-       <property name="geometry">
-        <rect>
-         <x>191</x>
-         <y>10</y>
-         <width>51</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>6000</number>
-       </property>
-       <property name="value">
-        <number>10</number>
-       </property>
-      </widget>
-      <widget class="QGroupBox" name="groupBox_Sounds">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>40</y>
-         <width>331</width>
-         <height>121</height>
-        </rect>
-       </property>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_MouseButtonTag">
        <property name="title">
-        <string>Sounds</string>
+        <string>Mouse button tagging</string>
        </property>
-       <widget class="QCheckBox" name="checkBox_PlaySound">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>20</y>
-          <width>301</width>
-          <height>17</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Play sound effects</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-       <widget class="QScrollBar" name="horizontalScrollBar_Volume_DistanceReceived">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>80</y>
-          <width>231</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="singleStep">
-         <number>10</number>
-        </property>
-        <property name="value">
-         <number>100</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_Volume_Tagging">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>71</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Vol-tagging:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-       <widget class="QScrollBar" name="horizontalScrollBar_Volume_MouseButtonTagging">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>50</y>
-          <width>231</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="singleStep">
-         <number>10</number>
-        </property>
-        <property name="value">
-         <number>100</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="invertedAppearance">
-         <bool>false</bool>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_Volume_Distance">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>80</y>
-          <width>71</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Vol-distance:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="RightClickPushButton" name="pushButton_MouseTag">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>20</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Click to tag 
+LMB, RMB or MMB</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
-     </widget>
-    </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
