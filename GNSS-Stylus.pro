@@ -17,6 +17,15 @@ TEMPLATE = app
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# Following two defines remove Eigen's vectorization that seems to cause
+# runtime assertion failure (not always, but sometimes, how?!?)
+# By default it tries to use fast (SIMD) instructions for calculation, see:
+# http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+# Here lack of vectorization may not be a big issue as speed is probably more
+# limited by IO than math.
+DEFINES += EIGEN_DONT_VECTORIZE
+DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+
 INCLUDEPATH += $$PWD/Eigen
 
 # You can also make your code fail to compile if you use deprecated APIs.
