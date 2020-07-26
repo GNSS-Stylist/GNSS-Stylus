@@ -838,7 +838,8 @@ void PostProcessingForm::addTagData(const QStringList& fileNames)
                     firstDuplicateTagLine = 0;
                 }
 
-                tags.insertMulti(uptime, newTag);
+                // QT pre 5.15: tags.insertMulti(uptime, newTag);
+                tags.insert(uptime, newTag);
 
                 numberOfTags ++;
             }
