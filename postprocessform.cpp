@@ -68,7 +68,7 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
 
     ui->spinBox_MaxLogLines->setValue(settings.value("PostProcessing_MaxLogLines", "1000").toInt());
 
-    ui->checkBox_IncludeNormals->setChecked(settings.value("PostProcessing_IncludeNormals", false).toBool());
+    ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", false).toBool());
 
     ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "100").toInt());
     ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", "0").toInt());
@@ -81,13 +81,13 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->doubleSpinBox_Translation_E->setValue(settings.value("PostProcessing_Translation_E", "0").toDouble());
     ui->doubleSpinBox_Translation_D->setValue(settings.value("PostProcessing_Translation_D", "0").toDouble());
 
-    ui->doubleSpinBox_Movie_Camera_N->setValue(settings.value("PostProcessing_Movie_Camera_N", "-1").toDouble());
-    ui->doubleSpinBox_Movie_Camera_E->setValue(settings.value("PostProcessing_Movie_Camera_E", "0").toDouble());
-    ui->doubleSpinBox_Movie_Camera_D->setValue(settings.value("PostProcessing_Movie_Camera_D", "-0.05").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_N->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_N", "-1").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_E->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_E", "0").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_D->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_D", "-0.05").toDouble());
 
-    ui->doubleSpinBox_Movie_LookAt_N->setValue(settings.value("PostProcessing_Movie_LookAt_N", "0").toDouble());
-    ui->doubleSpinBox_Movie_LookAt_E->setValue(settings.value("PostProcessing_Movie_LookAt_E", "0").toDouble());
-    ui->doubleSpinBox_Movie_LookAt_D->setValue(settings.value("PostProcessing_Movie_LookAt_D", "-0.05").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_N->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_N", "0").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_E->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_E", "0").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_D->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_D", "-0.05").toDouble());
 
     for (int row = 0; row < 4; row++)
     {
@@ -130,7 +130,7 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     }
 
 
-    ui->doubleSpinBox_Movie_FPS->setValue(settings.value("PostProcessing_FPS", "30").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", "30").toDouble());
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -144,7 +144,7 @@ PostProcessingForm::~PostProcessingForm()
 
     settings.setValue("PostProcessing_MaxLogLines", ui->spinBox_MaxLogLines->value());
 
-    settings.setValue("PostProcessing_IncludeNormals", ui->checkBox_IncludeNormals->isChecked());
+    settings.setValue("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked());
 
     settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
     settings.setValue("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value());
@@ -157,13 +157,13 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Translation_E", ui->doubleSpinBox_Translation_E->value());
     settings.setValue("PostProcessing_Translation_D", ui->doubleSpinBox_Translation_D->value());
 
-    settings.setValue("PostProcessing_Movie_Camera_N", ui->doubleSpinBox_Movie_Camera_N->value());
-    settings.setValue("PostProcessing_Movie_Camera_E", ui->doubleSpinBox_Movie_Camera_E->value());
-    settings.setValue("PostProcessing_Movie_Camera_D", ui->doubleSpinBox_Movie_Camera_D->value());
+    settings.setValue("PostProcessing_Stylus_Movie_Camera_N", ui->doubleSpinBox_Stylus_Movie_Camera_N->value());
+    settings.setValue("PostProcessing_Stylus_Movie_Camera_E", ui->doubleSpinBox_Stylus_Movie_Camera_E->value());
+    settings.setValue("PostProcessing_Stylus_Movie_Camera_D", ui->doubleSpinBox_Stylus_Movie_Camera_D->value());
 
-    settings.setValue("PostProcessing_Movie_LookAt_N", ui->doubleSpinBox_Movie_LookAt_N->value());
-    settings.setValue("PostProcessing_Movie_LookAt_E", ui->doubleSpinBox_Movie_LookAt_E->value());
-    settings.setValue("PostProcessing_Movie_LookAt_D", ui->doubleSpinBox_Movie_LookAt_D->value());
+    settings.setValue("PostProcessing_Stylus_Movie_LookAt_N", ui->doubleSpinBox_Stylus_Movie_LookAt_N->value());
+    settings.setValue("PostProcessing_Stylus_Movie_LookAt_E", ui->doubleSpinBox_Stylus_Movie_LookAt_E->value());
+    settings.setValue("PostProcessing_Stylus_Movie_LookAt_D", ui->doubleSpinBox_Stylus_Movie_LookAt_D->value());
 
     for (int row = 0; row < 4; row++)
     {
@@ -189,7 +189,7 @@ PostProcessingForm::~PostProcessingForm()
         }
     }
 
-    settings.setValue("PostProcessing_FPS", ui->doubleSpinBox_Movie_FPS->value());
+    settings.setValue("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value());
 
     delete ui;
 }
@@ -882,7 +882,7 @@ void PostProcessingForm::on_pushButton_AddTagData_clicked()
 
 }
 
-void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
+void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
 {
     Eigen::Matrix4d transformMatrix;
 
@@ -911,7 +911,7 @@ void PostProcessingForm::on_pushButton_GeneratePointClouds_clicked()
         QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
-        bool includeNormals = ui->checkBox_IncludeNormals->checkState();
+        bool includeNormals = ui->checkBox_Stylus_PointCloud_IncludeNormals->checkState();
 
 //        QMultiMap<qint64, Tag_New>::const_iterator currentTagIterator;
 
@@ -1829,7 +1829,7 @@ void PostProcessingForm::on_pushButton_ContinueReplay_clicked()
     }
 }
 
-void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
+void PostProcessingForm::on_pushButton_Stylus_Movie_GenerateScript_clicked()
 {
     Eigen::Matrix4d transformMatrix;
 
@@ -1894,8 +1894,8 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Min = ui->spinBox_Movie_ITOW_Points_Min->value();
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Max = ui->spinBox_Movie_ITOW_Points_Max->value();
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Min = ui->spinBox_Stylus_Movie_ITOW_Points_Min->value();
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Lines_Max = ui->spinBox_Stylus_Movie_ITOW_Points_Max->value();
         unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
 
 //        QMap<qint64, Tag_New>::const_iterator currentTagIterator;
@@ -2398,10 +2398,10 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
                       "\tCamera_X\tCamera_Y\tCamera_Z"
                       "\tLookAt_X\tLookAt_Y\tLookAt_X\tTipPositionValidity\n";
 
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_Movie_ITOW_Script_Min->value();
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_Movie_ITOW_Script_Max->value();
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_Stylus_Movie_ITOW_Script_Min->value();
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_Stylus_Movie_ITOW_Script_Max->value();
 
-        double fps = ui->doubleSpinBox_Movie_FPS->value();
+        double fps = ui->doubleSpinBox_Stylus_Movie_FPS->value();
 
         iTOWRange_Script_Min -= iTOWRange_Script_Min % expectedITOWAlignment; // Round to previous aligned ITOW
 
@@ -2416,13 +2416,13 @@ void PostProcessingForm::on_pushButton_Movie_GenerateScript_clicked()
         int frameCounter = 0;
 
         // Some variables for camera:
-        double cameraNShift = ui->doubleSpinBox_Movie_Camera_N->value();
-        double cameraEShift = ui->doubleSpinBox_Movie_Camera_E->value();
-        double cameraDShift = ui->doubleSpinBox_Movie_Camera_D->value();
+        double cameraNShift = ui->doubleSpinBox_Stylus_Movie_Camera_N->value();
+        double cameraEShift = ui->doubleSpinBox_Stylus_Movie_Camera_E->value();
+        double cameraDShift = ui->doubleSpinBox_Stylus_Movie_Camera_D->value();
 
-        double lookAtNShift = ui->doubleSpinBox_Movie_LookAt_N->value();
-        double lookAtEShift = ui->doubleSpinBox_Movie_LookAt_E->value();
-        double lookAtDShift = ui->doubleSpinBox_Movie_LookAt_D->value();
+        double lookAtNShift = ui->doubleSpinBox_Stylus_Movie_LookAt_N->value();
+        double lookAtEShift = ui->doubleSpinBox_Stylus_Movie_LookAt_E->value();
+        double lookAtDShift = ui->doubleSpinBox_Stylus_Movie_LookAt_D->value();
 
         UBXMessage_RELPOSNED::ITOW iTOW = (frameCounter * 1000) / fps + startingITOW;
 

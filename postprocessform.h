@@ -108,7 +108,7 @@ private slots:
 
     void on_pushButton_AddTagData_clicked();
 
-    void on_pushButton_GeneratePointClouds_clicked();
+    void on_pushButton_Stylus_GeneratePointClouds_clicked();
 
     void on_pushButton_StartReplay_clicked();
 
@@ -116,7 +116,7 @@ private slots:
 
     void on_pushButton_ContinueReplay_clicked();
 
-    void on_pushButton_Movie_GenerateScript_clicked();
+    void on_pushButton_Stylus_Movie_GenerateScript_clicked();
 
     // Slots for UBloxDataStreamProcessor
     void ubloxProcessor_nmeaSentenceReceived(const NMEAMessage& nmeaSentence);

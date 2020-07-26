@@ -1482,7 +1482,7 @@
           <attribute name="title">
            <string>Movie script generator</string>
           </attribute>
-          <widget class="QLabel" name="label_ITOWRange_Points_Min_2">
+          <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Min_2">
            <property name="geometry">
             <rect>
              <x>20</x>
@@ -1498,7 +1498,7 @@
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QSpinBox" name="spinBox_Movie_ITOW_Points_Min">
+          <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Points_Min">
            <property name="geometry">
             <rect>
              <x>230</x>
@@ -1511,7 +1511,7 @@
             <number>604800000</number>
            </property>
           </widget>
-          <widget class="QSpinBox" name="spinBox_Movie_ITOW_Script_Max">
+          <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Script_Max">
            <property name="geometry">
             <rect>
              <x>430</x>
@@ -1527,7 +1527,7 @@
             <number>604800000</number>
            </property>
           </widget>
-          <widget class="QPushButton" name="pushButton_Movie_GenerateScript">
+          <widget class="QPushButton" name="pushButton_Stylus_Movie_GenerateScript">
            <property name="geometry">
             <rect>
              <x>20</x>
@@ -1540,7 +1540,7 @@
             <string>Generate script...</string>
            </property>
           </widget>
-          <widget class="QLabel" name="label_ITOWRange_Points_Max_2">
+          <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Max_2">
            <property name="geometry">
             <rect>
              <x>380</x>
@@ -1556,7 +1556,7 @@
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="label_ITOWRange_Points_Max">
+          <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Max">
            <property name="geometry">
             <rect>
              <x>380</x>
@@ -1572,7 +1572,7 @@
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QGroupBox" name="groupBox_Camera">
+          <widget class="QGroupBox" name="groupBox_Stylus_Camera">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -1584,7 +1584,7 @@
            <property name="title">
             <string>Camera settings when stylus is pointing north in N(orth), E(east), D(own)-coordinate system</string>
            </property>
-           <widget class="QLabel" name="label_CameraPosition">
+           <widget class="QLabel" name="label_Stylus_Movie_CameraPosition">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -1600,7 +1600,7 @@
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_N">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_Camera_N">
             <property name="geometry">
              <rect>
               <x>390</x>
@@ -1625,7 +1625,7 @@
              <double>-1.000000000000000</double>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_E">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_Camera_E">
             <property name="geometry">
              <rect>
               <x>460</x>
@@ -1650,7 +1650,7 @@
              <double>0.000000000000000</double>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_Camera_D">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_Camera_D">
             <property name="geometry">
              <rect>
               <x>530</x>
@@ -1675,7 +1675,7 @@
              <double>-0.050000000000000</double>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_E">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_LookAt_E">
             <property name="geometry">
              <rect>
               <x>460</x>
@@ -1700,7 +1700,7 @@
              <double>0.000000000000000</double>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_N">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_LookAt_N">
             <property name="geometry">
              <rect>
               <x>390</x>
@@ -1725,7 +1725,7 @@
              <double>1.000000000000000</double>
             </property>
            </widget>
-           <widget class="QLabel" name="label_LookAtPosition">
+           <widget class="QLabel" name="label_Stylus_Movie_LookAtPosition">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -1741,7 +1741,7 @@
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_LookAt_D">
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_LookAt_D">
             <property name="geometry">
              <rect>
               <x>530</x>
@@ -1767,7 +1767,7 @@
             </property>
            </widget>
           </widget>
-          <widget class="QSpinBox" name="spinBox_Movie_ITOW_Script_Min">
+          <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Script_Min">
            <property name="geometry">
             <rect>
              <x>230</x>
@@ -1780,7 +1780,7 @@
             <number>604800000</number>
            </property>
           </widget>
-          <widget class="QLabel" name="label_Movie_FPS">
+          <widget class="QLabel" name="label_Stylus_Movie_FPS">
            <property name="geometry">
             <rect>
              <x>60</x>
@@ -1796,7 +1796,7 @@
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QSpinBox" name="spinBox_Movie_ITOW_Points_Max">
+          <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Points_Max">
            <property name="geometry">
             <rect>
              <x>430</x>
@@ -1812,7 +1812,7 @@
             <number>604800000</number>
            </property>
           </widget>
-          <widget class="QLabel" name="label_ITOWRange_Points_Min">
+          <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Min">
            <property name="geometry">
             <rect>
              <x>20</x>
@@ -1828,7 +1828,7 @@
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_Movie_FPS">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_Stylus_Movie_FPS">
            <property name="geometry">
             <rect>
              <x>230</x>
@@ -1861,7 +1861,7 @@
           <attribute name="title">
            <string>Point cloud</string>
           </attribute>
-          <widget class="QPushButton" name="pushButton_GeneratePointClouds">
+          <widget class="QPushButton" name="pushButton_Stylus_GeneratePointClouds">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -1874,7 +1874,7 @@
             <string>Generate point cloud (xyz) files...</string>
            </property>
           </widget>
-          <widget class="QCheckBox" name="checkBox_IncludeNormals">
+          <widget class="QCheckBox" name="checkBox_Stylus_PointCloud_IncludeNormals">
            <property name="geometry">
             <rect>
              <x>20</x>
