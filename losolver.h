@@ -53,7 +53,7 @@ public:
 private:
     ErrorCode errorCode = ERROR_INVALID_REFERENCE_POINTS;
 
-    Eigen::Matrix3d refBasis;
+    Eigen::Matrix3d refBasisInverse;
 
     bool refPointsValid = false;
     Eigen::Vector3d refPoints[3];

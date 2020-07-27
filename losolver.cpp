@@ -105,7 +105,8 @@ bool LOSolver::calculateReferenceBasis(void)
     // Left-handed version:
     // Eigen::Vector3d refUnitVecZ = refUnitVecY.cross(refUnitVecX).normalized();
 
-    refBasis <<
+    // This is constructed as transposed, but as it's orthogonal, it equals the inverse:
+    refBasisInverse <<
                 refUnitVecX(0), refUnitVecX(1), refUnitVecX(2),
                 refUnitVecY(0), refUnitVecY(1), refUnitVecY(2),
                 refUnitVecZ(0), refUnitVecZ(1), refUnitVecZ(2);
@@ -179,33 +180,30 @@ bool LOSolver::getTransformMatrix(Eigen::Transform<double, 3, Eigen::Affine>& tr
     // Left-handed version:
     // Eigen::Vector3d orientationUnitVecZ = orientationUnitVecY.cross(orientationUnitVecX).normalized();
 
-    Eigen::Matrix3d orientationBasisInverse;    // This is actually formed as transpose, but as this is orthogonal, there's no difference
+    Eigen::Matrix3d orientationBasis;
 
-    orientationBasisInverse <<
+    orientationBasis <<
                         orientationUnitVecX(0), orientationUnitVecY(0), orientationUnitVecZ(0),
                         orientationUnitVecX(1), orientationUnitVecY(1), orientationUnitVecZ(1),
                         orientationUnitVecX(2), orientationUnitVecY(2), orientationUnitVecZ(2);
 
-    Eigen::Matrix3d finalTransform = orientationBasisInverse * refBasis;
-
-    // Inverse can be calculated using transpose because the matrix here is orthogonal.
-    Eigen::Matrix3d finalInverseTransform = finalTransform.transpose();   // "True meaning" here is .inverse() (see above)
+    Eigen::Matrix3d finalTransform = orientationBasis * refBasisInverse;
 
     // Origin can be now calculated using centroids and the newly calculated matrix
     Eigen::Vector3d origin = centroid - (finalTransform * refCentroid);
 
     transform.matrix() <<
-                finalInverseTransform(0,0), finalInverseTransform(0,1), finalInverseTransform(0,2), origin(0),
-                finalInverseTransform(1,0), finalInverseTransform(1,1), finalInverseTransform(1,2), origin(1),
-                finalInverseTransform(2,0), finalInverseTransform(2,1), finalInverseTransform(2,2), origin(2),
+                finalTransform(0,0), finalTransform(0,1), finalTransform(0,2), origin(0),
+                finalTransform(1,0), finalTransform(1,1), finalTransform(1,2), origin(1),
+                finalTransform(2,0), finalTransform(2,1), finalTransform(2,2), origin(2),
                 0, 0, 0, 1;
 
     if (orientationTransform_Debug)
     {
         orientationTransform_Debug->matrix() <<
-                orientationUnitVecX(0), orientationUnitVecX(1), orientationUnitVecX(2), centroid(0),
-                orientationUnitVecY(0), orientationUnitVecY(1), orientationUnitVecY(2), centroid(1),
-                orientationUnitVecZ(0), orientationUnitVecZ(1), orientationUnitVecZ(2), centroid(2),
+                orientationUnitVecX(0), orientationUnitVecY(0), orientationUnitVecZ(0), centroid(0),
+                orientationUnitVecX(1), orientationUnitVecY(1), orientationUnitVecZ(1), centroid(1),
+                orientationUnitVecX(2), orientationUnitVecY(2), orientationUnitVecZ(2), centroid(2),
                 0, 0, 0, 1;
     }
 
@@ -224,14 +222,14 @@ bool LOSolver::getYawPitchRollAngles(Eigen::Transform<double, 3, Eigen::Affine> 
 {
     Eigen::Matrix3d linearPart = transform.linear();
 
-    pitch = -asin(linearPart(0, 2));
+    pitch = -asin(linearPart(2, 0));
 
     // Calculate roll by using a "rotational plane" that is perpendicular
     // to the "forward"-vector and one axis (here planeVecX) is parallel to the "ground plane"
     // I tried to use Eigen's eulerAngles-function to no avail (commented out code below).
     // Maybe there's a way to use it that I didn't find(?)
 
-    Eigen::Vector3d forwardVec(linearPart(0,0), linearPart(0,1), linearPart(0,2));
+    Eigen::Vector3d forwardVec(linearPart(0,0), linearPart(1,0), linearPart(2,0));
     const Eigen::Vector3d unitVecDown(0, 0, 1);
 
     // Vector parallel to the ground plane:
@@ -241,18 +239,18 @@ bool LOSolver::getYawPitchRollAngles(Eigen::Transform<double, 3, Eigen::Affine> 
     {
         // pitch is directly up or down -> yaw and roll are on the same axis (="gimbal lock")
         // -> Calculate yaw based on the object's "down" vector.
-        yaw = atan2(linearPart(2,1), linearPart(2,0));
+        yaw = atan2(linearPart(1,2), linearPart(0,2));
         roll = 0;   // Roll is meaningless in this case
     }
     else
     {
-        yaw = atan2(linearPart(0,1), linearPart(0,0));
+        yaw = atan2(linearPart(1,0), linearPart(0,0));
         planeVecX.normalize();
 
         // Vector perpendicular to the vector parallel to the ground plane and "forward"-vector:
         Eigen::Vector3d planeVecY = -forwardVec.cross(planeVecX);
         planeVecY.normalize();
-        Eigen::Vector3d objectDownVec(linearPart(2,0), linearPart(2,1), linearPart(2,2));
+        Eigen::Vector3d objectDownVec(linearPart(0,2), linearPart(1,2), linearPart(2,2));
 
         roll = -atan2(objectDownVec.dot(planeVecX), -objectDownVec.dot(planeVecY));
     }
