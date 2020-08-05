@@ -252,7 +252,7 @@ bool LOSolver::getYawPitchRollAngles(Eigen::Transform<double, 3, Eigen::Affine> 
         planeVecY.normalize();
         Eigen::Vector3d objectDownVec(linearPart(0,2), linearPart(1,2), linearPart(2,2));
 
-        roll = -atan2(objectDownVec.dot(planeVecX), -objectDownVec.dot(planeVecY));
+        roll = -atan2(-objectDownVec.dot(planeVecX), objectDownVec.dot(planeVecY));
     }
 
 /* Tried to use Eigen's eulerAngles here but failed. Maybe there's a way?
