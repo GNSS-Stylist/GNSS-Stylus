@@ -158,6 +158,8 @@ private slots:
 
     void on_pushButton_ValidateAntennaLocations_clicked();
 
+    void on_pushButton_LOSolver_GenerateScript_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -224,7 +226,7 @@ private:
     QFileDialog fileDialog_UBX;
     QFileDialog fileDialog_Tags;
     QFileDialog fileDialog_PointCloud;
-    QFileDialog fileDialog_MovieScript;
+    QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_Distances;
     QFileDialog fileDialog_Sync;
     QFileDialog fileDialog_All;
@@ -232,6 +234,7 @@ private:
     QFileDialog fileDialog_Transformation_Save;
     QFileDialog fileDialog_AntennaLocations_Load;
     QFileDialog fileDialog_AntennaLocations_Save;
+    QFileDialog fileDialog_LOSolver_Script;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;

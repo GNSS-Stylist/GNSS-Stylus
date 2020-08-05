@@ -42,7 +42,7 @@ struct
             {  0,  0,  0,  1 },
         }
     },
-    { "XYZ = +E+D-N or NED -> -Z+X+Y (Processing's \"movie script\" default left-handed)",
+    { "XYZ = EDS = +E+D-N or NED -> -Z+X+Y (Processing's default left-handed)",
         {
             {  0,  1,  0,  0 },
             {  0,  0,  1,  0 },
@@ -50,6 +50,15 @@ struct
             {  0,  0,  0,  1 },
         }
     },
+    { "XYZ = EUS = +E-D-N or NED -> -Z+X-Y (Godot's \"North = -Z\")",
+    {
+        {  0,  1,  0,  0 },
+        {  0,  0, -1,  0 },
+        { -1,  0,  0,  0 },
+        {  0,  0,  0,  1 },
+    }
+},
+
 };
 
 
@@ -255,15 +264,15 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_PointCloud.setFileMode(QFileDialog::Directory);
 
-        fileDialog_MovieScript.setFileMode(QFileDialog::AnyFile);
-        fileDialog_MovieScript.setDefaultSuffix("MovieScript");
+        fileDialog_Stylus_MovieScript.setFileMode(QFileDialog::AnyFile);
+        fileDialog_Stylus_MovieScript.setDefaultSuffix("MovieScript");
 
         QStringList movieScriptFilters;
 
         movieScriptFilters << "moviescript files (*.moviescript)"
                 << "Any files (*)";
 
-        fileDialog_MovieScript.setNameFilters(movieScriptFilters);
+        fileDialog_Stylus_MovieScript.setNameFilters(movieScriptFilters);
 
 
         fileDialog_Transformation_Load.setFileMode(QFileDialog::ExistingFile);
@@ -297,6 +306,16 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
 
+
+        fileDialog_LOSolver_Script.setFileMode(QFileDialog::AnyFile);
+        fileDialog_LOSolver_Script.setDefaultSuffix("LOScript");
+
+        QStringList loScriptFilters;
+
+        loScriptFilters << "location/orientation script files (*.loscript)"
+                << "Any files (*)";
+
+        fileDialog_LOSolver_Script.setNameFilters(loScriptFilters);
 
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
@@ -1844,9 +1863,9 @@ void PostProcessingForm::on_pushButton_Stylus_Movie_GenerateScript_clicked()
 
     Eigen::Matrix3d transform_NoTranslation = transformMatrix.block<3,3>(0,0);
 
-    if (fileDialog_MovieScript.exec())
+    if (fileDialog_Stylus_MovieScript.exec())
     {
-        QStringList fileNameList = fileDialog_MovieScript.selectedFiles();
+        QStringList fileNameList = fileDialog_Stylus_MovieScript.selectedFiles();
 
         if (fileNameList.length() != 1)
         {
@@ -3737,4 +3756,259 @@ void PostProcessingForm::on_pushButton_ValidateAntennaLocations_clicked()
     }
 
     msgBox.exec();
+}
+
+void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
+{
+    Eigen::Matrix4d transformMatrix;
+
+    if (!generateTransformationMatrix(transformMatrix))
+    {
+        return;
+    }
+
+    LOSolver loSolver;
+
+    if (!updateLOSolverReferencePointLocations(loSolver))
+    {
+        return;
+    }
+
+    Eigen::Transform<double, 3, Eigen::Affine> transformNEDToXYZ;
+    transformNEDToXYZ = transformMatrix;
+
+    Eigen::Matrix3d transform_NEDToXYZ_NoTranslation = transformMatrix.block<3,3>(0,0);
+    Eigen::Matrix3d transform_XYZToNED_NoTranslation = transform_NEDToXYZ_NoTranslation.transpose();
+
+    if (fileDialog_LOSolver_Script.exec())
+    {
+        QStringList fileNameList = fileDialog_LOSolver_Script.selectedFiles();
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Location/orientation script: Multiple file selection not supported. Script not created.");
+            return;
+        }
+
+        QFile loScriptFile;
+
+        loScriptFile.setFileName(fileNameList[0]);
+
+        if (loScriptFile.exists())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Location/orientation script not created.");
+                return;
+            }
+        }
+
+        if (!loScriptFile.open(QIODevice::WriteOnly))
+        {
+            addLogLine("Can't open location/orientation script file.");
+            return;
+        }
+
+        QTextStream textStream(&loScriptFile);
+
+        addLogLine("Processing location/orientation script...");
+
+        // Add some metadata to make possible changes in the future easier
+        textStream << "META\tHEADER\tGNSS location/orientation script\n";
+        textStream << "META\tVERSION\t1.0.0\n";
+        textStream << "META\tFORMAT\tASCII\n";
+        textStream << "META\tCONTENT\tDEFAULT\n";
+        textStream << "META\tEND\n";
+
+        textStream << "iTOW\t"
+                      "Origin_X\tOrigin_Y\tOrigin_Z\t"
+                      "Basis_XX\tBasis_XY\tBasis_XZ\t"
+                      "Basis_YX\tBasis_YY\tBasis_YZ\t"
+                      "Basis_ZX\tBasis_ZY\tBasis_ZZ\n";
+
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value();
+        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value();
+
+        //iTOWRange_Script_Min -= iTOWRange_Script_Min % expectedITOWAlignment; // Round to previous aligned ITOW
+
+        UBXMessage_RELPOSNED::ITOW currentITOW = iTOWRange_Script_Min;
+
+        unsigned int itemCount = 0;
+
+        UBXMessage_RELPOSNED::ITOW iTOWMismatchStart = -1;
+        unsigned int iTOWMismatchCount = 0;
+
+        unsigned int warningCount = 0;
+
+        while (currentITOW <= iTOWRange_Script_Max)
+        {
+            if (warningCount >= 1000)
+            {
+                addLogLine("Error: Maximum number of warnings (1000) reached. "
+                           "Please check your data.");
+
+                iTOWMismatchCount = 0;
+                break;
+            }
+
+            QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterators[3];
+
+            relposIterators[0] = rovers[0].relposnedMessages.lowerBound(currentITOW);
+            relposIterators[1] = rovers[1].relposnedMessages.lowerBound(currentITOW);
+            relposIterators[2] = rovers[2].relposnedMessages.lowerBound(currentITOW);
+
+            bool endOfData = false;
+
+            for (unsigned int i = 0; i < 3; i++)
+            {
+                if (relposIterators[i] == rovers[i].relposnedMessages.end())
+                {
+                    // No more data
+                    endOfData = true;
+                }
+            }
+
+            if (endOfData)
+            {
+                break;
+            }
+
+            UBXMessage_RELPOSNED::ITOW lowestNextRoverITOW = 1e9;
+
+            for (unsigned int i = 0; i < 3; i++)
+            {
+                if (relposIterators[i].value().iTOW < lowestNextRoverITOW)
+                {
+                    lowestNextRoverITOW = relposIterators[i].value().iTOW;
+                }
+            }
+
+            bool roverITOWSInSync = true;
+
+            for (unsigned int i = 0; i < 3; i++)
+            {
+                if (relposIterators[i].value().iTOW != lowestNextRoverITOW)
+                {
+                    roverITOWSInSync = false;
+                }
+            }
+
+            if (!roverITOWSInSync)
+            {
+                if (iTOWMismatchCount == 0)
+                {
+                    // First mismatch in this set
+
+                    iTOWMismatchStart = lowestNextRoverITOW;
+                    iTOWMismatchCount = 1;
+                }
+                else
+                {
+                    iTOWMismatchCount++;
+                }
+
+                currentITOW = lowestNextRoverITOW + 1;
+                continue;
+            }
+            else if (iTOWMismatchCount != 0)
+            {
+                addLogLine("Warning: Mismatch in rover iTOWs, range: \"" +
+                           QString::number(iTOWMismatchStart) + " - " + QString::number(lowestNextRoverITOW - 1) +
+                           ", number of discarded iTOWS: " + QString::number(iTOWMismatchCount));
+
+                iTOWMismatchCount = 0;
+                warningCount++;
+            }
+
+            Eigen::Vector3d points[3];
+
+            for (unsigned int i = 0; i < 3; i++)
+            {
+                points[i] = Eigen::Vector3d(relposIterators[i].value().relPosN, relposIterators[i].value().relPosE, relposIterators[i].value().relPosD);
+            }
+
+            if (!loSolver.setPoints(points))
+            {
+                addLogLine("Warning: Error setting points. ITOW: \"" +
+                           QString::number(lowestNextRoverITOW) +
+                           ", error code: " + QString::number(loSolver.getLastError()));
+
+                currentITOW = lowestNextRoverITOW + 1;
+                warningCount++;
+                continue;
+            }
+
+            Eigen::Transform<double, 3, Eigen::Affine> loTransformNED;
+
+            if (!loSolver.getTransformMatrix(loTransformNED))
+            {
+                addLogLine("Warning: Error calculating transform matrix. ITOW: \"" +
+                           QString::number(lowestNextRoverITOW) +
+                           ", error code: " + QString::number(loSolver.getLastError()));
+
+                currentITOW = lowestNextRoverITOW + 1;
+                warningCount++;
+                continue;
+            }
+
+            Eigen::Matrix3d loTransformNED_NoTranslation = loTransformNED.matrix().block<3,3>(0,0);
+
+            Eigen::Vector3d unitVecXInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(1, 0, 0);
+            Eigen::Vector3d unitVecYInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(0, 1, 0);
+            Eigen::Vector3d unitVecZInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(0, 0, 1);
+
+            Eigen::Vector3d unitVecX = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecXInNED;
+            Eigen::Vector3d unitVecY = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecYInNED;
+            Eigen::Vector3d unitVecZ = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecZInNED;
+
+            Eigen::Vector3d originXYZ = transformNEDToXYZ * Eigen::Vector3d(loTransformNED(0,3), loTransformNED(1,3), loTransformNED(2,3));
+
+            QString lineOut =
+                    QString::number(lowestNextRoverITOW) +
+
+                    "\t" + QString::number(originXYZ(0), 'f', 4) +
+                    "\t" + QString::number(originXYZ(1), 'f', 4) +
+                    "\t" + QString::number(originXYZ(2), 'f', 4) +
+
+                    "\t" + QString::number(unitVecX(0), 'f', 4) +
+                    "\t" + QString::number(unitVecX(1), 'f', 4) +
+                    "\t" + QString::number(unitVecX(2), 'f', 4) +
+
+                    "\t" + QString::number(unitVecY(0), 'f', 4) +
+                    "\t" + QString::number(unitVecY(1), 'f', 4) +
+                    "\t" + QString::number(unitVecY(2), 'f', 4) +
+
+                    "\t" + QString::number(unitVecZ(0), 'f', 4) +
+                    "\t" + QString::number(unitVecZ(1), 'f', 4) +
+                    "\t" + QString::number(unitVecZ(2), 'f', 4);
+
+                    textStream << (lineOut + "\n");
+
+            currentITOW = lowestNextRoverITOW + 1;
+
+            itemCount++;
+        }
+
+        if (iTOWMismatchCount != 0)
+        {
+            addLogLine("Warning: Mismatch in rover iTOWs in the end of rover data, first ITOW: \"" +
+                       QString::number(iTOWMismatchStart) +
+                       ", number of discarded iTOWS: " + QString::number(iTOWMismatchCount));
+
+            warningCount++;
+        }
+
+        addLogLine("Location/orientation script generated. Number of rows: " + QString::number(itemCount));
+    }
 }
