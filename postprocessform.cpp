@@ -2959,6 +2959,8 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
             int firstDuplicateSyncItemLine = 0;
             int lastDuplicateSyncItemLine = 0;
 
+            unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
+
             while (!textStream.atEnd())
             {
                 lineNumber++;
@@ -3068,6 +3070,47 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
                                ": Duplicate rover sync item(s). Line(s) skipped.");
 
                     firstDuplicateSyncItemLine = 0;
+                }
+
+                if ((newSyncItem.iTOW % expectedITOWAlignment) != 0)
+                {
+                    unsigned int iTOWautoAlignThreshold = ui->spinBox_ITOWAutoAlignThreshold->value();
+                    int autoAlignedITOW = 0;
+                    bool iTOWAutoAligned = false;
+
+                    if ((newSyncItem.iTOW % expectedITOWAlignment) <= iTOWautoAlignThreshold)
+                    {
+                        // Negative correction (f. exp 1001 > 1000)
+                        autoAlignedITOW = newSyncItem.iTOW - (newSyncItem.iTOW % expectedITOWAlignment);
+                        iTOWAutoAligned = true;
+                    }
+                    else if ((expectedITOWAlignment - (newSyncItem.iTOW % expectedITOWAlignment)) <= iTOWautoAlignThreshold)
+                    {
+                        // Positive correction (f. exp 999 > 1000)
+                        autoAlignedITOW = newSyncItem.iTOW - (newSyncItem.iTOW % expectedITOWAlignment) + expectedITOWAlignment;
+                        iTOWAutoAligned = true;
+                    }
+
+                    if (iTOWAutoAligned)
+                    {
+                        if (ui->checkBox_ReportITOWAutoAlign->isChecked())
+                        {
+                            addLogLine("Warning: Line " + QString::number(lineNumber) + ": Rover iTOW auto-aligned to expected interval (" +
+                                       QString::number(expectedITOWAlignment) +" ms). original iTOW: " + QString::number(newSyncItem.iTOW) +
+                                       ", auto-aligned: " + QString::number(autoAlignedITOW) +
+                                       " (adjustment: " + QString::number(int(autoAlignedITOW) - int(newSyncItem.iTOW)) + ")");
+                        }
+
+                        newSyncItem.iTOW = autoAlignedITOW;
+                    }
+                    else
+                    {
+                        if (ui->checkBox_ReportUnalignedITOWS->isChecked())
+                        {
+                            addLogLine("Warning: Line " + QString::number(lineNumber) + ": Rover iTOW not aligned or auto-alignable to expected interval (" +
+                                       QString::number(expectedITOWAlignment) +" ms). iTOW: " + QString::number(newSyncItem.iTOW));
+                        }
+                    }
                 }
 
                 roverContainer->insert(uptime, newSyncItem);
