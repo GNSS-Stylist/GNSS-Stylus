@@ -924,6 +924,8 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
             return;
         }
 
+        fileDialog_PointCloud.setDirectory(dir);
+
         addLogLine("Processing...");
 
         // Some locals to prevent excessive typing:
@@ -1866,6 +1868,11 @@ void PostProcessingForm::on_pushButton_Stylus_Movie_GenerateScript_clicked()
     if (fileDialog_Stylus_MovieScript.exec())
     {
         QStringList fileNameList = fileDialog_Stylus_MovieScript.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_Stylus_MovieScript.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
 
         if (fileNameList.length() != 1)
         {
@@ -3497,6 +3504,11 @@ void PostProcessingForm::on_pushButton_SaveTransformation_clicked()
     {
         QStringList fileNameList = fileDialog_Transformation_Save.selectedFiles();
 
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_Transformation_Save.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
+
         if (fileNameList.length() != 1)
         {
             addLogLine("Error: Multiple file selection not supported. Transformation not saved.");
@@ -3826,6 +3838,11 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
     if (fileDialog_LOSolver_Script.exec())
     {
         QStringList fileNameList = fileDialog_LOSolver_Script.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_LOSolver_Script.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
 
         if (fileNameList.length() != 1)
         {
