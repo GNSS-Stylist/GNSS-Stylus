@@ -19,7 +19,7 @@
      <item>
       <widget class="QGroupBox" name="groupBox_iTOW_Combined">
        <property name="title">
-        <string>ITOW (Last common for both rovers)</string>
+        <string>ITOW (Last common for all rovers used)</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>

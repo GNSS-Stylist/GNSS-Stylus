@@ -79,8 +79,8 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
 
     ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", false).toBool());
 
-    ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "100").toInt());
-    ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", "0").toInt());
+    ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "125").toInt());
+    ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", "5").toInt());
     ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Correction", "0").toDouble());
     ui->checkBox_ReportITOWAutoAlign->setChecked(settings.value("PostProcessing_ReportITOWAutoAlign", false).toBool());
     ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", false).toBool());
