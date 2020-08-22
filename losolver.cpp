@@ -70,19 +70,17 @@ bool LOSolver::calculateReferenceBasis(void)
     Eigen::Vector3d vecAtoC = refPoints[2] - refPoints[0];
     Eigen::Vector3d vecBtoC = refPoints[2] - refPoints[1];
 
-    Eigen::Vector3d vecAtoBCMidpoint = (refPoints[1] + refPoints[2]) / 2 - refPoints[0];
-
     refDistAB = vecAtoB.norm();
     refDistAC = vecAtoC.norm();
     refDistBC = vecBtoC.norm();
 
     refCentroid = (refPoints[0] + refPoints[1] + refPoints[2]) / 3;
-    Eigen::Vector3d refVecYDirection = vecAtoC.cross(vecAtoB);
+    Eigen::Vector3d vecZDirection = vecAtoB.cross(vecAtoC);
 
     if ((refDistAB == 0) ||
             (refDistAC == 0) ||
             (refDistBC == 0) ||
-            (refVecYDirection.norm() == 0))
+            (vecZDirection.norm() == 0))
     {
         // Some of the points are either identical or lie on the same line
         refPointsValid = false;
@@ -90,28 +88,67 @@ bool LOSolver::calculateReferenceBasis(void)
         return false;
     }
 
-    // Calculate reference basis vectors so that:
-    // X points from A to the midpoint of vector BC,
-    // Y is in right angle with the plane defined by points A, B and C,
-    // Z is in right angle with both vectors AB and the new unit vector Y
-    // (and therefore Z lies on the plane defined by points A, B and C)
+    // As no point should affect the calculation more than others, basis vector X (and indirectly Y)
+    // is calculated as follows (degrees used in this explanation):
+    // "Imaginary" vectors from centroid, lying on the plane defined by points A, B and C and
+    // separated by 120 degrees (1/3 of full round) are rotated around the centroid so that
+    // the sum of the ("signed") angles between these and the vectors to real corners of the
+    // triangle are zero.
+    // "Imaginary" vector initially pointing to point A and rotated as explained above
+    // is then used as a basis vector X.
 
-    Eigen::Vector3d refUnitVecX = vecAtoBCMidpoint.normalized();
-    Eigen::Vector3d refUnitVecY = refVecYDirection.normalized();
+    // Calculate reference basis vectors so that:
+    // X points from centroid to the direction calculated as described above.
+    // Y is in right angle with the unit vector X and lies on the plane defined by points A, B and C,
+    // Z is in right angle with both unit vectors X and Y
+    // (and therefore Z is perpendicular to the plane defined by points A, B and C)
+
+    Eigen::Vector3d unitVecFromCentroidTowardsA = (refPoints[0] - refCentroid).normalized();
+    Eigen::Vector3d unitVecFromCentroidTowardsB = (refPoints[1] - refCentroid).normalized();
+    Eigen::Vector3d unitVecFromCentroidTowardsC = (refPoints[2] - refCentroid).normalized();
+
+    double angleBetweenVectorsAndBFromCentroid = acos(unitVecFromCentroidTowardsB.dot(unitVecFromCentroidTowardsA)); // * 360. / (2 * M_PI);
+    double angleBetweenVectorsAndCFromCentroid = acos(unitVecFromCentroidTowardsC.dot(unitVecFromCentroidTowardsA)); // * 360. / (2 * M_PI);
+
+    // No "120 degree" separation is needed here as the different signs cause "cancellation".
+    double angleError = angleBetweenVectorsAndBFromCentroid - angleBetweenVectorsAndCFromCentroid;
+
+    // Basis vector Z is also the axis to turn the "imaginary" vectors from centroid around.
+    Eigen::Vector3d unitVecZ = vecZDirection.normalized();
+
+    // Turn the "imaginary" vector from the centoid around so that the sum of angle differences will be zero.
+    Eigen::Vector3d unitVecX = Eigen::AngleAxisd(angleError / 3, unitVecZ) * unitVecFromCentroidTowardsA;
 
     // This results in right-handed system. Handedness only affects the debug
     // output from getTransformMatrix (if you make the same change to getTransformMatrix-function)
-    Eigen::Vector3d refUnitVecZ = refUnitVecX.cross(refUnitVecY).normalized();
+    Eigen::Vector3d unitVecY = vecZDirection.cross(unitVecX).normalized();
     // Left-handed version:
-    // Eigen::Vector3d refUnitVecZ = refUnitVecY.cross(refUnitVecX).normalized();
+    // Eigen::Vector3d unitVecY = unitVecX.cross(vecZDirection).normalized();
 
     // This is constructed as transposed, but as it's orthogonal, it equals the inverse:
     refBasisInverse <<
-                refUnitVecX(0), refUnitVecX(1), refUnitVecX(2),
-                refUnitVecY(0), refUnitVecY(1), refUnitVecY(2),
-                refUnitVecZ(0), refUnitVecZ(1), refUnitVecZ(2);
+                unitVecX(0), unitVecX(1), unitVecX(2),
+                unitVecY(0), unitVecY(1), unitVecY(2),
+                unitVecZ(0), unitVecZ(1), unitVecZ(2);
 
     refPointsValid = true;
+
+#if 0
+    // Test code. All angle "errors" added together should be close to zero.
+    Eigen::Vector3d refDirA = unitVecX;
+    double angleErrorA = acos(refDirA.dot(unitVecCentroidToA)) * (refDirA.cross(unitVecCentroidToA).dot(unitVecZ) < 0 ? 1 : -1);
+
+    Eigen::Vector3d refDirB = Eigen::AngleAxisd(-2 * M_PI / 3, unitVecZ) * unitVecX;
+    double angleErrorB = acos(refDirB.dot(unitVecCentroidToB)) * (refDirB.cross(unitVecCentroidToB).dot(unitVecZ) < 0 ? 1 : -1);
+
+    Eigen::Vector3d refDirC = Eigen::AngleAxisd(2 * M_PI / 3, unitVecZ) * unitVecX;
+    double angleErrorC = acos(refDirC.dot(unitVecCentroidToC)) * (refDirC.cross(unitVecCentroidToC).dot(unitVecZ) < 0 ? 1 : -1);
+
+    double angleErrorTotal = angleErrorA + angleErrorB + angleErrorC;
+
+    Q_ASSERT(fabs(angleErrorTotal) < 0.001);
+#endif
+
     return true;
 }
 
@@ -144,8 +181,6 @@ bool LOSolver::getTransformMatrix(Eigen::Transform<double, 3, Eigen::Affine>& tr
     Eigen::Vector3d vecAtoC = points[2] - points[0];
     Eigen::Vector3d vecBtoC = points[2] - points[1];
 
-    Eigen::Vector3d vecAtoBCMidpoint = (points[1] + points[2]) / 2 - points[0];
-
     double distAB = vecAtoB.norm();
     double distAC = vecAtoC.norm();
     double distBC = vecBtoC.norm();
@@ -153,39 +188,46 @@ bool LOSolver::getTransformMatrix(Eigen::Transform<double, 3, Eigen::Affine>& tr
     // TODO: Add comparison of distances with the reference basis points
 
     Eigen::Vector3d centroid = (points[0] + points[1] + points[2]) / 3;
-    Eigen::Vector3d vecYDirection = vecAtoC.cross(vecAtoB);
+    Eigen::Vector3d vecZDirection = vecAtoB.cross(vecAtoC);
 
     if ((distAB == 0) ||
             (distAC == 0) ||
             (distBC == 0) ||
-            (vecYDirection.norm() == 0))
+            (vecZDirection.norm() == 0))
     {
         // Some of the points are either identical or lie on the same line
         errorCode = ERROR_INVALID_POINTS;
         return false;
     }
 
-    // Calculate reference basis vectors (identically with the reference basis) so that:
-    // X points from A to the midpoint of vector BC,
-    // Y is in right angle with the plane defined by points A, B and C,
-    // Z is in right angle with both vectors AB and the new unit vector Y
-    // (and therefore Z lies on the plane defined by points A, B and C)
+    // See comments on the calculateReferenceBasis-function for an explanation on
+    // how the basis is calculated here (the following few lines are almost identical).
 
-    Eigen::Vector3d orientationUnitVecX = vecAtoBCMidpoint.normalized();
-    Eigen::Vector3d orientationUnitVecY = vecYDirection.normalized();
+    Eigen::Vector3d unitVecFromCentroidTowardsA = (points[0] - centroid).normalized();
+    Eigen::Vector3d unitVecFromCentroidTowardsB = (points[1] - centroid).normalized();
+    Eigen::Vector3d unitVecFromCentroidTowardsC = (points[2] - centroid).normalized();
+
+    double angleBetweenVectorsAndBFromCentroid = acos(unitVecFromCentroidTowardsB.dot(unitVecFromCentroidTowardsA)); // * 360. / (2 * M_PI);
+    double angleBetweenVectorsAndCFromCentroid = acos(unitVecFromCentroidTowardsC.dot(unitVecFromCentroidTowardsA)); // * 360. / (2 * M_PI);
+
+    double angleError = angleBetweenVectorsAndBFromCentroid - angleBetweenVectorsAndCFromCentroid;
+
+    Eigen::Vector3d unitVecZ = vecZDirection.normalized();
+
+    Eigen::Vector3d unitVecX = Eigen::AngleAxisd(angleError / 3, unitVecZ) * unitVecFromCentroidTowardsA;
 
     // This results in right-handed system. Handedness only affects the debug
-    // output (orientationTransform_Debug) (if you make the same change to calculateReferenceBasis-function)
-    Eigen::Vector3d orientationUnitVecZ = orientationUnitVecX.cross(orientationUnitVecY).normalized();
+    // output from getTransformMatrix
+    Eigen::Vector3d unitVecY = vecZDirection.cross(unitVecX).normalized();
     // Left-handed version:
-    // Eigen::Vector3d orientationUnitVecZ = orientationUnitVecY.cross(orientationUnitVecX).normalized();
+    // Eigen::Vector3d unitVecY = unitVecX.cross(vecZDirection).normalized();
 
     Eigen::Matrix3d orientationBasis;
 
     orientationBasis <<
-                        orientationUnitVecX(0), orientationUnitVecY(0), orientationUnitVecZ(0),
-                        orientationUnitVecX(1), orientationUnitVecY(1), orientationUnitVecZ(1),
-                        orientationUnitVecX(2), orientationUnitVecY(2), orientationUnitVecZ(2);
+                        unitVecX(0), unitVecY(0), unitVecZ(0),
+                        unitVecX(1), unitVecY(1), unitVecZ(1),
+                        unitVecX(2), unitVecY(2), unitVecZ(2);
 
     Eigen::Matrix3d finalTransform = orientationBasis * refBasisInverse;
 
@@ -201,9 +243,9 @@ bool LOSolver::getTransformMatrix(Eigen::Transform<double, 3, Eigen::Affine>& tr
     if (orientationTransform_Debug)
     {
         orientationTransform_Debug->matrix() <<
-                orientationUnitVecX(0), orientationUnitVecY(0), orientationUnitVecZ(0), centroid(0),
-                orientationUnitVecX(1), orientationUnitVecY(1), orientationUnitVecZ(1), centroid(1),
-                orientationUnitVecX(2), orientationUnitVecY(2), orientationUnitVecZ(2), centroid(2),
+                unitVecX(0), unitVecY(0), unitVecZ(0), centroid(0),
+                unitVecX(1), unitVecY(1), unitVecZ(1), centroid(1),
+                unitVecX(2), unitVecY(2), unitVecZ(2), centroid(2),
                 0, 0, 0, 1;
     }
 
