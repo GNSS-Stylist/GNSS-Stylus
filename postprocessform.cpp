@@ -1719,6 +1719,12 @@ void PostProcessingForm::handleReplay(bool firstRound)
             ui->pushButton_StopReplay->setEnabled(false);
             ui->lineEdit_Uptime_Min->setEnabled(true);
             ui->lineEdit_Uptime_Max->setEnabled(true);
+
+            if (ui->checkBox_Looping->isChecked())
+            {
+                addLogLine("Looping replay...");
+                on_pushButton_StartReplay_clicked();
+            }
         }
     }
     else

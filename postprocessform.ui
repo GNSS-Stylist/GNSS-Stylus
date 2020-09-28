@@ -1448,6 +1448,19 @@
         <string>9223372036854775807</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox_Looping">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>140</y>
+         <width>70</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Looping</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="tab_Stylus">
       <property name="autoFillBackground">
