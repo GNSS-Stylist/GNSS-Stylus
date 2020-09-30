@@ -38,6 +38,7 @@
 #include "postprocessform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "losolver.h"
+#include "doomrunsyouform.h"
 
 namespace Ui {
 class EssentialsForm;
@@ -127,6 +128,8 @@ private slots:
     void on_pushButton_LoadAntennaLocations_clicked();
 
     void on_pushButton_SaveAntennaLocations_clicked();
+
+    void on_pushButton_DoomRunsYOU_clicked();
 
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
@@ -323,6 +326,10 @@ private:
     LOSolver loSolver;
 
     LocationOrientation loSolverLocationOrientation;
+
+    DoomRunsYouForm* doomRunsYouForm = nullptr;
+    void closeEvent (QCloseEvent *event);
+
 };
 
 #endif // ESSENTIALSFORM_H

@@ -112,6 +112,8 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     fileDialog_AntennaLocations_Save.setDefaultSuffix("AntennaLocations");
 
     fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
+
+    doomRunsYouForm = new DoomRunsYouForm(parent);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -139,6 +141,7 @@ EssentialsForm::~EssentialsForm()
         }
     }
 
+    delete doomRunsYouForm;
     delete ui;
 }
 
@@ -865,6 +868,8 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
         {
             rovers[i].lastMatchingRoverRELPOSNED = rovers[i].messageQueue_RELPOSNED.dequeue();
         }
+
+        doomRunsYouForm->newPositionData(rovers[0].lastMatchingRoverRELPOSNED, rovers[1].lastMatchingRoverRELPOSNED);
 
         updateTipData();
     }
@@ -1969,4 +1974,18 @@ void EssentialsForm::on_pushButton_SaveAntennaLocations_clicked()
         }
     }
 
+}
+
+
+void EssentialsForm::on_pushButton_DoomRunsYOU_clicked()
+{
+    doomRunsYouForm->show();
+    doomRunsYouForm->raise();
+    doomRunsYouForm->activateWindow();
+}
+
+void EssentialsForm::closeEvent (QCloseEvent *event)
+{
+    doomRunsYouForm->close();
+    event->accept();
 }

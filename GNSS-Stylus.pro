@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport
+QT       += core gui serialport charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
@@ -40,6 +40,7 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    doomrunsyouform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
     losolver.cpp \
@@ -56,6 +57,7 @@ SOURCES += \
     postprocessform.cpp
 
 HEADERS += \
+    doomrunsyouform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
     losolver.h \
@@ -71,6 +73,7 @@ HEADERS += \
     postprocessform.h
 
 FORMS += \
+    doomrunsyouform.ui \
     laserrangefinder20hzv2messagemonitorform.ui \
         mainwindow.ui \
     messagemonitorform.ui \

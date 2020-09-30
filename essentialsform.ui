@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>960</width>
-    <height>540</height>
+    <height>566</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,6 +22,13 @@
         <string>ITOW (Last common for all rovers used)</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QPushButton" name="pushButton_DoomRunsYOU">
+          <property name="text">
+           <string>Doom runs YOU!</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QLabel" name="label_iTOW_BIG">
           <property name="font">
@@ -233,7 +240,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_StylusData">
         <property name="autoFillBackground">
