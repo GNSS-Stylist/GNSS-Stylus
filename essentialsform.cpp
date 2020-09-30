@@ -45,6 +45,8 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
 
     ui->lineEdit_LoggingDirectory->setText(settings.value("LoggingDirectory", "").toString());
     ui->lineEdit_LoggingFileNamePrefix->setText(settings.value("LoggingFileNamePrefix", "ublox").toString());
+
+    ui->spinBox_NumberOfRovers->setValue(settings.value("NumberOfRovers").toInt());
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
     ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
     ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
@@ -117,6 +119,8 @@ EssentialsForm::~EssentialsForm()
     QSettings settings;
     settings.setValue("LoggingDirectory", ui->lineEdit_LoggingDirectory->text());
     settings.setValue("LoggingFileNamePrefix", ui->lineEdit_LoggingFileNamePrefix->text());
+
+    settings.setValue("NumberOfRovers", ui->spinBox_NumberOfRovers->value());
     settings.setValue("FluctuationHistoryLength", ui->spinBox_FluctuationHistoryLength->value());
 
     settings.setValue("PlaySound", ui->checkBox_PlaySound->isChecked());
