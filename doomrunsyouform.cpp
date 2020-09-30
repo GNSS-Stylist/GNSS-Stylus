@@ -17,6 +17,27 @@ DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QSettings settings;
+
+
+    ui->doubleSpinBox_CoordMultiplier->setValue(settings.value("DoomRunsYou_CoordMultiplier", 32768).toDouble());
+    ui->doubleSpinBox_LocationUpdateThreshold->setValue(settings.value("DoomRunsYou_LocationUpdateThreshold", 0.020).toDouble());
+
+    ui->doubleSpinBox_BFGG_Camera_N->setValue(settings.value("DoomRunsYou_BFGG_Camera_N", -0.5).toDouble());
+    ui->doubleSpinBox_BFGG_Camera_E->setValue(settings.value("DoomRunsYou_BFGG_Camera_E", 0).toDouble());
+    ui->doubleSpinBox_BFGG_Camera_D->setValue(settings.value("DoomRunsYou_BFGG_Camera_D", -0.1).toDouble());
+
+    ui->doubleSpinBox_BFGG_LookAt_N->setValue(settings.value("DoomRunsYou_BFGG_LookAt_N", 1).toDouble());
+    ui->doubleSpinBox_BFGG_LookAt_E->setValue(settings.value("DoomRunsYou_BFGG_LookAt_E", 0).toDouble());
+    ui->doubleSpinBox_BFGG_LookAt_D->setValue(settings.value("DoomRunsYou_BFGG_LookAt_D", -0.1).toDouble());
+
+    ui->comboBox_MotionPredictorType->setCurrentIndex(settings.value("DoomRunsYou_MotionPredictorType", 0).toInt());
+
+    ui->spinBox_MotionPredictTime->setValue(settings.value("DoomRunsYou_MotionPredictTime", 0).toInt());
+    ui->doubleSpinBox_PostLPFilteringCoefficient->setValue(settings.value("DoomRunsYou_PostLPFilteringCoefficient", 1).toDouble());
+
+    ui->spinBox_MaxLogLines->setValue(settings.value("DoomRunsYou_MaxLogLines", 1000).toInt());
+
     QElapsedTimer uptimeBaselineTimer;
     uptimeBaselineTimer.start();
     uptimeBaseline = uptimeBaselineTimer.msecsSinceReference();
@@ -76,6 +97,27 @@ DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
 DoomRunsYouForm::~DoomRunsYouForm()
 {
     fastTickTimer.stop();
+
+    QSettings settings;
+
+    settings.setValue("DoomRunsYou_CoordMultiplier", ui->doubleSpinBox_CoordMultiplier->value());
+    settings.setValue("DoomRunsYou_LocationUpdateThreshold", ui->doubleSpinBox_LocationUpdateThreshold->value());
+
+    settings.setValue("DoomRunsYou_BFGG_Camera_N", ui->doubleSpinBox_BFGG_Camera_N->value());
+    settings.setValue("DoomRunsYou_BFGG_Camera_E", ui->doubleSpinBox_BFGG_Camera_E->value());
+    settings.setValue("DoomRunsYou_BFGG_Camera_D", ui->doubleSpinBox_BFGG_Camera_D->value());
+
+    settings.setValue("DoomRunsYou_BFGG_LookAt_N", ui->doubleSpinBox_BFGG_LookAt_N->value());
+    settings.setValue("DoomRunsYou_BFGG_LookAt_E", ui->doubleSpinBox_BFGG_LookAt_E->value());
+    settings.setValue("DoomRunsYou_BFGG_LookAt_D", ui->doubleSpinBox_BFGG_LookAt_D->value());
+
+    settings.setValue("DoomRunsYou_MotionPredictorType", ui->comboBox_MotionPredictorType->currentIndex());
+
+    settings.setValue("DoomRunsYou_MotionPredictTime", ui->spinBox_MotionPredictTime->value());
+    settings.setValue("DoomRunsYou_PostLPFilteringCoefficient", ui->doubleSpinBox_PostLPFilteringCoefficient->value());
+
+    settings.setValue("DoomRunsYou_MaxLogLines", ui->spinBox_MaxLogLines->value());
+
     delete ui;
 }
 
@@ -373,7 +415,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 double posY = lastPosY;
                                 double yaw = 0;
                                 double pitch = 0;
-                                double predictUptime = (currentUptime + ui->spinBox_MotionPredict->value());
+                                double predictUptime = (currentUptime + ui->spinBox_MotionPredictTime->value());
                                 int i;
 
                                 switch(ui->comboBox_MotionPredictorType->currentIndex())
@@ -428,7 +470,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     LocationOrientation prevLO = locationOrientationHistory[locationOrientationHistory.size() - 2];
 
                                     double timeDiff = currentLO.uptime - prevLO.uptime;
-                                    double predictTimeDiff = (currentUptime + ui->spinBox_MotionPredict->value()) - currentLO.uptime;
+                                    double predictTimeDiff = (currentUptime + ui->spinBox_MotionPredictTime->value()) - currentLO.uptime;
 
                                     double xDiff = currentLO.x - prevLO.x;
                                     double yDiff = currentLO.y - prevLO.y;
@@ -449,7 +491,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     LocationOrientation prevLO = locationOrientationHistory[locationOrientationHistory.size() - 2];
                                     LocationOrientation prevPrevLO = locationOrientationHistory[locationOrientationHistory.size() - 3];
 
-                                    double predictTimeDiff = (currentUptime + ui->spinBox_MotionPredict->value()) - currentLO.uptime;
+                                    double predictTimeDiff = (currentUptime + ui->spinBox_MotionPredictTime->value()) - currentLO.uptime;
 
                                     posX = currentLO.x +
                                         (2 * ((currentLO.x - prevLO.x) / (currentLO.uptime - prevLO.uptime)) -
@@ -799,7 +841,7 @@ void DoomRunsYouForm::trimChart(void)
 
     yAxis_Angles_Pitch->setRange(minY - ((maxY-minY) * 0.1), maxY + ((maxY-minY) * 0.1));
 
-    xAxis_Angles->setRange(trimUptime, std::max(uptime, uptime+ui->spinBox_MotionPredict->value()));
+    xAxis_Angles->setRange(trimUptime, std::max(uptime, uptime+ui->spinBox_MotionPredictTime->value()));
 }
 
 void DoomRunsYouForm::removeOldSeriesData(QtCharts::QLineSeries* series, int xAxisThreshold)
