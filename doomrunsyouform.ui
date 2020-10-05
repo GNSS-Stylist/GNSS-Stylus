@@ -500,6 +500,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="checkBox_Active">
+     <property name="text">
+      <string>Active (Activating will reset everything to initial state. Use to sync things with the game)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QVBoxLayout" name="verticalLayout_CenterControls">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_MaxLines">

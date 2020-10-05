@@ -563,12 +563,27 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                 int sendData[6];
 
-                                sendData[0] = CT_LOCATION_ORIENTATION_COMMAND;
-                                sendData[1] = ++doomRunsYouCommandCounter;
-                                sendData[2] = intMovementX;
-                                sendData[3] = intMovementY;
-                                sendData[4] = intPitch - lastIntPitch;
-                                sendData[5] = intYaw - lastIntYaw;
+                                if (ui->checkBox_Active->checkState() == Qt::Checked)
+                                {
+                                    sendData[0] = CT_LOCATION_ORIENTATION_COMMAND;
+                                    sendData[1] = ++doomRunsYouCommandCounter;
+                                    sendData[2] = intMovementX;
+                                    sendData[3] = intMovementY;
+                                    sendData[4] = intPitch - lastIntPitch;
+                                    sendData[5] = intYaw - lastIntYaw;
+                                }
+                                else
+                                {
+                                    addLogLine("Not active, sending dummy command.");
+
+                                    sendData[0] = CT_LOCATION_ORIENTATION_COMMAND;
+                                    sendData[1] = ++doomRunsYouCommandCounter;
+                                    sendData[2] = 0;
+                                    sendData[3] = 0;
+                                    sendData[4] = 0;
+                                    sendData[5] = 0;
+
+                                }
 
                                 DWORD bytesWritten;
 
@@ -817,6 +832,39 @@ void DoomRunsYouForm::removeOldSeriesData(QtCharts::QLineSeries* series, int xAx
            (series->at(0).x() < xAxisThreshold))
     {
         series->remove(0);
+    }
+}
+
+void DoomRunsYouForm::on_checkBox_Active_stateChanged(int arg1)
+{
+    Qt::CheckState state = Qt::CheckState(arg1);
+
+    if (state == Qt::Checked)
+    {
+        addLogLine("Activity state changed: Restarting everything.", true);
+
+        contYawRounds = 0;
+        lastYawCalculatedFromReceivedData = 0;
+        lastIntYaw = 0;
+        lastIntPitch = 0;
+        lastPosX = 0;
+        lastIntPosX = 0;
+        lastPosY = 0;
+        lastIntPosY = 0;
+
+        locationOrientationHistory.clear();
+
+        lastSentCommandUptime = 0;
+
+        posXFilteringStorage = 0;
+        posYFilteringStorage = 0;
+        yawFilteringStorage = 0;
+        pitchFilteringStorage = 0;
+        lastSentPosX = 0;
+        lastSentPosY = 0;
+
+        movementRoundingErrorX = 0;
+        movementRoundingErrorY = 0;
     }
 }
 

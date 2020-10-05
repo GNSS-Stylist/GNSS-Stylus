@@ -51,7 +51,10 @@ private slots:
 
     void on_pushButton_Ping_clicked();
 
+    void on_checkBox_Active_stateChanged(int arg1);
+
     void on_pushButton_ClearAll_clicked();
+
 private:
     Ui::DoomRunsYouForm *ui;
     void addLogLine(const QString& line, bool important = false);
