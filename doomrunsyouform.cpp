@@ -817,3 +817,8 @@ void DoomRunsYouForm::removeOldSeriesData(QtCharts::QLineSeries* series, int xAx
     }
 }
 
+void DoomRunsYouForm::on_pushButton_ClearAll_clicked()
+{
+    ui->plainTextEdit_Log->clear();
+    ui->plainTextEdit_Log_Severe->clear();
+}
