@@ -234,7 +234,7 @@ void DoomRunsYouForm::newPositionData(const UBXMessage_RELPOSNED& relposned_Rove
 
     Eigen::Vector3d cameraToLookAtVecNED = lookAtPosNED - cameraPosNED;
 
-    double yaw = atan2(cameraToLookAtVecNED(0), cameraToLookAtVecNED(1));
+    double yaw = atan2(cameraToLookAtVecNED(1), cameraToLookAtVecNED(0));
     double pitch = atan2(-cameraToLookAtVecNED(2), sqrt(cameraToLookAtVecNED(0) * cameraToLookAtVecNED(0) + cameraToLookAtVecNED(1) * cameraToLookAtVecNED(1)));
 
     trimChart();
@@ -254,8 +254,8 @@ void DoomRunsYouForm::newPositionData(const UBXMessage_RELPOSNED& relposned_Rove
     lastYawCalculatedFromReceivedData = yaw;
 
     newLO.uptime = dataReceivedUptime;
-    newLO.x = cameraPosNED(0);
-    newLO.y = cameraPosNED(1);
+    newLO.x = cameraPosNED(1);
+    newLO.y = cameraPosNED(0);
     newLO.contYaw = yaw + contYawRounds * 2 * M_PI;
     newLO.pitch = pitch;
 
@@ -372,7 +372,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                             {
                                 double posX = lastPosX;
                                 double posY = lastPosY;
-                                double yaw = 0;
+                                double contYaw = 0;
                                 double pitch = 0;
                                 double predictUptime = (currentUptime + ui->spinBox_MotionPredictTime->value());
                                 int i;
@@ -382,7 +382,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 case 0: // None - use most recent value
                                     posX = currentLO.x;
                                     posY = currentLO.y;
-                                    yaw = currentLO.contYaw;
+                                    contYaw = currentLO.contYaw;
                                     pitch = currentLO.pitch;
                                     break;
 
@@ -391,7 +391,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     {
                                         posX = locationOrientationHistory[0].x;
                                         posY = locationOrientationHistory[0].y;
-                                        yaw = locationOrientationHistory[0].contYaw;
+                                        contYaw = locationOrientationHistory[0].contYaw;
                                         pitch = locationOrientationHistory[0].pitch;
                                     }
                                     else
@@ -405,7 +405,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                                     // Time is more recent than the last value -> use non-interpolated most recent value
                                                     posX = currentLO.x;
                                                     posY = currentLO.y;
-                                                    yaw = currentLO.contYaw;
+                                                    contYaw = currentLO.contYaw;
                                                     pitch = currentLO.pitch;
                                                 }
                                                 else
@@ -416,7 +416,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                                     posX = locationOrientationHistory[i].x + fraction * (locationOrientationHistory[i + 1].x - locationOrientationHistory[i].x);
                                                     posY = locationOrientationHistory[i].y + fraction * (locationOrientationHistory[i + 1].y - locationOrientationHistory[i].y);
-                                                    yaw = locationOrientationHistory[i].contYaw + fraction * (locationOrientationHistory[i + 1].contYaw - locationOrientationHistory[i].contYaw);
+                                                    contYaw = locationOrientationHistory[i].contYaw + fraction * (locationOrientationHistory[i + 1].contYaw - locationOrientationHistory[i].contYaw);
                                                     pitch = locationOrientationHistory[i].pitch + fraction * (locationOrientationHistory[i + 1].pitch - locationOrientationHistory[i].pitch);
                                                 }
                                                 break;
@@ -440,7 +440,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     posX = currentLO.x + xDiff * (predictTimeDiff / timeDiff);
                                     posY = currentLO.y + yDiff * (predictTimeDiff / timeDiff);
 
-                                    yaw = currentLO.contYaw + yawDiff * (predictTimeDiff / timeDiff);
+                                    contYaw = currentLO.contYaw + yawDiff * (predictTimeDiff / timeDiff);
                                     pitch = currentLO.pitch + pitchDiff * (predictTimeDiff / timeDiff);
                                     }
                                     break;
@@ -462,7 +462,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                             ((prevLO.y - prevPrevLO.y) / (prevLO.uptime - prevPrevLO.uptime))) *
                                             predictTimeDiff;
 
-                                    yaw = currentLO.contYaw +
+                                    contYaw = currentLO.contYaw +
                                         (2 * ((currentLO.contYaw - prevLO.contYaw) / (currentLO.uptime - prevLO.uptime)) -
                                             ((prevLO.contYaw - prevPrevLO.contYaw) / (prevLO.uptime - prevPrevLO.uptime))) *
                                             predictTimeDiff;
@@ -489,15 +489,16 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 posY = posY * LPFilteringCoeff + posYFilteringStorage * (1 - LPFilteringCoeff);
                                 posYFilteringStorage = posY;
 
-                                yaw = yaw * LPFilteringCoeff + yawFilteringStorage * (1 - LPFilteringCoeff);
-                                yawFilteringStorage = yaw;
+                                contYaw = contYaw * LPFilteringCoeff + yawFilteringStorage * (1 - LPFilteringCoeff);
+                                yawFilteringStorage = contYaw;
 
                                 pitch = pitch * LPFilteringCoeff + pitchFilteringStorage * (1 - LPFilteringCoeff);
                                 pitchFilteringStorage = pitch;
 
                                 double movement = sqrt(pow(posX - lastSentPosX, 2) + pow(posY - lastSentPosY, 2));
 
-                                int intYaw = yaw * 65536 / (2 * M_PI);
+
+                                int intYaw = -contYaw * 65536 / (2 * M_PI);
                                 int intPitch = pitch * 65536 / (2 * M_PI);
 
                                 intYaw &= 0xFFFF;
@@ -520,8 +521,8 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     double movementY = posY - lastSentPosY - movementRoundingErrorY;
 
                                     Eigen::Vector2d movementXY(movementX, movementY);
-                                    Eigen::Vector2d firstPersonBasisForward(sin(yaw), cos(yaw));
-                                    Eigen::Vector2d firstPersonBasisRight(sin(yaw - M_PI/2), cos(yaw - M_PI/2));
+                                    Eigen::Vector2d firstPersonBasisForward(sin(contYaw), cos(contYaw));
+                                    Eigen::Vector2d firstPersonBasisRight(sin(contYaw + M_PI/2), cos(contYaw + M_PI/2));
 
                                     Eigen::Vector2d firstPersonMovement(firstPersonBasisForward.dot(movementXY), firstPersonBasisRight.dot(movementXY));
 
@@ -545,8 +546,12 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 #endif
                                 }
 
-                                addLogLine("Dbg:Yaw:" + QString::number(yaw, 'f', 1) + "\t(as int: " + QString::number(intYaw) +
-                                           "),\tpitch: " + QString::number(pitch, 'f', 1) + "\t(as int " + QString::number(intPitch) +
+                                double clampedYaw = contYaw - M_PI * 2 * floor(contYaw / (2 * M_PI));
+
+                                addLogLine("Dbg:\tYaw, cont:" + QString::number(contYaw, 'f', 1) +
+                                           "\t(" + QString::number(clampedYaw * 360 / (2*M_PI), 'f', 2) + " deg)" +
+                                           "\t(as int: " + QString::number(intYaw) +
+                                           "),\tpitch: " + QString::number(pitch, 'f', 2) + "\t(as int " + QString::number(intPitch) +
                                            "),\tcontYawRounds:" + QString::number(contYawRounds)
                                            );
 
@@ -581,7 +586,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 lastIntPitch = intPitch;
                                 lastIntYaw = intYaw;
 
-                                lineSeries_Yaw_Filtered->append(predictUptime, yaw * 360 / (2*M_PI));
+                                lineSeries_Yaw_Filtered->append(predictUptime, contYaw * 360 / (2*M_PI));
                                 lineSeries_Pitch_Filtered->append(predictUptime, pitch * 360 / (2*M_PI));
 
                                 trimChart();
