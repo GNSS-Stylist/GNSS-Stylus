@@ -268,52 +268,6 @@ void DoomRunsYouForm::newPositionData(const UBXMessage_RELPOSNED& relposned_Rove
     {
         locationOrientationHistory.remove(0);
     }
-#if 0
-    int intYaw = yaw * 65536 / (2 * M_PI);
-    int intPitch = pitch * 65536 / (2 * M_PI);
-
-    double doomWorldXCoord_Abs = cameraPosNED(0) * doomWorldCoordMultiplier;
-    int intDoomWorldXCoord_Abs = doomWorldXCoord_Abs;
-
-    double doomWorldYCoord_Abs = cameraPosNED(1) * doomWorldCoordMultiplier;
-    int intDoomWorldYCoord_Abs = doomWorldYCoord_Abs;
-
-
-    if (pipeHandle != INVALID_HANDLE_VALUE)
-    {
-        int sendData[6];
-
-        sendData[0] = ++doomRunsYouCommandCounter;
-        sendData[1] = 0;    // Flags (not used for now)
-        sendData[2] = ui->spinBox_Forward->value();
-        sendData[3] = ui->spinBox_Side->value();
-        sendData[4] = intPitch - lastIntPitch;
-        sendData[5] = intYaw - lastIntYaw;
-
-        DWORD bytesWritten;
-
-        BOOL success = WriteFile(
-                    pipeHandle,            // pipe handle
-                    &sendData,             // message
-                    sizeof(sendData),      // message length
-                    &bytesWritten,         // bytes written
-                    NULL);                 // not overlapped
-
-        if (!success)
-        {
-            addLogLine("Error: Sending command failed (WriteFile-function ot called successfully).");
-        }
-
-        lastIntPitch = intPitch;
-        lastIntYaw = intYaw;
-
-    }
-    else
-    {
-//        addLogLine("Error: Pipe not open, not sending command.");
-    }
-#endif
-
 }
 
 void DoomRunsYouForm::on_pushButton_ReOpenPipe_clicked()
