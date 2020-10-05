@@ -53,7 +53,7 @@ private slots:
 
 private:
     Ui::DoomRunsYouForm *ui;
-    void addLogLine(const QString& line, bool severe = false);
+    void addLogLine(const QString& line, bool important = false);
     HANDLE pipeHandle = INVALID_HANDLE_VALUE;
     int doomRunsYouCommandCounter = 1;
 

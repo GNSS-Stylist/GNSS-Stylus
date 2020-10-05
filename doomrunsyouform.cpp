@@ -129,11 +129,16 @@ int DoomRunsYouForm::getRelativeUptime_ms(void)
 }
 
 
-void DoomRunsYouForm::addLogLine(const QString& line, bool severe)
+void DoomRunsYouForm::addLogLine(const QString& line, bool important)
 {
+    QElapsedTimer uptimeTimer;
+    uptimeTimer.start();
+    qint64 absUptime = uptimeTimer.msecsSinceReference();
+    int relUptime = uptimeTimer.msecsSinceReference() - uptimeBaseline;
+
     QTime currentTime = QTime::currentTime();
 
-    QString timeString = currentTime.toString("hh:mm:ss:zzz");
+    QString timeString = currentTime.toString("hh:mm:ss:zzz") + ", uptime abs: " + QString::number(absUptime) + ", rel: " + QString::number(relUptime);
 
     ui->plainTextEdit_Log->setMaximumBlockCount(ui->spinBox_MaxLogLines->value());
     ui->plainTextEdit_Log_Severe->setMaximumBlockCount(ui->spinBox_MaxLogLines->value());
@@ -142,7 +147,7 @@ void DoomRunsYouForm::addLogLine(const QString& line, bool severe)
     ui->plainTextEdit_Log_Severe->setWordWrapMode(QTextOption::NoWrap);
     ui->plainTextEdit_Log->appendPlainText(timeString + ": " + line);
 
-    if (severe)
+    if (important)
     {
         ui->plainTextEdit_Log_Severe->appendPlainText(timeString + ": " + line);
     }
