@@ -509,7 +509,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                 if (movement >= 1)
                                 {
-                                    addLogLine("Instantaneous movement is insanely big, skipping.", true);
+                                    addLogLine("Instantaneous movement is insanely big, skipping.");
                                     lastSentPosX = posX;
                                     lastSentPosY = posY;
                                 }
@@ -575,7 +575,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                 if (!success)
                                 {
-                                    addLogLine("Error: Sending command failed (WriteFile-function ot called successfully).", true);
+                                    addLogLine("Error: Sending command failed (WriteFile-function not called successfully).");
                                 }
                                 else
                                 {
@@ -615,7 +615,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                 if (!success)
                                 {
-                                    addLogLine("Error: Sending command failed (WriteFile-function not called successfully).", true);
+                                    addLogLine("Error: Sending command failed (WriteFile-function not called successfully).");
                                 }
                                 else
                                 {
@@ -636,7 +636,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                     }
                     else
                     {
-                        addLogLine("Counter mismatch. Waiting for correct counter value.", true);
+                        addLogLine("Counter mismatch. Waiting for correct counter value.");
                     }
                     break;
                 case CT_PING_FROM_SERVER:
@@ -670,7 +670,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
         if (currentUptime - lastSentCommandUptime  > 500)
         {
-            addLogLine("No commands in a while, sending dummy command to wake up sending loop...", true);
+            addLogLine("No commands in a while, sending dummy command to wake up sending loop...");
 
             int sendData[6];
 
@@ -692,11 +692,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
             if (!success)
             {
-                addLogLine("Error: Sending command failed (WriteFile-function not called successfully).", true);
-            }
-            else
-            {
-                lastSentCommandUptime = currentUptime;
+                addLogLine("Error: Sending command failed (WriteFile-function not called successfully).");
             }
 
             lastSentCommandUptime = currentUptime;
