@@ -446,6 +446,12 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                     break;
 
                                 case 3: // Constant acceleration estimated using the last three measurements
+                                    // This is somewhat simplified so that the acceleration is not handled as
+                                    // continuous but instead the changing speed of the signals is calculated
+                                    // using the last three measurements and this "slope" is then used in extrapolation.
+                                    // This is only correct for the next "extrapolation piece"
+                                    // (basically valid only when motion predict time is 0).
+
                                     {
                                     LocationOrientation prevLO = locationOrientationHistory[locationOrientationHistory.size() - 2];
                                     LocationOrientation prevPrevLO = locationOrientationHistory[locationOrientationHistory.size() - 3];
