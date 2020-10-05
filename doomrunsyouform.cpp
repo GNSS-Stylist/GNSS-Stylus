@@ -699,6 +699,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                 lastSentCommandUptime = currentUptime;
             }
 
+            lastSentCommandUptime = currentUptime;
         }
     }
 }
