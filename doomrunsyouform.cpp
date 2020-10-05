@@ -666,14 +666,44 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 lastSentCommandUptime = currentUptime;
                             }
                         }
-                        else if (locationOrientationHistory.size() == 1)
+                        else
                         {
-                            // Initialize filters to prevent jumps at the start
+                            addLogLine("No valid GNSS-data available, sending dummy command.");
 
-                            posXFilteringStorage = locationOrientationHistory[0].x;
-                            posYFilteringStorage = locationOrientationHistory[0].y;
-                            yawFilteringStorage = locationOrientationHistory[0].contYaw;
-                            pitchFilteringStorage = locationOrientationHistory[0].pitch;
+                            int sendData[6];
+
+                            sendData[0] = CT_LOCATION_ORIENTATION_COMMAND;
+                            sendData[1] = ++doomRunsYouCommandCounter;
+                            sendData[2] = 0;
+                            sendData[3] = 0;
+                            sendData[4] = 0;
+                            sendData[5] = 0;
+
+                            DWORD bytesWritten;
+
+                            BOOL success = WriteFile(
+                                        pipeHandle,            // pipe handle
+                                        &sendData,             // message
+                                        sizeof(sendData),      // message length
+                                        &bytesWritten,         // bytes written
+                                        NULL);                 // not overlapped
+
+                            if (!success)
+                            {
+                                addLogLine("Error: Sending command failed (WriteFile-function not called successfully).");
+                            }
+
+                            lastSentCommandUptime = currentUptime;
+
+                            if (locationOrientationHistory.size() <= 2)
+                            {
+                                // Initialize filters to prevent jumps at the start
+
+                                posXFilteringStorage = locationOrientationHistory[0].x;
+                                posYFilteringStorage = locationOrientationHistory[0].y;
+                                yawFilteringStorage = locationOrientationHistory[0].contYaw;
+                                pitchFilteringStorage = locationOrientationHistory[0].pitch;
+                            }
                         }
                     }
                     else
