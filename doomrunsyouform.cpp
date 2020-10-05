@@ -37,7 +37,6 @@ DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
 
     QSettings settings;
 
-
     ui->doubleSpinBox_CoordMultiplier->setValue(settings.value("DoomRunsYou_CoordMultiplier", 32768).toDouble());
     ui->doubleSpinBox_LocationUpdateThreshold->setValue(settings.value("DoomRunsYou_LocationUpdateThreshold", 0.020).toDouble());
 
@@ -62,10 +61,6 @@ DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
 
     connect(&fastTickTimer, SIGNAL(timeout()), this, SLOT(fastTickTimerTimeout()));
 
-//     QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-//                             this, SLOT(dataReceived_Base(const QByteArray&)));
-
-
     lineSeries_Yaw_Unfiltered = new QLineSeries();
     lineSeries_Yaw_Filtered = new QLineSeries();
 
@@ -74,7 +69,6 @@ DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
 
     chart_Angles = new QChart();
     chart_Angles->legend()->hide();
-//    chart_Angles->createDefaultAxes();
     chart_Angles->setTitle("Yaw and pitch angles");
 
     chart_Angles->addSeries(lineSeries_Yaw_Unfiltered);
@@ -160,7 +154,6 @@ void DoomRunsYouForm::addLogLine(const QString& line, bool important)
 
     ui->plainTextEdit_Log->setMaximumBlockCount(ui->spinBox_MaxLogLines->value());
     ui->plainTextEdit_Log_Severe->setMaximumBlockCount(ui->spinBox_MaxLogLines->value());
-//    ui->plainTextEdit_Log->setCenterOnScroll(ui->checkBox_PagedScroll->isChecked());
     ui->plainTextEdit_Log->setWordWrapMode(QTextOption::NoWrap);
     ui->plainTextEdit_Log_Severe->setWordWrapMode(QTextOption::NoWrap);
     ui->plainTextEdit_Log->appendPlainText(timeString + ": " + line);
@@ -223,9 +216,9 @@ void DoomRunsYouForm::newPositionData(const UBXMessage_RELPOSNED& relposned_Rove
     Eigen::Vector3d roverBToAVecNormalizedNED = (roverAPosNED - roverBPosNED).normalized();
 
     Eigen::Vector3d downVecNED(0,0,1);
-    Eigen::Vector3d stylusForwardAxis = roverBToAVecNormalizedNED;
-    Eigen::Vector3d stylusRightAxis = -(roverBToAVecNormalizedNED.cross(downVecNED).normalized());
-    Eigen::Vector3d stylusDownAxis = roverBToAVecNormalizedNED.cross(stylusRightAxis).normalized();
+    Eigen::Vector3d bfggForwardAxis = roverBToAVecNormalizedNED;
+    Eigen::Vector3d bfggRightAxis = -(roverBToAVecNormalizedNED.cross(downVecNED).normalized());
+    Eigen::Vector3d bfggDownAxis = roverBToAVecNormalizedNED.cross(bfggRightAxis).normalized();
 
     // Some variables for camera:
     double cameraNShift = ui->doubleSpinBox_BFGG_Camera_N->value();
@@ -237,18 +230,14 @@ void DoomRunsYouForm::newPositionData(const UBXMessage_RELPOSNED& relposned_Rove
     double lookAtDShift = ui->doubleSpinBox_BFGG_LookAt_D->value();
 
     Eigen::Vector3d cameraPosNED = roverAPosNED +
-            stylusForwardAxis * cameraNShift +
-            stylusRightAxis * cameraEShift +
-            stylusDownAxis * cameraDShift;
-
-//    Eigen::Vector3d cameraPosXYZ = transform * cameraPosNED;
+            bfggForwardAxis * cameraNShift +
+            bfggRightAxis * cameraEShift +
+            bfggDownAxis * cameraDShift;
 
     Eigen::Vector3d lookAtPosNED = roverAPosNED +
-            stylusForwardAxis * lookAtNShift +
-            stylusRightAxis * lookAtEShift +
-            stylusDownAxis * lookAtDShift;
-
-//    Eigen::Vector3d lookAtPosXYZ = transform * lookAtPosNED;
+            bfggForwardAxis * lookAtNShift +
+            bfggRightAxis * lookAtEShift +
+            bfggDownAxis * lookAtDShift;
 
     Eigen::Vector3d cameraToLookAtVecNED = lookAtPosNED - cameraPosNED;
 
@@ -310,6 +299,9 @@ void DoomRunsYouForm::on_pushButton_ReOpenPipe_clicked()
 
     if (pipeHandle != INVALID_HANDLE_VALUE)
     {
+        // Using nonblocking mode here, because it seems to work
+        // (and I'm too lazy to implement this "right" for this).
+
         DWORD mode = PIPE_READMODE_MESSAGE | PIPE_NOWAIT; // "Note that nonblocking mode is supported for compatibility with Microsoft LAN Manager version 2.0 and should not be used to achieve asynchronous input and output (I/O) with named pipes."
         BOOL success = SetNamedPipeHandleState(
            pipeHandle,    // pipe handle
@@ -350,7 +342,12 @@ void DoomRunsYouForm::on_pushButton_ClosePipe_clicked()
 
 void DoomRunsYouForm::fastTickTimerTimeout()
 {
-//    addLogLine("Timer!!!");
+    // This (polling at 1 ms interval) is a horrible way to handle this.
+    // Should use threads / overlapped IO / signals / slots instead.
+    // I'm, however too lazy to implement "the correct" handling here.
+    // This works good enough for this joke(ish) thingy...
+
+    //    addLogLine("Timer!!!");
 
     int currentUptime = getRelativeUptime_ms();
 
@@ -502,8 +499,8 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 
                                 lastPosX = posX;
                                 lastPosY = posY;
-//                                lastContYaw = yaw;
-//                                lastPitch = pitch;
+
+                                // "Post"-filtering here is just a simple 1st-order low-pass filter.
 
                                 double LPFilteringCoeff = ui->doubleSpinBox_PostLPFilteringCoefficient->value();
 
@@ -520,7 +517,6 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 pitchFilteringStorage = pitch;
 
                                 double movement = sqrt(pow(posX - lastSentPosX, 2) + pow(posY - lastSentPosY, 2));
-
 
                                 int intYaw = -contYaw * 65536 / (2 * M_PI);
                                 int intPitch = pitch * 65536 / (2 * M_PI);
@@ -539,6 +535,9 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 }
                                 else if (movement >= ui->doubleSpinBox_LocationUpdateThreshold->value())
                                 {
+                                    // Threshold is here to prevent error accumulating into location
+                                    // while standing still.
+
                                     addLogLine("Movement exceeding threshold, sending new location.");
 
                                     double movementX = posX - lastSentPosX - movementRoundingErrorX;
@@ -558,6 +557,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 #if 0
                                     // Try to minimize effect of the rounding error accumulating into the location
                                     // There's some brainfart and movement goes all over the place.
+                                    // (this was the case even before changing the yaw value of 0 to point to north)
                                     // Works good enough without, so not using more time for this, at least for now
                                     double realMovementX = sin(intYaw * 2 * M_PI / 65536) * intMovementX / ui->doubleSpinBox_CoordMultiplier->value() +
                                             sin(((intYaw + 65536 / 4) & 0xFFFF) * 2 * M_PI / 65536) * intMovementY / ui->doubleSpinBox_CoordMultiplier->value();
@@ -570,7 +570,7 @@ void DoomRunsYouForm::fastTickTimerTimeout()
 #endif
                                 }
 
-                                double clampedYaw = contYaw - M_PI * 2 * floor(contYaw / (2 * M_PI));
+                                double clampedYaw = std::max(contYaw - M_PI * 2 * floor(contYaw / (2 * M_PI)), double(0));   // 0 to 2 * M_PI, max to prevent negative values due to rounding errors
 
                                 addLogLine("Dbg:\tYaw, cont:" + QString::number(contYaw, 'f', 1) +
                                            "\t(" + QString::number(clampedYaw * 360 / (2*M_PI), 'f', 2) + " deg)" +
@@ -592,6 +592,12 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 }
                                 else
                                 {
+                                    // When not active, just send zero data.
+                                    // This can be used for example when starting the game to sync location/yaw/pitch-values
+                                    // You can start the game when inactive here and switch to active -> Yaw will match in the
+                                    // game and here and location will not be changed (much). This way you can place some items into the
+                                    // real world, whose locations will (approximately) match the locations in the game.
+
                                     addLogLine("Not active, sending dummy command.");
 
                                     sendData[0] = CT_LOCATION_ORIENTATION_COMMAND;
@@ -656,11 +662,8 @@ void DoomRunsYouForm::fastTickTimerTimeout()
                                 {
                                     addLogLine("Error: Sending command failed (WriteFile-function not called successfully).");
                                 }
-                                else
-                                {
-                                    lastSentCommandUptime = currentUptime;
-                                }
 
+                                lastSentCommandUptime = currentUptime;
                             }
                         }
                         else if (locationOrientationHistory.size() == 1)
@@ -786,6 +789,9 @@ void DoomRunsYouForm::trimChart(void)
     double minY = 1e12;
     double maxY = -1e12;
 
+    // TODO: Remove these repeating code blocks.
+    // There might also be nicer way to do this automatic scaling.
+
     for (int i = 0; i < lineSeries_Yaw_Unfiltered->count(); i++)
     {
         if (lineSeries_Yaw_Unfiltered->at(i).y() < minY)
@@ -866,9 +872,7 @@ void DoomRunsYouForm::on_checkBox_Active_stateChanged(int arg1)
         lastIntYaw = 0;
         lastIntPitch = 0;
         lastPosX = 0;
-        lastIntPosX = 0;
         lastPosY = 0;
-        lastIntPosY = 0;
 
         locationOrientationHistory.clear();
 

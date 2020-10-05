@@ -82,17 +82,11 @@ private:
     int contYawRounds = 0;
     double lastYawCalculatedFromReceivedData = 0;
 
-//    double lastContYaw = 0;
     int lastIntYaw = 0;
-
-//    double lastPitch = 0;
     int lastIntPitch = 0;
 
     double lastPosX = 0;
-    int lastIntPosX = 0;
-
     double lastPosY = 0;
-    int lastIntPosY = 0;
 
     QVector<LocationOrientation> locationOrientationHistory;
 

@@ -560,7 +560,7 @@
    <item>
     <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>Errors/ more severe:</string>
+      <string>More important ones:</string>
      </property>
     </widget>
    </item>

@@ -17,18 +17,18 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_Left">
      <item>
+      <widget class="QPushButton" name="pushButton_DoomRunsYOU">
+       <property name="text">
+        <string>Doom runs YOU!</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QGroupBox" name="groupBox_iTOW_Combined">
        <property name="title">
         <string>ITOW (Last common for all rovers used)</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QPushButton" name="pushButton_DoomRunsYOU">
-          <property name="text">
-           <string>Doom runs YOU!</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QLabel" name="label_iTOW_BIG">
           <property name="font">
@@ -656,7 +656,7 @@
           <number>3</number>
          </property>
          <property name="value">
-          <number>3</number>
+          <number>2</number>
          </property>
         </widget>
        </widget>
