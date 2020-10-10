@@ -27,6 +27,14 @@
 #include "doomrunsyouform.h"
 #include "ui_doomrunsyouform.h"
 
+// This is just to prevent any liability if someone decides to run into traffic
+// or down a cliff or similar while running around with a BFGG.
+// Kinda ridicilous really, but maybe better to be safe than sorry.
+// This kind of thing is probably only needed for US (or is it?)
+// You may remove this define if you trust users' judgement about their actions.
+// (But then YOU do this at your own risk.)
+#define REQUIRE_ACTIVATION_ACKNOWLEDGE
+
 static const wchar_t* pipeName = L"\\\\.\\pipe\\DoomRunsYou";
 
 DoomRunsYouForm::DoomRunsYouForm(QWidget *parent) :
@@ -895,28 +903,51 @@ void DoomRunsYouForm::on_checkBox_Active_stateChanged(int arg1)
 
     if (state == Qt::Checked)
     {
-        addLogLine("Activity state changed: Restarting everything.", true);
+#ifdef REQUIRE_ACTIVATION_ACKNOWLEDGE
 
-        contYawRounds = 0;
-        lastYawCalculatedFromReceivedData = 0;
-        lastIntYaw = 0;
-        lastIntPitch = 0;
-        lastPosX = 0;
-        lastPosY = 0;
+        QMessageBox ackBox;
 
-        locationOrientationHistory.clear();
+        ackBox.setWindowTitle("Disclaimer");
+        ackBox.setText("I hereby acknowledge and confirm that I am using this feature and equipment at my own risk.");
+        QPushButton *ackButton = ackBox.addButton("Acknowledge and confirm", QMessageBox::ActionRole);
+        QPushButton *nackButton = ackBox.addButton(QMessageBox::Cancel);
+        ackBox.setDefaultButton(nackButton);
 
-        lastSentCommandUptime = 0;
+        ackBox.exec();
 
-        posXFilteringStorage = 0;
-        posYFilteringStorage = 0;
-        yawFilteringStorage = 0;
-        pitchFilteringStorage = 0;
-        lastSentPosX = 0;
-        lastSentPosY = 0;
+        if (ackBox.clickedButton() == ackButton)
+#else
+        if (1)
+#endif
+        {
+            addLogLine("Activity state changed: Restarting everything.", true);
 
-        movementRoundingErrorX = 0;
-        movementRoundingErrorY = 0;
+            contYawRounds = 0;
+            lastYawCalculatedFromReceivedData = 0;
+            lastIntYaw = 0;
+            lastIntPitch = 0;
+            lastPosX = 0;
+            lastPosY = 0;
+
+            locationOrientationHistory.clear();
+
+            lastSentCommandUptime = 0;
+
+            posXFilteringStorage = 0;
+            posYFilteringStorage = 0;
+            yawFilteringStorage = 0;
+            pitchFilteringStorage = 0;
+            lastSentPosX = 0;
+            lastSentPosY = 0;
+
+            movementRoundingErrorX = 0;
+            movementRoundingErrorY = 0;
+        }
+        else
+        {
+            addLogLine("Activity state change not acknowledged.", true);
+            QTimer::singleShot(0, this, [this]() { ui->checkBox_Active->setChecked(false); } );
+        }
     }
 }
 
