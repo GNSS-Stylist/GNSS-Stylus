@@ -32,9 +32,9 @@
  *
  */
 
-#include "sdkcommon.h"
+#include "../../sdkcommon.h"
 #include <mmsystem.h>
-#pragma comment(lib, "Winmm.lib")
+//#pragma comment(lib, "Winmm.lib")
 
 namespace rp{ namespace arch{
 
@@ -42,7 +42,7 @@ static LARGE_INTEGER _current_freq;
 
 void HPtimer_reset()
 {
-    BOOL ans=QueryPerformanceFrequency(&_current_freq);
+    QueryPerformanceFrequency(&_current_freq);
     _current_freq.QuadPart/=1000;
 }
 

@@ -45,6 +45,6 @@
 #include "hal/types.h"
 #include "hal/assert.h"
 
-#include "rplidar.h"
+#include "../include/rplidar.h"
 
 #include "hal/util.h"

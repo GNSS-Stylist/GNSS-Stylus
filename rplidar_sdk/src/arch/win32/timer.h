@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "hal/types.h"
+#include "../../hal/types.h"
 
 #define delay(x)   ::Sleep(x)
 

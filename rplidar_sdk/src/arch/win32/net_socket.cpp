@@ -6,17 +6,18 @@
  *  Win32 Implementation
  */
 
-#define _WINSOCKAPI_
+//#define _WIN32_WINNT _WIN32_WINNT_WIN7
+//#define _WINSOCKAPI_
 
-#include "sdkcommon.h"
-#include "..\..\hal\socket.h"
-#include <windows.h>  
 #include <winsock2.h>
+#include "../../sdkcommon.h"
+#include "../../hal/socket.h"
+//#include <windows.h>
 #include <ws2tcpip.h>
 
 #include <stdlib.h>  
 #include <stdio.h>  
-#pragma comment (lib, "Ws2_32.lib")
+//#pragma comment (lib, "Ws2_32.lib")
 
 namespace rp{ namespace net {
 
@@ -63,8 +64,9 @@ static const char* _inet_ntop(int af, const void* src, char* dst, int cnt){
     }
 
 	if (WSAAddressToStringA((struct sockaddr*) &srcaddr, sizeof(struct sockaddr_storage), 0, dst, (LPDWORD) &cnt) != 0) {
-		DWORD rv = WSAGetLastError();
-		return NULL;
+//		DWORD rv = WSAGetLastError();
+        WSAGetLastError();
+        return NULL;
 	}
 	return dst;
 }
@@ -244,7 +246,8 @@ u_result SocketAddress::getAddressAsString(char * buffer, size_t buffersize) con
 
         break;
     }
-    return ans<=0?RESULT_OPERATION_FAIL:RESULT_OK;
+    //return ans<=0?RESULT_OPERATION_FAIL:RESULT_OK;    // Yeah, that's how you check a null pointer...
+    return ans ? RESULT_OK : RESULT_OPERATION_FAIL;
 }
 
 
@@ -260,8 +263,9 @@ size_t SocketAddress::LoopUpHostName(const char * hostname, const char * sevicen
     hints.ai_flags = AI_PASSIVE;
 
     if (!performDNS) {
-        hints.ai_family |= AI_NUMERICSERV | AI_NUMERICHOST;
-    
+        // hints.ai_family |= AI_NUMERICSERV | AI_NUMERICHOST;
+        hints.ai_family |= 0x00000008 | AI_NUMERICHOST;
+
     }
 
     ans = getaddrinfo(hostname, sevicename, &hints, &result);

@@ -34,6 +34,7 @@
 
 #pragma once
 
+#include "rptypes.h"
 
 #ifndef __cplusplus
 #error "The RPlidar SDK requires a C++ compiler to be built"
@@ -62,7 +63,7 @@ struct RplidarScanMode {
 
 enum {
     DRIVER_TYPE_SERIALPORT = 0x0,
-    DRIVER_TYPE_TCP = 0x1,
+//    DRIVER_TYPE_TCP = 0x1,
 };
 
 class ChannelDevice

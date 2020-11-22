@@ -35,7 +35,7 @@
 #pragma once
 
 #include <vector>
-#include "hal/types.h"
+#include "../src/hal/types.h"
 #include "rplidar_protocol.h"
 #include "rplidar_cmd.h"
 

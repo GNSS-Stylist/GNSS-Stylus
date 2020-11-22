@@ -34,10 +34,12 @@
 
 #pragma once
 
+#include "../src/hal/types.h"
 
-#ifdef _WIN32
-
+#if (defined(_MSC_FULL_VER) && defined(_WIN32))
+//#ifdef _WIN32
 //fake stdint.h for VC only
+//Then limit this to VC only (like ifdeffing _MSC_FULL_VER in addition to _WIN32)?
 
 typedef signed   char     int8_t;
 typedef unsigned char     uint8_t;

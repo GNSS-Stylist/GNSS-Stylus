@@ -34,7 +34,7 @@
 
 #pragma once 
 
-#include "hal/types.h"
+#include "types.h"
 
 namespace rp{ namespace hal{
 

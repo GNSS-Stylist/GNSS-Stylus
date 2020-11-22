@@ -32,16 +32,16 @@
  *
  */
 
-#include "sdkcommon.h"
+#include "../../sdkcommon.h"
 #include "net_serial.h"
 
 namespace rp{ namespace arch{ namespace net{
 
 raw_serial::raw_serial()
     : rp::hal::serial_rxtx()
-    , _serial_handle(NULL)
     , _baudrate(0)
     , _flags(0)
+    , _serial_handle(NULL)
 {
     _init();
 }
@@ -70,9 +70,11 @@ bool raw_serial::bind(const char * portname, _u32 baudrate, _u32 flags)
 
 bool raw_serial::open(const char * portname, _u32 baudrate, _u32 flags)
 {
+    (void)flags;
+
     if (isOpened()) close();
     
-    _serial_handle = CreateFile(
+    _serial_handle = CreateFileA(
         portname,
         GENERIC_READ | GENERIC_WRITE,
         0,
@@ -143,7 +145,7 @@ void raw_serial::close()
 int raw_serial::senddata(const unsigned char * data, size_t size)
 {
     DWORD    error;
-    DWORD w_len = 0, o_len = -1;
+    DWORD w_len = 0;
     if (!isOpened()) return ANS_DEV_ERR;
 
     if (data == NULL || size ==0) return 0;
@@ -183,6 +185,8 @@ int raw_serial::recvdata(unsigned char * data, size_t size)
 
 void raw_serial::flush( _u32 flags)
 {
+    (void) flags;
+
     PurgeComm(_serial_handle, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR );
 }
 
@@ -290,7 +294,6 @@ size_t raw_serial::rxqueue_count()
     if  ( !isOpened() ) return 0;
     COMSTAT  com_stat;
     DWORD error;
-    DWORD r_len = 0;
 
     if(ClearCommError(_serial_handle, &error, &com_stat) && error > 0)
     {

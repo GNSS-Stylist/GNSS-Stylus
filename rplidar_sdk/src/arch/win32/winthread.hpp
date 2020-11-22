@@ -32,7 +32,8 @@
  *
  */
 
-#include "sdkcommon.h"
+#include "../../sdkcommon.h"
+#include "../../hal/thread.h"
 #include <process.h>
 
 namespace rp{ namespace hal{
@@ -53,7 +54,7 @@ u_result Thread::terminate()
     if (TerminateThread( reinterpret_cast<HANDLE>(this->_handle), -1))
     {
         CloseHandle(reinterpret_cast<HANDLE>(this->_handle));
-        this->_handle = NULL;
+        this->_handle = 0;
         return RESULT_OK;
     }else
     {
@@ -130,7 +131,7 @@ u_result Thread::join(unsigned long timeout)
     {
     case WAIT_OBJECT_0:
         CloseHandle(reinterpret_cast<HANDLE>(this->_handle));
-        this->_handle = NULL;
+        this->_handle = 0;
         return RESULT_OK;
     case WAIT_ABANDONED:
         return RESULT_OPERATION_FAIL;
