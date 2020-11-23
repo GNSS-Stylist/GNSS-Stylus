@@ -39,6 +39,10 @@
 #include "postprocessform.h"
 #include "laserrangefinder20hzv2messagemonitorform.h"
 #include "laserrangefinder20hzv2serialthread.h"
+#include "Lidar/rplidarthread.h"
+#include "Lidar/rplidarmessagemonitorform.h"
+#include "Lidar/lidarchartform.h"
+#include "licensesform.h"
 
 class MainWinRover : public QObject
 {
@@ -150,6 +154,11 @@ private slots:
     void commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString);
     void commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data);
 
+    void thread_RPLidar_ErrorMessage(const QString& errorMessage);
+    void thread_RPLidar_WarningMessage(const QString& warningMessage);
+    void thread_RPLidar_InfoMessage(const QString& infoMessage);
+    void thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
+
     void on_pushButton_StartThread_Base_Serial_clicked();
 
     void on_pushButton_TerminateThread_Base_Serial_clicked();
@@ -196,6 +205,28 @@ private slots:
 
     void ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int roverId);
 
+    void on_pushButton_StartThread_RPLidar_clicked();
+
+    void on_pushButton_TerminateThread_RPLidar_clicked();
+
+    void on_pushButton_ShowMessageWindow_RPLidar_clicked();
+
+    void on_pushButton_ShowLidarChartWindow_RPLidar_clicked();
+
+    void on_pushButton_ClearRoundCounter_RPLidar_clicked();
+
+    void on_pushButton_ClearErrorMessage_RPLidar_clicked();
+
+    void on_pushButton_ClearWarningMessage_RPLidar_clicked();
+
+    void on_pushButton_ClearInfoMessage_RPLidar_clicked();
+
+    void on_checkBox_SuspendThread_RPLidar_stateChanged(int arg1);
+
+    void on_actionExit_triggered();
+
+    void on_actionLicenses_triggered();
+
 signals:
     void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 
@@ -205,23 +236,30 @@ private:
 
     Ui::MainWindow *ui;
 
-    MessageMonitorForm* messageMonitorForm_Base_Serial;
-    SerialThread* serialThread_Base;
+    MessageMonitorForm* messageMonitorForm_Base_Serial = nullptr;
+    SerialThread* serialThread_Base = nullptr;
     UBloxDataStreamProcessor ubloxDataStreamProcessor_Base_Serial;
     int messageCounter_RTCM_Base_Serial;
 
-    MessageMonitorForm* messageMonitorForm_Base_NTRIP;
-    NTRIPThread* ntripThread;
+    MessageMonitorForm* messageMonitorForm_Base_NTRIP = nullptr;
+    NTRIPThread* ntripThread = nullptr;
     UBloxDataStreamProcessor ubloxDataStreamProcessor_Base_NTRIP;
     int messageCounter_RTCM_Base_NTRIP;
 
-    LaserRangeFinder20HzV2MessageMonitorForm* messageMonitorForm_LaserDist;
-    LaserRangeFinder20HzV2SerialThread* serialThread_LaserDist;
+    LaserRangeFinder20HzV2MessageMonitorForm* messageMonitorForm_LaserDist = nullptr;
+    LaserRangeFinder20HzV2SerialThread* serialThread_LaserDist = nullptr;
     int messageCounter_LaserDist_Distance;
+
+    RPLidarMessageMonitorForm* messageMonitorForm_RPLidar = nullptr;
+    RPLidarThread* thread_RPLidar = nullptr;
+    int messageCounter_RPLidar_Rounds;
+    LidarChartForm* lidarChartForm = nullptr;
 
     EssentialsForm* essentialsForm;
 
-    PostProcessingForm* postProcessingForm;
+    PostProcessingForm* postProcessingForm = nullptr;
+
+    LicensesForm* licencesForm = nullptr;
 
     void closeEvent (QCloseEvent *event);
 

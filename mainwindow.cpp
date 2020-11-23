@@ -20,6 +20,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "Lidar/rplidar_sdk/include/rplidar.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
     serialThread_Base = nullptr;
     ntripThread = nullptr;
     serialThread_LaserDist = nullptr;
+    thread_RPLidar = nullptr;
 
     ui->setupUi(this);
 
@@ -128,6 +130,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     messageMonitorForm_LaserDist = new LaserRangeFinder20HzV2MessageMonitorForm(parent, "Message monitor (\"Laser distance meter 20Hz V2\")");
 
+    messageMonitorForm_RPLidar = new RPLidarMessageMonitorForm(parent, "Message monitor (RPLidar)");
+    lidarChartForm = new LidarChartForm(parent);
+
     essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_Serial);
     essentialsForm->connectUBloxDataStreamProcessorSlots_Base(&ubloxDataStreamProcessor_Base_NTRIP);
 
@@ -151,12 +156,18 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(&ubloxDataStreamProcessor_Base_NTRIP, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
                      this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&)));
 
+    licencesForm = new LicensesForm(parent);
+
     QSettings settings;
 
     ui->lineEdit_SerialPort_Base->setText(settings.value("SerialPort_Base", "\\\\.\\COM").toString());
     ui->spinBox_SerialSpeed_Base->setValue(settings.value("SerialSpeed_Base", "115200").toInt());
 
     ui->lineEdit_Command_Base_NTRIP->setText(settings.value("Command_Base_NTRIP", "-help").toString());
+
+    ui->lineEdit_SerialPort_RPLidar->setText(settings.value("SerialPort_RPLidar", "\\\\.\\COM").toString());
+    ui->spinBox_SerialSpeed_RPLidar->setValue(settings.value("SerialSpeed_RPLidar", "256000").toInt());
+    ui->spinBox_MotorPWM_RPLidar->setValue(settings.value("MotorPWM_RPLidar", "660").toInt());
 
     // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
     qRegisterMetaType<SerialThread::DataReceivedEmitReason>();
@@ -170,8 +181,16 @@ MainWindow::~MainWindow()
 
     settings.setValue("Command_Base_NTRIP", ui->lineEdit_Command_Base_NTRIP->text());
 
+    settings.setValue("SerialPort_RPLidar", ui->lineEdit_SerialPort_RPLidar->text());
+    settings.setValue("SerialSpeed_RPLidar", ui->spinBox_SerialSpeed_RPLidar->value());
+    settings.setValue("MotorPWM_RPLidar", ui->spinBox_MotorPWM_RPLidar->value());
+
     delete messageMonitorForm_Base_Serial;
     delete messageMonitorForm_Base_NTRIP;
+    delete messageMonitorForm_LaserDist;
+    delete messageMonitorForm_RPLidar;
+    delete lidarChartForm;
+
     for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
     {
         delete rovers[i];
@@ -179,12 +198,41 @@ MainWindow::~MainWindow()
     }
     delete essentialsForm;
     delete postProcessingForm;
+    delete licencesForm;
 
     delete ui;
 }
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
+    if (serialThread_Base)
+    {
+        serialThread_Base->requestTerminate();
+    }
+
+    if (ntripThread)
+    {
+        ntripThread->requestTerminate();
+    }
+
+    if (serialThread_LaserDist)
+    {
+        serialThread_LaserDist->requestTerminate();
+    }
+
+    if (thread_RPLidar)
+    {
+        thread_RPLidar->requestTerminate();
+    }
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        if (rovers[i]->serialThread)
+        {
+            rovers[i]->serialThread->requestTerminate();
+        }
+    }
+
     messageMonitorForm_Base_Serial->close();
     messageMonitorForm_Base_NTRIP->close();
 
@@ -198,6 +246,41 @@ void MainWindow::closeEvent (QCloseEvent *event)
     postProcessingForm->close();
 
     messageMonitorForm_LaserDist->close();
+    messageMonitorForm_RPLidar->close();
+    lidarChartForm->close();
+
+    if (serialThread_Base)
+    {
+        serialThread_Base->wait(5000);
+        serialThread_Base = nullptr;
+    }
+
+    if (ntripThread)
+    {
+        ntripThread->wait(5000);
+        ntripThread = nullptr;
+    }
+
+    if (serialThread_LaserDist)
+    {
+        serialThread_LaserDist->wait(5000);
+        serialThread_LaserDist = nullptr;
+    }
+
+    if (thread_RPLidar)
+    {
+        thread_RPLidar->wait(5000);
+        thread_RPLidar = nullptr;
+    }
+
+    for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
+    {
+        if (rovers[i]->serialThread)
+        {
+            rovers[i]->serialThread->wait(5000);
+            rovers[i]->serialThread = nullptr;
+        }
+    }
 
     event->accept();
 }
@@ -338,13 +421,16 @@ void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
 
 void MainWindow::on_checkBox_SuspendThread_Base_Serial_stateChanged(int arg1)
 {
-    if (arg1 == Qt::Checked)
+    if (serialThread_Base)
     {
-        serialThread_Base->suspend();
-    }
-    else
-    {
-        serialThread_Base->resume();
+        if (arg1 == Qt::Checked)
+        {
+            serialThread_Base->suspend();
+        }
+        else
+        {
+            serialThread_Base->resume();
+        }
     }
 }
 
@@ -963,13 +1049,16 @@ void MainWinRover::on_pushButton_ShowRELPOSNEDWindow_clicked()
 
 void MainWinRover::on_checkBox_SuspendThread_stateChanged(int arg1)
 {
-    if (arg1 == Qt::Checked)
+    if (serialThread)
     {
-        serialThread->suspend();
-    }
-    else
-    {
-        serialThread->resume();
+        if (arg1 == Qt::Checked)
+        {
+            serialThread->suspend();
+        }
+        else
+        {
+            serialThread->resume();
+        }
     }
 }
 
@@ -994,3 +1083,164 @@ void MainWinRover::on_pushButton_ClearInfoMessage_clicked()
     extUIThings.label_LastInfoMessage->setText("");
 }
 
+void MainWindow::on_pushButton_StartThread_RPLidar_clicked()
+{
+    if (!thread_RPLidar)
+    {
+        thread_RPLidar = new RPLidarThread(ui->lineEdit_SerialPort_RPLidar->text(), ui->spinBox_SerialSpeed_RPLidar->value(), ui->spinBox_MotorPWM_RPLidar->value());
+        if (ui->checkBox_SuspendThread_RPLidar->isChecked())
+        {
+            thread_RPLidar->suspend();
+        }
+
+        QObject::connect(thread_RPLidar, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_InfoMessage(const QString&)));
+
+        QObject::connect(thread_RPLidar, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_WarningMessage(const QString&)));
+
+        QObject::connect(thread_RPLidar, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_ErrorMessage(const QString&)));
+
+        QObject::connect(thread_RPLidar, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                         this, SLOT(thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+
+        messageMonitorForm_RPLidar->connectRPLidarThreadSlots(thread_RPLidar);
+        lidarChartForm->connectRPLidarThreadSlots(thread_RPLidar);
+
+        thread_RPLidar->start();
+
+        ui->lineEdit_SerialPort_RPLidar->setEnabled(false);
+        ui->spinBox_SerialSpeed_RPLidar->setEnabled(false);
+        ui->spinBox_MotorPWM_RPLidar->setEnabled(false);
+        ui->pushButton_StartThread_RPLidar->setEnabled(false);
+        ui->pushButton_TerminateThread_RPLidar->setEnabled(true);
+    }
+
+
+}
+
+void MainWindow::on_pushButton_TerminateThread_RPLidar_clicked()
+{
+    if (thread_RPLidar)
+    {
+        thread_RPLidar->requestTerminate();
+
+        thread_RPLidar->wait(5000);
+
+        QObject::disconnect(thread_RPLidar, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_InfoMessage(const QString&)));
+
+        QObject::disconnect(thread_RPLidar, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_WarningMessage(const QString&)));
+
+        QObject::disconnect(thread_RPLidar, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(thread_RPLidar_ErrorMessage(const QString&)));
+
+        QObject::disconnect(thread_RPLidar, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                         this, SLOT(thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+
+        messageMonitorForm_RPLidar->disconnectRPLidarThreadSlots(thread_RPLidar);
+        lidarChartForm->disconnectRPLidarThreadSlots(thread_RPLidar);
+
+        delete thread_RPLidar;
+        thread_RPLidar = nullptr;
+
+        ui->lineEdit_SerialPort_RPLidar->setEnabled(true);
+        ui->spinBox_SerialSpeed_RPLidar->setEnabled(true);
+        ui->spinBox_MotorPWM_RPLidar->setEnabled(true);
+        ui->pushButton_StartThread_RPLidar->setEnabled(true);
+        ui->pushButton_TerminateThread_RPLidar->setEnabled(false);
+    }
+}
+
+
+void MainWindow::thread_RPLidar_InfoMessage(const QString& infoMessage)
+{
+    ui->label_LastInfoMessage_RPLidar->setText(infoMessage);
+}
+
+void MainWindow::thread_RPLidar_ErrorMessage(const QString& errorMessage)
+{
+    ui->label_LastErrorMessage_RPLidar->setText(errorMessage);
+}
+
+void MainWindow::thread_RPLidar_WarningMessage(const QString& warningMessage)
+{
+    ui->label_LastWarningMessage_RPLidar->setText(warningMessage);
+}
+
+void MainWindow::thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& distanceItems, qint64 startUptime, qint64 endUptime)
+{
+    (void) distanceItems;
+    (void) startUptime;
+    (void) endUptime;
+
+    messageCounter_RPLidar_Rounds++;
+    ui->label_RoundCount_RPLidar->setText(QString::number(messageCounter_RPLidar_Rounds));
+}
+
+void MainWindow::on_pushButton_ShowMessageWindow_RPLidar_clicked()
+{
+    messageMonitorForm_RPLidar->show();
+    messageMonitorForm_RPLidar->raise();
+    messageMonitorForm_RPLidar->activateWindow();
+}
+
+void MainWindow::on_pushButton_ShowLidarChartWindow_RPLidar_clicked()
+{
+    lidarChartForm->show();
+    lidarChartForm->raise();
+    lidarChartForm->activateWindow();
+}
+
+
+void MainWindow::on_pushButton_ClearRoundCounter_RPLidar_clicked()
+{
+    messageCounter_RPLidar_Rounds = 0;
+    ui->label_RoundCount_RPLidar->setText(QString::number(messageCounter_RPLidar_Rounds));
+}
+
+void MainWindow::on_pushButton_ClearErrorMessage_RPLidar_clicked()
+{
+    ui->label_LastErrorMessage_RPLidar->setText("");
+}
+
+void MainWindow::on_pushButton_ClearWarningMessage_RPLidar_clicked()
+{
+    ui->label_LastWarningMessage_RPLidar->setText("");
+}
+
+void MainWindow::on_pushButton_ClearInfoMessage_RPLidar_clicked()
+{
+    ui->label_LastInfoMessage_RPLidar->setText("");
+}
+
+void MainWindow::on_checkBox_SuspendThread_RPLidar_stateChanged(int arg1)
+{
+    if (thread_RPLidar)
+    {
+        if (arg1 == Qt::Checked)
+        {
+            thread_RPLidar->suspend();
+        }
+        else
+        {
+            thread_RPLidar->resume();
+        }
+    }
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    close();
+}
+
+
+
+void MainWindow::on_actionLicenses_triggered()
+{
+    licencesForm->show();
+    licencesForm->raise();
+    licencesForm->activateWindow();
+}

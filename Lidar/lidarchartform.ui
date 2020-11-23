@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LidarChartForm</class>
+ <widget class="QWidget" name="LidarChartForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1102</width>
+    <height>634</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Lidar chart</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+   <item>
+    <widget class="LidarChartView" name="chartView"/>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget_Right">
+     <property name="minimumSize">
+      <size>
+       <width>350</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="tab_Settings">
+      <attribute name="title">
+       <string>Settings</string>
+      </attribute>
+      <widget class="QLabel" name="label_RoundsToSkip">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>241</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Rounds to skip between handled ones:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QSpinBox" name="spinBox_Settings_RoundsToSkip">
+       <property name="geometry">
+        <rect>
+         <x>261</x>
+         <y>10</y>
+         <width>71</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="maximum">
+        <number>1000</number>
+       </property>
+      </widget>
+      <widget class="QListWidget" name="listWidget_SeriesVisibility">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>321</width>
+         <height>192</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>211</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Series visibility:</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tab_Data">
+      <attribute name="title">
+       <string>Data &amp;&amp; controls</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3" stretch="10,8">
+       <item>
+        <widget class="QGroupBox" name="groupBox_Statistics">
+         <property name="title">
+          <string>Statistics (sums/averages after reset)</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QTreeWidget" name="treeWidget_Statistics">
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
+            <property name="itemsExpandable">
+             <bool>false</bool>
+            </property>
+            <property name="headerHidden">
+             <bool>false</bool>
+            </property>
+            <property name="expandsOnDoubleClick">
+             <bool>false</bool>
+            </property>
+            <property name="columnCount">
+             <number>2</number>
+            </property>
+            <attribute name="headerDefaultSectionSize">
+             <number>200</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string notr="true">Name</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string notr="true">Value</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_ResetStatistics">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_LastRound">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Last round received (instantaneous values)</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QTreeWidget" name="treeWidget_LastRound">
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
+            <property name="itemsExpandable">
+             <bool>false</bool>
+            </property>
+            <property name="headerHidden">
+             <bool>false</bool>
+            </property>
+            <property name="expandsOnDoubleClick">
+             <bool>false</bool>
+            </property>
+            <property name="columnCount">
+             <number>2</number>
+            </property>
+            <attribute name="headerDefaultSectionSize">
+             <number>200</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string notr="true">Name</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string notr="true">Value</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LidarChartView</class>
+   <extends>QGraphicsView</extends>
+   <header>lidarchartview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

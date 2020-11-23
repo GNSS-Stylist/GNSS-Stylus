@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport
+QT       += core gui serialport charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
@@ -26,7 +26,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += EIGEN_DONT_VECTORIZE
 DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
-INCLUDEPATH += $$PWD/Eigen
+INCLUDEPATH += $$PWD/Eigen $$PWD/Lidar
 
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -42,11 +42,20 @@ win32:LIBS += -l"ws2_32"
 SOURCES += \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
+    Lidar/lidarchartform.cpp \
+    Lidar/lidarchartview.cpp \
+    licensesform.cpp \
     losolver.cpp \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
     ntripthread.cpp \
+    Lidar/rplidar_sdk/src/arch/rplidarplatforms.cpp \
+    Lidar/rplidar_sdk/src/hal/thread.cpp \
+    Lidar/rplidar_sdk/src/rplidar_driver.cpp \
+    Lidar/rplidarmessagemonitorform.cpp \
+    Lidar/rplidarplausibilityfilter.cpp \
+    Lidar/rplidarthread.cpp \
     ubloxdatastreamprocessor.cpp \
     serialthread.cpp \
     messagemonitorform.cpp \
@@ -58,10 +67,16 @@ SOURCES += \
 HEADERS += \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
+    Lidar/lidarchartform.h \
+    Lidar/lidarchartview.h \
+    licensesform.h \
     losolver.h \
         mainwindow.h \
     gnssmessage.h \
     ntripthread.h \
+    Lidar/rplidarmessagemonitorform.h \
+    Lidar/rplidarplausibilityfilter.h \
+    Lidar/rplidarthread.h \
     ubloxdatastreamprocessor.h \
     serialthread.h \
     messagemonitorform.h \
@@ -72,11 +87,14 @@ HEADERS += \
 
 FORMS += \
     laserrangefinder20hzv2messagemonitorform.ui \
+    Lidar/lidarchartform.ui \
+    licensesform.ui \
         mainwindow.ui \
     messagemonitorform.ui \
     relposnedform.ui \
     essentialsform.ui \
-    postprocessform.ui
+    postprocessform.ui \
+    Lidar/rplidarmessagemonitorform.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
