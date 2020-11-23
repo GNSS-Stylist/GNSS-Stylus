@@ -34,12 +34,10 @@
 
 #pragma once
 
-#include "../src/hal/types.h"
-
 #if (defined(_MSC_FULL_VER) && defined(_WIN32))
 //#ifdef _WIN32
 //fake stdint.h for VC only
-//Then limit this to VC only (like ifdeffing _MSC_FULL_VER in addition to _WIN32)?
+//Then limit this to VC only (like ifdeffing _MSC_FULL_VER in addition to _WIN32 (stdint.h works with MinGW))?
 
 typedef signed   char     int8_t;
 typedef unsigned char     uint8_t;
@@ -73,7 +71,7 @@ typedef uint32_t       _u32;
 typedef int64_t        _s64;
 typedef uint64_t       _u64;
 
-#define __small_endian
+// #define __small_endian // Not used anywhere(?) (And this is little endian system anyway (and quick googling didn't find this used anywhere else than RPLidar's files...))
 
 #ifndef __GNUC__
 #define __attribute__(x)
