@@ -251,6 +251,18 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_All.setFileMode(QFileDialog::ExistingFiles);
 
+
+        fileDialog_Lidar.setFileMode(QFileDialog::ExistingFiles);
+
+        QStringList lidarFilters;
+
+        syncFilters << "Lidar-files (*.lidar)"
+                << "Any files (*)";
+
+        fileDialog_Lidar.setNameFilters(lidarFilters);
+
+        fileDialog_All.setFileMode(QFileDialog::ExistingFiles);
+
         QStringList allFilesFilters;
 
         allFilesFilters << "UBX log files (*.ubx)"
@@ -1591,6 +1603,11 @@ void PostProcessingForm::handleReplay(bool firstRound)
             emit replayData_Distance(nextUptime_ms, distances[nextUptime_ms]);
         }
 
+        if (lidarRounds.find(nextUptime_ms) != lidarRounds.end())
+        {
+            emit replayData_Lidar(lidarRounds[nextUptime_ms].distanceItems, lidarRounds[nextUptime_ms].startTime, lidarRounds[nextUptime_ms].endTime);
+        }
+
         if (tags.find(nextUptime_ms) != tags.end())
         {
             QList<Tag> tagItems = tags.values(nextUptime_ms);
@@ -1757,6 +1774,11 @@ qint64 PostProcessingForm::getFirstUptime()
         firstUptime = distances.firstKey();
     }
 
+    if ((!lidarRounds.isEmpty()) && (lidarRounds.firstKey() < firstUptime))
+    {
+        firstUptime = lidarRounds.firstKey();
+    }
+
     if ((!tags.isEmpty()) && (tags.firstKey() < firstUptime))
     {
         firstUptime = tags.firstKey();
@@ -1785,6 +1807,11 @@ qint64 PostProcessingForm::getLastUptime()
     if ((!distances.isEmpty()) && (distances.lastKey() > lastUptime))
     {
         lastUptime = distances.lastKey();
+    }
+
+    if ((!lidarRounds.isEmpty()) && (lidarRounds.lastKey() > lastUptime))
+    {
+        lastUptime = lidarRounds.lastKey();
     }
 
     if ((!tags.isEmpty()) && (tags.lastKey() > lastUptime))
@@ -1818,6 +1845,12 @@ qint64 PostProcessingForm::getNextUptime(const qint64 uptime)
             ((distances.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
     {
         nextUptime = distances.upperBound(uptime).key();
+    }
+
+    if ((!lidarRounds.empty()) && (lidarRounds.upperBound(uptime) != lidarRounds.end()) &&
+            ((lidarRounds.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
+    {
+        nextUptime = lidarRounds.upperBound(uptime).key();
     }
 
     if (nextUptime == std::numeric_limits<qint64>::max())
@@ -3306,6 +3339,7 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
                 { ".tags", "tags (""single extension""" },
 
                 { ".distances", "distances" },
+                { ".lidar", "lidar" },
 
                 { ".sync", "sync" },
                 { ".transformation", "transformation" },
@@ -3352,6 +3386,9 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
 
         fileNames = getAppendedFileNames(baseFileNames, ".distances");
         addDistanceData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".lidar");
+        addLidarData(fileNames);
 
         fileNames = getAppendedFileNames(baseFileNames, ".sync");
         addSyncData(fileNames);
@@ -4077,4 +4114,148 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 
         addLogLine("Location/orientation script generated. Number of rows: " + QString::number(itemCount));
     }
+}
+
+void PostProcessingForm::addLidarData(const QStringList& fileNames)
+{
+    addLogLine("Reading lidar data...");
+
+    for (const auto& fileName : fileNames)
+    {
+        QFileInfo fileInfo(fileName);
+        addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+        QFile lidarFile;
+        lidarFile.setFileName(fileName);
+        if (lidarFile.open(QIODevice::ReadOnly))
+        {
+            QDataStream dataStream(&lidarFile);
+
+            int64_t fileLength = lidarFile.size();
+
+/*            if (fileLength > 0x7FFFFFFFLL)
+            {
+                addLogLine("Error: File \"" + fileInfo.fileName() + "\" is too big. Skipped.");
+                lidarFile.close();
+                continue;
+            }
+*/
+
+            qint64 numberOfSamples = 0;
+            unsigned int numberOfRounds = 0;
+            unsigned int parseErrors = 0;
+
+            while (!dataStream.atEnd())
+            {
+                if (parseErrors >= 100)
+                {
+                    addLogLine("Warning:  Maximum number of parse errors (100) reached. Your file is probably completely broken. skipping the end of fle");
+                    break;
+                }
+
+                if (fileLength - lidarFile.pos() < (unsigned int)(2 * sizeof(unsigned int)))
+                {
+                    addLogLine("Warning: Unexpected end of file (can not read header).");
+                    break;
+                }
+
+                unsigned int dataType;
+                unsigned int dataChunkLength;
+
+                dataStream >> dataType >> dataChunkLength;
+
+                if (lidarFile.pos() + dataChunkLength > fileLength)
+                {
+                    addLogLine("Warning: Unexpected end of file (chunk extends over the end of file).");
+                    break;
+                }
+
+                switch (dataType)
+                {
+                case 1:
+                {
+                    if (dataChunkLength < sizeof(unsigned int))
+                    {
+                        addLogLine("Warning: Data chunk length less than the minimum. Skipping chunk.");
+                        dataStream.skipRawData(dataChunkLength);
+                        parseErrors++;
+                        break;
+                    }
+
+                    unsigned int numOfItems;
+
+                    dataStream >> numOfItems;
+
+                    if (dataChunkLength != 2 * sizeof(qint64) + numOfItems * 3 * sizeof(float))
+                    {
+                        addLogLine("Warning: Data chunk length doesn't match with the number of items. Skipping chunk.");
+                        dataStream.skipRawData(dataChunkLength);
+                        parseErrors++;
+                        break;
+                    }
+
+                    qint64 startTime;
+                    qint64 endTime;
+                    LidarRound newRound;
+
+                    dataStream >> startTime >> endTime;
+
+                    newRound.startTime = startTime;
+                    newRound.endTime = endTime;
+
+                    for (unsigned int i = 0; i < numOfItems; i++)
+                    {
+                        RPLidarThread::DistanceItem newItem;
+                        dataStream >> newItem.distance >> newItem.angle >> newItem.quality;
+                        newRound.distanceItems.push_back(newItem);
+                        numberOfSamples++;
+                    }
+
+                    lidarRounds[endTime] = newRound;
+
+                    numberOfRounds++;
+                    break;
+                }
+                default:
+                    addLogLine("Warning: Unsupported data type (" + QString::number(dataType) + "). Skipping chunk.");
+                    dataStream.skipRawData(dataChunkLength);
+                    parseErrors++;
+                    break;
+
+                }
+            }
+
+
+            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid lidar rounds: " +
+                       QString::number(numberOfRounds) +
+                       ", samples: " + QString::number(numberOfSamples));
+
+        }
+        else
+        {
+            addLogLine("Error: Can not open file \"" + fileInfo.fileName() + "\". Skipped.");
+        }
+    }
+    addLogLine("Files read.");
+}
+
+void PostProcessingForm::on_pushButton_AddLidarData_clicked()
+{
+    if (fileDialog_Lidar.exec())
+    {
+        QStringList fileNames = fileDialog_Lidar.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Lidar.setDirectory(QFileInfo(fileNames[0]).path());
+        }
+
+        addLidarData(fileNames);
+    }
+}
+
+void PostProcessingForm::on_pushButton_ClearLidarData_clicked()
+{
+    lidarRounds.clear();
+    addLogLine("Lidar data cleared.");
 }

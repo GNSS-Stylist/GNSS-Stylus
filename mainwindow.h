@@ -158,6 +158,9 @@ private slots:
     void thread_RPLidar_WarningMessage(const QString& warningMessage);
     void thread_RPLidar_InfoMessage(const QString& infoMessage);
     void thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
+    void replay_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
+
+    void ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int roverId);
 
     void on_pushButton_StartThread_Base_Serial_clicked();
 
@@ -202,8 +205,6 @@ private slots:
     void on_MainWindow_destroyed();
 
     void on_doubleSpinBox_Distance_Constant_valueChanged(double arg1);
-
-    void ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int roverId);
 
     void on_pushButton_StartThread_RPLidar_clicked();
 

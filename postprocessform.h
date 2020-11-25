@@ -36,6 +36,7 @@
 #include "ubloxdatastreamprocessor.h"
 #include "Eigen/Geometry"
 #include "losolver.h"
+#include "Lidar/rplidarthread.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -160,6 +161,10 @@ private slots:
 
     void on_pushButton_LOSolver_GenerateScript_clicked();
 
+    void on_pushButton_AddLidarData_clicked();
+
+    void on_pushButton_ClearLidarData_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -222,6 +227,16 @@ private:
 
     Rover rovers[3];
 
+    class LidarRound
+    {
+    public:
+        qint64 startTime;
+        qint64 endTime;
+        QVector<RPLidarThread::DistanceItem> distanceItems;
+    };
+
+    QMap<qint64, LidarRound> lidarRounds;
+
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;
     QFileDialog fileDialog_Tags;
@@ -229,6 +244,7 @@ private:
     QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_Distances;
     QFileDialog fileDialog_Sync;
+    QFileDialog fileDialog_Lidar;
     QFileDialog fileDialog_All;
     QFileDialog fileDialog_Transformation_Load;
     QFileDialog fileDialog_Transformation_Save;
@@ -253,6 +269,7 @@ private:
     void addTagData(const QStringList& fileNames);
     void addDistanceData(const QStringList& fileNames);
     void addSyncData(const QStringList& fileNames);
+    void addLidarData(const QStringList& fileNames);
     void addAllData(const bool includeTransformation);
 
     void loadTransformation(const QString fileName);
@@ -278,6 +295,8 @@ signals:
     void replayData_Tag(const qint64, const PostProcessingForm::Tag&); //!< New tag
 
     void replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&); //!< New distance
+
+    void replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
 };
 
 #endif // POSTPROCESSFORM_H

@@ -29,6 +29,7 @@
 #include <QListWidgetItem>
 
 #include "rplidarthread.h"
+#include "../postprocessform.h"
 
 namespace Ui {
 class LidarChartForm;
@@ -43,20 +44,33 @@ public:
     ~LidarChartForm();
 
     /**
-     * @brief Connects slots from LaserRangeFinder20HzV2SerialThread
-     * @param serThread SerialThread to connect signals from
+     * @brief Connects slots from RPLidarThread
+     * @param rpLidarThread RPLidarThread to connect signals from
      */
     void connectRPLidarThreadSlots(RPLidarThread* rpLidarThread);
 
     /**
-     * @brief Disconnects slots from SerialThread
-     * @param serThread SerialThread to disconnect signals from
+     * @brief Disconnects slots from RPLidarThread
+     * @param rpLidarThread RPLidarThread to disconnect signals from
      */
     void disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread);
 
+    /**
+     * @brief Connects slots from PostProcessingForm
+     * @param postProcessingForm PostProcessingForm to connect signals from
+     */
+    void connectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm);
+
+    /**
+     * @brief Disconnects slots from PostProcessingForm
+     * @param postProcessingForm PostProcessingForm to disconnect signals from
+     */
+    void disconnectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm);
+
 private slots:
 
-    void distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
+    void distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
+    void distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
 
     void on_pushButton_ResetStatistics_clicked();
 
@@ -122,7 +136,7 @@ private:
 
     unsigned int skipCounter = 1e9;
 
-
+    void distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime, const bool lagDetection);
 
     void updateChartData(void);
     void updateStatisticFields(void);

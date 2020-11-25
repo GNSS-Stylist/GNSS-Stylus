@@ -38,6 +38,7 @@
 #include "postprocessform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "losolver.h"
+#include "Lidar/rplidarthread.h"
 
 namespace Ui {
 class EssentialsForm;
@@ -89,6 +90,9 @@ public:
     void connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread); //!< Connects signals from "Laser range finder 20 Hz V2"-thread
     void disconnectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread); //!< Disconnects signals from "Laser range finder 20 Hz V2"-thread
 
+    void connectRPLidarThreadSlots(RPLidarThread* rpLidarThread); //!< Connects slots from LaserRangeFinder20HzV2SerialThread
+    void disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread); //!< Disconnects slots from SerialThread
+
 public slots:
     void on_distanceReceived(const EssentialsForm::DistanceItem& item);
     void on_measuredDistanceReceived(const double& distance, qint64 frameStartTime, qint64 frameEndTime);
@@ -127,6 +131,11 @@ private slots:
     void on_pushButton_LoadAntennaLocations_clicked();
 
     void on_pushButton_SaveAntennaLocations_clicked();
+
+    void on_lidarTimeoutTimerTimeout();
+
+    void distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
+
 
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
@@ -219,6 +228,7 @@ private:
     QFile logFile_Distances;        //!< Log file for distance measurements
     QFile logFile_Distances_Unfiltered;        //!< Log file for distance measurements (unfiltered)
     QFile logFile_Sync;             //!< Log file for syncing data (RELPOSNED-messages)
+    QFile logFile_Lidar;            //!< Log file for lidar data (binary)
 
     bool treeItemsCreated = false;  //!< Textual items (name/value pairs) created?
     bool loggingActive = 0;         //!< All log files open and logging active?
@@ -284,6 +294,8 @@ private:
     QTreeWidgetItem *treeItem_Pitch_LOSolver;
     QTreeWidgetItem *treeItem_Roll_LOSolver;
 
+    QTreeWidgetItem *treeItem_LidarRoundFrequency_LOSolver;
+
 
     void handleRELPOSNEDQueues(void);   //!< Handles also syncing of rover RELPOSNED-messages
     void closeAllLogFiles(void);
@@ -323,6 +335,10 @@ private:
     LOSolver loSolver;
 
     LocationOrientation loSolverLocationOrientation;
+
+    float lidarRoundFrequency = 0;
+    bool lidarTimeout = true;   //!< Lidar is in timeout (no rounds received in 1s?)
+    QTimer lidarTimeoutTimer;
 };
 
 #endif // ESSENTIALSFORM_H

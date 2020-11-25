@@ -112,6 +112,10 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     fileDialog_AntennaLocations_Save.setDefaultSuffix("AntennaLocations");
 
     fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
+
+    lidarTimeoutTimer.setSingleShot(true);
+
+    connect(&lidarTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_lidarTimeoutTimerTimeout);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -161,6 +165,7 @@ void EssentialsForm::closeAllLogFiles(void)
     logFile_Distances.close();
     logFile_Distances_Unfiltered.close();
     logFile_Sync.close();
+    logFile_Lidar.close();
 }
 
 void EssentialsForm::on_pushButton_StartLogging_clicked()
@@ -198,6 +203,7 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     logFile_Distances.setFileName(fileNameBeginning + ".distances");
     logFile_Distances_Unfiltered.setFileName(fileNameBeginning + "_Unfiltered.distances");
     logFile_Sync.setFileName(fileNameBeginning + ".sync");
+    logFile_Lidar.setFileName(fileNameBeginning + ".lidar");
 
     QIODevice::OpenMode openMode = QIODevice::WriteOnly;
 
@@ -223,7 +229,8 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
             logFile_Tags.exists() ||
             logFile_Distances.exists() ||
             logFile_Distances_Unfiltered.exists() ||
-            logFile_Sync.exists())
+            logFile_Sync.exists() ||
+            logFile_Lidar.exists())
     {
         QMessageBox msgBox;
         msgBox.setText("One or more of the files already exists.");
@@ -295,6 +302,7 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     logFilesOpen = logFilesOpen && logFile_Distances.open(openMode| QIODevice::Text);
     logFilesOpen = logFilesOpen && logFile_Distances_Unfiltered.open(openMode| QIODevice::Text);
     logFilesOpen = logFilesOpen && logFile_Sync.open(openMode| QIODevice::Text);
+    logFilesOpen = logFilesOpen && logFile_Lidar.open(openMode);
 
     if (!logFilesOpen)
     {
@@ -665,6 +673,9 @@ void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessi
 
     QObject::connect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
                      this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
+
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
 }
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
@@ -677,6 +688,9 @@ void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProce
 
     QObject::disconnect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
                      this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
+
+    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
 }
 
 void EssentialsForm::connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
@@ -1198,6 +1212,9 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_Roll_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
         treeItem_Roll_LOSolver->setText(0, "Roll");
 
+        treeItem_LidarRoundFrequency_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_LidarRoundFrequency_LOSolver->setText(0, "Lidar data frequency");
+
         treeItemsCreated = true;
     }
 
@@ -1411,7 +1428,17 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_Heading_LOSolver->setBackground(1, brush_Invalid);
         treeItem_Pitch_LOSolver->setBackground(1, brush_Invalid);
         treeItem_Roll_LOSolver->setBackground(1, brush_Invalid);
+    }
 
+    if (lidarTimeout)
+    {
+        treeItem_LidarRoundFrequency_LOSolver->setText(1, "0");
+        treeItem_LidarRoundFrequency_LOSolver->setBackground(1, brush_Invalid);
+    }
+    else
+    {
+        treeItem_LidarRoundFrequency_LOSolver->setText(1, QString::number(lidarRoundFrequency, 'f', 1));
+        treeItem_LidarRoundFrequency_LOSolver->setBackground(1, brush_Valid);
     }
 }
 
@@ -1970,3 +1997,70 @@ void EssentialsForm::on_pushButton_SaveAntennaLocations_clicked()
     }
 
 }
+
+void EssentialsForm::connectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
+{
+    QObject::connect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+}
+
+void EssentialsForm::disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
+{
+    QObject::disconnect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+}
+
+void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)
+{
+    (void) data;
+
+    int timeDiff = endTime - startTime;
+
+    if (timeDiff > 0)
+    {
+        lidarTimeout = false;
+        lidarTimeoutTimer.start(1000);
+
+        lidarRoundFrequency = 1000. / timeDiff;
+    }
+    else
+    {
+        // Indicate strange times as timeout
+        lidarTimeout = true;
+        lidarTimeoutTimer.stop();
+        lidarRoundFrequency = 0;
+    }
+
+    if (logFile_Lidar.isOpen())
+    {
+        // Log as binary data. This already makes about
+        // 3600 * 16000 * 3 * 4 + 3600 × 10 * (3 * 4 + 2* 8) = 692 208 000 bytes per hour
+
+        QDataStream dataStream(&logFile_Lidar);
+
+        unsigned int dataType = 1;  // Datatype for possible future extensions (like compression?)
+        unsigned int numOfItems = data.size();
+        unsigned int dataChunkLength = 2 * sizeof(qint64) + numOfItems * 3 * sizeof(float);
+
+        dataStream << dataType << dataChunkLength << numOfItems << startTime << endTime;
+
+        for (int i = 0; i < data.size(); i++)
+        {
+            dataStream << data[i].distance << data[i].angle << data[i].quality;
+        }
+    }
+
+    updateTreeItems();
+}
+
+
+void EssentialsForm::on_lidarTimeoutTimerTimeout()
+{
+    lidarTimeout = true;
+    updateTreeItems();
+}
+
+
+
+
+

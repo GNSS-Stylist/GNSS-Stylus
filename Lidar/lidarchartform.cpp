@@ -191,17 +191,38 @@ LidarChartForm::~LidarChartForm()
 void LidarChartForm::connectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
     QObject::connect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+                     this, SLOT(distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
 }
 
 void LidarChartForm::disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
     QObject::disconnect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+                     this, SLOT(distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
 }
 
+void LidarChartForm::connectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm)
+{
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+}
 
-void LidarChartForm::distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)
+void LidarChartForm::disconnectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm)
+{
+    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+}
+
+void LidarChartForm::distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)
+{
+    distanceRoundReceived(data, startTime, endTime, true);
+}
+
+void LidarChartForm::distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)
+{
+    distanceRoundReceived(data, startTime, endTime, false);
+}
+
+void LidarChartForm::distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime, const bool lagDetection)
 {
     totalRounds++;
     totalSamples += data.size();
@@ -213,6 +234,20 @@ void LidarChartForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
     timer.start();
     qint64 uptime = timer.msecsSinceReference();
 
+    if (statisticsStartTime == 0)
+    {
+        // First round or statistics reset -> Store starttime and clear counters
+
+        totalRounds = 0;
+        totalSamples = 0;
+
+        updateStatisticFields();
+
+        statisticsStartTime = uptime;
+        skipCounter = 1e9;  // Update next round
+        return;
+    }
+
     if (skipCounter > (unsigned int)ui->spinBox_Settings_RoundsToSkip->value())
     {
         skipCounter = 0;
@@ -221,7 +256,7 @@ void LidarChartForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
         lastRoundStartUptime = startTime;
         lastRoundEndUptime = endTime;
 
-        if ((uptime - endTime) < 100)
+        if (((uptime - endTime) < 100) || (!lagDetection))
         {
             lastRoundDistanceItems = data;
             updateChartData();
@@ -233,21 +268,10 @@ void LidarChartForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
             totalSkippedRounds_LagPrevention++;
         }
 
-        if (statisticsStartTime == 0)
-        {
-            // First ever round received
-            statisticsStartTime = lastRoundStartUptime;
-            totalHandledRounds = 0;
-            totalHandledSamples = 0;
-        }
-        else
-        {
-            // Start incrementing these after first round to make frequency calculations correct
-            // (Time counting starts after the first round received).
-            totalHandledRounds++;
-            totalHandledSamples += data.size();
-        }
-
+        // Start incrementing these after first round to make frequency calculations correct
+        // (Time counting starts after the first round received).
+        totalHandledRounds++;
+        totalHandledSamples += data.size();
     }
     else
     {
@@ -334,7 +358,7 @@ void LidarChartForm::updateChartData(void)
     const QBrush brush_Indeterminate = QBrush(QColor(255,255,0));
     const QBrush brush_Invalid = QBrush(QColor(255,128,128));
 
-    if ((lastRoundReceivedUptime != 0) && (lastRoundEndUptime !=0) && (lastRoundEndUptime != 0) &&
+    if ((lastRoundReceivedUptime != 0) && (lastRoundStartUptime !=0) && (lastRoundEndUptime != 0) &&
             (lastRoundEndUptime > lastRoundStartUptime))
     {
         treeItem_LastRound_Samples->setText(1, QString::number(lastRoundDistanceItems.size()));
@@ -370,7 +394,7 @@ void LidarChartForm::updateChartData(void)
 
 void LidarChartForm::updateStatisticFields(void)
 {
-    if (totalRounds != 0)
+    if ((totalRounds != 0) && (statisticsStartTime != 0))
     {
         QElapsedTimer timer;
         timer.start();
@@ -391,7 +415,7 @@ void LidarChartForm::updateStatisticFields(void)
         QString samplesPerSecondAvgString = "N/A";
         QString roundsPerSecondAvgString = "N/A";
 
-        if (uptime - statisticsStartTime > 0)
+        if ((statisticsStartTime != 0) && (uptime - statisticsStartTime > 0))
         {
             qint64 elapsed = uptime - statisticsStartTime;
 
@@ -430,10 +454,6 @@ void LidarChartForm::updateStatisticFields(void)
 
 void LidarChartForm::on_pushButton_ResetStatistics_clicked()
 {
-    QElapsedTimer timer;
-    timer.start();
-    qint64 uptime = timer.msecsSinceReference();
-
     totalRounds = 0;
     totalHandledRounds = 0;
     totalSkippedRounds_Deliberate = 0;
@@ -441,8 +461,8 @@ void LidarChartForm::on_pushButton_ResetStatistics_clicked()
 
     totalSamples = 0;
     totalHandledSamples = 0;
-    statisticsStartTime = statisticsEndTime;
-    statisticsEndTime = uptime;
+    statisticsStartTime = 0;
+    statisticsEndTime = 0;
     totalDiscardedSamples_Quality = 0;
     totalDiscardedSamples_Filtering = 0;
     totalChartUpdateTime_us = 0;

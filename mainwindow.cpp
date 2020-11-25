@@ -148,7 +148,11 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
                      this, SLOT(ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int)));
 
+    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
+                     this, SLOT(replay_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+
     essentialsForm->connectPostProcessingSlots(postProcessingForm);
+    lidarChartForm->connectRPLidarPostProcessingSlots(postProcessingForm);
 
     QObject::connect(&ubloxDataStreamProcessor_Base_Serial, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
                      this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&)));
@@ -1107,6 +1111,7 @@ void MainWindow::on_pushButton_StartThread_RPLidar_clicked()
 
         messageMonitorForm_RPLidar->connectRPLidarThreadSlots(thread_RPLidar);
         lidarChartForm->connectRPLidarThreadSlots(thread_RPLidar);
+        essentialsForm->connectRPLidarThreadSlots(thread_RPLidar);
 
         thread_RPLidar->start();
 
@@ -1142,6 +1147,7 @@ void MainWindow::on_pushButton_TerminateThread_RPLidar_clicked()
 
         messageMonitorForm_RPLidar->disconnectRPLidarThreadSlots(thread_RPLidar);
         lidarChartForm->disconnectRPLidarThreadSlots(thread_RPLidar);
+        essentialsForm->disconnectRPLidarThreadSlots(thread_RPLidar);
 
         delete thread_RPLidar;
         thread_RPLidar = nullptr;
@@ -1178,6 +1184,11 @@ void MainWindow::thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThrea
 
     messageCounter_RPLidar_Rounds++;
     ui->label_RoundCount_RPLidar->setText(QString::number(messageCounter_RPLidar_Rounds));
+}
+
+void MainWindow::replay_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& distanceItems, qint64 startUptime, qint64 endUptime)
+{
+    thread_RPLidar_DistanceRoundReceived(distanceItems, startUptime, endUptime);
 }
 
 void MainWindow::on_pushButton_ShowMessageWindow_RPLidar_clicked()
