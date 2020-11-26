@@ -240,16 +240,19 @@ private:
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;
     QFileDialog fileDialog_Tags;
-    QFileDialog fileDialog_PointCloud;
-    QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_Distances;
     QFileDialog fileDialog_Sync;
     QFileDialog fileDialog_Lidar;
     QFileDialog fileDialog_All;
+
     QFileDialog fileDialog_Transformation_Load;
     QFileDialog fileDialog_Transformation_Save;
+
     QFileDialog fileDialog_AntennaLocations_Load;
     QFileDialog fileDialog_AntennaLocations_Save;
+
+    QFileDialog fileDialog_PointCloud;
+    QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_LOSolver_Script;
 
     // Replay:
@@ -287,6 +290,8 @@ private:
     void loadAntennaLocations(const QString fileName);
 
     bool updateLOSolverReferencePointLocations(LOSolver& loSolver);
+
+    void syncLogFileDialogDirectories(const QString dir, const bool savesetting);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover

@@ -200,6 +200,18 @@ PostProcessingForm::~PostProcessingForm()
 
     settings.setValue("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value());
 
+    // NOTE: Directories to log files are saved in syncLogFileDialogDirectories-function "on the fly"
+
+    settings.setValue("PostProcessing_Directory_Dialog_Transformation_Load", fileDialog_Transformation_Load.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_Transformation_Save", fileDialog_Transformation_Save.directory().path());
+
+    settings.setValue("PostProcessing_Directory_Dialog_AntennaLocations_Load", fileDialog_AntennaLocations_Load.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_AntennaLocations_Save", fileDialog_AntennaLocations_Save.directory().path());
+
+    settings.setValue("PostProcessing_Directory_Dialog_PointCloud", fileDialog_PointCloud.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_Stylus_MovieScript", fileDialog_Stylus_MovieScript.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_LOSolver_Script", fileDialog_LOSolver_Script.directory().path());
+
     delete ui;
 }
 
@@ -270,6 +282,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
                 << "Tag-files (*.tags)"
                 << "Txt-files (*.txt)"
                 << "Sync-files (*.sync)"
+                << "lidar-files (*.lidar)"
                 << "Any files (*)";
 
         fileDialog_All.setNameFilters(allFilesFilters);
@@ -336,6 +349,21 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         onShowInitializationsDone = true;
     }
+
+    QSettings settings;
+
+    fileDialog_All.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Logs").toString()));
+
+    syncLogFileDialogDirectories(fileDialog_All.directory().path(), false);
+    fileDialog_Transformation_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Transformation_Load").toString()));
+    fileDialog_Transformation_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Transformation_Save").toString()));
+
+    fileDialog_AntennaLocations_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_AntennaLocations_Load").toString()));
+    fileDialog_AntennaLocations_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_AntennaLocations_Save").toString()));
+
+    fileDialog_PointCloud.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_PointCloud").toString()));
+    fileDialog_Stylus_MovieScript.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Stylus_MovieScript").toString()));
+    fileDialog_LOSolver_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_LOSolver_Script").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -391,6 +419,8 @@ void PostProcessingForm::addRELPOSNEDData_Rover(const unsigned int roverId)
             }
 
             addRELPOSNEDData_Rover(fileNames, roverId);
+
+            syncLogFileDialogDirectories(fileDialog_UBX.directory().path(), true);
         }
     }
 }
@@ -910,6 +940,8 @@ void PostProcessingForm::on_pushButton_AddTagData_clicked()
         }
 
         addTagData(fileNames);
+
+        syncLogFileDialogDirectories(fileDialog_Tags.directory().path(), true);
     }
 
 }
@@ -2950,6 +2982,8 @@ void PostProcessingForm::on_pushButton_AddDistanceData_clicked()
         }
 
         addDistanceData(fileNames);
+
+        syncLogFileDialogDirectories(fileDialog_Distances.directory().path(), true);
     }
 }
 
@@ -3198,6 +3232,8 @@ void PostProcessingForm::on_pushButton_AddSyncData_clicked()
         }
 
         addSyncData(fileNames);
+
+        syncLogFileDialogDirectories(fileDialog_Sync.directory().path(), true);
     }
 }
 
@@ -3292,6 +3328,7 @@ void PostProcessingForm::on_pushButton_ClearAllFileData_clicked()
     this->on_pushButton_ClearTagData_clicked();
     this->on_pushButton_ClearDistanceData_clicked();
     this->on_pushButton_ClearSyncData_clicked();
+    this->on_pushButton_ClearLidarData_clicked();
 }
 
 void PostProcessingForm::addAllData(const bool includeTransformation)
@@ -3412,13 +3449,30 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
                 loadTransformation(fileNames[0]);
             }
         }
+
+        syncLogFileDialogDirectories(fileDialog_All.directory().path(), true);
     }
 }
-
 
 void PostProcessingForm::on_pushButton_AddAll_clicked()
 {
     addAllData(false);
+}
+
+void PostProcessingForm::syncLogFileDialogDirectories(const QString dir, const bool savesetting)
+{
+    fileDialog_UBX.setDirectory(QDir(dir));
+    fileDialog_Tags.setDirectory(QDir(dir));
+    fileDialog_Distances.setDirectory(QDir(dir));
+    fileDialog_Sync.setDirectory(QDir(dir));
+    fileDialog_Lidar.setDirectory(QDir(dir));
+    fileDialog_All.setDirectory(QDir(dir));
+
+    if (savesetting)
+    {
+        QSettings settings;
+        settings.setValue("PostProcessing_Directory_Dialog_Logs", dir);
+    }
 }
 
 QStringList PostProcessingForm::getAppendedFileNames(const QStringList& fileNames, const QString appendix)
@@ -4251,6 +4305,8 @@ void PostProcessingForm::on_pushButton_AddLidarData_clicked()
         }
 
         addLidarData(fileNames);
+
+        syncLogFileDialogDirectories(fileDialog_Lidar.directory().path(), true);
     }
 }
 
