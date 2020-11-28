@@ -261,14 +261,11 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_Sync.setNameFilters(syncFilters);
 
-        fileDialog_All.setFileMode(QFileDialog::ExistingFiles);
-
-
         fileDialog_Lidar.setFileMode(QFileDialog::ExistingFiles);
 
         QStringList lidarFilters;
 
-        syncFilters << "Lidar-files (*.lidar)"
+        lidarFilters << "Lidar-files (*.lidar)"
                 << "Any files (*)";
 
         fileDialog_Lidar.setNameFilters(lidarFilters);
@@ -4184,6 +4181,7 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
         if (lidarFile.open(QIODevice::ReadOnly))
         {
             QDataStream dataStream(&lidarFile);
+            dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
 
             int64_t fileLength = lidarFile.size();
 
@@ -4198,12 +4196,18 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
             qint64 numberOfSamples = 0;
             unsigned int numberOfRounds = 0;
             unsigned int parseErrors = 0;
+            unsigned int chunkIndex = 0;
+            unsigned int firstDuplicateChunk = 0;
+            qint64 firstDuplicateUptime = -1;
+            unsigned int lastDuplicateChunk = 0;
+            qint64 lastDuplicateUptime = -1;
+            int discardedChunks = 0;
 
             while (!dataStream.atEnd())
             {
                 if (parseErrors >= 100)
                 {
-                    addLogLine("Warning:  Maximum number of parse errors (100) reached. Your file is probably completely broken. skipping the end of fle");
+                    addLogLine("Warning:  Maximum number of parse errors (100) reached. Your file is probably completely broken. Skipping the end of fle");
                     break;
                 }
 
@@ -4224,6 +4228,8 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                     break;
                 }
 
+                chunkIndex++;
+
                 switch (dataType)
                 {
                 case 1:
@@ -4240,22 +4246,50 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
 
                     dataStream >> numOfItems;
 
-                    if (dataChunkLength != 2 * sizeof(qint64) + numOfItems * 3 * sizeof(float))
+                    qint64 startTime;
+                    qint64 endTime;
+
+                    if (dataChunkLength != sizeof(numOfItems) + sizeof(startTime) + sizeof(endTime) + numOfItems * 3 * sizeof(float))
                     {
                         addLogLine("Warning: Data chunk length doesn't match with the number of items. Skipping chunk.");
-                        dataStream.skipRawData(dataChunkLength);
+                        dataStream.skipRawData(dataChunkLength - sizeof(numOfItems));
                         parseErrors++;
                         break;
                     }
 
-                    qint64 startTime;
-                    qint64 endTime;
                     LidarRound newRound;
 
                     dataStream >> startTime >> endTime;
 
                     newRound.startTime = startTime;
                     newRound.endTime = endTime;
+
+                    if (lidarRounds.find(endTime) != lidarRounds.end())
+                    {
+                        if (firstDuplicateUptime == -1)
+                        {
+                            firstDuplicateChunk = chunkIndex;
+                            firstDuplicateUptime = endTime;
+                        }
+
+                        lastDuplicateChunk = chunkIndex;
+                        lastDuplicateUptime = endTime;
+
+                        discardedChunks++;
+                        dataStream.skipRawData(dataChunkLength - sizeof(numOfItems) - sizeof(startTime) - sizeof(endTime));
+                        break;
+                    }
+
+                    if (firstDuplicateUptime != -1)
+                    {
+                        addLogLine("Warning: Chunk(s) " + QString::number(firstDuplicateChunk) +
+                                   "-" + QString::number(lastDuplicateChunk) +
+                                   " (uptime range: " + QString::number(firstDuplicateUptime) +
+                                   "-" + QString::number(lastDuplicateUptime) +
+                                   "): Distance(s) with duplicate uptime(s). Line(s) skipped.");
+
+                        firstDuplicateUptime = -1;
+                    }
 
                     for (unsigned int i = 0; i < numOfItems; i++)
                     {
@@ -4279,10 +4313,19 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                 }
             }
 
+            if (firstDuplicateUptime != -1)
+            {
+                addLogLine("Warning: Chunk(s) " + QString::number(firstDuplicateChunk) +
+                           "-" + QString::number(lastDuplicateChunk) +
+                           " (uptime range: " + QString::number(firstDuplicateUptime) +
+                           "-" + QString::number(lastDuplicateUptime) +
+                           "): Distance(s) with duplicate uptime(s). Line(s) skipped.");
+            }
 
             addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid lidar rounds: " +
                        QString::number(numberOfRounds) +
-                       ", samples: " + QString::number(numberOfSamples));
+                       ", samples: " + QString::number(numberOfSamples) +
+                       ", discarded chunks: " + QString::number(discardedChunks));
 
         }
         else

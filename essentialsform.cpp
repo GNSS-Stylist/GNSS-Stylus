@@ -2037,17 +2037,26 @@ void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
         // 3600 * 16000 * 3 * 4 + 3600 × 10 * (3 * 4 + 2* 8) = 692 208 000 bytes per hour
 
         QDataStream dataStream(&logFile_Lidar);
+        dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
 
         unsigned int dataType = 1;  // Datatype for possible future extensions (like compression?)
         unsigned int numOfItems = data.size();
-        unsigned int dataChunkLength = 2 * sizeof(qint64) + numOfItems * 3 * sizeof(float);
+        unsigned int dataChunkLength = sizeof(numOfItems) + sizeof(startTime) + sizeof(endTime) + numOfItems * 3 * sizeof(float);
 
-        dataStream << dataType << dataChunkLength << numOfItems << startTime << endTime;
+        dataStream << dataType << dataChunkLength;
+
+        qint64 chunkStartFileSize = logFile_Lidar.pos();
+
+        dataStream << numOfItems << startTime << endTime;
 
         for (int i = 0; i < data.size(); i++)
         {
             dataStream << data[i].distance << data[i].angle << data[i].quality;
         }
+
+        qint64 chunkEndFileSize = logFile_Lidar.pos();
+
+        Q_ASSERT(chunkEndFileSize - chunkStartFileSize == dataChunkLength);
     }
 
     updateTreeItems();
