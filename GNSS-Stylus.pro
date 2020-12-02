@@ -56,6 +56,7 @@ SOURCES += \
     Lidar/rplidarmessagemonitorform.cpp \
     Lidar/rplidarplausibilityfilter.cpp \
     Lidar/rplidarthread.cpp \
+    transformmatrixgenerator.cpp \
     ubloxdatastreamprocessor.cpp \
     serialthread.cpp \
     messagemonitorform.cpp \
@@ -77,6 +78,7 @@ HEADERS += \
     Lidar/rplidarmessagemonitorform.h \
     Lidar/rplidarplausibilityfilter.h \
     Lidar/rplidarthread.h \
+    transformmatrixgenerator.h \
     ubloxdatastreamprocessor.h \
     serialthread.h \
     messagemonitorform.h \

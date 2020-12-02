@@ -283,7 +283,7 @@ private:
     qint64 getFirstUptime();
     qint64 getLastUptime();
 
-    bool generateTransformationMatrix(Eigen::Matrix4d& outputMatrix);
+    bool generateTransformationMatrix(Eigen::Transform<double, 3, Eigen::Affine>& outputMatrix);
 
     QString getRoverIdentString(const unsigned int roverId);
 

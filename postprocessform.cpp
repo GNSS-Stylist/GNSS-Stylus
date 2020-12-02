@@ -26,6 +26,7 @@
 
 #include "postprocessform.h"
 #include "ui_postprocessform.h"
+#include "transformmatrixgenerator.h"
 //#include "tinyspline/tinysplinecpp.h"
 
 struct
@@ -945,15 +946,12 @@ void PostProcessingForm::on_pushButton_AddTagData_clicked()
 
 void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
 {
-    Eigen::Matrix4d transformMatrix;
+    Eigen::Transform<double, 3, Eigen::Affine> transform;
 
-    if (!generateTransformationMatrix(transformMatrix))
+    if (!generateTransformationMatrix(transform))
     {
         return;
     }
-
-    Eigen::Transform<double, 3, Eigen::Affine> transform;
-    transform = transformMatrix;
 
     if (fileDialog_PointCloud.exec())
     {
@@ -1921,17 +1919,14 @@ void PostProcessingForm::on_pushButton_ContinueReplay_clicked()
 
 void PostProcessingForm::on_pushButton_Stylus_Movie_GenerateScript_clicked()
 {
-    Eigen::Matrix4d transformMatrix;
+    Eigen::Transform<double, 3, Eigen::Affine> transform;
 
-    if (!generateTransformationMatrix(transformMatrix))
+    if (!generateTransformationMatrix(transform))
     {
         return;
     }
 
-    Eigen::Transform<double, 3, Eigen::Affine> transform;
-    transform = transformMatrix;
-
-    Eigen::Matrix3d transform_NoTranslation = transformMatrix.block<3,3>(0,0);
+    Eigen::Matrix3d transform_NoTranslation = transform.linear();
 
     if (fileDialog_Stylus_MovieScript.exec())
     {
@@ -3272,25 +3267,17 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
     addLogLine(QString::number(itemCount) + " sync items created.");
 }
 
-bool PostProcessingForm::generateTransformationMatrix(Eigen::Matrix4d& outputMatrix)
+bool PostProcessingForm::generateTransformationMatrix(Eigen::Transform<double, 3, Eigen::Affine>& outputMatrix)
 {
-    Eigen::Matrix4d translation_NED;
+    Eigen::Transform<double, 3, Eigen::Affine> translation_NED;
 
-    for (int i = 0; i < 4; i++)
-    {
-        for (int k= 0; k < 4; k++)
-        {
-            translation_NED(i, k) = 0;
-        }
-
-        translation_NED(i, i) = 1;
-    }
+    translation_NED = translation_NED.Identity();
 
     translation_NED(0, 3) = ui->doubleSpinBox_Translation_N->value();
     translation_NED(1, 3) = ui->doubleSpinBox_Translation_E->value();
     translation_NED(2, 3) = ui->doubleSpinBox_Translation_D->value();
 
-    Eigen::Matrix4d prelimTransform;
+    Eigen::Transform<double, 3, Eigen::Affine> prelimTransform;
 
     for (int i = 0; i < 4; i++)
     {
@@ -3312,7 +3299,6 @@ bool PostProcessingForm::generateTransformationMatrix(Eigen::Matrix4d& outputMat
     }
 
     outputMatrix = prelimTransform * translation_NED;
-
 
     return true;
 }
@@ -3909,9 +3895,9 @@ void PostProcessingForm::on_pushButton_ValidateAntennaLocations_clicked()
 
 void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 {
-    Eigen::Matrix4d transformMatrix;
+    Eigen::Transform<double, 3, Eigen::Affine> transformationMatrix_CoordSystemConv_NED_toXYZ;
 
-    if (!generateTransformationMatrix(transformMatrix))
+    if (!generateTransformationMatrix(transformationMatrix_CoordSystemConv_NED_toXYZ))
     {
         return;
     }
@@ -3923,11 +3909,53 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
         return;
     }
 
-    Eigen::Transform<double, 3, Eigen::Affine> transformNEDToXYZ;
-    transformNEDToXYZ = transformMatrix;
+    TransformMatrixGenerator matrixGenerator;
 
-    Eigen::Matrix3d transform_NEDToXYZ_NoTranslation = transformMatrix.block<3,3>(0,0);
-    Eigen::Matrix3d transform_XYZToNED_NoTranslation = transform_NEDToXYZ_NoTranslation.transpose();
+    Eigen::Transform<double, 3, Eigen::Affine> transformationMatrix_Generated;
+
+    try
+    {
+        QStringList lines = ui->plainTextEdit_LOSolver_TransformMatrixScript->document()->toPlainText().split("\n");
+
+        transformationMatrix_Generated = matrixGenerator.generate(lines).matrix();
+    }
+    catch (TransformMatrixGenerator::Issue& issue)
+    {
+        addLogLine("Generating transform matrix failed. Error: " + issue.text +
+                   " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1));
+
+        QTextCursor cursor = ui->plainTextEdit_LOSolver_TransformMatrixScript->textCursor();
+        cursor.setPosition(0, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+        if (issue.item.firstCol != -1)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
+
+            if (issue.item.lastCol != -1)
+            {
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
+            }
+        }
+
+        ui->plainTextEdit_LOSolver_TransformMatrixScript->setTextCursor(cursor);
+        ui->plainTextEdit_LOSolver_TransformMatrixScript->setFocus();
+
+        return;
+    }
+
+    Eigen::Transform<double, 3, Eigen::Affine> transformationMatrix_Generated_NoTranslation;
+    transformationMatrix_Generated_NoTranslation = transformationMatrix_Generated.linear();
+
+    //    Eigen::Matrix4d transformationMatrix_Combined = transformationMatrix_CoordSystemConv_NED_toXYZ * transformationMatrix_Generated;
+
+    Eigen::Transform<double, 3, Eigen::Affine> transformNEDToXYZ;
+    transformNEDToXYZ = transformationMatrix_CoordSystemConv_NED_toXYZ;
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ_NoTranslation;
+    transform_NEDToXYZ_NoTranslation = transformationMatrix_CoordSystemConv_NED_toXYZ.linear();
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform_XYZToNED_NoTranslation;
+    transform_XYZToNED_NoTranslation = transform_NEDToXYZ_NoTranslation.matrix().transpose();
 
     if (fileDialog_LOSolver_Script.exec())
     {
@@ -4116,17 +4144,30 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
                 continue;
             }
 
-            Eigen::Matrix3d loTransformNED_NoTranslation = loTransformNED.matrix().block<3,3>(0,0);
+
+
+
+
+
+            // TODO: Optimize this. Operation here are performed probably in overly complicated manner.
+            // Probably just a few matrix operations could be enough instead of this vector-hell.
+            Eigen::Transform<double, 3, Eigen::Affine> loTransformNED_NoTranslation;
+            loTransformNED_NoTranslation = loTransformNED.linear();
 
             Eigen::Vector3d unitVecXInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(1, 0, 0);
             Eigen::Vector3d unitVecYInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(0, 1, 0);
             Eigen::Vector3d unitVecZInNED = transform_XYZToNED_NoTranslation * Eigen::Vector3d(0, 0, 1);
 
-            Eigen::Vector3d unitVecX = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecXInNED;
-            Eigen::Vector3d unitVecY = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecYInNED;
-            Eigen::Vector3d unitVecZ = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * unitVecZInNED;
+            Eigen::Vector3d unitVecX = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * transformationMatrix_Generated_NoTranslation * unitVecXInNED;
+            Eigen::Vector3d unitVecY = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * transformationMatrix_Generated_NoTranslation * unitVecYInNED;
+            Eigen::Vector3d unitVecZ = transform_NEDToXYZ_NoTranslation * loTransformNED_NoTranslation * transformationMatrix_Generated_NoTranslation * unitVecZInNED;
 
             Eigen::Vector3d originXYZ = transformNEDToXYZ * Eigen::Vector3d(loTransformNED(0,3), loTransformNED(1,3), loTransformNED(2,3));
+
+            // Move origin as defined by the generated (using "script"-operations) transformation matrix
+            originXYZ += transform_NEDToXYZ_NoTranslation * (transformationMatrix_Generated(0,3) * Eigen::Vector3d(loTransformNED(0,0), loTransformNED(1,0), loTransformNED(2,0)));
+            originXYZ += transform_NEDToXYZ_NoTranslation * (transformationMatrix_Generated(1,3) * Eigen::Vector3d(loTransformNED(0,1), loTransformNED(1,1), loTransformNED(2,1)));
+            originXYZ += transform_NEDToXYZ_NoTranslation * (transformationMatrix_Generated(2,3) * Eigen::Vector3d(loTransformNED(0,2), loTransformNED(1,2), loTransformNED(2,2)));
 
             QString lineOut =
                     QString::number(lowestNextRoverITOW) +

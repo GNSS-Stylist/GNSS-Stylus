@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Post-processing</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="5,0,1">
+  <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="0,0,1">
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="sizePolicy">
@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -59,7 +59,7 @@
          <x>0</x>
          <y>10</y>
          <width>631</width>
-         <height>421</height>
+         <height>451</height>
         </rect>
        </property>
        <property name="toolTipDuration">
@@ -384,7 +384,7 @@
            <x>10</x>
            <y>10</y>
            <width>601</width>
-           <height>211</height>
+           <height>301</height>
           </rect>
          </property>
          <property name="title">
@@ -394,7 +394,7 @@
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>20</y>
+            <y>70</y>
             <width>471</width>
             <height>141</height>
            </rect>
@@ -502,44 +502,54 @@
            </property>
           </item>
          </widget>
-         <widget class="QPushButton" name="pushButton_ValidateAntennaLocations">
-          <property name="geometry">
-           <rect>
-            <x>270</x>
-            <y>170</y>
-            <width>131</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Validate</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_SaveAntennaLocations">
-          <property name="geometry">
-           <rect>
-            <x>140</x>
-            <y>170</y>
-            <width>121</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Save to file...</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_LoadAntennaLocations">
+         <widget class="QLabel" name="label_AntennaLocationsDescription">
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>170</y>
-            <width>121</width>
-            <height>23</height>
+            <y>20</y>
+            <width>571</width>
+            <height>31</height>
            </rect>
           </property>
           <property name="text">
-           <string>Load from file...</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are in relation to the chosen origin and orientation in object's coordinate system. You can perform additional operations in this space when creating scripts or point clouds (utilizing lidar).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QWidget" name="">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>220</y>
+            <width>249</width>
+            <height>25</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <item>
+            <widget class="QPushButton" name="pushButton_LoadAntennaLocations">
+             <property name="text">
+              <string>Load from file...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_SaveAntennaLocations">
+             <property name="text">
+              <string>Save to file...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_ValidateAntennaLocations">
+             <property name="text">
+              <string>Validate</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </widget>
        </widget>
@@ -550,36 +560,11 @@
         <attribute name="title">
          <string>Translate/transform</string>
         </attribute>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_D">
-         <property name="geometry">
-          <rect>
-           <x>500</x>
-           <y>10</y>
-           <width>91</width>
-           <height>22</height>
-          </rect>
-         </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-10000.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.000000000000000</double>
-         </property>
-        </widget>
         <widget class="QGroupBox" name="groupBox_TransformationMatrix">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>40</y>
+           <y>90</y>
            <width>611</width>
            <height>321</height>
           </rect>
@@ -800,68 +785,97 @@
           </layout>
          </widget>
         </widget>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_E">
+        <widget class="QLabel" name="label_FinalTransformDescription">
          <property name="geometry">
           <rect>
-           <x>400</x>
+           <x>10</x>
            <y>10</y>
-           <width>91</width>
-           <height>22</height>
-          </rect>
-         </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-10000.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.000000000000000</double>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_N">
-         <property name="geometry">
-          <rect>
-           <x>300</x>
-           <y>10</y>
-           <width>91</width>
-           <height>22</height>
-          </rect>
-         </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-10000.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_CameraPosition_2">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>10</y>
-           <width>291</width>
-           <height>20</height>
+           <width>601</width>
+           <height>41</height>
           </rect>
          </property>
          <property name="text">
-          <string>Translation in NED-coordinates (before transformation):</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are performed in the final step when generating scripts or point clouds. Other operations are performed in NED and/or object's coordinate system.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
+        </widget>
+        <widget class="QWidget" name="">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>60</y>
+           <width>519</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_12">
+          <item>
+           <widget class="QLabel" name="label_CameraPosition_2">
+            <property name="text">
+             <string>Translation in NED-coordinates (before transformation):</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_N">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_E">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_Translation_D">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-10000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </widget>
       </widget>
@@ -2014,7 +2028,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>50</y>
+         <y>430</y>
          <width>231</width>
          <height>23</height>
         </rect>
@@ -2022,6 +2036,48 @@
        <property name="text">
         <string>Generate script...</string>
        </property>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_LOSolver_Operations">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>40</y>
+         <width>611</width>
+         <height>381</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Operations</string>
+       </property>
+       <widget class="QLabel" name="label_LOSolver_OperationsDescription">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>581</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are performed in object's coordinate system as defined in Settings-&amp;gt;Location/orientation solver.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QPlainTextEdit" name="plainTextEdit_LOSolver_TransformMatrixScript">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>591</width>
+          <height>321</height>
+         </rect>
+        </property>
+        <property name="lineWrapMode">
+         <enum>QPlainTextEdit::NoWrap</enum>
+        </property>
+       </widget>
       </widget>
      </widget>
     </widget>
