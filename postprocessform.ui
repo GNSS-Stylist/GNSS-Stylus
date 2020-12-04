@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="0,0,1">
    <item>
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QTabWidget" name="tabWidget_Lidar">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
        <horstretch>0</horstretch>
@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>5</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -518,7 +518,7 @@
            <bool>true</bool>
           </property>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -572,7 +572,7 @@
          <property name="title">
           <string>Transformation matrix</string>
          </property>
-         <widget class="QWidget" name="layoutWidget">
+         <widget class="QWidget" name="layoutWidget_2">
           <property name="geometry">
            <rect>
             <x>0</x>
@@ -801,7 +801,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget_3">
          <property name="geometry">
           <rect>
            <x>10</x>
@@ -2077,6 +2077,110 @@
         <property name="lineWrapMode">
          <enum>QPlainTextEdit::NoWrap</enum>
         </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tab_Lidar">
+      <attribute name="title">
+       <string>Lidar</string>
+      </attribute>
+      <widget class="QTabWidget" name="tabWidget_Lidar_PointCloud">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>631</width>
+         <height>451</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
+        <attribute name="title">
+         <string>Operations before rotation</string>
+        </attribute>
+        <widget class="QPlainTextEdit" name="plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>571</width>
+           <height>211</height>
+          </rect>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_LOSolver_OperationsDescription_2">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>551</width>
+           <height>71</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are performed in lidar's &amp;quot;rotating coordinate system&amp;quot; when lidar is laying in NE-plane (rotation axis parallel to the D-axis), laser pointing north. In other words this whole coordinate system rotates along the lidar and therefore allows settings for off-axisity, tilt of the laser beam (deviation from parallel NE-plane), calibrating angles and so on. But you can not fix things like mounting angle here (use &amp;quot;Operations after rotation&amp;quot; for them).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_Lidar_OperationsAfterRotation">
+        <attribute name="title">
+         <string>Operations after rotation</string>
+        </attribute>
+        <widget class="QPlainTextEdit" name="plainTextEdit_Lidar_TransformMatrixScript_AfterRotation">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>50</y>
+           <width>561</width>
+           <height>271</height>
+          </rect>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_LOSolver_OperationsDescription_3">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>561</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are performed in object's coordinate system as defined in Settings-&amp;gt;Location/orientation solver. These define the mounting location/orientation of the lidar device itself in the rig.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_Lidar_PointCloud">
+        <attribute name="title">
+         <string>Point cloud</string>
+        </attribute>
+        <widget class="QPushButton" name="pushButton_Lidar_GeneratePointClouds">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>80</y>
+           <width>271</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Generate point cloud (xyz) files...</string>
+         </property>
+        </widget>
        </widget>
       </widget>
      </widget>

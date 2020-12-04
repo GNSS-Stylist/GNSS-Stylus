@@ -31,6 +31,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QVector3D>
+#include <QTextStream>
 
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
@@ -165,6 +166,8 @@ private slots:
 
     void on_pushButton_ClearLidarData_clicked();
 
+    void on_pushButton_Lidar_GeneratePointClouds_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -292,6 +295,20 @@ private:
     bool updateLOSolverReferencePointLocations(LOSolver& loSolver);
 
     void syncLogFileDialogDirectories(const QString dir, const bool savesetting);
+
+    bool generatePointCloudPointSet_Stylus(const Tag& beginningTag, const Tag& endingTag,
+                                           const qint64 beginningUptime, const qint64 endingUptime,
+                                           QTextStream* outStream,
+                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform,
+                                           int& pointsWritten);
+
+    typedef enum
+    {
+        SOURCE_LASERDISTANCEMETER_OR_CONSTANT = 0, //!< Laser distance distance meter or constant as a fallback
+        SOURCE_LIDAR                            //!< Lidar
+    } PointCloudDistanceSource;
+
+    void generatePointClouds(const PointCloudDistanceSource source);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover

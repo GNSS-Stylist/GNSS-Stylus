@@ -21,7 +21,6 @@
 
 #include <QTime>
 #include <QSettings>
-#include <QTextStream>
 #include <QMessageBox>
 
 #include "postprocessform.h"
@@ -414,11 +413,10 @@ void PostProcessingForm::addRELPOSNEDData_Rover(const unsigned int roverId)
             if (fileNames.size() != 0)
             {
                 fileDialog_UBX.setDirectory(QFileInfo(fileNames[0]).path());
+                syncLogFileDialogDirectories(fileDialog_UBX.directory().path(), true);
             }
 
             addRELPOSNEDData_Rover(fileNames, roverId);
-
-            syncLogFileDialogDirectories(fileDialog_UBX.directory().path(), true);
         }
     }
 }
@@ -935,22 +933,83 @@ void PostProcessingForm::on_pushButton_AddTagData_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_Tags.setDirectory(QFileInfo(fileNames[0]).path());
+            syncLogFileDialogDirectories(fileDialog_Tags.directory().path(), true);
         }
 
         addTagData(fileNames);
-
-        syncLogFileDialogDirectories(fileDialog_Tags.directory().path(), true);
     }
 
 }
 
 void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
 {
-    Eigen::Transform<double, 3, Eigen::Affine> transform;
+    generatePointClouds(SOURCE_LASERDISTANCEMETER_OR_CONSTANT);
+}
 
-    if (!generateTransformationMatrix(transform))
+void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource source)
+{
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_Lidar_Generated_BeforeRotation;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_LidarGenerated_AfterRotation;
+    LOSolver loSolver_Lidar;
+
+    if (!generateTransformationMatrix(transform_NEDToXYZ))
     {
         return;
+    }
+
+    switch (source)
+    {
+    case SOURCE_LASERDISTANCEMETER_OR_CONSTANT:
+        break;
+
+    case SOURCE_LIDAR:
+    {
+        TransformMatrixGenerator matrixGenerator;
+        QPlainTextEdit *currentEditor;
+        QString currentTabName;
+
+        try
+        {
+            currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation;
+            currentTabName = "Operations before rotation";
+            QStringList lines = currentEditor->document()->toPlainText().split("\n");
+            transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines).matrix();
+
+            currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation;
+            currentTabName = "Operations after rotation";
+            lines = currentEditor->document()->toPlainText().split("\n");
+            transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines).matrix();
+        }
+        catch (TransformMatrixGenerator::Issue& issue)
+        {
+            addLogLine("Generating transform matrix failed. Error: " + issue.text +
+                       " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1) +
+                       ". See tab\"" + currentTabName + "\".");
+
+            QTextCursor cursor = currentEditor->textCursor();
+            cursor.setPosition(0, QTextCursor::MoveAnchor);
+            cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+            if (issue.item.firstCol != -1)
+            {
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
+
+                if (issue.item.lastCol != -1)
+                {
+                    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
+                }
+            }
+
+            currentEditor->setTextCursor(cursor);
+            currentEditor->setFocus();
+
+            return;
+        }
+        break;
+    }
+    default:
+        addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
+        break;
     }
 
     if (fileDialog_PointCloud.exec())
@@ -971,8 +1030,6 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
         QString tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-        double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
-        bool includeNormals = ui->checkBox_Stylus_PointCloud_IncludeNormals->checkState();
 
 //        QMultiMap<qint64, Tag_New>::const_iterator currentTagIterator;
 
@@ -1150,346 +1207,35 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
                         continue;
                     }
 
-                    bool constDistancesOnly = true;
-
-                    QMap<qint64, DistanceItem>::const_iterator distIter = distances.upperBound(beginningUptime);
-
-                    while ((distIter != distances.end()) && (distIter.key() < uptime))
+                    switch (source)
                     {
-                        if (distIter.value().type == DistanceItem::Type::MEASURED)
-                        {
-                            constDistancesOnly = false;
-                            break;
-                        }
-
-                        distIter++;
-                    }
-
-                    int pointsBetweenTags = 0;
-
-                    if (constDistancesOnly)
+                    case SOURCE_LASERDISTANCEMETER_OR_CONSTANT:
                     {
-                        distIter = distances.upperBound(beginningUptime);
-
-                        if (distIter != distances.end())
+                        int prevPointWritten = pointsWritten;
+                        if (generatePointCloudPointSet_Stylus(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, pointsWritten))
                         {
-                            distIter--;
+                            int pointsBetweenTags = pointsWritten - prevPointWritten;
 
-                            if ((distIter == distances.end()) ||
-                                    (distIter.value().type != DistanceItem::Type::CONSTANT))
+                            if (pointsBetweenTags == 0)
                             {
-                                addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
-                                           QString::number(currentTag.sourceFileLine)+
-                                           ", uptime " + QString::number(uptime) +
-                                           ", iTOW " + QString::number(currentTag.iTOW) +
-                                           ": Points between tags having only constant distances without preceeding constant distance. Skipped.");
-                                continue;
-                            }
-
-                            stylusTipDistanceFromRoverA = distIter.value().distance;
-                        }
-
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = rovers[0].relposnedMessages.upperBound(beginningTag.iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = rovers[1].relposnedMessages.upperBound(beginningTag.iTOW);
-
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = rovers[0].relposnedMessages.upperBound(currentTag.iTOW);
-                        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = rovers[1].relposnedMessages.upperBound(currentTag.iTOW);
-
-                        while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                            (relposIterator_RoverB != relposIterator_RoverB_EndTag))
-                        {
-                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                                   (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
-                            {
-                                // Skip all rover A RELPOSNEDs that have lower iTOW than the next rover B RELPOSNED (sync)
-                                relposIterator_RoverA++;
-                            }
-
-                            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
-                                   (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
-                            {
-                                // Skip all rover B RELPOSNEDs that have lower iTOW than the next rover A RELPOSNED (sync)
-                                relposIterator_RoverB++;
-                            }
-
-                            if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
-                                (relposIterator_RoverB != relposIterator_RoverB_EndTag))
-                            {
-                                Eigen::Vector3d roverAPosNED(
-                                        relposIterator_RoverA.value().relPosN,
-                                        relposIterator_RoverA.value().relPosE,
-                                        relposIterator_RoverA.value().relPosD);
-
-                                Eigen::Vector3d roverBPosNED(
-                                        relposIterator_RoverB.value().relPosN,
-                                        relposIterator_RoverB.value().relPosE,
-                                        relposIterator_RoverB.value().relPosD);
-
-                                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
-                                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
-                                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
-
-                                // Convert to XYZ-coordinates
-                                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
-                                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
-                                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
-                                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
-
-                                QString lineOut;
-
-                                if (includeNormals)
-                                {
-                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
-                                }
-                                else
-                                {
-                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
-                                }
-
-                                outStream->operator<<(lineOut + "\n");
-
-                                pointsWritten++;
-
-                                pointsBetweenTags++;
-                                relposIterator_RoverA++;
-                                relposIterator_RoverB++;
+                                addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
+                                           QString::number(beginningTag.sourceFileLine) +
+                                           ", uptime " + QString::number(beginningUptime) +
+                                           ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
+                                           QString::number(endingTag.sourceFileLine) +
+                                           ", uptime " + QString::number(endingTag.iTOW) +
+                                           ", iTOW " + QString::number(endingTag.iTOW) +
+                                           ", File \"" + endingTag.sourceFile + "\""
+                                           " No points between tags.");
                             }
                         }
+                        break;
                     }
-                    else
-                    {
-                        // Distances found, sync point creation to them.
-                        // Rover coordinates are interpolated according to distance timestamps.
-
-                        distIter = distances.upperBound(beginningUptime);
-
-                        while ((distIter != distances.end()) && (distIter.key() < uptime))
-                        {
-                            if (distIter.value().type == DistanceItem::Type::CONSTANT)
-                            {
-                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                           QString::number(distIter.value().sourceFileLine)+
-                                           ", uptime " + QString::number(distIter.key()) +
-                                           ": Constant distance between measured ones. Skipped.");
-                                distIter++;
-                                continue;
-                            }
-                            else if (distIter.value().type == DistanceItem::Type::MEASURED)
-                            {
-                                // Try to find next and previous rover coordinates
-                                // for this uptime
-
-                                qint64 distanceUptime = distIter.key();
-                                // TODO: Add/subtract fine tune sync value here if needed
-
-                                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = rovers[0].roverSyncData.lowerBound(distanceUptime);
-                                UBXMessage_RELPOSNED interpolated_RoverA;
-
-                                if (roverAUptimeIter != rovers[0].roverSyncData.end())
-                                {
-                                    const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
-                                    RoverSyncItem lowerSyncItem;
-                                    roverAUptimeIter--;
-                                    if (roverAUptimeIter != rovers[0].roverSyncData.end())
-                                    {
-                                        lowerSyncItem = roverAUptimeIter.value();
-                                    }
-                                    else
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover A sync data (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    if (rovers[0].relposnedMessages.find(upperSyncItem.iTOW) == rovers[0].relposnedMessages.end())
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    if (rovers[0].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[0].relposnedMessages.end())
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
-
-                                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[0].relposnedMessages.find(lowerSyncItem.iTOW).value(),
-                                                            rovers[0].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
-                                }
-                                else
-                                {
-                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                               QString::number(distIter.value().sourceFileLine)+
-                                               ", uptime " + QString::number(distIter.key()) +
-                                               ": Can not find corresponding rover A sync data (upper limit). Skipped.");
-                                    distIter++;
-                                    continue;
-                                }
-
-                                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = rovers[1].roverSyncData.lowerBound(distanceUptime);
-                                UBXMessage_RELPOSNED interpolated_RoverB;
-
-                                if (roverBUptimeIter != rovers[1].roverSyncData.end())
-                                {
-                                    const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
-                                    RoverSyncItem lowerSyncItem;
-                                    roverBUptimeIter--;
-                                    if (roverBUptimeIter != rovers[1].roverSyncData.end())
-                                    {
-                                        lowerSyncItem = roverBUptimeIter.value();
-                                    }
-                                    else
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover B sync data (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    if (rovers[1].relposnedMessages.find(upperSyncItem.iTOW) == rovers[1].relposnedMessages.end())
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    if (rovers[1].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[1].relposnedMessages.end())
-                                    {
-                                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                                   QString::number(distIter.value().sourceFileLine)+
-                                                   ", uptime " + QString::number(distIter.key()) +
-                                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
-                                        distIter++;
-                                        continue;
-                                    }
-
-                                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
-
-                                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[1].relposnedMessages.find(lowerSyncItem.iTOW).value(),
-                                                            rovers[1].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
-                                }
-                                else
-                                {
-                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                               QString::number(distIter.value().sourceFileLine)+
-                                               ", uptime " + QString::number(distIter.key()) +
-                                               ": Can not find corresponding rover B sync data (upper limit). Skipped.");
-                                    distIter++;
-                                    continue;
-                                }
-
-                                stylusTipDistanceFromRoverA = distIter.value().distance;
-
-                                // TODO: Refine this quick hack or at least make the distance configurable!
-                                // Skip distances that are too far away
-                                // (measurement module seems to emit "outliers" now and then)
-                                if (stylusTipDistanceFromRoverA > 2)
-                                {
-                                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                               QString::number(distIter.value().sourceFileLine)+
-                                               ", uptime " + QString::number(distIter.key()) +
-                                               ": Distance between RoverA and tip too high (" +
-                                               QString::number(stylusTipDistanceFromRoverA) +
-                                               " m). Skipped.");
-                                    distIter++;
-                                    continue;
-                                }
-
-                                Eigen::Vector3d roverAPosNED(
-                                        interpolated_RoverA.relPosN,
-                                        interpolated_RoverA.relPosE,
-                                        interpolated_RoverA.relPosD);
-
-                                Eigen::Vector3d roverBPosNED(
-                                        interpolated_RoverB.relPosN,
-                                        interpolated_RoverB.relPosE,
-                                        interpolated_RoverB.relPosD);
-
-                                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
-                                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
-                                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
-
-                                // Convert to XYZ-coordinates
-                                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
-                                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
-                                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
-                                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
-
-                                QString lineOut;
-
-                                if (includeNormals)
-                                {
-                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
-                                }
-                                else
-                                {
-                                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
-                                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
-                                }
-
-                                outStream->operator<<(lineOut + "\n");
-                                pointsWritten++;
-                                pointsBetweenTags++;
-                            }
-                            else
-                            {
-                                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                           QString::number(distIter.value().sourceFileLine)+
-                                           ", uptime " + QString::number(distIter.key()) +
-                                           ": Unknown distance type between measured ones. Skipped.");
-                                distIter++;
-                                continue;
-                            }
-
-                            distIter++;
-                        }
+                    default:
+                        addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
+                        break;
                     }
 
-                    if (pointsBetweenTags == 0)
-                    {
-                        addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
-                                   QString::number(beginningTag.sourceFileLine) +
-                                   ", uptime " + QString::number(beginningUptime) +
-                                   ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
-                                   QString::number(endingTag.sourceFileLine) +
-                                   ", uptime " + QString::number(currentTag.iTOW) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ", File \"" + endingTag.sourceFile + "\""
-                                   " No points between tags.");
-                    }
 
                     beginningUptime = -1;
                 }
@@ -2971,11 +2717,10 @@ void PostProcessingForm::on_pushButton_AddDistanceData_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_Distances.setDirectory(QFileInfo(fileNames[0]).path());
+            syncLogFileDialogDirectories(fileDialog_Distances.directory().path(), true);
         }
 
         addDistanceData(fileNames);
-
-        syncLogFileDialogDirectories(fileDialog_Distances.directory().path(), true);
     }
 }
 
@@ -3221,11 +2966,10 @@ void PostProcessingForm::on_pushButton_AddSyncData_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_Sync.setDirectory(QFileInfo(fileNames[0]).path());
+            syncLogFileDialogDirectories(fileDialog_Sync.directory().path(), true);
         }
 
         addSyncData(fileNames);
-
-        syncLogFileDialogDirectories(fileDialog_Sync.directory().path(), true);
     }
 }
 
@@ -3323,6 +3067,7 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
         if (selectedFileNames.size() != 0)
         {
             fileDialog_All.setDirectory(QFileInfo(selectedFileNames[0]).path());
+            syncLogFileDialogDirectories(fileDialog_All.directory().path(), true);
         }
 
         QStringList baseFileNames;
@@ -3432,8 +3177,6 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
                 loadTransformation(fileNames[0]);
             }
         }
-
-        syncLogFileDialogDirectories(fileDialog_All.directory().path(), true);
     }
 }
 
@@ -3568,6 +3311,7 @@ void PostProcessingForm::on_pushButton_LoadTransformation_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_Transformation_Load.setDirectory(QFileInfo(fileNames[0]).path());
+            fileDialog_Transformation_Save.setDirectory(QFileInfo(fileNames[0]).path());
 
             loadTransformation(fileNames[0]);
         }
@@ -3587,6 +3331,7 @@ void PostProcessingForm::on_pushButton_SaveTransformation_clicked()
         if (fileNameList.size() != 0)
         {
             fileDialog_Transformation_Save.setDirectory(QFileInfo(fileNameList[0]).path());
+            fileDialog_Transformation_Load.setDirectory(QFileInfo(fileNameList[0]).path());
         }
 
         if (fileNameList.length() != 1)
@@ -3769,6 +3514,7 @@ void PostProcessingForm::on_pushButton_LoadAntennaLocations_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_AntennaLocations_Load.setDirectory(QFileInfo(fileNames[0]).path());
+            fileDialog_AntennaLocations_Save.setDirectory(QFileInfo(fileNames[0]).path());
 
             loadAntennaLocations(fileNames[0]);
         }
@@ -3783,17 +3529,19 @@ void PostProcessingForm::on_pushButton_SaveAntennaLocations_clicked()
 {
     if (fileDialog_AntennaLocations_Save.exec())
     {
-        QStringList fileNameList = fileDialog_AntennaLocations_Save.selectedFiles();
+        QStringList fileNames = fileDialog_AntennaLocations_Save.selectedFiles();
 
-        if (fileNameList.length() != 1)
+        if (fileNames.length() != 1)
         {
             addLogLine("Error: Multiple file selection not supported. Antenna locations not saved.");
             return;
         }
 
-        QFile antennaLocationsFile;
+        fileDialog_AntennaLocations_Save.setDirectory(QFileInfo(fileNames[0]).path());
+        fileDialog_AntennaLocations_Load.setDirectory(QFileInfo(fileNames[0]).path());
 
-        antennaLocationsFile.setFileName(fileNameList[0]);
+        QFile antennaLocationsFile;
+        antennaLocationsFile.setFileName(fileNames[0]);
 
         if (antennaLocationsFile.exists())
         {
@@ -4351,11 +4099,10 @@ void PostProcessingForm::on_pushButton_AddLidarData_clicked()
         if (fileNames.size() != 0)
         {
             fileDialog_Lidar.setDirectory(QFileInfo(fileNames[0]).path());
+            syncLogFileDialogDirectories(fileDialog_Lidar.directory().path(), true);
         }
 
         addLidarData(fileNames);
-
-        syncLogFileDialogDirectories(fileDialog_Lidar.directory().path(), true);
     }
 }
 
@@ -4364,3 +4111,352 @@ void PostProcessingForm::on_pushButton_ClearLidarData_clicked()
     lidarRounds.clear();
     addLogLine("Lidar data cleared.");
 }
+
+
+void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
+{
+    generatePointClouds(SOURCE_LIDAR);
+}
+
+bool PostProcessingForm::generatePointCloudPointSet_Stylus(const Tag& beginningTag, const Tag& endingTag,
+                                                           const qint64 beginningUptime, const qint64 endingUptime,
+                                                           QTextStream* outStream,
+                                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform,
+                                                           int& pointsWritten)
+{
+    double stylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
+    bool includeNormals = ui->checkBox_Stylus_PointCloud_IncludeNormals->checkState();
+
+    bool constDistancesOnly = true;
+
+    QMap<qint64, DistanceItem>::const_iterator distIter = distances.upperBound(beginningUptime);
+
+    while ((distIter != distances.end()) && (distIter.key() < endingUptime))
+    {
+        if (distIter.value().type == DistanceItem::Type::MEASURED)
+        {
+            constDistancesOnly = false;
+            break;
+        }
+
+        distIter++;
+    }
+
+    int pointsBetweenTags = 0;
+
+    if (constDistancesOnly)
+    {
+        distIter = distances.upperBound(beginningUptime);
+
+        if (distIter != distances.end())
+        {
+            distIter--;
+
+            if ((distIter == distances.end()) ||
+                    (distIter.value().type != DistanceItem::Type::CONSTANT))
+            {
+                addLogLine("Warning: File \"" + endingTag.sourceFile + "\", line " +
+                           QString::number(endingTag.sourceFileLine)+
+                           ", uptime " + QString::number(endingUptime) +
+                           ", iTOW " + QString::number(endingTag.iTOW) +
+                           ": Points between tags having only constant distances without preceeding constant distance. Skipped.");
+
+                return false;
+            }
+
+            stylusTipDistanceFromRoverA = distIter.value().distance;
+        }
+
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA = rovers[0].relposnedMessages.upperBound(beginningTag.iTOW);
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB = rovers[1].relposnedMessages.upperBound(beginningTag.iTOW);
+
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverA_EndTag = rovers[0].relposnedMessages.upperBound(endingTag.iTOW);
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator_RoverB_EndTag = rovers[1].relposnedMessages.upperBound(endingTag.iTOW);
+
+        while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+            (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+        {
+            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                   (relposIterator_RoverA.key() < relposIterator_RoverB.key()))
+            {
+                // Skip all rover A RELPOSNEDs that have lower iTOW than the next rover B RELPOSNED (sync)
+                relposIterator_RoverA++;
+            }
+
+            while ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                   (relposIterator_RoverB != relposIterator_RoverB_EndTag) &&
+                   (relposIterator_RoverB.key() < relposIterator_RoverA.key()))
+            {
+                // Skip all rover B RELPOSNEDs that have lower iTOW than the next rover A RELPOSNED (sync)
+                relposIterator_RoverB++;
+            }
+
+            if ((relposIterator_RoverA != relposIterator_RoverA_EndTag) &&
+                (relposIterator_RoverB != relposIterator_RoverB_EndTag))
+            {
+                Eigen::Vector3d roverAPosNED(
+                        relposIterator_RoverA.value().relPosN,
+                        relposIterator_RoverA.value().relPosE,
+                        relposIterator_RoverA.value().relPosD);
+
+                Eigen::Vector3d roverBPosNED(
+                        relposIterator_RoverB.value().relPosN,
+                        relposIterator_RoverB.value().relPosE,
+                        relposIterator_RoverB.value().relPosD);
+
+                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
+                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
+                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
+
+                // Convert to XYZ-coordinates
+                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
+                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
+                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
+
+                QString lineOut;
+
+                if (includeNormals)
+                {
+                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
+                }
+                else
+                {
+                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
+                }
+
+                outStream->operator<<(lineOut + "\n");
+
+                pointsWritten++;
+
+                pointsBetweenTags++;
+                relposIterator_RoverA++;
+                relposIterator_RoverB++;
+            }
+        }
+    }
+    else
+    {
+        // Distances found, sync point creation to them.
+        // Rover coordinates are interpolated according to distance timestamps.
+
+        distIter = distances.upperBound(beginningUptime);
+
+        while ((distIter != distances.end()) && (distIter.key() < endingUptime))
+        {
+            if (distIter.value().type == DistanceItem::Type::CONSTANT)
+            {
+                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                           QString::number(distIter.value().sourceFileLine)+
+                           ", uptime " + QString::number(distIter.key()) +
+                           ": Constant distance between measured ones. Skipped.");
+                distIter++;
+                continue;
+            }
+            else if (distIter.value().type == DistanceItem::Type::MEASURED)
+            {
+                // Try to find next and previous rover coordinates
+                // for this uptime
+
+                qint64 distanceUptime = distIter.key();
+                // TODO: Add/subtract fine tune sync value here if needed
+
+                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = rovers[0].roverSyncData.lowerBound(distanceUptime);
+                UBXMessage_RELPOSNED interpolated_RoverA;
+
+                if (roverAUptimeIter != rovers[0].roverSyncData.end())
+                {
+                    const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
+                    RoverSyncItem lowerSyncItem;
+                    roverAUptimeIter--;
+                    if (roverAUptimeIter != rovers[0].roverSyncData.end())
+                    {
+                        lowerSyncItem = roverAUptimeIter.value();
+                    }
+                    else
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover A sync data (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    if (rovers[0].relposnedMessages.find(upperSyncItem.iTOW) == rovers[0].relposnedMessages.end())
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    if (rovers[0].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[0].relposnedMessages.end())
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[0].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                            rovers[0].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                }
+                else
+                {
+                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                               QString::number(distIter.value().sourceFileLine)+
+                               ", uptime " + QString::number(distIter.key()) +
+                               ": Can not find corresponding rover A sync data (upper limit). Skipped.");
+                    distIter++;
+                    continue;
+                }
+
+                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = rovers[1].roverSyncData.lowerBound(distanceUptime);
+                UBXMessage_RELPOSNED interpolated_RoverB;
+
+                if (roverBUptimeIter != rovers[1].roverSyncData.end())
+                {
+                    const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
+                    RoverSyncItem lowerSyncItem;
+                    roverBUptimeIter--;
+                    if (roverBUptimeIter != rovers[1].roverSyncData.end())
+                    {
+                        lowerSyncItem = roverBUptimeIter.value();
+                    }
+                    else
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover B sync data (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    if (rovers[1].relposnedMessages.find(upperSyncItem.iTOW) == rovers[1].relposnedMessages.end())
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    if (rovers[1].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[1].relposnedMessages.end())
+                    {
+                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                   QString::number(distIter.value().sourceFileLine)+
+                                   ", uptime " + QString::number(distIter.key()) +
+                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
+                        distIter++;
+                        continue;
+                    }
+
+                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
+
+                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[1].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                            rovers[1].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                }
+                else
+                {
+                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                               QString::number(distIter.value().sourceFileLine)+
+                               ", uptime " + QString::number(distIter.key()) +
+                               ": Can not find corresponding rover B sync data (upper limit). Skipped.");
+                    distIter++;
+                    continue;
+                }
+
+                stylusTipDistanceFromRoverA = distIter.value().distance;
+
+                // TODO: Refine this quick hack or at least make the distance configurable!
+                // Skip distances that are too far away
+                // (measurement module seems to emit "outliers" now and then)
+                if (stylusTipDistanceFromRoverA > 2)
+                {
+                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                               QString::number(distIter.value().sourceFileLine)+
+                               ", uptime " + QString::number(distIter.key()) +
+                               ": Distance between RoverA and tip too high (" +
+                               QString::number(stylusTipDistanceFromRoverA) +
+                               " m). Skipped.");
+                    distIter++;
+                    continue;
+                }
+
+                Eigen::Vector3d roverAPosNED(
+                        interpolated_RoverA.relPosN,
+                        interpolated_RoverA.relPosE,
+                        interpolated_RoverA.relPosD);
+
+                Eigen::Vector3d roverBPosNED(
+                        interpolated_RoverB.relPosN,
+                        interpolated_RoverB.relPosE,
+                        interpolated_RoverB.relPosD);
+
+                Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
+                Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
+                Eigen::Vector3d stylusTipPosNED = roverAPosNED + roverBToANEDNormalized * stylusTipDistanceFromRoverA;
+
+                // Convert to XYZ-coordinates
+                Eigen::Vector3d roverAPosXYZ = transform * roverAPosNED;
+                Eigen::Vector3d roverBPosXYZ = transform * roverBPosNED;
+                Eigen::Vector3d stylusTipPosXYZ = transform * stylusTipPosNED;
+                Eigen::Vector3d roverBToAVecNormalizedXYZ = (roverAPosXYZ - roverBPosXYZ).normalized();
+
+                QString lineOut;
+
+                if (includeNormals)
+                {
+                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(0), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(1), 'f', 4) +
+                            "\t" + QString::number(-roverBToAVecNormalizedXYZ(2), 'f', 4);
+                }
+                else
+                {
+                    lineOut = QString::number(stylusTipPosXYZ(0), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(1), 'f', 4) +
+                            "\t" + QString::number(stylusTipPosXYZ(2), 'f', 4);
+                }
+
+                outStream->operator<<(lineOut + "\n");
+                pointsWritten++;
+                pointsBetweenTags++;
+            }
+            else
+            {
+                addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                           QString::number(distIter.value().sourceFileLine)+
+                           ", uptime " + QString::number(distIter.key()) +
+                           ": Unknown distance type between measured ones. Skipped.");
+                distIter++;
+                continue;
+            }
+
+            distIter++;
+        }
+    }
+
+    return true;
+}
+
+
