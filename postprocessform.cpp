@@ -4269,117 +4269,74 @@ bool PostProcessingForm::generatePointCloudPointSet_Stylus(const Tag& beginningT
                 qint64 distanceUptime = distIter.key();
                 // TODO: Add/subtract fine tune sync value here if needed
 
-                QMap<qint64, RoverSyncItem>::const_iterator roverAUptimeIter = rovers[0].roverSyncData.lowerBound(distanceUptime);
-                UBXMessage_RELPOSNED interpolated_RoverA;
+                UBXMessage_RELPOSNED interpolated_Rovers[2];
+                bool fail = false;
 
-                if (roverAUptimeIter != rovers[0].roverSyncData.end())
+                for (int i = 0; i < 2; i++)
                 {
-                    const RoverSyncItem upperSyncItem = roverAUptimeIter.value();
-                    RoverSyncItem lowerSyncItem;
-                    roverAUptimeIter--;
-                    if (roverAUptimeIter != rovers[0].roverSyncData.end())
+                    QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = rovers[i].roverSyncData.lowerBound(distanceUptime);
+
+                    if (roverUptimeIter != rovers[i].roverSyncData.end())
                     {
-                        lowerSyncItem = roverAUptimeIter.value();
+                        const RoverSyncItem upperSyncItem = roverUptimeIter.value();
+                        RoverSyncItem lowerSyncItem;
+                        roverUptimeIter--;
+                        if (roverUptimeIter != rovers[i].roverSyncData.end())
+                        {
+                            lowerSyncItem = roverUptimeIter.value();
+                        }
+                        else
+                        {
+                            addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                       QString::number(distIter.value().sourceFileLine)+
+                                       ", uptime " + QString::number(distIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) + " sync data (higher limit). Skipped.");
+                            distIter++;
+                            fail = true;
+                            break;
+                        }
+
+                        if (rovers[i].relposnedMessages.find(upperSyncItem.iTOW) == rovers[i].relposnedMessages.end())
+                        {
+                            addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                       QString::number(distIter.value().sourceFileLine)+
+                                       ", uptime " + QString::number(distIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) + " iTOW (higher limit). Skipped.");
+                            distIter++;
+                            fail = true;
+                            break;
+                        }
+
+                        if (rovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[i].relposnedMessages.end())
+                        {
+                            addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
+                                       QString::number(distIter.value().sourceFileLine)+
+                                       ", uptime " + QString::number(distIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) + " iTOW (higher limit). Skipped.");
+                            distIter++;
+                            fail = true;
+                            break;
+                        }
+
+                        qint64 timeDiff = distanceUptime - roverUptimeIter.key();
+
+                        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                rovers[i].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
                     }
                     else
                     {
                         addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
                                    QString::number(distIter.value().sourceFileLine)+
                                    ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover A sync data (higher limit). Skipped.");
+                                   ": Can not find corresponding rover" + getRoverIdentString(i) + " sync data (upper limit). Skipped.");
                         distIter++;
-                        continue;
+                        fail = true;
+                        break;
                     }
-
-                    if (rovers[0].relposnedMessages.find(upperSyncItem.iTOW) == rovers[0].relposnedMessages.end())
-                    {
-                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                   QString::number(distIter.value().sourceFileLine)+
-                                   ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
-                        distIter++;
-                        continue;
-                    }
-
-                    if (rovers[0].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[0].relposnedMessages.end())
-                    {
-                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                   QString::number(distIter.value().sourceFileLine)+
-                                   ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover A iTOW (higher limit). Skipped.");
-                        distIter++;
-                        continue;
-                    }
-
-                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
-
-                    interpolated_RoverA = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[0].relposnedMessages.find(lowerSyncItem.iTOW).value(),
-                                            rovers[0].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
-                }
-                else
-                {
-                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                               QString::number(distIter.value().sourceFileLine)+
-                               ", uptime " + QString::number(distIter.key()) +
-                               ": Can not find corresponding rover A sync data (upper limit). Skipped.");
-                    distIter++;
-                    continue;
                 }
 
-                QMap<qint64, RoverSyncItem>::const_iterator roverBUptimeIter = rovers[1].roverSyncData.lowerBound(distanceUptime);
-                UBXMessage_RELPOSNED interpolated_RoverB;
-
-                if (roverBUptimeIter != rovers[1].roverSyncData.end())
+                if (fail)
                 {
-                    const RoverSyncItem upperSyncItem = roverBUptimeIter.value();
-                    RoverSyncItem lowerSyncItem;
-                    roverBUptimeIter--;
-                    if (roverBUptimeIter != rovers[1].roverSyncData.end())
-                    {
-                        lowerSyncItem = roverBUptimeIter.value();
-                    }
-                    else
-                    {
-                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                   QString::number(distIter.value().sourceFileLine)+
-                                   ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover B sync data (higher limit). Skipped.");
-                        distIter++;
-                        continue;
-                    }
-
-                    if (rovers[1].relposnedMessages.find(upperSyncItem.iTOW) == rovers[1].relposnedMessages.end())
-                    {
-                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                   QString::number(distIter.value().sourceFileLine)+
-                                   ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
-                        distIter++;
-                        continue;
-                    }
-
-                    if (rovers[1].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[1].relposnedMessages.end())
-                    {
-                        addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                                   QString::number(distIter.value().sourceFileLine)+
-                                   ", uptime " + QString::number(distIter.key()) +
-                                   ": Can not find corresponding rover B iTOW (higher limit). Skipped.");
-                        distIter++;
-                        continue;
-                    }
-
-                    qint64 timeDiff = distanceUptime - roverAUptimeIter.key();
-
-                    interpolated_RoverB = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[1].relposnedMessages.find(lowerSyncItem.iTOW).value(),
-                                            rovers[1].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
-                }
-                else
-                {
-                    addLogLine("Warning: File \"" + distIter.value().sourceFile + "\", line " +
-                               QString::number(distIter.value().sourceFileLine)+
-                               ", uptime " + QString::number(distIter.key()) +
-                               ": Can not find corresponding rover B sync data (upper limit). Skipped.");
-                    distIter++;
                     continue;
                 }
 
@@ -4401,14 +4358,14 @@ bool PostProcessingForm::generatePointCloudPointSet_Stylus(const Tag& beginningT
                 }
 
                 Eigen::Vector3d roverAPosNED(
-                        interpolated_RoverA.relPosN,
-                        interpolated_RoverA.relPosE,
-                        interpolated_RoverA.relPosD);
+                        interpolated_Rovers[0].relPosN,
+                        interpolated_Rovers[0].relPosE,
+                        interpolated_Rovers[0].relPosD);
 
                 Eigen::Vector3d roverBPosNED(
-                        interpolated_RoverB.relPosN,
-                        interpolated_RoverB.relPosE,
-                        interpolated_RoverB.relPosD);
+                        interpolated_Rovers[1].relPosN,
+                        interpolated_Rovers[1].relPosE,
+                        interpolated_Rovers[1].relPosD);
 
                 Eigen::Vector3d roverBToANED = roverAPosNED- roverBPosNED;
                 Eigen::Vector3d roverBToANEDNormalized = roverBToANED.normalized();
