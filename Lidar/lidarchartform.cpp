@@ -22,6 +22,7 @@
 #include <QSettings>
 #include "lidarchartform.h"
 #include "ui_lidarchartform.h"
+#include "rplidarplausibilityfilter.h"
 
 LidarChartForm::LidarChartForm(QWidget *parent) :
     QWidget(parent),
@@ -294,13 +295,19 @@ void LidarChartForm::updateChartData(void)
     QVector<QPointF> filteredItems;
     QVector<QPointF> qualities;
 
-    for (int i = 0; i < lastRoundDistanceItems.size(); i++)
+    RPLidarPlausibilityFilter filter;
+
+    QVector<RPLidarPlausibilityFilter::FilteredItem> rpFilteredItems;
+
+    filter.filter(lastRoundDistanceItems, rpFilteredItems);
+
+    for (int i = 0; i < rpFilteredItems.size(); i++)
     {
-        if (lastRoundDistanceItems[i].quality > 0.0)
+        if (rpFilteredItems[i].type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
         {
             if (lineSeries_Distance_Filtered->isVisible() || scatterSeries_Distance_Filtered->isVisible())
             {
-                QPointF newPoint(lastRoundDistanceItems[i].angle * 360 / (2 * M_PI), lastRoundDistanceItems[i].distance);
+                QPointF newPoint(rpFilteredItems[i].item.angle * 360 / (2 * M_PI), rpFilteredItems[i].item.distance);
                 filteredItems.push_back(newPoint);
             }
 //            lineSeries->append(lastRoundDistanceItems[i].angle * 360 / (2 * M_PI), lastRoundDistanceItems[i].distance);
@@ -309,7 +316,7 @@ void LidarChartForm::updateChartData(void)
 
         if (lineSeries_Quality->isVisible() || scatterSeries_Quality->isVisible())
         {
-            QPointF newQualityPoint(lastRoundDistanceItems[i].angle * 360 / (2 * M_PI), lastRoundDistanceItems[i].quality);
+            QPointF newQualityPoint(rpFilteredItems[i].item.angle * 360 / (2 * M_PI), rpFilteredItems[i].item.quality);
             qualities.push_back(newQualityPoint);
         }
     }

@@ -26,7 +26,7 @@
 #include "postprocessform.h"
 #include "ui_postprocessform.h"
 #include "transformmatrixgenerator.h"
-//#include "tinyspline/tinysplinecpp.h"
+#include "Lidar/rplidarplausibilityfilter.h"
 
 struct
 {
@@ -1005,10 +1005,17 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
 
             return;
         }
+
+        if (!updateLOSolverReferencePointLocations(loSolver_Lidar))
+        {
+            return;
+        }
+
         break;
     }
     default:
-        addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
+        Q_ASSERT(false);
+        // addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
         break;
     }
 
@@ -1207,35 +1214,42 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
                         continue;
                     }
 
+                    bool generatingOk = false;
+                    int prevPointsWritten = pointsWritten;
+
                     switch (source)
                     {
                     case SOURCE_LASERDISTANCEMETER_OR_CONSTANT:
-                    {
-                        int prevPointWritten = pointsWritten;
-                        if (generatePointCloudPointSet_Stylus(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, pointsWritten))
-                        {
-                            int pointsBetweenTags = pointsWritten - prevPointWritten;
-
-                            if (pointsBetweenTags == 0)
-                            {
-                                addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
-                                           QString::number(beginningTag.sourceFileLine) +
-                                           ", uptime " + QString::number(beginningUptime) +
-                                           ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
-                                           QString::number(endingTag.sourceFileLine) +
-                                           ", uptime " + QString::number(endingTag.iTOW) +
-                                           ", iTOW " + QString::number(endingTag.iTOW) +
-                                           ", File \"" + endingTag.sourceFile + "\""
-                                           " No points between tags.");
-                            }
-                        }
+                        generatingOk = generatePointCloudPointSet_Stylus(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, pointsWritten);
                         break;
-                    }
+
+                    case SOURCE_LIDAR:
+                        generatingOk = generatePointCloudPointSet_Lidar(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, transform_Lidar_Generated_BeforeRotation, transform_LidarGenerated_AfterRotation, loSolver_Lidar, pointsWritten);
+                        break;
+
                     default:
-                        addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
+                        Q_ASSERT(false);
+                        //addLogLine("Unsupported point cloud distance source (not implemented in SW so fix it!)");
                         break;
                     }
 
+                    if (generatingOk)
+                    {
+                        int pointsBetweenTags = pointsWritten - prevPointsWritten;
+
+                        if (pointsBetweenTags == 0)
+                        {
+                            addLogLine("Warning: File \"" + beginningTag.sourceFile + "\", beginning tag line " +
+                                       QString::number(beginningTag.sourceFileLine) +
+                                       ", uptime " + QString::number(beginningUptime) +
+                                       ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
+                                       QString::number(endingTag.sourceFileLine) +
+                                       ", uptime " + QString::number(endingTag.iTOW) +
+                                       ", iTOW " + QString::number(endingTag.iTOW) +
+                                       ", File \"" + endingTag.sourceFile + "\""
+                                       " No points between tags.");
+                        }
+                    }
 
                     beginningUptime = -1;
                 }
@@ -4017,6 +4031,8 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
 
                     newRound.startTime = startTime;
                     newRound.endTime = endTime;
+                    newRound.fileName = fileName;
+                    newRound.chunkIndex = chunkIndex;
 
                     if (lidarRounds.find(endTime) != lidarRounds.end())
                     {
@@ -4416,4 +4432,255 @@ bool PostProcessingForm::generatePointCloudPointSet_Stylus(const Tag& beginningT
     return true;
 }
 
+float distanceDeltaLimit = 0.01 / ((M_PI * 2) * (1. /360.));  //!< Discard samples when changing speed in relation to the previous and next sample of distance are higher than this (meters/radian)
+
+bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTag, const Tag& endingTag,
+                                       const qint64 beginningUptime, const qint64 endingUptime,
+                                       QTextStream* outStream,
+                                       const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
+                                       const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
+                                       const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
+                                       LOSolver& loSolver,
+                                       int& pointsWritten)
+{
+    bool includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState();
+    int timeShift = ui->spinBox_Lidar_PointCloud_TimeShift->value();
+
+    QMap<qint64, LidarRound>::const_iterator lidarIter = lidarRounds.upperBound(beginningUptime);
+
+    int pointsBetweenTags = 0;
+
+    QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
+    filteredItems.reserve(10000);
+
+    RPLidarPlausibilityFilter plausibilityFilter;
+
+    // TODO: Read and set plausibility filter settings. Using defaults for now.
+
+    while ((lidarIter != lidarRounds.end()) && (lidarIter.value().startTime < endingUptime))
+    {
+        plausibilityFilter.filter(lidarIter.value().distanceItems, filteredItems);
+
+        Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
+
+        const LidarRound& round = lidarIter.value();
+
+        for (int i = 0; i < lidarIter.value().distanceItems.count(); i++)
+        {
+            const RPLidarPlausibilityFilter::FilteredItem& currentItem = filteredItems[i];
+
+            if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
+            {
+                // Rover coordinates interpolated according to distance timestamps.
+
+                // TODO: This could be optimized if needed (most likely several times faster).
+                // Now this searches items from the map every time, that could be avoided by
+                // remembering the previous items and only changing them when necessary.
+
+                // TODO: This should use quaternions to work better.
+                // As measurements are received 8 times/s typically,
+                // interpolating coordinates may not be a big issue either.
+                // If using quaternions, rover data should be ITOW-synced.
+
+                qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
+                UBXMessage_RELPOSNED interpolated_Rovers[3];
+
+                qint64 roverUptime = itemUptime + timeShift;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = rovers[i].roverSyncData.lowerBound(roverUptime);
+
+                    if (roverUptimeIter != rovers[i].roverSyncData.end())
+                    {
+                        const RoverSyncItem upperSyncItem = roverUptimeIter.value();
+                        RoverSyncItem lowerSyncItem;
+                        roverUptimeIter--;
+                        if (roverUptimeIter != rovers[i].roverSyncData.end())
+                        {
+                            lowerSyncItem = roverUptimeIter.value();
+                        }
+                        else
+                        {
+                            addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                                       QString::number(lidarIter.value().chunkIndex)+
+                                       ", uptime " + QString::number(lidarIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) +
+                                       " sync data (higher limit). Skipped the rest of this set of points " +
+                                       "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                                       QString::number(endingTag.sourceFileLine) +
+                                       " in file \"" + beginningTag.sourceFile + "\".");
+                            return(false);
+                        }
+
+                        if (rovers[i].relposnedMessages.find(upperSyncItem.iTOW) == rovers[i].relposnedMessages.end())
+                        {
+                            addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                                       QString::number(lidarIter.value().chunkIndex)+
+                                       ", uptime " + QString::number(lidarIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) +
+                                       " iTOW (higher limit). Skipped the rest of this set of points " +
+                                       "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                                       QString::number(endingTag.sourceFileLine) +
+                                       " in file \"" + beginningTag.sourceFile + "\".");
+                            return(false);
+                        }
+
+                        if (rovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == rovers[i].relposnedMessages.end())
+                        {
+                            addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                                       QString::number(lidarIter.value().chunkIndex)+
+                                       ", uptime " + QString::number(lidarIter.key()) +
+                                       ": Can not find corresponding rover" + getRoverIdentString(i) +
+                                       " iTOW (lower limit). Skipped the rest of this set of points " +
+                                       "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                                       QString::number(endingTag.sourceFileLine) +
+                                       " in file \"" + beginningTag.sourceFile + "\".");
+                            return(false);
+                        }
+
+                        qint64 timeDiff = roverUptime - roverUptimeIter.key();
+
+                        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(rovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value(),
+                                                rovers[i].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
+                    }
+                    else
+                    {
+                        addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                                   QString::number(lidarIter.value().chunkIndex)+
+                                   ", uptime " + QString::number(lidarIter.key()) +
+                                   ": Can not find corresponding rover" + getRoverIdentString(i) +
+                                   " sync data (upper limit). Skipped the rest of this set of points " +
+                                   "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                                   QString::number(endingTag.sourceFileLine) +
+                                   " in file \"" + beginningTag.sourceFile + "\".");
+
+                        return false;
+                    }
+                }
+
+                Eigen::Vector3d points[3] =
+                {
+                    { interpolated_Rovers[0].relPosN, interpolated_Rovers[0].relPosE, interpolated_Rovers[0].relPosD },
+                    { interpolated_Rovers[1].relPosN, interpolated_Rovers[1].relPosE, interpolated_Rovers[1].relPosD },
+                    { interpolated_Rovers[2].relPosN, interpolated_Rovers[2].relPosE, interpolated_Rovers[2].relPosD },
+                };
+
+                Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
+
+                if (!loSolver.setPoints(points))
+                {
+                    addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                               QString::number(lidarIter.value().chunkIndex)+
+                               ", uptime " + QString::number(lidarIter.key()) +
+                               ": LOSolver.setPoints failed. Error code: " + QString::number(loSolver.getLastError()) +
+                               ". Skipped the rest of this set of points " +
+                               "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                               QString::number(endingTag.sourceFileLine) +
+                               " in file \"" + beginningTag.sourceFile + "\".");
+
+                    return(false);
+                }
+
+
+                if (!loSolver.getTransformMatrix(transform_LoSolver))
+                {
+                    addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                               QString::number(lidarIter.value().chunkIndex)+
+                               ", uptime " + QString::number(lidarIter.key()) +
+                               ": LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) +
+                               ". Skipped the rest of this set of points " +
+                               "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                               QString::number(endingTag.sourceFileLine) +
+                               " in file \"" + beginningTag.sourceFile + "\".");
+
+                    return(false);
+                }
+
+                Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
+                transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+
+                // TODO: These calculations could be optimized.
+                // Now they are done step by step to make debugging easier.
+
+                Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
+
+                Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
+
+                Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
+
+                Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
+
+                Eigen::Vector3d laserOriginAfterLOSolverTransformNED = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
+
+
+
+
+                Eigen::Vector3d laserDirectionBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
+
+                Eigen::Vector3d laserDirectionAfterRotation = transform_LaserRotation * laserDirectionBeforeRotation;
+
+                Eigen::Vector3d laserDirectionAfterPostRotationTransform = transform_AfterRotation * laserDirectionAfterRotation;
+
+                Eigen::Vector3d laserDirectionAfterLOSolverTransform = transform_LoSolver * laserDirectionAfterPostRotationTransform;
+
+                Eigen::Vector3d laserDirectionAfterLOSolverTransformNED = transform_NEDToXYZ * laserDirectionAfterLOSolverTransform;
+
+
+
+                Eigen::Vector3d laserHitPos = laserDirectionAfterLOSolverTransformNED;
+                Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformNED - laserHitPos).normalized();
+
+
+
+                QString lineOut;
+                if (includeNormals)
+                {
+                    lineOut = QString::number(laserHitPos(0), 'f', 4) +
+                            "\t" + QString::number(laserHitPos(1), 'f', 4) +
+                            "\t" + QString::number(laserHitPos(2), 'f', 4) +
+                            "\t" + QString::number(normal(0), 'f', 4) +
+                            "\t" + QString::number(normal(1), 'f', 4) +
+                            "\t" + QString::number(normal(2), 'f', 4);
+                }
+                else
+                {
+                    lineOut = QString::number(laserHitPos(0), 'f', 4) +
+                            "\t" + QString::number(laserHitPos(1), 'f', 4) +
+                            "\t" + QString::number(laserHitPos(2), 'f', 4);
+
+/*
+                    lineOut = QString::number(laserOriginAfterLOSolverTransformNED(0), 'f', 4) +
+                            "\t" + QString::number(laserOriginAfterLOSolverTransformNED(1), 'f', 4) +
+                            "\t" + QString::number(laserOriginAfterLOSolverTransformNED(2), 'f', 4);
+*/
+
+
+                }
+
+                outStream->operator<<(lineOut + "\n");
+                pointsWritten++;
+                pointsBetweenTags++;
+            }
+/*            else
+            {
+                addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                           QString::number(lidarIter.value().chunkIndex)+
+                           ", uptime " + QString::number(lidarIter.key()) +
+                           ": Can not find corresponding rover" + getRoverIdentString(i) +
+                           " sync data (upper limit). Skipped the rest of this set of points " +
+                           "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
+                           QString::number(endingTag.sourceFileLine) +
+                           " in file \"" + beginningTag.sourceFile + "\".");
+                return(false);
+            }
+            */
+        }
+
+        lidarIter++;
+    }
+
+    return true;
+}
 

@@ -2094,7 +2094,7 @@
         </rect>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
         <attribute name="title">
@@ -2172,13 +2172,58 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>80</y>
+           <y>110</y>
            <width>271</width>
            <height>23</height>
           </rect>
          </property>
          <property name="text">
           <string>Generate point cloud (xyz) files...</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="checkBox_Lidar_PointCloud_IncludeNormals">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>10</y>
+           <width>401</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Include normals (pointing from measured point to lidar unit) into xyz-files</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_Lidar_PointCloud_TimeShift">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>411</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>TimeShift (rover uptime = distance uptime plus this, ms):</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="spinBox_Lidar_PointCloud_TimeShift">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>40</y>
+           <width>141</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>-1000000000</number>
+         </property>
+         <property name="maximum">
+          <number>1000000000</number>
          </property>
         </widget>
        </widget>

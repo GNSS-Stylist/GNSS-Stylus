@@ -233,8 +233,10 @@ private:
     class LidarRound
     {
     public:
-        qint64 startTime;
-        qint64 endTime;
+        QString fileName;
+        int chunkIndex = -1;
+        qint64 startTime = -1;
+        qint64 endTime = -1;
         QVector<RPLidarThread::DistanceItem> distanceItems;
     };
 
@@ -300,6 +302,15 @@ private:
                                            const qint64 beginningUptime, const qint64 endingUptime,
                                            QTextStream* outStream,
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform,
+                                           int& pointsWritten);
+
+    bool generatePointCloudPointSet_Lidar(const Tag& beginningTag, const Tag& endingTag,
+                                           const qint64 beginningUptime, const qint64 endingUptime,
+                                           QTextStream* outStream,
+                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
+                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
+                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
+                                           LOSolver& loSolver,
                                            int& pointsWritten);
 
     typedef enum
