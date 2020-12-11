@@ -138,8 +138,13 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
         }
     }
 
-
     ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", "30").toDouble());
+
+    ui->plainTextEdit_LOSolver_TransformMatrixScript->setPlainText(settings.value("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText()).toString());
+    ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText()).toString());
+    ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
+
+    ui->spinBox_Lidar_PointCloud_TimeShift->setValue(settings.value("PostProcessing_Lidar_PointCloud_TimeShift", "80").toInt());
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -211,6 +216,12 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_PointCloud", fileDialog_PointCloud.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Stylus_MovieScript", fileDialog_Stylus_MovieScript.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_LOSolver_Script", fileDialog_LOSolver_Script.directory().path());
+
+    settings.setValue("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText());
+    settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
+    settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
+
+    settings.setValue("PostProcessing_Lidar_PointCloud_TimeShift", ui->spinBox_Lidar_PointCloud_TimeShift->value());
 
     delete ui;
 }
@@ -4431,8 +4442,6 @@ bool PostProcessingForm::generatePointCloudPointSet_Stylus(const Tag& beginningT
 
     return true;
 }
-
-float distanceDeltaLimit = 0.01 / ((M_PI * 2) * (1. /360.));  //!< Discard samples when changing speed in relation to the previous and next sample of distance are higher than this (meters/radian)
 
 bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTag, const Tag& endingTag,
                                        const qint64 beginningUptime, const qint64 endingUptime,
