@@ -22,11 +22,11 @@
 #include <QTime>
 #include <QSettings>
 #include <QMessageBox>
+#include <QtMath>
 
 #include "postprocessform.h"
 #include "ui_postprocessform.h"
 #include "transformmatrixgenerator.h"
-#include "Lidar/rplidarplausibilityfilter.h"
 
 struct
 {
@@ -144,7 +144,17 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText()).toString());
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
 
+    ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals").toBool());
     ui->spinBox_Lidar_PointCloud_TimeShift->setValue(settings.value("PostProcessing_Lidar_PointCloud_TimeShift", "80").toInt());
+
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_StartAngle", "90").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_EndAngle", "270").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_Quality_Pre", "0.5").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_Quality_Post", "0.5").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Near", "0.1").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Far", "5").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceDeltaLimit", "0").toDouble());
+    ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit", "0").toDouble());
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -221,7 +231,17 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
 
+    settings.setValue("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState() == Qt::Checked);
     settings.setValue("PostProcessing_Lidar_PointCloud_TimeShift", ui->spinBox_Lidar_PointCloud_TimeShift->value());
+
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_StartAngle", ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_EndAngle", ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_Quality_Pre", ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_Quality_Post", ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Near", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Far", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceDeltaLimit", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit", ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->value());
 
     delete ui;
 }
@@ -963,6 +983,7 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
     Eigen::Transform<double, 3, Eigen::Affine> transform_Lidar_Generated_BeforeRotation;
     Eigen::Transform<double, 3, Eigen::Affine> transform_LidarGenerated_AfterRotation;
     LOSolver loSolver_Lidar;
+    RPLidarPlausibilityFilter::Settings lidarFilteringSettings;
 
     if (!generateTransformationMatrix(transform_NEDToXYZ))
     {
@@ -1021,6 +1042,15 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
         {
             return;
         }
+
+        lidarFilteringSettings.startAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->value());
+        lidarFilteringSettings.endAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->value());
+        lidarFilteringSettings.qualityLimit_PreFiltering = ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->value();
+        lidarFilteringSettings.qualityLimit_PostFiltering = ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->value();
+        lidarFilteringSettings.distanceLimit_Near = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->value();
+        lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->value();
+        lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
+        lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
 
         break;
     }
@@ -1235,7 +1265,7 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
                         break;
 
                     case SOURCE_LIDAR:
-                        generatingOk = generatePointCloudPointSet_Lidar(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, transform_Lidar_Generated_BeforeRotation, transform_LidarGenerated_AfterRotation, loSolver_Lidar, pointsWritten);
+                        generatingOk = generatePointCloudPointSet_Lidar(beginningTag, endingTag, beginningUptime, uptime, outStream, transform_NEDToXYZ, transform_Lidar_Generated_BeforeRotation, transform_LidarGenerated_AfterRotation, loSolver_Lidar, lidarFilteringSettings, pointsWritten);
                         break;
 
                     default:
@@ -4449,7 +4479,7 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
                                        const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
                                        const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
                                        const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
-                                       LOSolver& loSolver,
+                                       LOSolver& loSolver, const RPLidarPlausibilityFilter::Settings& filteringSettings,
                                        int& pointsWritten)
 {
     bool includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState();
@@ -4463,6 +4493,8 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
     filteredItems.reserve(10000);
 
     RPLidarPlausibilityFilter plausibilityFilter;
+
+    plausibilityFilter.setSettings(filteringSettings);
 
     // TODO: Read and set plausibility filter settings. Using defaults for now.
 

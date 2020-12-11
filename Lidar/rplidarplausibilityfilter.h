@@ -29,19 +29,19 @@ public:
     class Settings
     {
     public:
-        float startAngle = M_PI / 2;
-        float endAngle = M_PI + M_PI / 2;
+        float startAngle = 0;
+        float endAngle = M_PI * 2;
 
-//        float startAngle = 0;
-//        float endAngle = M_PI * 2;
-
-        float qualityLimit_PreFiltering = 0.5;
+        float qualityLimit_PreFiltering = 0;
         float qualityLimit_PostFiltering = 0;
 
-        float distanceLimit_Near = 0.1;
-        float distanceLimit_Far = 5;
+        float distanceLimit_Near = 0;
+        float distanceLimit_Far = 1e9;
 
-        float gapLimit = M_PI;
+        float distanceDeltaLimit = 0;   //!< Discard sample when changing speed in relation to the previous and next sample of distance are higher than this (meters/radian) 0 -> Don't use
+        float relativeSlopeLimit = 0;   //!< Discard sample when relative changing speed in relation to the previous and next sample of distance are higher than this (relative change/radian) 0 -> Don't use
+
+/*        float gapLimit = M_PI;
         float discardAngle_BeforeGap = 0;
         float discardAngle_AfterGap = 0;
 
@@ -49,6 +49,7 @@ public:
         float distanceDiscontinuityLimit_Decreasing = 100;
         float discardAngle_BeforeDiscontinuity = 0;
         float discardAngle_AfterDiscontinuity = 0;
+*/
     };
 
     class FilteredItem
@@ -62,10 +63,13 @@ public:
             FIT_REJECTED_QUALITY_POST,
             FIT_REJECTED_DISTANCE_NEAR,
             FIT_REJECTED_DISTANCE_FAR,
-            FIT_REJECTED_GAP_BEFORE,
+            FIT_REJECTED_DISTANCE_DELTA,
+            FIT_REJECTED_SLOPE,
+/*            FIT_REJECTED_GAP_BEFORE,
             FIT_REJECTED_GAP_AFTER,
             FIT_REJECTED_DISCONTINUITY_BEFORE,
             FIT_REJECTED_DISCONTINUITY_AFTER,
+*/
         };
 
         Type type;

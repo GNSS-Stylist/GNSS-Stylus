@@ -38,6 +38,7 @@
 #include "Eigen/Geometry"
 #include "losolver.h"
 #include "Lidar/rplidarthread.h"
+#include "Lidar/rplidarplausibilityfilter.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -310,7 +311,7 @@ private:
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
-                                           LOSolver& loSolver,
+                                           LOSolver& loSolver, const RPLidarPlausibilityFilter::Settings& filteringSettings,
                                            int& pointsWritten);
 
     typedef enum
