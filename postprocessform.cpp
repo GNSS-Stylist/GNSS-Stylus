@@ -157,6 +157,10 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", "0").toDouble());
     ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", "0").toDouble());
 
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_N", "0").toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_E", "0").toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_D", "0").toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Radius->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Radius", "100000000").toDouble());
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -245,6 +249,11 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Lidar_Filtering_DistanceLimit_Far", ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value());
     settings.setValue("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value());
     settings.setValue("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value());
+
+    settings.setValue("PostProcessing_Lidar_BoundingSphere_Center_N", ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value());
+    settings.setValue("PostProcessing_Lidar_BoundingSphere_Center_E", ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value());
+    settings.setValue("PostProcessing_Lidar_BoundingSphere_Center_D", ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
+    settings.setValue("PostProcessing_Lidar_BoundingSphere_Radius", ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value());
 
     delete ui;
 }
@@ -4481,6 +4490,12 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
     bool includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState();
     int timeShift = ui->spinBox_Lidar_TimeShift->value();
 
+    Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
+                    ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
+                    ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
+
+    double boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
+
     QMap<qint64, LidarRound>::const_iterator lidarIter = lidarRounds.upperBound(beginningUptime);
 
     int pointsBetweenTags = 0;
@@ -4547,70 +4562,47 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
 
                 Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
 
-                Eigen::Vector3d laserOriginAfterLOSolverTransformNED = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
 
 
 
 
-                Eigen::Vector3d laserDirectionBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
+                Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
 
-                Eigen::Vector3d laserDirectionAfterRotation = transform_LaserRotation * laserDirectionBeforeRotation;
+                Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
 
-                Eigen::Vector3d laserDirectionAfterPostRotationTransform = transform_AfterRotation * laserDirectionAfterRotation;
+                Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
 
-                Eigen::Vector3d laserDirectionAfterLOSolverTransform = transform_LoSolver * laserDirectionAfterPostRotationTransform;
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
 
-                Eigen::Vector3d laserDirectionAfterLOSolverTransformNED = transform_NEDToXYZ * laserDirectionAfterLOSolverTransform;
-
-
-
-                Eigen::Vector3d laserHitPos = laserDirectionAfterLOSolverTransformNED;
-                Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformNED - laserHitPos).normalized();
-
-
-
-                QString lineOut;
-                if (includeNormals)
+                if ((laserHitPosAfterLOSolverTransform - boundingSphere_Center).norm() <= boundingSphere_Radius)
                 {
-                    lineOut = QString::number(laserHitPos(0), 'f', 4) +
-                            "\t" + QString::number(laserHitPos(1), 'f', 4) +
-                            "\t" + QString::number(laserHitPos(2), 'f', 4) +
-                            "\t" + QString::number(normal(0), 'f', 4) +
-                            "\t" + QString::number(normal(1), 'f', 4) +
-                            "\t" + QString::number(normal(2), 'f', 4);
+                    Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+
+                    Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
+
+                    QString lineOut;
+                    if (includeNormals)
+                    {
+                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
+                                "\t" + QString::number(normal(0), 'f', 4) +
+                                "\t" + QString::number(normal(1), 'f', 4) +
+                                "\t" + QString::number(normal(2), 'f', 4);
+                    }
+                    else
+                    {
+                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
+                    }
+
+                    outStream->operator<<(lineOut + "\n");
+                    pointsWritten++;
+                    pointsBetweenTags++;
                 }
-                else
-                {
-                    lineOut = QString::number(laserHitPos(0), 'f', 4) +
-                            "\t" + QString::number(laserHitPos(1), 'f', 4) +
-                            "\t" + QString::number(laserHitPos(2), 'f', 4);
-
-/*
-                    lineOut = QString::number(laserOriginAfterLOSolverTransformNED(0), 'f', 4) +
-                            "\t" + QString::number(laserOriginAfterLOSolverTransformNED(1), 'f', 4) +
-                            "\t" + QString::number(laserOriginAfterLOSolverTransformNED(2), 'f', 4);
-*/
-
-
-                }
-
-                outStream->operator<<(lineOut + "\n");
-                pointsWritten++;
-                pointsBetweenTags++;
             }
-/*            else
-            {
-                addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
-                           QString::number(lidarIter.value().chunkIndex)+
-                           ", uptime " + QString::number(lidarIter.key()) +
-                           ": Can not find corresponding rover" + getRoverIdentString(i) +
-                           " sync data (upper limit). Skipped the rest of this set of points " +
-                           "between tags in lines " + QString::number(beginningTag.sourceFileLine) +
-                           QString::number(endingTag.sourceFileLine) +
-                           " in file \"" + beginningTag.sourceFile + "\".");
-                return(false);
-            }
-            */
         }
 
         lidarIter++;
@@ -4629,14 +4621,6 @@ void PostProcessingForm::getLidarFilteringSettings(RPLidarPlausibilityFilter::Se
     lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value();
     lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
     lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
-}
-
-void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
-{
-//    bool objectActive = false;
-//    bool scanningActive = false;
-
-
 }
 
 PostProcessingForm::LOInterpolator::LOInterpolator(PostProcessingForm* owner)
@@ -4734,4 +4718,12 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
     {
         throw QString("LOSolver.setPoints failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
     }
+}
+
+void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
+{
+//    bool objectActive = false;
+//    bool scanningActive = false;
+
+
 }

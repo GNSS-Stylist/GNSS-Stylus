@@ -420,7 +420,7 @@
           </rect>
          </property>
          <property name="title">
-          <string>Filtering</string>
+          <string>Filtering (measurements from the lidar-module)</string>
          </property>
          <widget class="QLabel" name="label_Lidar_Filtering_StartAngle">
           <property name="geometry">
@@ -745,6 +745,145 @@
           </property>
           <property name="text">
            <string>Distance slope limit (relative change/deg, 0=don't use):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_Lidar_BoundingSphere">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>310</y>
+           <width>601</width>
+           <height>101</height>
+          </rect>
+         </property>
+         <property name="title">
+          <string>Bounding sphere (points outside this will be discarded)</string>
+         </property>
+         <widget class="QLabel" name="label_Lidar_BoundingSphere_Center">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>30</y>
+            <width>268</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Coordinates of the center point (NED):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_BoundingSphere_Center_N">
+          <property name="geometry">
+           <rect>
+            <x>294</x>
+            <y>30</y>
+            <width>77</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>-100000000.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_BoundingSphere_Center_E">
+          <property name="geometry">
+           <rect>
+            <x>377</x>
+            <y>30</y>
+            <width>77</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>-100000000.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_BoundingSphere_Center_D">
+          <property name="geometry">
+           <rect>
+            <x>460</x>
+            <y>30</y>
+            <width>77</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>-100000000.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_BoundingSphere_Radius">
+          <property name="geometry">
+           <rect>
+            <x>294</x>
+            <y>60</y>
+            <width>241</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_BoundingSphere_Radius">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>60</y>
+            <width>268</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Radius (m):</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
