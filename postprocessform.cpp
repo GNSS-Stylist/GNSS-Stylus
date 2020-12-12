@@ -1046,14 +1046,7 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
             return;
         }
 
-        lidarFilteringSettings.startAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_StartAngle->value());
-        lidarFilteringSettings.endAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_EndAngle->value());
-        lidarFilteringSettings.qualityLimit_PreFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->value();
-        lidarFilteringSettings.qualityLimit_PostFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Post->value();
-        lidarFilteringSettings.distanceLimit_Near = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->value();
-        lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value();
-        lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
-        lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
+        getLidarFilteringSettings(lidarFilteringSettings);
 
         break;
     }
@@ -4726,5 +4719,17 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
     }
 
     return true;
+}
+
+void PostProcessingForm::getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings)
+{
+    lidarFilteringSettings.startAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_StartAngle->value());
+    lidarFilteringSettings.endAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_EndAngle->value());
+    lidarFilteringSettings.qualityLimit_PreFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->value();
+    lidarFilteringSettings.qualityLimit_PostFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Post->value();
+    lidarFilteringSettings.distanceLimit_Near = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->value();
+    lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value();
+    lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
+    lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
 }
 

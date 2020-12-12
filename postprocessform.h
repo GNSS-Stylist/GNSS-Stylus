@@ -322,6 +322,8 @@ private:
 
     void generatePointClouds(const PointCloudDistanceSource source);
 
+    void getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings);
+
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
 
