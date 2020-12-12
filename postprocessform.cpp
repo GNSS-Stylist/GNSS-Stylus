@@ -4639,12 +4639,20 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 
 }
 
+PostProcessingForm::LOInterpolator::LOInterpolator(PostProcessingForm* owner)
+{
+    this->owner = owner;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int ii = 0; ii < 2; ii++)
+        {
+            roverUptimeLimits[i][ii] = -1;
+        }
+    }
+}
+
 void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform)
 {
-    // TODO: This could be optimized if needed (most likely several times faster).
-    // Now this searches items from the map every time, that could be avoided by
-    // caching the previous items and only changing them when necessary.
-
     // TODO: This should use quaternions to work better.
     // As measurements are received 8 times/s typically,
     // interpolating coordinates may not be a big issue either.
@@ -4654,41 +4662,60 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
 
     for (int i = 0; i < 3; i++)
     {
-        QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = owner->rovers[i].roverSyncData.lowerBound(uptime);
-
-        if (roverUptimeIter != owner->rovers[i].roverSyncData.end())
+        if ((uptime <= roverUptimeLimits[i][0]) || (uptime > roverUptimeLimits[i][1]))
         {
-            const RoverSyncItem upperSyncItem = roverUptimeIter.value();
-            RoverSyncItem lowerSyncItem;
-            roverUptimeIter--;
+            // "Cache miss" -> Find new limiting values
+
+            QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = owner->rovers[i].roverSyncData.lowerBound(uptime);
+
             if (roverUptimeIter != owner->rovers[i].roverSyncData.end())
             {
-                lowerSyncItem = roverUptimeIter.value();
+                roverUptimeLimits[i][1] = roverUptimeIter.key();
+
+                const RoverSyncItem upperSyncItem = roverUptimeIter.value();
+                RoverSyncItem lowerSyncItem;
+                roverUptimeIter--;
+                if (roverUptimeIter != owner->rovers[i].roverSyncData.end())
+                {
+                    lowerSyncItem = roverUptimeIter.value();
+                    roverUptimeLimits[i][0] = roverUptimeIter.key();
+                }
+                else
+                {
+                    roverUptimeLimits[i][0] = -1;
+                    roverUptimeLimits[i][1] = -1;
+                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (higher limit).");
+                }
+
+                if (owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
+                {
+                    roverUptimeLimits[i][0] = -1;
+                    roverUptimeLimits[i][1] = -1;
+                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (higher limit).");
+                }
+
+                if (owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
+                {
+                    roverUptimeLimits[i][0] = -1;
+                    roverUptimeLimits[i][1] = -1;
+                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
+                }
+
+                roverRELPOSNEDS_Lower[i] = owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
+                roverRELPOSNEDS_Upper[i] = owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
             }
             else
             {
-                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (higher limit).");
+                roverUptimeLimits[i][0] = -1;
+                roverUptimeLimits[i][1] = -1;
+                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (upper limit).");
             }
-
-            if (owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
-            {
-                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (higher limit).");
-            }
-
-            if (owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
-            {
-                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
-            }
-
-            qint64 timeDiff = uptime - roverUptimeIter.key();
-
-            interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value(),
-                                    owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW).value(), lowerSyncItem.iTOW + timeDiff);
         }
-        else
-        {
-            throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (upper limit).");
-        }
+
+        qint64 timeDiff = uptime - roverUptimeLimits[i][0];
+
+        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(roverRELPOSNEDS_Lower[i],
+                                roverRELPOSNEDS_Upper[i], roverRELPOSNEDS_Lower[i].iTOW + timeDiff);
     }
 
     Eigen::Vector3d points[3] =

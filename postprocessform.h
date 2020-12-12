@@ -246,13 +246,16 @@ private:
     class LOInterpolator
     {
     public:
-        LOInterpolator(PostProcessingForm* owner) { this->owner = owner; };
+        LOInterpolator(PostProcessingForm* owner);
         void getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
 
         LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
 
     private:
         PostProcessingForm* owner = nullptr;
+        qint64 roverUptimeLimits[3][2];
+        UBXMessage_RELPOSNED roverRELPOSNEDS_Lower[3];
+        UBXMessage_RELPOSNED roverRELPOSNEDS_Upper[3];
     };
 
     QMap<qint64, LidarRound> lidarRounds;
