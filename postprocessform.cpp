@@ -145,16 +145,18 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
 
     ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals").toBool());
-    ui->spinBox_Lidar_PointCloud_TimeShift->setValue(settings.value("PostProcessing_Lidar_PointCloud_TimeShift", "80").toInt());
 
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_StartAngle", "90").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_EndAngle", "270").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_Quality_Pre", "0.5").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_Quality_Post", "0.5").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Near", "0.1").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Far", "5").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_DistanceDeltaLimit", "0").toDouble());
-    ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit", "0").toDouble());
+    ui->spinBox_Lidar_TimeShift->setValue(settings.value("PostProcessing_Lidar_TimeShift", "80").toInt());
+
+    ui->doubleSpinBox_Lidar_Filtering_StartAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_StartAngle", "90").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_EndAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_EndAngle", "270").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Pre", "0.5").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_Quality_Post->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Post", "0.5").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Near", "0.1").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Far", "5").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", "0").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", "0").toDouble());
+
 }
 
 PostProcessingForm::~PostProcessingForm()
@@ -232,16 +234,17 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
 
     settings.setValue("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState() == Qt::Checked);
-    settings.setValue("PostProcessing_Lidar_PointCloud_TimeShift", ui->spinBox_Lidar_PointCloud_TimeShift->value());
 
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_StartAngle", ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_EndAngle", ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_Quality_Pre", ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_Quality_Post", ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Near", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceLimit_Far", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_DistanceDeltaLimit", ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->value());
-    settings.setValue("PostProcessing_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit", ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->value());
+    settings.setValue("PostProcessing_Lidar_TimeShift", ui->spinBox_Lidar_TimeShift->value());
+
+    settings.setValue("PostProcessing_Lidar_Filtering_StartAngle", ui->doubleSpinBox_Lidar_Filtering_StartAngle->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_EndAngle", ui->doubleSpinBox_Lidar_Filtering_EndAngle->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_Quality_Pre", ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_Quality_Post", ui->doubleSpinBox_Lidar_Filtering_Quality_Post->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_DistanceLimit_Near", ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_DistanceLimit_Far", ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value());
+    settings.setValue("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value());
 
     delete ui;
 }
@@ -1043,14 +1046,14 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
             return;
         }
 
-        lidarFilteringSettings.startAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle->value());
-        lidarFilteringSettings.endAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle->value());
-        lidarFilteringSettings.qualityLimit_PreFiltering = ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre->value();
-        lidarFilteringSettings.qualityLimit_PostFiltering = ui->doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post->value();
-        lidarFilteringSettings.distanceLimit_Near = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near->value();
-        lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far->value();
-        lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
-        lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
+        lidarFilteringSettings.startAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_StartAngle->value());
+        lidarFilteringSettings.endAngle = qDegreesToRadians(ui->doubleSpinBox_Lidar_Filtering_EndAngle->value());
+        lidarFilteringSettings.qualityLimit_PreFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->value();
+        lidarFilteringSettings.qualityLimit_PostFiltering = ui->doubleSpinBox_Lidar_Filtering_Quality_Post->value();
+        lidarFilteringSettings.distanceLimit_Near = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->value();
+        lidarFilteringSettings.distanceLimit_Far = ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value();
+        lidarFilteringSettings.distanceDeltaLimit = ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value() * 360. / (2. * M_PI);
+        lidarFilteringSettings.relativeSlopeLimit = ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value() * 360. / (2. * M_PI);
 
         break;
     }
@@ -4483,7 +4486,7 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
                                        int& pointsWritten)
 {
     bool includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState();
-    int timeShift = ui->spinBox_Lidar_PointCloud_TimeShift->value();
+    int timeShift = ui->spinBox_Lidar_TimeShift->value();
 
     QMap<qint64, LidarRound>::const_iterator lidarIter = lidarRounds.upperBound(beginningUptime);
 

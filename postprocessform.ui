@@ -371,6 +371,387 @@
          </property>
         </widget>
        </widget>
+       <widget class="QWidget" name="tab_Settings_Lidar">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Lidar</string>
+        </attribute>
+        <widget class="QSpinBox" name="spinBox_Lidar_TimeShift">
+         <property name="geometry">
+          <rect>
+           <x>500</x>
+           <y>10</y>
+           <width>81</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>-1000000000</number>
+         </property>
+         <property name="maximum">
+          <number>1000000000</number>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_Lidar_TimeShift">
+         <property name="geometry">
+          <rect>
+           <x>80</x>
+           <y>10</y>
+           <width>411</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Time shift (rover uptime = distance uptime plus this, ms):</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_Lidar_Filtering">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>601</width>
+           <height>271</height>
+          </rect>
+         </property>
+         <property name="title">
+          <string>Filtering</string>
+         </property>
+         <widget class="QLabel" name="label_Lidar_Filtering_StartAngle">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>20</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Start angle (deg):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_StartAngle">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>20</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>90.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_EndAngle">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>50</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>270.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_EndAngle">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>50</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>End angle (deg):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_Quality_Pre">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>80</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Quality filtering pre (0...1):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_Quality_Pre">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>80</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_Quality_Post">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>110</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.500000000000000</double>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_Quality_Post">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>110</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Quality filtering post (0...1):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_Distance_Near">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>140</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Distance limit near (m):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_DistanceLimit_Near">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>140</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.001000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_DistanceLimit_Far">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>170</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.001000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>5.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_Distance_Far">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>170</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Distance limit far (m):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_DistanceDelta">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>200</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Distance delta limit (m/deg, 0=don't use):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>200</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>4</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>230</y>
+            <width>81</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="decimals">
+           <number>4</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.000000000000000</double>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_Lidar_Filtering_RelativeDistanceSlope">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>230</y>
+            <width>351</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Distance slope limit (relative change/deg, 0=don't use):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </widget>
+       </widget>
        <widget class="QWidget" name="tab_Settings_LOSolver">
         <property name="autoFillBackground">
          <bool>true</bool>
@@ -2081,6 +2462,9 @@
       </widget>
      </widget>
      <widget class="QWidget" name="tab_Lidar">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <attribute name="title">
        <string>Lidar</string>
       </attribute>
@@ -2093,10 +2477,16 @@
          <height>451</height>
         </rect>
        </property>
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
        <property name="currentIndex">
         <number>2</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Operations before rotation</string>
         </attribute>
@@ -2131,6 +2521,9 @@
         </widget>
        </widget>
        <widget class="QWidget" name="tab_Lidar_OperationsAfterRotation">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Operations after rotation</string>
         </attribute>
@@ -2165,6 +2558,9 @@
         </widget>
        </widget>
        <widget class="QWidget" name="tab_Lidar_PointCloud">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Point cloud</string>
         </attribute>
@@ -2172,7 +2568,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>350</y>
+           <y>40</y>
            <width>271</width>
            <height>23</height>
           </rect>
@@ -2193,379 +2589,6 @@
          <property name="text">
           <string>Include normals (pointing from measured point to lidar unit) into xyz-files</string>
          </property>
-        </widget>
-        <widget class="QLabel" name="label_Lidar_PointCloud_TimeShift">
-         <property name="geometry">
-          <rect>
-           <x>80</x>
-           <y>40</y>
-           <width>411</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TimeShift (rover uptime = distance uptime plus this, ms):</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-        <widget class="QSpinBox" name="spinBox_Lidar_PointCloud_TimeShift">
-         <property name="geometry">
-          <rect>
-           <x>500</x>
-           <y>40</y>
-           <width>81</width>
-           <height>22</height>
-          </rect>
-         </property>
-         <property name="minimum">
-          <number>-1000000000</number>
-         </property>
-         <property name="maximum">
-          <number>1000000000</number>
-         </property>
-        </widget>
-        <widget class="QGroupBox" name="groupBox_Lidar_PointCloud_Filtering">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>70</y>
-           <width>601</width>
-           <height>271</height>
-          </rect>
-         </property>
-         <property name="title">
-          <string>Filtering</string>
-         </property>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_StartAngle">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>20</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Start angle (deg):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_StartAngle">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>20</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>360.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>90.000000000000000</double>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_EndAngle">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>50</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>360.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>270.000000000000000</double>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_EndAngle">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>50</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>End angle (deg):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_Quality_Pre">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>80</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Quality filtering pre (0...1):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Pre">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>80</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>3</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.100000000000000</double>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_Quality_Post">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>110</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>3</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.500000000000000</double>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_Quality_Post">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>110</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Quality filtering post (0...1):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_Distance_Near">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>140</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Distance limit near (m):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Near">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>140</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>3</number>
-          </property>
-          <property name="minimum">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.010000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.100000000000000</double>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_DistanceLimit_Far">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>170</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>3</number>
-          </property>
-          <property name="minimum">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>1.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>5.000000000000000</double>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_Distance_Far">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>170</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Distance limit far (m):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_DistanceDelta">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>200</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Distance delta limit (m/deg, 0=don't use):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_DistanceDeltaLimit">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>200</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>4</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.000000000000000</double>
-          </property>
-         </widget>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_Lidar_PointCloud_Filtering_RelativeDistanceSlopeLimit">
-          <property name="geometry">
-           <rect>
-            <x>510</x>
-            <y>230</y>
-            <width>81</width>
-            <height>22</height>
-           </rect>
-          </property>
-          <property name="decimals">
-           <number>4</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.000000000000000</double>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_Lidar_PointCloud_Filtering_RelativeDistanceSlope">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>230</y>
-            <width>351</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Distance slope limit (relative change/deg, 0=don't use):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
         </widget>
        </widget>
       </widget>
