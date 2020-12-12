@@ -2567,7 +2567,7 @@
         <widget class="QPushButton" name="pushButton_Lidar_GeneratePointClouds">
          <property name="geometry">
           <rect>
-           <x>10</x>
+           <x>20</x>
            <y>40</y>
            <width>271</width>
            <height>23</height>
@@ -2588,6 +2588,85 @@
          </property>
          <property name="text">
           <string>Include normals (pointing from measured point to lidar unit) into xyz-files</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_Lidar_Script">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Script</string>
+        </attribute>
+        <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Min">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>10</y>
+           <width>211</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Uptime range, min:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Min">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>10</y>
+           <width>171</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Max">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>40</y>
+           <width>211</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Uptime range, max:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Max">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>40</y>
+           <width>171</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>9223372036854775807</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_GenerateScript">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>80</y>
+           <width>221</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Generate script...</string>
          </property>
         </widget>
        </widget>

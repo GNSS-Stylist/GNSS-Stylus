@@ -169,6 +169,8 @@ private slots:
 
     void on_pushButton_Lidar_GeneratePointClouds_clicked();
 
+    void on_pushButton_Lidar_GenerateScript_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -241,6 +243,18 @@ private:
         QVector<RPLidarThread::DistanceItem> distanceItems;
     };
 
+    class LOInterpolator
+    {
+    public:
+        LOInterpolator(PostProcessingForm* owner) { this->owner = owner; };
+        void getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
+
+        LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
+
+    private:
+        PostProcessingForm* owner = nullptr;
+    };
+
     QMap<qint64, LidarRound> lidarRounds;
 
     bool onShowInitializationsDone = false;
@@ -311,7 +325,7 @@ private:
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
                                            const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
-                                           LOSolver& loSolver, const RPLidarPlausibilityFilter::Settings& filteringSettings,
+                                           LOInterpolator& loInterpolator, const RPLidarPlausibilityFilter::Settings& filteringSettings,
                                            int& pointsWritten);
 
     typedef enum
