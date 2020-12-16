@@ -232,6 +232,7 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_PointCloud", fileDialog_PointCloud.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Stylus_MovieScript", fileDialog_Stylus_MovieScript.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_LOSolver_Script", fileDialog_LOSolver_Script.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_Lidar_Script", fileDialog_Lidar_Script.directory().path());
 
     settings.setValue("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
@@ -382,6 +383,18 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_LOSolver_Script.setNameFilters(loScriptFilters);
 
+
+        fileDialog_Lidar_Script.setFileMode(QFileDialog::AnyFile);
+        fileDialog_Lidar_Script.setDefaultSuffix("LidarScript");
+
+        QStringList lidarScriptFilters;
+
+        lidarScriptFilters << "lidar script files (*.lidarscript)"
+                << "Any files (*)";
+
+        fileDialog_Lidar_Script.setNameFilters(lidarScriptFilters);
+
+
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
             ui->comboBox_Presets->addItem(transformationPresets[presetIndex].name);
@@ -404,6 +417,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
     fileDialog_PointCloud.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_PointCloud").toString()));
     fileDialog_Stylus_MovieScript.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Stylus_MovieScript").toString()));
     fileDialog_LOSolver_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_LOSolver_Script").toString()));
+    fileDialog_Lidar_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Lidar_Script").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -1009,44 +1023,8 @@ void PostProcessingForm::generatePointClouds(const PointCloudDistanceSource sour
 
     case SOURCE_LIDAR:
     {
-        TransformMatrixGenerator matrixGenerator;
-        QPlainTextEdit *currentEditor;
-        QString currentTabName;
-
-        try
+        if (!generateLidarTransformMatrices(transform_Lidar_Generated_BeforeRotation, transform_LidarGenerated_AfterRotation))
         {
-            currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation;
-            currentTabName = "Operations before rotation";
-            QStringList lines = currentEditor->document()->toPlainText().split("\n");
-            transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines).matrix();
-
-            currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation;
-            currentTabName = "Operations after rotation";
-            lines = currentEditor->document()->toPlainText().split("\n");
-            transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines).matrix();
-        }
-        catch (TransformMatrixGenerator::Issue& issue)
-        {
-            addLogLine("Generating transform matrix failed. Error: " + issue.text +
-                       " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1) +
-                       ". See tab\"" + currentTabName + "\".");
-
-            QTextCursor cursor = currentEditor->textCursor();
-            cursor.setPosition(0, QTextCursor::MoveAnchor);
-            cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
-            if (issue.item.firstCol != -1)
-            {
-                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
-
-                if (issue.item.lastCol != -1)
-                {
-                    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
-                }
-            }
-
-            currentEditor->setTextCursor(cursor);
-            currentEditor->setFocus();
-
             return;
         }
 
@@ -3805,12 +3783,20 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 
         // Add some metadata to make possible changes in the future easier
         textStream << "META\tHEADER\tGNSS location/orientation script\n";
-        textStream << "META\tVERSION\t1.0.0\n";
+        textStream << "META\tVERSION\t1.0.1\n";
         textStream << "META\tFORMAT\tASCII\n";
         textStream << "META\tCONTENT\tDEFAULT\n";
+
+        QString timeStampColumnText = "iTOW";
+
+        if (ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1)
+        {
+            textStream << "META\tTIMESTAMPS\tUPTIME\n";
+            timeStampColumnText = "Uptime";
+        }
         textStream << "META\tEND\n";
 
-        textStream << "iTOW\t"
+        textStream << timeStampColumnText + "\t"
                       "Origin_X\tOrigin_Y\tOrigin_Z\t"
                       "Basis_XX\tBasis_XY\tBasis_XZ\t"
                       "Basis_YX\tBasis_YY\tBasis_YZ\t"
@@ -3943,8 +3929,46 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 
             Eigen::Transform<double, 3, Eigen::Affine> finalMatrix = transform_NEDToXYZ * loTransformNED * transform_Generated * transform_XYZToNED_NoTranslation;
 
+            QString timeString;
+
+            if (ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1)
+            {
+                qint64 timeSum = 0;
+                bool fail = false;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    if (rovers[i].reverseSync.find(lowestNextRoverITOW) != rovers[i].reverseSync.end())
+                    {
+                        timeSum += rovers[i].reverseSync.find(lowestNextRoverITOW).value();
+                    }
+                    else
+                    {
+                        fail = true;
+                        break;
+                    }
+                }
+
+                if (fail)
+                {
+                    addLogLine("Warning: Can not find reverse sync (ITOW -> uptime) for all rovers. ITOW: \"" +
+                               QString::number(lowestNextRoverITOW));
+
+                    currentITOW = lowestNextRoverITOW + 1;
+                    warningCount++;
+                }
+
+                timeSum /= 3;
+
+                timeString = QString::number(timeSum);
+            }
+            else
+            {
+                timeString = QString::number(lowestNextRoverITOW);
+            }
+
             QString lineOut =
-                    QString::number(lowestNextRoverITOW) +
+                    timeString +
 
                     "\t" + QString::number(finalMatrix(0, 3), 'f', 4) +
                     "\t" + QString::number(finalMatrix(1, 3), 'f', 4) +
@@ -4498,6 +4522,15 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
 
     QMap<qint64, LidarRound>::const_iterator lidarIter = lidarRounds.upperBound(beginningUptime);
 
+    // As lidar rounds are "mapped" according to their arriving (=end) timestamps,
+    // roll here to the first one with a bigger starting timestamp
+    // to prevent taking "past" measurements into account
+
+    while ((lidarIter != lidarRounds.end()) && (lidarIter.value().startTime < beginningUptime))
+    {
+        lidarIter++;
+    }
+
     int pointsBetweenTags = 0;
 
     QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
@@ -4511,11 +4544,11 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
     {
         plausibilityFilter.filter(lidarIter.value().distanceItems, filteredItems);
 
-        Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
+        // Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
 
         const LidarRound& round = lidarIter.value();        
 
-        for (int i = 0; i < lidarIter.value().distanceItems.count(); i++)
+        for (int i = 0; i < filteredItems.count(); i++)
         {
             const RPLidarPlausibilityFilter::FilteredItem& currentItem = filteredItems[i];
 
@@ -4550,30 +4583,28 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
                 Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
                 transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
+                // Lot of parentheses here to keep all calculations as matrix * vector
+                // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation * (transform_LaserRotation * (transform_BeforeRotation * Eigen::Vector3d::Zero()))));
 
-                // TODO: These calculations could be optimized.
-                // Now they are done step by step to make debugging easier.
-
+                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
-
                 Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
-
                 Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
-
                 Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
-
                 Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
+                */
 
+                // Lot of parentheses here to keep all calculations as matrix * vector
+                // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation * (transform_LaserRotation * (transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
-
-
+                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
-
                 Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
-
                 Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
-
                 Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
+                */
 
                 if ((laserHitPosAfterLOSolverTransform - boundingSphere_Center).norm() <= boundingSphere_Radius)
                 {
@@ -4720,10 +4751,457 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
     }
 }
 
+bool PostProcessingForm::generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_Lidar_Generated_BeforeRotation,
+                                    Eigen::Transform<double, 3, Eigen::Affine>& transform_LidarGenerated_AfterRotation)
+{
+    TransformMatrixGenerator matrixGenerator;
+    QPlainTextEdit *currentEditor;
+    QString currentTabName;
+
+    try
+    {
+        currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation;
+        currentTabName = "Operations before rotation";
+        QStringList lines = currentEditor->document()->toPlainText().split("\n");
+        transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines).matrix();
+
+        currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation;
+        currentTabName = "Operations after rotation";
+        lines = currentEditor->document()->toPlainText().split("\n");
+        transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines).matrix();
+    }
+    catch (TransformMatrixGenerator::Issue& issue)
+    {
+        addLogLine("Generating transform matrix failed. Error: " + issue.text +
+                   " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1) +
+                   ". See tab\"" + currentTabName + "\".");
+
+        QTextCursor cursor = currentEditor->textCursor();
+        cursor.setPosition(0, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+        if (issue.item.firstCol != -1)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
+
+            if (issue.item.lastCol != -1)
+            {
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
+            }
+        }
+
+        currentEditor->setTextCursor(cursor);
+        currentEditor->setFocus();
+
+        return false;
+    }
+
+    return true;
+}
+
+
 void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 {
-//    bool objectActive = false;
-//    bool scanningActive = false;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
 
+    if (!generateTransformationMatrix(transform_NEDToXYZ))
+    {
+        return;
+    }
 
+    int timeShift = ui->spinBox_Lidar_TimeShift->value();
+
+    Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
+                    ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
+                    ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
+
+    double boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
+
+    bool convOk;
+    qint64 uptime_Min = ui->lineEdit_Lidar_Script_UptimeRange_Min->text().toLongLong(&convOk);
+    if (!convOk)
+    {
+        addLogLine("Invalid uptime range, min.");
+        ui->lineEdit_Uptime_Min->setFocus();
+        return;
+    }
+
+    qint64 uptime_Max = ui->lineEdit_Lidar_Script_UptimeRange_Max->text().toLongLong(&convOk);
+    if (!convOk)
+    {
+        addLogLine("Invalid uptime range, max.");
+        ui->lineEdit_Uptime_Max->setFocus();
+        return;
+    }
+
+    QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
+    filteredItems.reserve(10000);
+
+    RPLidarPlausibilityFilter plausibilityFilter;
+    RPLidarPlausibilityFilter::Settings lidarFilteringSettings;
+    getLidarFilteringSettings(lidarFilteringSettings);
+    plausibilityFilter.setSettings(lidarFilteringSettings);
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform_Lidar_Generated_BeforeRotation;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_Lidar_Generated_AfterRotation;
+
+    if (!generateLidarTransformMatrices(transform_Lidar_Generated_BeforeRotation, transform_Lidar_Generated_AfterRotation))
+    {
+        return;
+    }
+
+    LOInterpolator loInterpolator_Lidar(this);
+
+    if (!updateLOSolverReferencePointLocations(loInterpolator_Lidar.loSolver))
+    {
+        return;
+    }
+
+    if (!fileDialog_Lidar_Script.exec())
+    {
+        return;
+    }
+
+    QStringList fileNameList = fileDialog_Lidar_Script.selectedFiles();
+
+    if (fileNameList.size() != 0)
+    {
+        fileDialog_Lidar_Script.setDirectory(QFileInfo(fileNameList[0]).path());
+    }
+
+    if (fileNameList.length() != 1)
+    {
+        addLogLine("Lidar script: Multiple file selection not supported. Script not created.");
+        return;
+    }
+
+    QFile lidarScriptFile;
+
+    lidarScriptFile.setFileName(fileNameList[0]);
+
+    if (lidarScriptFile.exists())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("File already exists.");
+        msgBox.setInformativeText("How to proceed?");
+
+        QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+        QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+        msgBox.setDefaultButton(cancelButton);
+
+        msgBox.exec();
+
+        if (msgBox.clickedButton() != overwriteButton)
+        {
+            addLogLine("Lidar script not created.");
+            return;
+        }
+    }
+
+    if (!lidarScriptFile.open(QIODevice::WriteOnly))
+    {
+        addLogLine("Can't open lidar script file.");
+        return;
+    }
+
+    QTextStream textStream(&lidarScriptFile);
+
+    addLogLine("Processing lidar script...");
+
+    // Add some metadata to make possible changes in the future easier
+    textStream << "META\tHEADER\tGNSS-Stylus lidar script\n";
+    textStream << "META\tVERSION\t1.0.0\n";
+    textStream << "META\tFORMAT\tASCII\n";
+    textStream << "META\tCONTENT\tDEFAULT\n";
+    textStream << "META\tEND\n";
+
+    textStream << "Uptime\tType\tDescr/subtype\t"
+                  "RotAngle\t"
+                  "Origin_X\tOrigin_Y\tOrigin_Z\t"
+                  "Hit_X\tHit_Y\tHit_Z\n";
+
+    QMap<qint64, LidarRound>::const_iterator lidarIter = lidarRounds.upperBound(uptime_Min);
+    QMultiMap<qint64, Tag>::const_iterator tagIter = tags.begin();
+
+    QString objectName;
+    bool objectActive = false;
+    bool scanningActive = false;
+    bool ignoreBeginningAndEndingTags = false;
+    qint64 beginningUptime = -1;
+    Tag beginningTag;
+
+    // Some locals to prevent excessive typing:
+    QString tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
+    QString tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
+    QString tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
+
+    unsigned int pointsWritten = 0;
+
+    while ((lidarIter.key() <= uptime_Max) && (lidarIter != lidarRounds.end()))
+    {
+        QString previousObjectName = objectName;
+        bool previousObjectActive = objectActive;
+        bool previousScanningActive = scanningActive;
+
+        while ((tagIter.key() < lidarIter.value().startTime) && tagIter != tags.end())
+        {
+            // Roll tags to the current uptime to keep track of scanning state and object name
+
+            QList<Tag> tagItems = tags.values(tagIter.key());
+
+            Tag currentTag = tagIter.value();
+
+            // Since "The items that share the same key are available from most recently to least recently inserted."
+            // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+            for (int i = tagItems.size() - 1; i >= 0; i--)
+            {
+                const Tag& currentTag = tagItems[i];
+
+                qint64 tagUptime = tagIter.key();
+
+                if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
+                {
+                    // Tag type: new object
+
+                    if (currentTag.text.length() == 0)
+                    {
+                        // Empty name for the new object not allowed
+
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(tagUptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": New object without a name. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+                        ignoreBeginningAndEndingTags = true;
+
+                        continue;
+                    }
+
+                    objectName = currentTag.text;
+                    objectActive = true;
+                    ignoreBeginningAndEndingTags = false;
+                    beginningUptime = -1;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
+                {
+                    // Tag type: Begin points
+
+                    if (!objectActive)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(tagUptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Beginning tag outside object. Skipped.");
+                        continue;
+                    }
+
+                    if (beginningUptime != -1)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(tagUptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": Duplicate beginning tag. Skipped.");
+                        continue;
+                    }
+
+                    scanningActive = true;
+                    beginningUptime = tagUptime;
+                    beginningTag = currentTag;
+                }
+                else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
+                {
+                    // Tag type: end points
+
+                    if (!objectActive)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(tagUptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag outside object. Skipped.");
+                        continue;
+                    }
+
+                    if (beginningUptime == -1)
+                    {
+                        addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                   QString::number(currentTag.sourceFileLine)+
+                                   ", uptime " + QString::number(tagUptime) +
+                                   ", iTOW " + QString::number(currentTag.iTOW) +
+                                   ": End tag without beginning tag. Skipped.");
+                        continue;
+                    }
+
+                    const Tag& endingTag = currentTag;
+
+                    if (endingTag.sourceFile != beginningTag.sourceFile)
+                    {
+                        addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
+                                   beginningTag.sourceFile + "\", line " +
+                                   QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
+                                   endingTag.sourceFile + "\", line " +
+                                   QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
+                        continue;
+                    }
+
+                    beginningUptime = -1;
+                    scanningActive = false;
+                }
+            }
+
+            if (previousObjectName != objectName)
+            {
+                // Note: timeShift used here so that LOScript and this use the same timing
+
+                textStream << QString::number(tagIter.key() + timeShift) +  "\tOBJECTNAME\t" + objectName + "\n";
+            }
+
+            if (!previousObjectActive && objectActive)
+            {
+                textStream << QString::number(tagIter.key() + timeShift) + "\tSTARTOBJECT\n";
+            }
+
+            if (previousObjectActive && !objectActive)
+            {
+                textStream << QString::number(tagIter.key() + timeShift) + "\tENDOBJECT\n";
+            }
+
+            if (!previousScanningActive && scanningActive)
+            {
+                textStream << QString::number(tagIter.key() + timeShift) + "\tSTARTSCAN\n";
+            }
+
+            if (previousScanningActive && !scanningActive)
+            {
+                textStream << QString::number(tagIter.key() + timeShift) + "\tENDSCAN\n";
+            }
+
+            tagIter++;
+        }
+
+        const LidarRound& round = lidarIter.value();
+
+        plausibilityFilter.filter(round.distanceItems, filteredItems);
+
+        for (int i = 0; i < filteredItems.count(); i++)
+        {
+            const RPLidarPlausibilityFilter::FilteredItem& currentItem = filteredItems[i];
+
+            // Rover coordinates interpolated according to distance timestamps.
+
+            qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
+            UBXMessage_RELPOSNED interpolated_Rovers[3];
+
+            qint64 roverUptime = itemUptime + timeShift;
+
+            Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
+
+            try
+            {
+                loInterpolator_Lidar.getInterpolatedLocationOrientationTransformMatrix(roverUptime, transform_LoSolver);
+            }
+            catch (QString& stringThrown)
+            {
+                addLogLine("Warning: File \"" + lidarIter.value().fileName + "\", chunk index " +
+                           QString::number(lidarIter.value().chunkIndex)+
+                           ", uptime " + QString::number(lidarIter.key()) +
+                           ": " + stringThrown + " Lidar script generating terminated.");
+                return;
+            }
+
+            Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
+            transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+            // Lot of parentheses here to keep all calculations as matrix * vector
+            // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
+            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * (transform_LoSolver * (transform_Lidar_Generated_AfterRotation * (transform_LaserRotation * (transform_Lidar_Generated_BeforeRotation * Eigen::Vector3d::Zero()))));
+
+            // Lot of parentheses here to keep all calculations as matrix * vector
+            // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_Lidar_Generated_AfterRotation * (transform_LaserRotation * (transform_Lidar_Generated_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+
+            Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+
+            QString descr;
+
+            if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
+            {
+                if (objectActive)
+                {
+                    if (scanningActive)
+                    {
+                        if ((laserHitPosAfterLOSolverTransform - boundingSphere_Center).norm() <= boundingSphere_Radius)
+                        {
+                            descr = "H";
+                        }
+                        else
+                        {
+                            descr = "M";
+                        }
+                    }
+                    else
+                    {
+                        descr = "NS";
+                    }
+                }
+                else
+                {
+                    descr = "NO";
+                }
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_ANGLE)
+            {
+                descr = "FA";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_QUALITY_PRE)
+            {
+                descr = "FQ1";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_QUALITY_POST)
+            {
+                descr = "FQ2";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_NEAR)
+            {
+                descr = "FDN";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_FAR)
+            {
+                descr = "FDF";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_DELTA)
+            {
+                descr = "FDD";
+            }
+            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_SLOPE)
+            {
+                descr = "FS";
+            }
+            else
+            {
+                descr = "F?";
+            }
+
+            // Note: roverUptime used here so that LOScript and this use the same timing
+
+            textStream << QString::number(roverUptime) + "\tL\t" + descr +
+                          "\t" + QString::number(currentItem.item.angle, 'f', 2) +
+                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(0), 'f', 4) +
+                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(1), 'f', 4) +
+                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(2), 'f', 4) +
+                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) + "\n";
+
+            pointsWritten++;
+        }
+
+        lidarIter++;
+    }
+
+    addLogLine("Lidar script generated. Number of points: " + QString::number(pointsWritten));
 }

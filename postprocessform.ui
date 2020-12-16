@@ -2561,9 +2561,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>40</y>
+         <y>70</y>
          <width>611</width>
-         <height>381</height>
+         <height>351</height>
         </rect>
        </property>
        <property name="title">
@@ -2591,13 +2591,52 @@
           <x>10</x>
           <y>50</y>
           <width>591</width>
-          <height>321</height>
+          <height>291</height>
          </rect>
         </property>
         <property name="lineWrapMode">
          <enum>QPlainTextEdit::NoWrap</enum>
         </property>
        </widget>
+      </widget>
+      <widget class="QLabel" name="label_LOSolver_Movie_TimeStampType">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>201</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Timestamps:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_LOSolver_Movie_TimeStamps">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>40</y>
+         <width>141</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>ITOW</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Uptime</string>
+        </property>
+       </item>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_Lidar">

@@ -277,6 +277,7 @@ private:
     QFileDialog fileDialog_PointCloud;
     QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_LOSolver_Script;
+    QFileDialog fileDialog_Lidar_Script;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;
@@ -340,6 +341,9 @@ private:
     void generatePointClouds(const PointCloudDistanceSource source);
 
     void getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings);
+
+    bool generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_Lidar_Generated_BeforeRotation,
+                                        Eigen::Transform<double, 3, Eigen::Affine>& transform_LidarGenerated_AfterRotation);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
