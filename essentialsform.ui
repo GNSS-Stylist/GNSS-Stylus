@@ -685,6 +685,37 @@ LMB, RMB or MMB</string>
      </item>
     </layout>
    </item>
+   <item>
+    <widget class="QLabel" name="label_Side">
+     <property name="font">
+      <font>
+       <pointsize>20</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>1
+2
+3
+4
+5
+6
+7
+
+1
+2
+3
+4
+5
+6
+7</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>

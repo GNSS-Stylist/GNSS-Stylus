@@ -136,6 +136,7 @@ private slots:
 
     void distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
 
+    void on_sideBarUpdateTimerTimeout();
 
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
@@ -311,6 +312,7 @@ private:
 
     QString getRoverIdentString(const unsigned int roverId);
     bool updateLOSolverReferencePointLocations(void);
+    void updateSideBar(void);
 
     // Settings for video frame writing (ugly I know, but this is just to make video "recording" possible)
     bool video_WriteFrames = false;
@@ -339,6 +341,9 @@ private:
     float lidarRoundFrequency = 0;
     bool lidarTimeout = true;   //!< Lidar is in timeout (no rounds received in 1s?)
     QTimer lidarTimeoutTimer;
+
+    QTimer sideBarUpdateTimer;
+
 };
 
 #endif // ESSENTIALSFORM_H

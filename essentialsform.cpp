@@ -116,6 +116,9 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     lidarTimeoutTimer.setSingleShot(true);
 
     connect(&lidarTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_lidarTimeoutTimerTimeout);
+
+    connect(&sideBarUpdateTimer, &QTimer::timeout, this, &EssentialsForm::on_sideBarUpdateTimerTimeout);
+    sideBarUpdateTimer.start(10);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -895,6 +898,7 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
     if (matchingiTOWFound)
     {
         ui->label_iTOW_BIG->setNum(lastMatchingRELPOSNEDiTOW);
+        updateSideBar();
 
         double worstAccuracy = 0;
 
@@ -2067,6 +2071,63 @@ void EssentialsForm::on_lidarTimeoutTimerTimeout()
 {
     lidarTimeout = true;
     updateTreeItems();
+}
+
+void EssentialsForm::on_sideBarUpdateTimerTimeout()
+{
+    updateSideBar();
+}
+
+void EssentialsForm::updateSideBar(void)
+{
+    QElapsedTimer uptimeTimer;
+    uptimeTimer.start();
+    qint64 uptime = uptimeTimer.msecsSinceReference();
+
+    QString uptimeString = QString::number(uptime);
+    QString lastITOWString = QString::number(lastMatchingRELPOSNEDiTOW);
+
+    QString sideString;
+
+    bool firstLine = true;
+
+    for (int i = uptimeString.length() - 1 - 6; i < uptimeString.length(); i++)
+    {
+        if (!firstLine)
+        {
+            sideString.append("\n");
+        }
+        else
+        {
+            firstLine = false;
+        }
+
+        if (i < 0)
+        {
+            sideString.append("x");
+        }
+        else
+        {
+            sideString.append(uptimeString[i]);
+        }
+    }
+
+    sideString.append("\n");
+
+    for (int i = lastITOWString.length() - 1 - 6; i < lastITOWString.length(); i++)
+    {
+        if (i < 0)
+        {
+            sideString.append("\nx");
+        }
+        else
+        {
+            sideString.append("\n");
+            sideString.append(lastITOWString[i]);
+        }
+    }
+
+    ui->label_Side->setText(sideString);
 }
 
 
