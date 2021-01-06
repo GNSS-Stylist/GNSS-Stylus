@@ -1213,7 +1213,7 @@ void RPlidarDriverImplCommon::_ultraCapsuleToNormal(const rplidar_response_ultra
 
             int dist_major2;
 
-            _u32 scalelvl1, scalelvl2;
+            _u32 scalelvl1 = 0, scalelvl2 = 0;
 
             // prefetch next ...
             if (pos == _countof(_cached_previous_ultracapsuledata.ultra_cabins) - 1)
