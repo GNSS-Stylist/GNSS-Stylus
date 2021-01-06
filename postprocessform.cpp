@@ -3967,24 +3967,27 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
                 timeString = QString::number(lowestNextRoverITOW);
             }
 
+            const int originDecimals = 4;
+            const int unitVectorDecimals = 6;
+
             QString lineOut =
                     timeString +
 
-                    "\t" + QString::number(finalMatrix(0, 3), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(1, 3), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(2, 3), 'f', 4) +
+                    "\t" + QString::number(finalMatrix(0, 3), 'f', originDecimals) +
+                    "\t" + QString::number(finalMatrix(1, 3), 'f', originDecimals) +
+                    "\t" + QString::number(finalMatrix(2, 3), 'f', originDecimals) +
 
-                    "\t" + QString::number(finalMatrix(0, 0), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(1, 0), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(2, 0), 'f', 4) +
+                    "\t" + QString::number(finalMatrix(0, 0), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(1, 0), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(2, 0), 'f', unitVectorDecimals) +
 
-                    "\t" + QString::number(finalMatrix(0, 1), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(1, 1), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(2, 1), 'f', 4) +
+                    "\t" + QString::number(finalMatrix(0, 1), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(1, 1), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(2, 1), 'f', unitVectorDecimals) +
 
-                    "\t" + QString::number(finalMatrix(0, 2), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(1, 2), 'f', 4) +
-                    "\t" + QString::number(finalMatrix(2, 2), 'f', 4);
+                    "\t" + QString::number(finalMatrix(0, 2), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(1, 2), 'f', unitVectorDecimals) +
+                    "\t" + QString::number(finalMatrix(2, 2), 'f', unitVectorDecimals);
                     textStream << (lineOut + "\n");
 
             currentITOW = lowestNextRoverITOW + 1;
