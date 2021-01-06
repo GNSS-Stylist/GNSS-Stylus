@@ -62,7 +62,7 @@ bool raw_serial::open()
 
 bool raw_serial::bind(const char * portname, _u32 baudrate, _u32 flags)
 {   
-    strncpy(_portName, portname, sizeof(_portName));
+    strncpy(_portName, portname, sizeof(_portName) - 1);
     _baudrate = baudrate;
     _flags    = flags;
     return true;
