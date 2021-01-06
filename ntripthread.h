@@ -1,6 +1,6 @@
 /*
     ntripthread.h (part of GNSS-Stylus)
-    Copyright (C) 2019-2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     Original implementation: NTRIP client for POSIX.
     $Id: ntripclient.c,v 1.51 2009/09/11 09:49:19 stoecker Exp $

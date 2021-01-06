@@ -1,6 +1,6 @@
 /*
     licensesform.cpp (part of GNSS-Stylus)
-    Copyright (C) 2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2020-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

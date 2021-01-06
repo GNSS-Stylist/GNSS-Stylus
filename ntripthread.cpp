@@ -4,7 +4,7 @@
     Copyright (C) 2003-2008 by Dirk Stöcker <soft@dstoecker.de>
 
     ntripthread.cpp (modifications for GNSS-Stylus)
-    Copyright (C) 2019-2020 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
