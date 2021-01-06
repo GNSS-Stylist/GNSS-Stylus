@@ -4515,6 +4515,7 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
                                        int& pointsWritten)
 {
     bool includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState();
+    bool normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->checkState();
     int timeShift = ui->spinBox_Lidar_TimeShift->value();
 
     Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
@@ -4614,6 +4615,11 @@ bool PostProcessingForm::generatePointCloudPointSet_Lidar(const Tag& beginningTa
                     Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
 
                     Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
+
+                    if (normalLengthsAsQuality)
+                    {
+                        normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
+                    }
 
                     QString lineOut;
                     if (includeNormals)
