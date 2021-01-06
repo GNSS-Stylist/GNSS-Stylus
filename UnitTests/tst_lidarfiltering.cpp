@@ -232,6 +232,9 @@ void LidarFiltering::test_SlopeFiltering()
     {
         QCOMPARE(filteredItems[itemIndex++].type, RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED);
     }
+
+    // Just testing the unit test if all items are checked
+    QCOMPARE(itemIndex, filteredItems.count());
 }
 
 
