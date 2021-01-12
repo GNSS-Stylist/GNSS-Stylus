@@ -144,6 +144,15 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
         }
     }
 
+
+    ui->doubleSpinBox_ReplaySpeed->setValue(settings.value("PostProcessing_Replay_ReplaySpeed", "1").toDouble());
+    ui->doubleSpinBox_LimitInterval->setValue(settings.value("PostProcessing_Replay_IntervalLimit", "1").toDouble());
+
+    ui->lineEdit_Uptime_Min->setText(settings.value("PostProcessing_Replay_Uptime_Min", "0").toString());
+    ui->lineEdit_Uptime_Max->setText(settings.value("PostProcessing_Replay_Uptime_Max", "9223372036854775807").toString());
+    ui->checkBox_Looping->setChecked(settings.value("PostProcessing_Replay_Looping", false).toBool());
+
+
     ui->doubleSpinBox_Stylus_Movie_Camera_N->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_N", "-1").toDouble());
     ui->doubleSpinBox_Stylus_Movie_Camera_E->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_E", "0").toDouble());
     ui->doubleSpinBox_Stylus_Movie_Camera_D->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_D", "-0.05").toDouble());
@@ -152,9 +161,18 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->doubleSpinBox_Stylus_Movie_LookAt_E->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_E", "0").toDouble());
     ui->doubleSpinBox_Stylus_Movie_LookAt_D->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_D", "-0.05").toDouble());
 
+    ui->spinBox_Stylus_Movie_ITOW_Points_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Min", "0").toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Points_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Max", "604800000").toInt());
+
+    ui->spinBox_Stylus_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Min", "0").toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Max", "604800000").toInt());
+
     ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", "30").toDouble());
 
     ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", false).toBool());
+
+    ui->spinBox_LOSolver_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Min", "0").toInt());
+    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Max", "604800000").toInt());
 
     ui->comboBox_LOSolver_Movie_TimeStamps->setCurrentIndex(settings.value("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex()).toInt());
     ui->plainTextEdit_LOSolver_TransformMatrixScript->setPlainText(settings.value("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText()).toString());
@@ -164,6 +182,12 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
 
     ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals").toBool());
+    ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality").toBool());
+
+
+    ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", "0").toString());
+    ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", "9223372036854775807").toString());
+
 
     ui->spinBox_MaxLogLines->setValue(settings.value("PostProcessing_MaxLogLines", "1000").toInt());
 }
@@ -229,6 +253,13 @@ PostProcessingForm::~PostProcessingForm()
         }
     }
 
+    settings.setValue("PostProcessing_Replay_ReplaySpeed", ui->doubleSpinBox_ReplaySpeed->value());
+    settings.setValue("PostProcessing_Replay_IntervalLimit", ui->doubleSpinBox_LimitInterval->value());
+    settings.setValue("PostProcessing_Replay_Uptime_Min", ui->lineEdit_Uptime_Min->text());
+    settings.setValue("PostProcessing_Replay_Uptime_Max", ui->lineEdit_Uptime_Max->text());
+    settings.setValue("PostProcessing_Replay_Looping", ui->checkBox_Looping->isChecked());
+
+
     settings.setValue("PostProcessing_Stylus_Movie_Camera_N", ui->doubleSpinBox_Stylus_Movie_Camera_N->value());
     settings.setValue("PostProcessing_Stylus_Movie_Camera_E", ui->doubleSpinBox_Stylus_Movie_Camera_E->value());
     settings.setValue("PostProcessing_Stylus_Movie_Camera_D", ui->doubleSpinBox_Stylus_Movie_Camera_D->value());
@@ -237,20 +268,36 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Stylus_Movie_LookAt_E", ui->doubleSpinBox_Stylus_Movie_LookAt_E->value());
     settings.setValue("PostProcessing_Stylus_Movie_LookAt_D", ui->doubleSpinBox_Stylus_Movie_LookAt_D->value());
 
+    settings.setValue("PostProcessing_Stylus_Movie_ITOW_Points_Min", ui->spinBox_Stylus_Movie_ITOW_Points_Min->value());
+    settings.setValue("PostProcessing_Stylus_Movie_ITOW_Points_Max", ui->spinBox_Stylus_Movie_ITOW_Points_Max->value());
+    settings.setValue("PostProcessing_Stylus_Movie_ITOW_Script_Min", ui->spinBox_Stylus_Movie_ITOW_Script_Min->value());
+    settings.setValue("PostProcessing_Stylus_Movie_ITOW_Script_Max", ui->spinBox_Stylus_Movie_ITOW_Script_Max->value());
+
     settings.setValue("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value());
+
 
     settings.setValue("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked());
 
+
+    settings.setValue("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value());
+    settings.setValue("PostProcessing_LOSolver_Movie_ITOW_Script_Max", ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value());
     settings.setValue("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex());
     settings.setValue("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText());
 
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
 
+
     settings.setValue("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState() == Qt::Checked);
+    settings.setValue("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->checkState() == Qt::Checked);
+
+
+    settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
+    settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
 
 
     settings.setValue("PostProcessing_MaxLogLines", ui->spinBox_MaxLogLines->value());
+
 
     // NOTE: Directories to log files are saved in syncLogFileDialogDirectories-function "on the fly"
 
