@@ -2591,11 +2591,37 @@
           <x>10</x>
           <y>50</y>
           <width>591</width>
-          <height>291</height>
+          <height>251</height>
          </rect>
         </property>
         <property name="lineWrapMode">
          <enum>QPlainTextEdit::NoWrap</enum>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_LoSolver_Operations_Load">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>310</y>
+          <width>131</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load from file...</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_LOSolver_Operations_Save">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>310</y>
+          <width>151</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Save to file...</string>
         </property>
        </widget>
       </widget>
@@ -2659,7 +2685,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
         <property name="autoFillBackground">
@@ -2697,6 +2723,32 @@
           <bool>true</bool>
          </property>
         </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_OperationsBeforeRotation_Load">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>310</y>
+           <width>131</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Load from file...</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_OperationsBeforeRotation_Save">
+         <property name="geometry">
+          <rect>
+           <x>150</x>
+           <y>310</y>
+           <width>151</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Save to file...</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QWidget" name="tab_Lidar_OperationsAfterRotation">
         <property name="autoFillBackground">
@@ -2732,6 +2784,32 @@
          </property>
          <property name="wordWrap">
           <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_OperationsAfterRotation_Save">
+         <property name="geometry">
+          <rect>
+           <x>150</x>
+           <y>330</y>
+           <width>151</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Save to file...</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_OperationsAfterRotation_Load">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>330</y>
+           <width>131</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Load from file...</string>
          </property>
         </widget>
        </widget>

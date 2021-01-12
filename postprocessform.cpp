@@ -234,6 +234,9 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_LOSolver_Script", fileDialog_LOSolver_Script.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Lidar_Script", fileDialog_Lidar_Script.directory().path());
 
+    settings.setValue("PostProcessing_Directory_Dialog_Operations_Load", fileDialog_Operations_Load.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_Operations_Save", fileDialog_Operations_Save.directory().path());
+
     settings.setValue("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
@@ -395,6 +398,22 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_Lidar_Script.setNameFilters(lidarScriptFilters);
 
 
+        fileDialog_Operations_Load.setFileMode(QFileDialog::ExistingFile);
+
+        QStringList OperationsFilters;
+
+        OperationsFilters << "Operations-files (*.Operations)"
+                << "Any files (*)";
+
+        fileDialog_Operations_Load.setNameFilters(OperationsFilters);
+
+        fileDialog_Operations_Save.setFileMode(QFileDialog::AnyFile);
+        fileDialog_Operations_Save.setDefaultSuffix("Operations");
+
+        fileDialog_Operations_Save.setNameFilters(OperationsFilters);
+
+
+
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
             ui->comboBox_Presets->addItem(transformationPresets[presetIndex].name);
@@ -418,6 +437,9 @@ void PostProcessingForm::showEvent(QShowEvent* event)
     fileDialog_Stylus_MovieScript.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Stylus_MovieScript").toString()));
     fileDialog_LOSolver_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_LOSolver_Script").toString()));
     fileDialog_Lidar_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Lidar_Script").toString()));
+
+    fileDialog_Operations_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Operations_Load").toString()));
+    fileDialog_Operations_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Operations_Save").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -5213,4 +5235,136 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
     }
 
     addLogLine("Lidar script generated. Number of points: " + QString::number(pointsWritten));
+}
+
+bool PostProcessingForm::loadOperations(QPlainTextEdit* plainTextEdit)
+{
+    if (fileDialog_Operations_Load.exec())
+    {
+        QStringList fileNames = fileDialog_Operations_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Operations_Load.setDirectory(QFileInfo(fileNames[0]).path());
+            fileDialog_Operations_Save.setDirectory(QFileInfo(fileNames[0]).path());
+
+            QString fileName = fileNames[0];
+
+            QFileInfo fileInfo(fileName);
+            addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+            QFile operationsFile;
+            operationsFile.setFileName(fileName);
+            if (operationsFile.open(QIODevice::ReadOnly))
+            {
+                plainTextEdit->setPlainText(QString::fromUtf8(operationsFile.readAll()));
+                operationsFile.close();
+                addLogLine("Operations read.");
+                return true;
+            }
+            else
+            {
+                addLogLine("Error: Can't open file \"" + fileInfo.fileName() + "\".");
+                return false;
+            }
+        }
+        else
+        {
+            addLogLine("Warning: No operations file selected. Data not read.");
+            return false;
+        }
+    }
+    return false;
+}
+
+bool PostProcessingForm::saveOperations(QPlainTextEdit* plainTextEdit)
+{
+    if (fileDialog_Operations_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_Operations_Save.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_Operations_Load.setDirectory(QFileInfo(fileNameList[0]).path());
+            fileDialog_Operations_Save.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Error: Multiple file selection not supported. Operations not saved.");
+            return false;
+        }
+
+        QFile operationsFile;
+
+        operationsFile.setFileName(fileNameList[0]);
+
+        if (operationsFile.exists())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Operations not saved.");
+                return false;
+            }
+        }
+
+        if (!operationsFile.open(QIODevice::WriteOnly))
+        {
+            addLogLine("Error: Can't open operations file " + fileNameList[0] + ".");
+            return false;
+        }
+
+        operationsFile.write(plainTextEdit->toPlainText().toUtf8());
+
+        operationsFile.close();
+
+        addLogLine("Operations saved.");
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void PostProcessingForm::on_pushButton_Lidar_OperationsBeforeRotation_Load_clicked()
+{
+    loadOperations(ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation);
+}
+
+void PostProcessingForm::on_pushButton_Lidar_OperationsBeforeRotation_Save_clicked()
+{
+    saveOperations(ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation);
+}
+
+void PostProcessingForm::on_pushButton_Lidar_OperationsAfterRotation_Load_clicked()
+{
+    loadOperations(ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation);
+}
+
+void PostProcessingForm::on_pushButton_Lidar_OperationsAfterRotation_Save_clicked()
+{
+    saveOperations(ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation);
+}
+
+void PostProcessingForm::on_pushButton_LoSolver_Operations_Load_clicked()
+{
+    loadOperations(ui->plainTextEdit_LOSolver_TransformMatrixScript);
+}
+
+void PostProcessingForm::on_pushButton_LOSolver_Operations_Save_clicked()
+{
+    saveOperations(ui->plainTextEdit_LOSolver_TransformMatrixScript);
 }

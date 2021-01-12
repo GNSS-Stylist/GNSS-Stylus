@@ -32,6 +32,7 @@
 #include <QElapsedTimer>
 #include <QVector3D>
 #include <QTextStream>
+#include <QPlainTextEdit>
 
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
@@ -171,6 +172,18 @@ private slots:
 
     void on_pushButton_Lidar_GenerateScript_clicked();
 
+    void on_pushButton_Lidar_OperationsBeforeRotation_Load_clicked();
+
+    void on_pushButton_Lidar_OperationsBeforeRotation_Save_clicked();
+
+    void on_pushButton_Lidar_OperationsAfterRotation_Load_clicked();
+
+    void on_pushButton_Lidar_OperationsAfterRotation_Save_clicked();
+
+    void on_pushButton_LoSolver_Operations_Load_clicked();
+
+    void on_pushButton_LOSolver_Operations_Save_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -279,6 +292,9 @@ private:
     QFileDialog fileDialog_LOSolver_Script;
     QFileDialog fileDialog_Lidar_Script;
 
+    QFileDialog fileDialog_Operations_Load;
+    QFileDialog fileDialog_Operations_Save;
+
     // Replay:
     qint64 firstUptimeToReplay = 0;
     qint64 lastUptimeToReplay = std::numeric_limits < qint64 >::max();
@@ -344,6 +360,9 @@ private:
 
     bool generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_Lidar_Generated_BeforeRotation,
                                         Eigen::Transform<double, 3, Eigen::Affine>& transform_LidarGenerated_AfterRotation);
+
+    bool loadOperations(QPlainTextEdit* plainTextEdit);
+    bool saveOperations(QPlainTextEdit* plainTextEdit);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
