@@ -2042,6 +2042,19 @@
         <string>Looping</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="pushButton_Replay_Uptime_Max_Maximize">
+       <property name="geometry">
+        <rect>
+         <x>440</x>
+         <y>100</y>
+         <width>75</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set max</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="tab_Stylus">
       <property name="autoFillBackground">
@@ -2087,7 +2100,7 @@
             <rect>
              <x>230</x>
              <y>120</y>
-             <width>141</width>
+             <width>121</width>
              <height>22</height>
             </rect>
            </property>
@@ -2098,9 +2111,9 @@
           <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Script_Max">
            <property name="geometry">
             <rect>
-             <x>430</x>
+             <x>410</x>
              <y>150</y>
-             <width>141</width>
+             <width>101</width>
              <height>22</height>
             </rect>
            </property>
@@ -2127,7 +2140,7 @@
           <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Max_2">
            <property name="geometry">
             <rect>
-             <x>380</x>
+             <x>360</x>
              <y>150</y>
              <width>41</width>
              <height>20</height>
@@ -2143,7 +2156,7 @@
           <widget class="QLabel" name="label_Stylus_Movie_ITOWRange_Points_Max">
            <property name="geometry">
             <rect>
-             <x>380</x>
+             <x>360</x>
              <y>120</y>
              <width>41</width>
              <height>20</height>
@@ -2356,7 +2369,7 @@
             <rect>
              <x>230</x>
              <y>150</y>
-             <width>141</width>
+             <width>121</width>
              <height>22</height>
             </rect>
            </property>
@@ -2383,9 +2396,9 @@
           <widget class="QSpinBox" name="spinBox_Stylus_Movie_ITOW_Points_Max">
            <property name="geometry">
             <rect>
-             <x>430</x>
+             <x>410</x>
              <y>120</y>
-             <width>141</width>
+             <width>101</width>
              <height>22</height>
             </rect>
            </property>
@@ -2417,7 +2430,7 @@
             <rect>
              <x>230</x>
              <y>180</y>
-             <width>141</width>
+             <width>121</width>
              <height>22</height>
             </rect>
            </property>
@@ -2435,6 +2448,32 @@
            </property>
            <property name="value">
             <double>30.000000000000000</double>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButton_Stylus_Movie_ITOW_Points_Max_Maximize">
+           <property name="geometry">
+            <rect>
+             <x>510</x>
+             <y>120</y>
+             <width>75</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Set max</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButton_Stylus_Movie_ITOW_Script_Max_Maximize">
+           <property name="geometry">
+            <rect>
+             <x>510</x>
+             <y>150</y>
+             <width>75</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Set max</string>
            </property>
           </widget>
          </widget>
@@ -2486,7 +2525,7 @@
       <widget class="QLabel" name="label_LOSolver_Movie_ITOWRange_Points_Max">
        <property name="geometry">
         <rect>
-         <x>370</x>
+         <x>340</x>
          <y>10</y>
          <width>41</width>
          <height>20</height>
@@ -2502,9 +2541,9 @@
       <widget class="QSpinBox" name="spinBox_LOSolver_Movie_ITOW_Script_Max">
        <property name="geometry">
         <rect>
-         <x>420</x>
+         <x>390</x>
          <y>10</y>
-         <width>141</width>
+         <width>101</width>
          <height>22</height>
         </rect>
        </property>
@@ -2536,7 +2575,7 @@
         <rect>
          <x>220</x>
          <y>10</y>
-         <width>141</width>
+         <width>111</width>
          <height>22</height>
         </rect>
        </property>
@@ -2646,7 +2685,7 @@
         <rect>
          <x>220</x>
          <y>40</y>
-         <width>141</width>
+         <width>111</width>
          <height>22</height>
         </rect>
        </property>
@@ -2663,6 +2702,19 @@
          <string>Uptime</string>
         </property>
        </item>
+      </widget>
+      <widget class="QPushButton" name="pushButton_LOSolver_Movie_ITOW_Script_Max_Maximize">
+       <property name="geometry">
+        <rect>
+         <x>490</x>
+         <y>10</y>
+         <width>75</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set max</string>
+       </property>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_Lidar">
@@ -2936,6 +2988,19 @@
          </property>
          <property name="text">
           <string>Generate script...</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_Lidar_Script_UptimeRange_Max_Maximize">
+         <property name="geometry">
+          <rect>
+           <x>410</x>
+           <y>40</y>
+           <width>75</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Set max</string>
          </property>
         </widget>
        </widget>

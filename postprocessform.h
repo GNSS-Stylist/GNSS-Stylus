@@ -184,6 +184,16 @@ private slots:
 
     void on_pushButton_LOSolver_Operations_Save_clicked();
 
+    void on_pushButton_Replay_Uptime_Max_Maximize_clicked();
+
+    void on_pushButton_Stylus_Movie_ITOW_Points_Max_Maximize_clicked();
+
+    void on_pushButton_Stylus_Movie_ITOW_Script_Max_Maximize_clicked();
+
+    void on_pushButton_LOSolver_Movie_ITOW_Script_Max_Maximize_clicked();
+
+    void on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data

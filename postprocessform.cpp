@@ -5424,3 +5424,28 @@ void PostProcessingForm::on_pushButton_LOSolver_Operations_Save_clicked()
 {
     saveOperations(ui->plainTextEdit_LOSolver_TransformMatrixScript);
 }
+
+void PostProcessingForm::on_pushButton_Replay_Uptime_Max_Maximize_clicked()
+{
+    ui->lineEdit_Uptime_Max->setText("9223372036854775807");
+}
+
+void PostProcessingForm::on_pushButton_Stylus_Movie_ITOW_Points_Max_Maximize_clicked()
+{
+    ui->spinBox_Stylus_Movie_ITOW_Points_Max->setValue(604800000);
+}
+
+void PostProcessingForm::on_pushButton_Stylus_Movie_ITOW_Script_Max_Maximize_clicked()
+{
+    ui->spinBox_Stylus_Movie_ITOW_Script_Max->setValue(604800000);
+}
+
+void PostProcessingForm::on_pushButton_LOSolver_Movie_ITOW_Script_Max_Maximize_clicked()
+{
+    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(604800000);
+}
+
+void PostProcessingForm::on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_clicked()
+{
+    ui->lineEdit_Lidar_Script_UptimeRange_Max->setText("9223372036854775807");
+}
