@@ -308,6 +308,9 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_Operations_Load", fileDialog_Operations_Load.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Operations_Save", fileDialog_Operations_Save.directory().path());
 
+    settings.setValue("PostProcessing_Directory_Dialog_Parameters_Load", fileDialog_Parameters_Load.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_Parameters_Save", fileDialog_Parameters_Save.directory().path());
+
     delete ui;
 }
 
@@ -449,18 +452,32 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_Operations_Load.setFileMode(QFileDialog::ExistingFile);
 
-        QStringList OperationsFilters;
+        QStringList operationsFilters;
 
-        OperationsFilters << "Operations-files (*.Operations)"
+        operationsFilters << "Operations-files (*.Operations)"
                 << "Any files (*)";
 
-        fileDialog_Operations_Load.setNameFilters(OperationsFilters);
+        fileDialog_Operations_Load.setNameFilters(operationsFilters);
 
         fileDialog_Operations_Save.setFileMode(QFileDialog::AnyFile);
         fileDialog_Operations_Save.setDefaultSuffix("Operations");
 
-        fileDialog_Operations_Save.setNameFilters(OperationsFilters);
+        fileDialog_Operations_Save.setNameFilters(operationsFilters);
 
+
+        fileDialog_Parameters_Load.setFileMode(QFileDialog::ExistingFile);
+
+        QStringList parametersFilters;
+
+        parametersFilters << "Parameters-files (*.PPParameters)"
+                << "Any files (*)";
+
+        fileDialog_Parameters_Load.setNameFilters(parametersFilters);
+
+        fileDialog_Parameters_Save.setFileMode(QFileDialog::AnyFile);
+        fileDialog_Parameters_Save.setDefaultSuffix("PPParameters");
+
+        fileDialog_Parameters_Save.setNameFilters(parametersFilters);
 
 
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
@@ -489,6 +506,9 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
     fileDialog_Operations_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Operations_Load").toString()));
     fileDialog_Operations_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Operations_Save").toString()));
+
+    fileDialog_Parameters_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Parameters_Load").toString()));
+    fileDialog_Parameters_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Parameters_Save").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -5442,3 +5462,86 @@ void PostProcessingForm::on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_cli
 {
     ui->lineEdit_Lidar_Script_UptimeRange_Max->setText("9223372036854775807");
 }
+
+void PostProcessingForm::on_pushButton_LoadEditableFieldsFromFile_clicked()
+{
+    if (fileDialog_Parameters_Load.exec())
+    {
+        QStringList fileNames = fileDialog_Parameters_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_Parameters_Load.setDirectory(QFileInfo(fileNames[0]).path());
+            fileDialog_Parameters_Save.setDirectory(QFileInfo(fileNames[0]).path());
+
+            QString fileName = fileNames[0];
+
+            QFileInfo fileInfo(fileName);
+            addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+            if (QFile::exists(fileName))
+            {
+                QSettings settings(fileName, QSettings::IniFormat);
+
+                loadParametersFromQSettings(settings);
+                addLogLine("Parameters (found from the file) read.");
+            }
+            else
+            {
+                addLogLine("Error: Can't open file \"" + fileInfo.fileName() + "\".");
+            }
+        }
+        else
+        {
+            addLogLine("Warning: No operations file selected. Data not read.");
+        }
+    }
+}
+
+void PostProcessingForm::on_pushButton_SaveEditableFieldsToFile_clicked()
+{
+    if (fileDialog_Parameters_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_Parameters_Save.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_Parameters_Load.setDirectory(QFileInfo(fileNameList[0]).path());
+            fileDialog_Parameters_Save.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Error: Multiple file selection not supported. Operations not saved.");
+            return;
+        }
+
+        QString fileName = fileNameList[0];
+
+        if (QFile::exists(fileName))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Parameters not saved.");
+                return;
+            }
+        }
+
+        QSettings settings(fileName, QSettings::IniFormat);
+
+        saveParametersToQSettings(settings);
+        addLogLine("Parameters saved.");
+    }
+}
+

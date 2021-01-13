@@ -195,6 +195,11 @@ private slots:
 
     void on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_clicked();
 
+    void on_pushButton_LoadEditableFieldsFromFile_clicked();
+
+    void on_pushButton_SaveEditableFieldsToFile_clicked();
+
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -305,6 +310,9 @@ private:
 
     QFileDialog fileDialog_Operations_Load;
     QFileDialog fileDialog_Operations_Save;
+
+    QFileDialog fileDialog_Parameters_Load;
+    QFileDialog fileDialog_Parameters_Save;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;
