@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>664</width>
-    <height>793</height>
+    <width>661</width>
+    <height>828</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Post-processing</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="0,0,1">
+  <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <widget class="QTabWidget" name="tabWidget_Lidar">
      <property name="sizePolicy">
@@ -219,6 +219,9 @@
            <height>20</height>
           </rect>
          </property>
+         <property name="text">
+          <string>RMB</string>
+         </property>
         </widget>
         <widget class="QLabel" name="label_StylusTipDistanceFromRoverA_Fallback">
          <property name="geometry">
@@ -285,6 +288,9 @@
            <width>113</width>
            <height>20</height>
           </rect>
+         </property>
+         <property name="text">
+          <string>New object</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_TagIndicatingBeginningOfNewObject">
@@ -368,6 +374,9 @@
            <width>113</width>
            <height>20</height>
           </rect>
+         </property>
+         <property name="text">
+          <string>LMB</string>
          </property>
         </widget>
        </widget>
@@ -983,7 +992,7 @@
           </item>
           <item row="0" column="1">
            <property name="text">
-            <string>0</string>
+            <string>-1</string>
            </property>
           </item>
           <item row="0" column="2">
@@ -998,7 +1007,7 @@
           </item>
           <item row="1" column="1">
            <property name="text">
-            <string>0</string>
+            <string>1</string>
            </property>
           </item>
           <item row="1" column="2">
@@ -1008,7 +1017,7 @@
           </item>
           <item row="2" column="0">
            <property name="text">
-            <string>0</string>
+            <string>-1</string>
            </property>
           </item>
           <item row="2" column="1">
@@ -3007,6 +3016,24 @@
       </widget>
      </widget>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_13">
+     <item>
+      <widget class="QPushButton" name="pushButton_LoadEditableFieldsFromFile">
+       <property name="text">
+        <string>Load all editable fields from file...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_SaveEditableFieldsToFile">
+       <property name="text">
+        <string>Save all editable fields to file...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_CenterControls">

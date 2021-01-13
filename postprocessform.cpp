@@ -20,7 +20,6 @@
 #include <math.h>
 
 #include <QTime>
-#include <QSettings>
 #include <QMessageBox>
 #include <QtMath>
 
@@ -62,50 +61,37 @@ struct
 };
 
 
-PostProcessingForm::PostProcessingForm(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::PostProcessingForm)
+void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
 {
-    ui->setupUi(this);
+    ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value()).toInt());
+    ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value()).toInt());
 
-    QSettings settings;
+    ui->checkBox_ReportITOWAutoAlign->setChecked(settings.value("PostProcessing_ReportITOWAutoAlign", ui->checkBox_ReportITOWAutoAlign->isChecked()).toBool());
+    ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked()).toBool());
+    ui->checkBox_ReportUnalignedITOWS->setChecked(settings.value("PostProcessing_ReportUnalignedITOWS", ui->checkBox_ReportUnalignedITOWS->isChecked()).toBool());
 
-    ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", "125").toInt());
-    ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", "5").toInt());
+    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Fallback", ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value()).toDouble());
+    ui->lineEdit_TagIndicatingBeginningOfNewObject->setText(settings.value("PostProcessing_TagIndicatingBeginningOfNewObject", ui->lineEdit_TagIndicatingBeginningOfNewObject->text()).toString());
+    ui->lineEdit_TagIndicatingBeginningOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingBeginningOfObjectPoints", ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text()).toString());
+    ui->lineEdit_TagIndicatingEndOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingEndOfObjectPoints", ui->lineEdit_TagIndicatingEndOfObjectPoints->text()).toString());
 
-    ui->checkBox_ReportITOWAutoAlign->setChecked(settings.value("PostProcessing_ReportITOWAutoAlign", false).toBool());
-    ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", false).toBool());
-    ui->checkBox_ReportUnalignedITOWS->setChecked(settings.value("PostProcessing_ReportUnalignedITOWS", false).toBool());
+    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Correction", ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->value()).toDouble());
 
-    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Fallback", "900").toDouble());
-    ui->lineEdit_TagIndicatingBeginningOfNewObject->setText(settings.value("PostProcessing_TagIndicatingBeginningOfNewObject", "New object").toString());
-    ui->lineEdit_TagIndicatingBeginningOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingBeginningOfObjectPoints", "LMB").toString());
-    ui->lineEdit_TagIndicatingEndOfObjectPoints->setText(settings.value("PostProcessing_TagIndicatingEndOfObjectPoints", "RMB").toString());
+    ui->spinBox_Lidar_TimeShift->setValue(settings.value("PostProcessing_Lidar_TimeShift", ui->spinBox_Lidar_TimeShift->value()).toInt());
 
-    ui->doubleSpinBox_StylusTipDistanceFromRoverA_Correction->setValue(settings.value("PostProcessing_StylusTipDistanceFromRoverA_Correction", "0").toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_StartAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_StartAngle", ui->doubleSpinBox_Lidar_Filtering_StartAngle->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_EndAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_EndAngle", ui->doubleSpinBox_Lidar_Filtering_EndAngle->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Pre", ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_Quality_Post->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Post", ui->doubleSpinBox_Lidar_Filtering_Quality_Post->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Near", ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Far", ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->value()).toDouble());
+    ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->value()).toDouble());
 
-    ui->spinBox_Lidar_TimeShift->setValue(settings.value("PostProcessing_Lidar_TimeShift", "80").toInt());
-
-    ui->doubleSpinBox_Lidar_Filtering_StartAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_StartAngle", "90").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_EndAngle->setValue(settings.value("PostProcessing_Lidar_Filtering_EndAngle", "270").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_Quality_Pre->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Pre", "0.5").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_Quality_Post->setValue(settings.value("PostProcessing_Lidar_Filtering_Quality_Post", "0.5").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Near->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Near", "0.1").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_DistanceLimit_Far->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceLimit_Far", "5").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_DistanceDeltaLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_DistanceDeltaLimit", "0").toDouble());
-    ui->doubleSpinBox_Lidar_Filtering_RelativeDistanceSlopeLimit->setValue(settings.value("PostProcessing_Lidar_Filtering_RelativeDistanceSlopeLimit", "0").toDouble());
-
-    ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_N", "0").toDouble());
-    ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_E", "0").toDouble());
-    ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_D", "0").toDouble());
-    ui->doubleSpinBox_Lidar_BoundingSphere_Radius->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Radius", "100000000").toDouble());
-
-    // Just some valid values
-    const double defaultAntennaLocations[3][3] = {
-        { 1, 0, 0 },
-        { -1, -1, 0 },
-        { -1, 1, 0 }
-    };
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_N", ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value()).toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_E", ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value()).toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Center_D", ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value()).toDouble());
+    ui->doubleSpinBox_Lidar_BoundingSphere_Radius->setValue(settings.value("PostProcessing_Lidar_BoundingSphere_Radius", ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value()).toDouble());
 
     for (int row = 0; row < 3; row++)
     {
@@ -115,15 +101,13 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
                     QString::number(row) + "_Column" +
                     QString::number(column);
 
-            QString defaultValue = QString::number(defaultAntennaLocations[row][column], 'g', 3);
-
-            ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->setText(settings.value(settingKey, defaultValue).toString());
+            ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->setText(settings.value(settingKey, ui->tableWidget_AntennaLocations_LOSolver->item(row, column)->text()).toString());
         }
     }
 
-    ui->doubleSpinBox_Translation_N->setValue(settings.value("PostProcessing_Translation_N", "0").toDouble());
-    ui->doubleSpinBox_Translation_E->setValue(settings.value("PostProcessing_Translation_E", "0").toDouble());
-    ui->doubleSpinBox_Translation_D->setValue(settings.value("PostProcessing_Translation_D", "0").toDouble());
+    ui->doubleSpinBox_Translation_N->setValue(settings.value("PostProcessing_Translation_N", ui->doubleSpinBox_Translation_N->value()).toDouble());
+    ui->doubleSpinBox_Translation_E->setValue(settings.value("PostProcessing_Translation_E", ui->doubleSpinBox_Translation_E->value()).toDouble());
+    ui->doubleSpinBox_Translation_D->setValue(settings.value("PostProcessing_Translation_D", ui->doubleSpinBox_Translation_D->value()).toDouble());
 
     for (int row = 0; row < 4; row++)
     {
@@ -133,46 +117,39 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
                     QString::number(row) + "_Column" +
                     QString::number(column);
 
-            QString defaultValue = "0";
-
-            if (row == column)
-            {
-                defaultValue = "1";
-            }
-
-            ui->tableWidget_TransformationMatrix->item(row, column)->setText(settings.value(settingKey, defaultValue).toString());
+            ui->tableWidget_TransformationMatrix->item(row, column)->setText(settings.value(settingKey, ui->tableWidget_TransformationMatrix->item(row, column)->text()).toString());
         }
     }
 
 
-    ui->doubleSpinBox_ReplaySpeed->setValue(settings.value("PostProcessing_Replay_ReplaySpeed", "1").toDouble());
-    ui->doubleSpinBox_LimitInterval->setValue(settings.value("PostProcessing_Replay_IntervalLimit", "1").toDouble());
+    ui->doubleSpinBox_ReplaySpeed->setValue(settings.value("PostProcessing_Replay_ReplaySpeed", ui->doubleSpinBox_ReplaySpeed->value()).toDouble());
+    ui->doubleSpinBox_LimitInterval->setValue(settings.value("PostProcessing_Replay_IntervalLimit", ui->doubleSpinBox_LimitInterval->value()).toDouble());
 
-    ui->lineEdit_Uptime_Min->setText(settings.value("PostProcessing_Replay_Uptime_Min", "0").toString());
-    ui->lineEdit_Uptime_Max->setText(settings.value("PostProcessing_Replay_Uptime_Max", "9223372036854775807").toString());
-    ui->checkBox_Looping->setChecked(settings.value("PostProcessing_Replay_Looping", false).toBool());
+    ui->lineEdit_Uptime_Min->setText(settings.value("PostProcessing_Replay_Uptime_Min", ui->lineEdit_Uptime_Min->text()).toString());
+    ui->lineEdit_Uptime_Max->setText(settings.value("PostProcessing_Replay_Uptime_Max", ui->lineEdit_Uptime_Max->text()).toString());
+    ui->checkBox_Looping->setChecked(settings.value("PostProcessing_Replay_Looping", ui->checkBox_Looping->isChecked()).toBool());
 
 
-    ui->doubleSpinBox_Stylus_Movie_Camera_N->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_N", "-1").toDouble());
-    ui->doubleSpinBox_Stylus_Movie_Camera_E->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_E", "0").toDouble());
-    ui->doubleSpinBox_Stylus_Movie_Camera_D->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_D", "-0.05").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_N->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_N", ui->doubleSpinBox_Stylus_Movie_Camera_N->value()).toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_E->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_E", ui->doubleSpinBox_Stylus_Movie_Camera_E->value()).toDouble());
+    ui->doubleSpinBox_Stylus_Movie_Camera_D->setValue(settings.value("PostProcessing_Stylus_Movie_Camera_D", ui->doubleSpinBox_Stylus_Movie_Camera_D->value()).toDouble());
 
-    ui->doubleSpinBox_Stylus_Movie_LookAt_N->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_N", "0").toDouble());
-    ui->doubleSpinBox_Stylus_Movie_LookAt_E->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_E", "0").toDouble());
-    ui->doubleSpinBox_Stylus_Movie_LookAt_D->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_D", "-0.05").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_N->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_N", ui->doubleSpinBox_Stylus_Movie_LookAt_N->value()).toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_E->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_E", ui->doubleSpinBox_Stylus_Movie_LookAt_E->value()).toDouble());
+    ui->doubleSpinBox_Stylus_Movie_LookAt_D->setValue(settings.value("PostProcessing_Stylus_Movie_LookAt_D", ui->doubleSpinBox_Stylus_Movie_LookAt_D->value()).toDouble());
 
-    ui->spinBox_Stylus_Movie_ITOW_Points_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Min", "0").toInt());
-    ui->spinBox_Stylus_Movie_ITOW_Points_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Max", "604800000").toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Points_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Min", ui->spinBox_Stylus_Movie_ITOW_Points_Min->value()).toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Points_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Points_Max", ui->spinBox_Stylus_Movie_ITOW_Points_Max->value()).toInt());
 
-    ui->spinBox_Stylus_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Min", "0").toInt());
-    ui->spinBox_Stylus_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Max", "604800000").toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Min", ui->spinBox_Stylus_Movie_ITOW_Script_Min->value()).toInt());
+    ui->spinBox_Stylus_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_Stylus_Movie_ITOW_Script_Max", ui->spinBox_Stylus_Movie_ITOW_Script_Max->value()).toInt());
 
-    ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", "30").toDouble());
+    ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value()).toDouble());
 
-    ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", false).toBool());
+    ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked()).toBool());
 
-    ui->spinBox_LOSolver_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Min", "0").toInt());
-    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Max", "604800000").toInt());
+    ui->spinBox_LOSolver_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value()).toInt());
+    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Max", ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value()).toInt());
 
     ui->comboBox_LOSolver_Movie_TimeStamps->setCurrentIndex(settings.value("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex()).toInt());
     ui->plainTextEdit_LOSolver_TransformMatrixScript->setPlainText(settings.value("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText()).toString());
@@ -181,21 +158,31 @@ PostProcessingForm::PostProcessingForm(QWidget *parent) :
     ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText()).toString());
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
 
-    ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals").toBool());
-    ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality").toBool());
+    ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked()).toBool());
 
 
-    ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", "0").toString());
-    ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", "9223372036854775807").toString());
-
-
-    ui->spinBox_MaxLogLines->setValue(settings.value("PostProcessing_MaxLogLines", "1000").toInt());
+    ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
+    ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text()).toString());
 }
 
-PostProcessingForm::~PostProcessingForm()
+
+PostProcessingForm::PostProcessingForm(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::PostProcessingForm)
 {
+    ui->setupUi(this);
+
     QSettings settings;
 
+    loadParametersFromQSettings(settings);
+
+    ui->spinBox_MaxLogLines->setValue(settings.value("PostProcessing_MaxLogLines", ui->spinBox_MaxLogLines->value()).toInt());
+}
+
+
+void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
+{
     settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
     settings.setValue("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value());
 
@@ -294,10 +281,16 @@ PostProcessingForm::~PostProcessingForm()
 
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
+}
 
+
+PostProcessingForm::~PostProcessingForm()
+{
+    QSettings settings;
+
+    saveParametersToQSettings(settings);
 
     settings.setValue("PostProcessing_MaxLogLines", ui->spinBox_MaxLogLines->value());
-
 
     // NOTE: Directories to log files are saved in syncLogFileDialogDirectories-function "on the fly"
 

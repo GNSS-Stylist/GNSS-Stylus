@@ -33,6 +33,7 @@
 #include <QVector3D>
 #include <QTextStream>
 #include <QPlainTextEdit>
+#include <QSettings>
 
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
@@ -373,6 +374,9 @@ private:
 
     bool loadOperations(QPlainTextEdit* plainTextEdit);
     bool saveOperations(QPlainTextEdit* plainTextEdit);
+
+    void saveParametersToQSettings(QSettings& settings);
+    void loadParametersFromQSettings(QSettings& settings);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
