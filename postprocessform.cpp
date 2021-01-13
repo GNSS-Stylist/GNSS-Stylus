@@ -3187,7 +3187,7 @@ void PostProcessingForm::on_pushButton_ClearAllFileData_clicked()
     this->on_pushButton_ClearLidarData_clicked();
 }
 
-void PostProcessingForm::addAllData(const bool includeTransformation)
+void PostProcessingForm::addAllData(const bool includeParameters)
 {
     if (fileDialog_All.exec())
     {
@@ -3287,23 +3287,38 @@ void PostProcessingForm::addAllData(const bool includeTransformation)
         fileNames = getAppendedFileNames(baseFileNames, ".sync");
         addSyncData(fileNames);
 
-        if (includeTransformation)
+        if (includeParameters)
         {
-            fileNames = getAppendedFileNames(baseFileNames, ".Transformation");
+            fileNames = getAppendedFileNames(baseFileNames, ".PPParameters");
 
             if (fileNames.count() == 0)
             {
-                addLogLine("Warning: No file(s) selected. Transformation not read.");
+                addLogLine("Warning: No file(s) selected. Parameters not read.");
             }
             else
             {
+                QString fileName = fileNames[0];
+
                 if (fileNames.count() != 1)
                 {
-                    addLogLine("Warning: Multiple files selected. Transformation read only using the first one ("""+
-                               fileNames[0] + """)");
+                    addLogLine("Warning: Multiple files selected. Parameters read only using the first one ("""+
+                               fileName + """)");
                 }
 
-                loadTransformation(fileNames[0]);
+                QFileInfo fileInfo(fileName);
+                addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+                if (QFile::exists(fileName))
+                {
+                    QSettings settings(fileName, QSettings::IniFormat);
+
+                    loadParametersFromQSettings(settings);
+                    addLogLine("Parameters (found from the file) read.");
+                }
+                else
+                {
+                    addLogLine("Error: Can't open file \"" + fileInfo.fileName() + "\".");
+                }
             }
         }
     }
@@ -3519,7 +3534,7 @@ void PostProcessingForm::on_pushButton_SaveTransformation_clicked()
     }
 }
 
-void PostProcessingForm::on_pushButton_AddAllIncludingTransform_clicked()
+void PostProcessingForm::on_pushButton_AddAllIncludingParams_clicked()
 {
     addAllData(true);
 }
@@ -5544,4 +5559,5 @@ void PostProcessingForm::on_pushButton_SaveEditableFieldsToFile_clicked()
         addLogLine("Parameters saved.");
     }
 }
+
 

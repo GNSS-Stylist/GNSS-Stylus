@@ -1474,7 +1474,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_AddAllIncludingTransform">
+           <widget class="QPushButton" name="pushButton_AddAllIncludingParams">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -1482,10 +1482,10 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>Same as &quot;Add from files&quot;, but this also tries to read transformation matrix data from a file with an extension &quot;.Transformation&quot; added to base file name.</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Same as &amp;quot;Add from files&amp;quot;, but this also tries to read other editable fields from a file with an extension &amp;quot;.PPParams&amp;quot; added to base file name. This file can be saved with &amp;quot;Save all editable fields to file...&amp;quot;-button.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
-             <string>Add from files including transform...</string>
+             <string>Add from files including other fields (parameters)...</string>
             </property>
            </widget>
           </item>

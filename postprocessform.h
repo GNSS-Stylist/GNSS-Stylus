@@ -149,7 +149,7 @@ private slots:
 
     void on_pushButton_SaveTransformation_clicked();
 
-    void on_pushButton_AddAllIncludingTransform_clicked();
+    void on_pushButton_AddAllIncludingParams_clicked();
 
     void on_pushButton_Preset_clicked();
 
@@ -198,7 +198,6 @@ private slots:
     void on_pushButton_LoadEditableFieldsFromFile_clicked();
 
     void on_pushButton_SaveEditableFieldsToFile_clicked();
-
 
 private:
     /**
@@ -332,7 +331,7 @@ private:
     void addDistanceData(const QStringList& fileNames);
     void addSyncData(const QStringList& fileNames);
     void addLidarData(const QStringList& fileNames);
-    void addAllData(const bool includeTransformation);
+    void addAllData(const bool includeParameters);
 
     void loadTransformation(const QString fileName);
 
