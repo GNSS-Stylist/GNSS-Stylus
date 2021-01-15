@@ -32,7 +32,7 @@
  *
  */
 
-#include "arch/linux/arch_linux.h"
+#include "arch_linux.h"
 
 #include <sched.h>
 

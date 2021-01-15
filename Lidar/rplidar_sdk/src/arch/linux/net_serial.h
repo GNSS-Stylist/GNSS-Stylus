@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "hal/abs_rxtx.h"
+#include "../../hal/abs_rxtx.h"
 
 namespace rp{ namespace arch{ namespace net{
 
