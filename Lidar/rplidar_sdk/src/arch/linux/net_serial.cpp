@@ -96,6 +96,7 @@ bool raw_serial::bind(const char * portname, uint32_t baudrate, uint32_t flags)
 
 bool raw_serial::open(const char * portname, uint32_t baudrate, uint32_t flags)
 {
+    (void) flags;
     if (isOpened()) close();
     
     serial_fd = ::open(portname, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -280,17 +281,20 @@ int raw_serial::recvdata(unsigned char * data, size_t size)
 
 void raw_serial::flush( _u32 flags)
 {
+    (void) flags;
     tcflush(serial_fd,TCIFLUSH); 
 }
 
 int raw_serial::waitforsent(_u32 timeout, size_t * returned_size)
 {
+    (void) timeout;
     if (returned_size) *returned_size = required_tx_cnt;
     return 0;
 }
 
 int raw_serial::waitforrecv(_u32 timeout, size_t * returned_size)
 {
+    (void) timeout;
     if (!isOpened() ) return -1;
    
     if (returned_size) *returned_size = required_rx_cnt;
