@@ -120,7 +120,7 @@
           </rect>
          </property>
          <property name="toolTip">
-          <string>How much can iTOW differ from expected nearest aligned value to &quot;snap&quot; it to it.</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How much can iTOW differ from expected nearest aligned value to &amp;quot;snap&amp;quot; to it. Default: 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="minimum">
           <number>0</number>
@@ -174,7 +174,7 @@
           </rect>
          </property>
          <property name="toolTip">
-          <string>How long time is expected to elapse between RELPOSNED-messages (ms). Expected alignment starts from a value 0 (so that iTOW should always be divisible by this (which is expected behaviour of ublox-devices, but not always true)).</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How long time is expected to elapse between RELPOSNED-messages (ms). Default: 125 ms (8 Hz)&lt;/p&gt;&lt;p&gt;Expected alignment starts from a value 0 (so that iTOW should always be divisible by this (which is expected behaviour of ublox-devices, but not always true)).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="minimum">
           <number>10</number>
@@ -203,6 +203,123 @@
          </property>
         </widget>
        </widget>
+       <widget class="QWidget" name="tab_Tags">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Tags</string>
+        </attribute>
+        <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfObjectPoints">
+         <property name="geometry">
+          <rect>
+           <x>392</x>
+           <y>40</y>
+           <width>221</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Typically this is &amp;quot;RMB&amp;quot; or &amp;quot;LMB&amp;quot;. Default: LMB. Editable to make it easier to switch mouse buttons.&lt;/p&gt;&lt;p&gt;Switching may be more intuitive when mouse is attached to the rig/stylus 180 degrees rotated, for example.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>LMB</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_TagIndicatingBeginningOfObjectPoints">
+         <property name="geometry">
+          <rect>
+           <x>120</x>
+           <y>40</y>
+           <width>261</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Tag indicating beginning of object points:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfNewObject">
+         <property name="geometry">
+          <rect>
+           <x>392</x>
+           <y>100</y>
+           <width>221</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Default: &amp;quot;New object&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>New object</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lineEdit_TagIndicatingEndOfObjectPoints">
+         <property name="geometry">
+          <rect>
+           <x>392</x>
+           <y>70</y>
+           <width>221</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Typically this is &amp;quot;RMB&amp;quot; or &amp;quot;LMB&amp;quot;. Default: RMB. Editable to make it easier to switch mouse buttons.&lt;/p&gt;&lt;p&gt;Switching may be more intuitive when mouse is attached to the rig/stylus 180 degrees rotated, for example.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>RMB</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_TagIndicatingBeginningOfNewObject">
+         <property name="geometry">
+          <rect>
+           <x>120</x>
+           <y>100</y>
+           <width>261</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Tag indicating beginning of new object:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_TagIndicatingEndOfObjectPoints">
+         <property name="geometry">
+          <rect>
+           <x>120</x>
+           <y>70</y>
+           <width>261</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Tag indicating end of object points:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>601</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>These are used when reading log files (*.tags)</string>
+         </property>
+        </widget>
+       </widget>
        <widget class="QWidget" name="tab_Settings_Stylus">
         <property name="autoFillBackground">
          <bool>true</bool>
@@ -210,19 +327,6 @@
         <attribute name="title">
          <string>Stylus</string>
         </attribute>
-        <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfObjectPoints">
-         <property name="geometry">
-          <rect>
-           <x>500</x>
-           <y>40</y>
-           <width>113</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>RMB</string>
-         </property>
-        </widget>
         <widget class="QLabel" name="label_StylusTipDistanceFromRoverA_Fallback">
          <property name="geometry">
           <rect>
@@ -248,6 +352,12 @@
            <height>22</height>
           </rect>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+&lt;p&gt;Distance to be used when laser distance measurement module is not installed/active/ not yet providing measurements.&lt;/p&gt;
+&lt;p&gt;This is the distance used when using &amp;quot;contact-type&amp;quot; measurement tip.&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="decimals">
           <number>3</number>
          </property>
@@ -264,56 +374,11 @@
           <double>0.900000000000000</double>
          </property>
         </widget>
-        <widget class="QLabel" name="label_TagIndicatingBeginningOfObjectPoints">
-         <property name="geometry">
-          <rect>
-           <x>230</x>
-           <y>40</y>
-           <width>261</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Tag indicating beginning of object points:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-        <widget class="QLineEdit" name="lineEdit_TagIndicatingBeginningOfNewObject">
-         <property name="geometry">
-          <rect>
-           <x>500</x>
-           <y>100</y>
-           <width>113</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>New object</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_TagIndicatingBeginningOfNewObject">
-         <property name="geometry">
-          <rect>
-           <x>230</x>
-           <y>100</y>
-           <width>261</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Tag indicating beginning of new object:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
         <widget class="QLabel" name="label_StylusTipDistanceFromRoverA_Correction">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>130</y>
+           <y>40</y>
            <width>481</width>
            <height>20</height>
           </rect>
@@ -329,10 +394,13 @@
          <property name="geometry">
           <rect>
            <x>500</x>
-           <y>130</y>
+           <y>40</y>
            <width>111</width>
            <height>22</height>
           </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This can be used to fix systematic bias in distance measurements read from log files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>4</number>
@@ -348,35 +416,6 @@
          </property>
          <property name="value">
           <double>0.000000000000000</double>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_TagIndicatingEndOfObjectPoints">
-         <property name="geometry">
-          <rect>
-           <x>230</x>
-           <y>70</y>
-           <width>261</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Tag indicating end of object points:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-        <widget class="QLineEdit" name="lineEdit_TagIndicatingEndOfObjectPoints">
-         <property name="geometry">
-          <rect>
-           <x>500</x>
-           <y>70</y>
-           <width>113</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>LMB</string>
          </property>
         </widget>
        </widget>
@@ -395,6 +434,9 @@
            <width>81</width>
            <height>22</height>
           </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Used to sync data from rovers and lidar. Default: 80&lt;/p&gt;&lt;p&gt;Lidar is currently read so that every full round is read as one block. Uptimes for every single measurement in this block are then interpolated (first measurement gets a timestamp just above the timestamp of the last block received, last one gets the same timestamp as the receiving time of the block).&lt;/p&gt;&lt;p&gt;As delays with lidar and rovers differ (especially when they are received in a PC), this is needed to sync those.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="minimum">
           <number>-1000000000</number>
@@ -456,6 +498,9 @@
             <height>22</height>
            </rect>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements having an angle less than this will be discarded. Default: 90&lt;/p&gt;&lt;p&gt;The &amp;quot;fan of valid rays&amp;quot; can be limited with this.&lt;/p&gt;&lt;p&gt;Depending on the installation of the lidar you may want to use this to get rid of the points measured from the rig itself and/or the operator of the rig.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="decimals">
            <number>1</number>
           </property>
@@ -480,6 +525,9 @@
             <width>81</width>
             <height>22</height>
            </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements having an angle larger than this will be discarded. Default: 270&lt;/p&gt;&lt;p&gt;The &amp;quot;fan of valid rays&amp;quot; can be limited with this.&lt;/p&gt;&lt;p&gt;Depending on the installation of the lidar you may want to use this to get rid of the points measured from the rig itself and/or the operator of the rig.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="decimals">
            <number>1</number>
@@ -538,6 +586,9 @@
             <height>22</height>
            </rect>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements from lidar having a quality-value smaller than this will be discarded before doing any other filtering. Default: 0.1&lt;/p&gt;&lt;p&gt;RPLIDAR A3M1 seems to only return either 0 or 0.737254917622 (188 raw) through the SDK so this is of little use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="decimals">
            <number>3</number>
           </property>
@@ -562,6 +613,9 @@
             <width>81</width>
             <height>22</height>
            </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements from lidar having a quality-value smaller than this will be discarded after other filtering steps are done. Default: 0.5&lt;/p&gt;&lt;p&gt;RPLIDAR A3M1 seems to only return either 0 or 0.737254917622 (188 raw) through the SDK so this is of little use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="decimals">
            <number>3</number>
@@ -620,6 +674,9 @@
             <height>22</height>
            </rect>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements from lidar having a distance-value smaller than this will be discarded. Default: 0.1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="decimals">
            <number>3</number>
           </property>
@@ -644,6 +701,9 @@
             <width>81</width>
             <height>22</height>
            </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Measurements from lidar having a distance-value larger than this will be discarded. Default: 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="decimals">
            <number>3</number>
@@ -702,6 +762,9 @@
             <height>22</height>
            </rect>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;(This filtering scheme is not working as intended and should be rethought, it's recommended to use 0 (no filtering) here for now)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Filter out samples that are taken in a very shallow angle. Default: 0&lt;/p&gt;&lt;p&gt;Takes into account samples on both sides of the sample in question and filters it out only if the direction of the slope on both directions match and are over the changing speed limit. This is done this way to prevent small details from being filtered out collaterally. For example some small details might be filtered out otherwise.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="decimals">
            <number>4</number>
           </property>
@@ -726,6 +789,9 @@
             <width>81</width>
             <height>22</height>
            </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;(This filtering scheme is not working as intended and should be rethought, it's recommended to use 0 (no filtering) here for now)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Filter out samples that are taken in a very shallow angle. Default: 0&lt;/p&gt;&lt;p&gt;Takes into account samples on both sides of the sample in question and filters it out only if the direction of the slope on both directions match and are over the changing speed limit. This is done this way to prevent small details from being filtered out collaterally. For example some small details might be filtered out otherwise.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="decimals">
            <number>4</number>
@@ -2642,8 +2708,104 @@
           <height>251</height>
          </rect>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// These operations move camera in relation to the rig's origin&lt;br&gt;
+// First move camera's viewing reference point in relation to the mounting point (so we can move the mounting point next):&lt;br&gt;
+translate 0.010 -0.005 -0.030; // Lens' &quot;origin&quot; 10 mm forward, 5 mm left and 30 mm up from the mounting point&lt;br&gt;
+// Now we can operate on mounting point:&lt;br&gt;
+translate -0.200 0.050 -0.150; // Mounting point 200 mm back, 50 mm  right and 150 mm up from the rig's origin&lt;br&gt;
+// Camera is slightly pointing down:&lt;br&gt;
+rotate pitch -5 deg; // Turn the camera 5 degrees down&lt;br&gt;
+// Since the mount may not be perfect, add some calibration values:&lt;br&gt;
+rotate yaw 0.5 deg;&lt;br&gt;
+rotate roll -2 deg;&lt;br&gt;
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting to generate script so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="lineWrapMode">
          <enum>QPlainTextEdit::NoWrap</enum>
+        </property>
+        <property name="plainText">
+         <string>// This is an example of operations that can be used.
+// These operations were used when creating youtube-video https://www.youtube.com/watch?v=WE_fD6qsLKQ
+
+// Camera transforms (long mount, 26.12.2020):
+
+// First calculate coordinates for the &quot;camera eye&quot; (viewing reference point / origin)
+// relative to the camera's mounting point
+
+// Lens is 13 mm to the left of the mounting point of the camera (&quot;to west&quot;)
+translate 0 -0.013 0;
+
+// Height of the center of the lens (29 mm)
+translate 0 0 -0.029;
+
+// There's about 1 mm washer under the camera:
+translate 0 0 -0.001;
+
+// Estimated viewing reference point is 32 mm to front from the mounting point. This really just a wild quess
+translate 0.032 0 0;
+
+// Calibration:
+rotate yaw 0 deg;
+rotate roll -2 deg;
+
+// Now we can rotate the camera around the mounting point before moving it to the desired position
+rotate pitch -19 deg;
+
+// Move the camera to the mounting point (relative to the rig's origin)
+translate -0.193 0 0;	// 193 mm back
+translate 0 0.040 0;	// 40 mm right
+translate 0 0 -0.173;	// 173 mm up
+
+// It's also possible to use multiline-commands and tabs (although this multiplication with identity matrix does nothing):
+multiply	1	0	0	0
+	0	1	0	0
+	0	0	1	0;
+</string>
         </property>
        </widget>
        <widget class="QPushButton" name="pushButton_LoSolver_Operations_Load">
@@ -2746,7 +2908,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
         <property name="autoFillBackground">
@@ -2760,12 +2922,92 @@
           <rect>
            <x>10</x>
            <y>90</y>
-           <width>571</width>
+           <width>601</width>
            <height>211</height>
           </rect>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// Division between &quot;before and after rotation&quot; here is done &quot;in&quot; mounting point (center) of the lidar unit.&lt;br&gt;
+// Calibration for &quot;up/down&quot;-tilt (when lidar is lying on a NE-plane) of the laser beam:&lt;br&gt;
+rotate pitch 0 deg; // Should not be needed if lidar is a quality unit&lt;br&gt;
+// Up/down shift of the measurement &quot;core&quot;'s measurement thingies (rotating part with laser and receiver):&lt;br&gt;
+translate 0 0 -0.031; // Value 31 mm is from RPLidar A3M1's spec (drawing)
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting operations so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="lineWrapMode">
           <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="plainText">
+          <string>// This is an example of operations that can be used.
+// These operations were used when creating youtube-video https://www.youtube.com/watch?v=WE_fD6qsLKQ
+
+// Division between &quot;before and after rotation&quot; here is done
+// &quot;in&quot; mounting point (center) of the lidar unit.
+
+// Calibration for &quot;up/down&quot;-tilt of the laser beam (when lidar is lying on a NE-plane):
+rotate pitch 0 deg; // Should not be needed if lidar is a quality unit
+
+// Up/down shift of the measurement &quot;core&quot;'s measurement thingies (rotating part with laser and receiver):
+translate 0 0 -0.031;	// Value 31 mm is from RPLidar A3M1's spec (drawing)
+
+// Possible shift of the measurement axis:
+// (could be shifted in side (=E/Y) axis if the laser is used as the axis)
+// RPLidar A3M1 doesn't seem to need sideways shift, but 5 mm offset in N-axis
+// (practically adding 5mm into distance measurement) allows smaller features
+// to be visible after surface reconstruction. Without this the front legs of the 
+// hare (in the video) are &quot;glued&quot; to the body. But this comes at a price of eroding
+// the object somewhat.
+translate 0.005 0 0;
+
+// It's also possible to use multiline-commands and tabs (although this multiplication with identity matrix does nothing):
+multiply	1	0	0	0
+	0	1	0	0
+	0	0	1	0;
+</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_LOSolver_OperationsDescription_2">
@@ -2823,12 +3065,118 @@
           <rect>
            <x>10</x>
            <y>50</y>
-           <width>561</width>
+           <width>601</width>
            <height>271</height>
           </rect>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example (rig used in youtube video https://www.youtube.com/watch?v=WE_fD6qsLKQ):&lt;br&gt;
+// Division between &quot;before and after rotation&quot; here is done &quot;in&quot; mounting point (center) of the lidar unit. So here we can define operations just for the mounting point of the unit. Note that the origin should be in the middle point of the rig's front square tube, on the top surface of it.&lt;br&gt;
+rotate yaw 2.4 deg; // Calibration of the mounting direction (on the mounting plane):&lt;br&gt;
+rotate yaw 180 deg; // Turn the unit so that 0 degree-point faces backwards&lt;br&gt;
+rotate roll -90 deg; // Turn it to the left 90 degrees&lt;br&gt;
+translate 0.06075 0 0; // Move forward&lt;br&gt;
+rotate yaw 0 deg; // Compensate errors in the mounting direction (left/right (=yaw)):&lt;br&gt;
+// Move up/down (done in several steps to make it easier to separate the individual operations)&lt;br&gt;
+translate 0 0 -0.02075;	// 20.75 is half the lidar's mounting screw's distance 41.5 mm (bottom ones are in the center of the 35 mm rig's front square tube)&lt;br&gt;
+translate 0 0 0.0175;	// 17.5 is half of the square tube's diameter (35 mm)&lt;br&gt;
+// Move left/right (done in several steps to make it easier to separate the individual operations)&lt;br&gt;
+translate 0 0.099 0;	// Move center point of the square tube to right (mounting bolt location)&lt;br&gt;
+translate 0 -0.0175 0;	// Move back half of the tube's diameter (35 mm)
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting operations so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="lineWrapMode">
           <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="plainText">
+          <string>// This is an example of operations that can be used.
+// These operations were used when creating youtube-video https://www.youtube.com/watch?v=WE_fD6qsLKQ
+
+// Division between &quot;before and after rotation&quot; here is done
+// &quot;in&quot; mounting point (center) of the lidar unit.
+
+// Here we can define operations just for the mounting point of the unit.
+// Note that the origin should be in the middle point of the rig's front square tube,
+// on the top surface of it.
+
+// Calibration of the mounting direction (on the mounting plane):
+// This (identical line) could be in the end of &quot;before&quot;-section as well
+// but this is most probably caused by inaccuracy in the mounting to the rig
+rotate yaw 2.4 deg;
+
+// Turn the unit so that 0 degree-point faces backwards
+rotate yaw 180 deg;
+
+// Turn it to the left 90 degrees
+rotate roll -90 deg;
+
+// Move forward
+translate 0.06075 0 0;
+
+// Compensate errors in the mounting direction (left/right (=yaw)):
+rotate yaw 0 deg;
+
+// Move up/down
+// (done in several steps to make it easier to separate the individual operations)
+translate 0 0 -0.02075;	// 20.75 is half the lidar's mounting screw's distance 41.5 mm (bottom ones are in the center of the 35 mm rig's front square tube)
+translate 0 0 0.0175;	// 17.5 is half of the square tube's diameter (35 mm)
+
+// Move left/right
+// (done in several steps to make it easier to separate the individual operations)
+translate 0 0.099 0;	// Move center point of the square tube to right (mounting bolt location)
+translate 0 -0.0175 0;	// Move back half of the tube's diameter (35 mm)
+
+// Sag compensation:
+rotate pitch -0 deg;
+
+// It's also possible to use multiline-commands and tabs (although this multiplication with identity matrix does nothing):
+multiply	1	0	0	0
+	0	1	0	0
+	0	0	1	0;
+</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_LOSolver_OperationsDescription_3">
@@ -2915,6 +3263,9 @@
            <width>461</width>
            <height>17</height>
           </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Set normal lengths to multiplicative inverse of measured lidar distance (&quot;Quality&quot;)</string>
