@@ -950,7 +950,40 @@ void PostProcessingForm::addTagData(const QStringList& fileNames)
             {
                 lineNumber++;
 
-                QString line = textStream.readLine();
+                QString lineRead = textStream.readLine();
+
+                QString line;
+
+                bool initialWhitespace = true;
+                for (int i = 0; i < lineRead.length(); i++)
+                {
+                    if (initialWhitespace)
+                    {
+                        if ((lineRead[i] != ' ') && (lineRead[i] != '\t'))
+                        {
+                            initialWhitespace = false;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    if ((i < lineRead.length() - 1) && (lineRead[i] == '/') && (lineRead[i + 1] == '/'))
+                    {
+                        // Rest of the line is comment -> skip it
+                        break;
+                    }
+                    else
+                    {
+                        line += lineRead[i];
+                    }
+                }
+
+                if (line.length() == 0)
+                {
+                    continue;
+                }
 
                 QStringList subItems = line.split("\t");
 
