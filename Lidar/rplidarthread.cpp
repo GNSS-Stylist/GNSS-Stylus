@@ -16,8 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "rplidarthread.h"
 #include <math.h>
+
+#include <QElapsedTimer>
+
+#include "rplidarthread.h"
 
 RPLidarThread::RPLidarThread(const QString& serialPortFileName, const unsigned int serialPortBPS, const unsigned short motorPWM)
 {
