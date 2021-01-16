@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>GNSS-Stylus - devel (based on V 1.2.0)</string>
+   <string>GNSS-Stylus V 1.3.0</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_5">
