@@ -40,6 +40,7 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/postprocessform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
@@ -66,6 +67,7 @@ SOURCES += \
     rightclickpushbutton.cpp
 
 HEADERS += \
+    PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/postprocessform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \

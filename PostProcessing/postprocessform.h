@@ -159,6 +159,11 @@ private slots:
     void ubloxProcessor_nmeaParseError(const QString& errorString);
     void ubloxProcessor_unidentifiedDataReceived(const QByteArray& data);
 
+    // Slots for messages from "sub-actions"
+    void on_infoMessage(const QString& infoString);
+    void on_warningMessage(const QString& warningString);
+    void on_errorMessage(const QString& errorString);
+
     void on_pushButton_ClearDistanceData_clicked();
 
     void on_pushButton_AddDistanceData_clicked();
