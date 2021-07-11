@@ -59,6 +59,9 @@ class PostProcessingForm : public QWidget
     Q_OBJECT
 
 public:
+
+    void addLogLine(const QString& line);
+
     /**
      * @brief Tag-class stores the individual tag ("tag" here means items in tag-file)
      */
@@ -88,6 +91,31 @@ public:
         int sourceFileLine = 0;     //!< Line of the source file where this tag was read from
         int frameDuration = 0;
     };
+
+    class RoverSyncItem
+    {
+    public:
+        typedef enum
+        {
+            MSGTYPE_UNKNOWN = 0,
+            MSGTYPE_UBX_RELPOSNED,
+        } MessageType;
+
+        QString sourceFile;     //!< Filename of the source file
+        int sourceFileLine = 0;     //!< Line of the source file where this tag was read from
+        MessageType messageType = MSGTYPE_UNKNOWN;
+        UBXMessage_RELPOSNED::ITOW iTOW = -1;
+        qint64 frameTime = 0;
+    };
+
+    class Rover
+    {
+    public:
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages;
+        QMap<qint64, RoverSyncItem> roverSyncData;
+        QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync;
+    };
+
 
     explicit PostProcessingForm(QWidget *parent = nullptr); //!< Constructor
     ~PostProcessingForm();
@@ -235,30 +263,6 @@ private:
 
     QMap<qint64, DistanceItem> distances;
 
-    class RoverSyncItem
-    {
-    public:
-        typedef enum
-        {
-            MSGTYPE_UNKNOWN = 0,
-            MSGTYPE_UBX_RELPOSNED,
-        } MessageType;
-
-        QString sourceFile;     //!< Filename of the source file
-        int sourceFileLine = 0;     //!< Line of the source file where this tag was read from
-        MessageType messageType = MSGTYPE_UNKNOWN;
-        UBXMessage_RELPOSNED::ITOW iTOW = -1;
-        qint64 frameTime = 0;
-    };
-
-    class Rover
-    {
-    public:
-        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> relposnedMessages;
-        QMap<qint64, RoverSyncItem> roverSyncData;
-        QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync;
-    };
-
     Rover rovers[3];
 
     class LidarRound
@@ -321,7 +325,6 @@ private:
     qint64 cumulativeRequestedWaitTime_ns;
     bool stopReplayRequest = false;
 
-    void addLogLine(const QString& line);
     void addRELPOSNEDData_Rover(const unsigned int roverId);
     void addRELPOSNEDData_Rover(const QStringList fileNames, const unsigned int roverId);
     void addRELPOSNEDFileData(const QStringList& fileNames);

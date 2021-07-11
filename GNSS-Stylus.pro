@@ -40,6 +40,7 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    PostProcessing/postprocessform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
     Lidar/lidarchartform.cpp \
@@ -62,10 +63,10 @@ SOURCES += \
     messagemonitorform.cpp \
     relposnedform.cpp \
     essentialsform.cpp \
-    rightclickpushbutton.cpp \
-    postprocessform.cpp
+    rightclickpushbutton.cpp
 
 HEADERS += \
+    PostProcessing/postprocessform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
     Lidar/lidarchartform.h \
@@ -84,10 +85,10 @@ HEADERS += \
     messagemonitorform.h \
     relposnedform.h \
     essentialsform.h \
-    rightclickpushbutton.h \
-    postprocessform.h
+    rightclickpushbutton.h
 
 FORMS += \
+    PostProcessing/postprocessform.ui \
     laserrangefinder20hzv2messagemonitorform.ui \
     Lidar/lidarchartform.ui \
     licensesform.ui \
@@ -95,7 +96,6 @@ FORMS += \
     messagemonitorform.ui \
     relposnedform.ui \
     essentialsform.ui \
-    postprocessform.ui \
     Lidar/rplidarmessagemonitorform.ui
 
 # Default rules for deployment.
