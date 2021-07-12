@@ -35,7 +35,7 @@
 #include "ntripthread.h"
 #include "ubloxdatastreamprocessor.h"
 #include "gnssmessage.h"
-#include "PostProcessing/postprocessform.h"
+#include "PostProcessing/postprocessingform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "losolver.h"
 #include "Lidar/rplidarthread.h"

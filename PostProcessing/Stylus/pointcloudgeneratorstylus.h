@@ -19,7 +19,7 @@
 #ifndef POINTCLOUDGENERATORSTYLUS_H
 #define POINTCLOUDGENERATORSTYLUS_H
 
-#include "../postprocessform.h"
+#include "../postprocessingform.h"
 
 
 namespace Stylus

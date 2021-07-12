@@ -43,7 +43,7 @@ SOURCES += \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
-    PostProcessing/postprocessform.cpp \
+    PostProcessing/postprocessingform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
     Lidar/lidarchartform.cpp \
@@ -72,7 +72,7 @@ HEADERS += \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
-    PostProcessing/postprocessform.h \
+    PostProcessing/postprocessingform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
     Lidar/lidarchartform.h \
@@ -94,7 +94,7 @@ HEADERS += \
     rightclickpushbutton.h
 
 FORMS += \
-    PostProcessing/postprocessform.ui \
+    PostProcessing/postprocessingform.ui \
     laserrangefinder20hzv2messagemonitorform.ui \
     Lidar/lidarchartform.ui \
     licensesform.ui \

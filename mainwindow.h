@@ -36,7 +36,7 @@
 #include "messagemonitorform.h"
 #include "relposnedform.h"
 #include "essentialsform.h"
-#include "PostProcessing/postprocessform.h"
+#include "PostProcessing/postprocessingform.h"
 #include "laserrangefinder20hzv2messagemonitorform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "Lidar/rplidarthread.h"

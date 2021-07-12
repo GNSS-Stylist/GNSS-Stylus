@@ -23,7 +23,7 @@
 #include <QMessageBox>
 #include <QtMath>
 
-#include "postprocessform.h"
+#include "postprocessingform.h"
 #include "ui_postprocessform.h"
 #include "transformmatrixgenerator.h"
 #include "Stylus/moviescriptgenerator.h"

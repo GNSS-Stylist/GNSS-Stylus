@@ -19,7 +19,7 @@
 #ifndef POINTCLOUDGENERATORLIDAR_H
 #define POINTCLOUDGENERATORLIDAR_H
 
-#include "../postprocessform.h"
+#include "../postprocessingform.h"
 
 
 namespace Lidar

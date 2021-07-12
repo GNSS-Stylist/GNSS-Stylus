@@ -21,8 +21,8 @@
  * @brief Declaration for a form that allows post-processing based on the logged data.
  */
 
-#ifndef POSTPROCESSFORM_H
-#define POSTPROCESSFORM_H
+#ifndef POSTPROCESSINGFORM_H
+#define POSTPROCESSINGFORM_H
 
 #include <QTime>
 #include <QWidget>
@@ -381,4 +381,4 @@ signals:
     void replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
 };
 
-#endif // POSTPROCESSFORM_H
+#endif // POSTPROCESSINGFORM_H

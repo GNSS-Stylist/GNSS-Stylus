@@ -29,7 +29,7 @@
 #include <QListWidgetItem>
 
 #include "rplidarthread.h"
-#include "../PostProcessing/postprocessform.h"
+#include "../PostProcessing/postprocessingform.h"
 
 namespace Ui {
 class LidarChartForm;

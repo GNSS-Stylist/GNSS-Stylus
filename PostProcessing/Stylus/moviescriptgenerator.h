@@ -24,7 +24,7 @@
 #ifndef MOVIESCRIPTGENERATOR_H
 #define MOVIESCRIPTGENERATOR_H
 
-#include "../postprocessform.h"
+#include "../postprocessingform.h"
 
 namespace Stylus
 {
