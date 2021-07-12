@@ -23,8 +23,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 # Here lack of vectorization may not be a big issue as speed is probably more
 # limited by IO than math.
-DEFINES += EIGEN_DONT_VECTORIZE
-DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+#DEFINES += EIGEN_DONT_VECTORIZE
+#DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
 INCLUDEPATH += $$PWD/Eigen $$PWD/Lidar
 
@@ -40,7 +40,9 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
+    PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
     PostProcessing/postprocessform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
@@ -67,7 +69,9 @@ SOURCES += \
     rightclickpushbutton.cpp
 
 HEADERS += \
+    PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
+    PostProcessing/Stylus/pointcloudgeneratorstylus.h \
     PostProcessing/postprocessform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \

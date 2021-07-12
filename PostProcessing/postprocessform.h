@@ -116,9 +116,36 @@ public:
         QMap<UBXMessage_RELPOSNED::ITOW, qint64> reverseSync;
     };
 
+    class LidarRound
+    {
+    public:
+        QString fileName;
+        int chunkIndex = -1;
+        qint64 startTime = -1;
+        qint64 endTime = -1;
+        QVector<RPLidarThread::DistanceItem> distanceItems;
+    };
+
+    class LOInterpolator
+    {
+    public:
+        LOInterpolator(PostProcessingForm* owner);
+        void getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
+
+        LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
+
+    private:
+        PostProcessingForm* owner = nullptr;
+        qint64 roverUptimeLimits[3][2];
+        UBXMessage_RELPOSNED roverRELPOSNEDS_Lower[3];
+        UBXMessage_RELPOSNED roverRELPOSNEDS_Upper[3];
+    };
+
 
     explicit PostProcessingForm(QWidget *parent = nullptr); //!< Constructor
     ~PostProcessingForm();
+
+    static QString getRoverIdentString(const unsigned int roverId);
 
 protected:
     void showEvent(QShowEvent* event);  //!< Initializes some things that can't be initialized in constructor
@@ -270,31 +297,6 @@ private:
 
     Rover rovers[3];
 
-    class LidarRound
-    {
-    public:
-        QString fileName;
-        int chunkIndex = -1;
-        qint64 startTime = -1;
-        qint64 endTime = -1;
-        QVector<RPLidarThread::DistanceItem> distanceItems;
-    };
-
-    class LOInterpolator
-    {
-    public:
-        LOInterpolator(PostProcessingForm* owner);
-        void getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
-
-        LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
-
-    private:
-        PostProcessingForm* owner = nullptr;
-        qint64 roverUptimeLimits[3][2];
-        UBXMessage_RELPOSNED roverRELPOSNEDS_Lower[3];
-        UBXMessage_RELPOSNED roverRELPOSNEDS_Upper[3];
-    };
-
     QMap<qint64, LidarRound> lidarRounds;
 
     bool onShowInitializationsDone = false;
@@ -351,36 +353,11 @@ private:
 
     bool generateTransformationMatrix(Eigen::Transform<double, 3, Eigen::Affine>& outputMatrix);
 
-    QString getRoverIdentString(const unsigned int roverId);
-
     void loadAntennaLocations(const QString fileName);
 
     bool updateLOSolverReferencePointLocations(LOSolver& loSolver);
 
     void syncLogFileDialogDirectories(const QString dir, const bool savesetting);
-
-    bool generatePointCloudPointSet_Stylus(const Tag& beginningTag, const Tag& endingTag,
-                                           const qint64 beginningUptime, const qint64 endingUptime,
-                                           QTextStream* outStream,
-                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform,
-                                           int& pointsWritten);
-
-    bool generatePointCloudPointSet_Lidar(const Tag& beginningTag, const Tag& endingTag,
-                                           const qint64 beginningUptime, const qint64 endingUptime,
-                                           QTextStream* outStream,
-                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ,
-                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_BeforeRotation,
-                                           const Eigen::Transform<double, 3, Eigen::Affine>& transform_AfterRotation,
-                                           LOInterpolator& loInterpolator, const RPLidarPlausibilityFilter::Settings& filteringSettings,
-                                           int& pointsWritten);
-
-    typedef enum
-    {
-        SOURCE_LASERDISTANCEMETER_OR_CONSTANT = 0, //!< Laser distance distance meter or constant as a fallback
-        SOURCE_LIDAR                            //!< Lidar
-    } PointCloudDistanceSource;
-
-    void generatePointClouds(const PointCloudDistanceSource source);
 
     void getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings);
 
