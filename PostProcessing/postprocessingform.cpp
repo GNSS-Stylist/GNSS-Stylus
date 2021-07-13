@@ -29,6 +29,7 @@
 #include "Stylus/moviescriptgenerator.h"
 #include "Stylus/pointcloudgeneratorstylus.h"
 #include "Lidar/pointcloudgeneratorlidar.h"
+#include "loscriptgenerator.h"
 
 struct
 {
@@ -2807,264 +2808,31 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
             return;
         }
 
-        QFile loScriptFile;
+        LOScriptGenerator::Params params;
 
-        loScriptFile.setFileName(fileNameList[0]);
+        params.transform_NEDToXYZ = &transform_NEDToXYZ;
+        params.transform_Generated = &transform_Generated;
+        params.iTOWRange_Script_Min = ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value();
+        params.iTOWRange_Script_Max = ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value();
 
-        if (loScriptFile.exists())
-        {
-            QMessageBox msgBox;
-            msgBox.setText("File already exists.");
-            msgBox.setInformativeText("How to proceed?");
+        params.fileName = fileNameList[0];
+        params.timeStampFormat = ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1 ? LOScriptGenerator::Params::TimeStampFormat::TSF_UPTIME : LOScriptGenerator::Params::TimeStampFormat::TSF_ITOW;
+        params.loSolver = &loSolver;
 
-            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
-            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+        params.rovers = rovers;
 
-            msgBox.setDefaultButton(cancelButton);
+        LOScriptGenerator loScriptGenerator;
 
-            msgBox.exec();
+        QObject::connect(&loScriptGenerator, SIGNAL(infoMessage(const QString&)),
+                         this, SLOT(on_infoMessage(const QString&)));
 
-            if (msgBox.clickedButton() != overwriteButton)
-            {
-                addLogLine("Location/orientation script not created.");
-                return;
-            }
-        }
+        QObject::connect(&loScriptGenerator, SIGNAL(warningMessage(const QString&)),
+                         this, SLOT(on_warningMessage(const QString&)));
 
-        if (!loScriptFile.open(QIODevice::WriteOnly))
-        {
-            addLogLine("Can't open location/orientation script file.");
-            return;
-        }
+        QObject::connect(&loScriptGenerator, SIGNAL(errorMessage(const QString&)),
+                         this, SLOT(on_errorMessage(const QString&)));
 
-        QTextStream textStream(&loScriptFile);
-
-        addLogLine("Processing location/orientation script...");
-
-        // Add some metadata to make possible changes in the future easier
-        textStream << "META\tHEADER\tGNSS location/orientation script\n";
-        textStream << "META\tVERSION\t1.0.1\n";
-        textStream << "META\tFORMAT\tASCII\n";
-        textStream << "META\tCONTENT\tDEFAULT\n";
-
-        QString timeStampColumnText = "iTOW";
-
-        if (ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1)
-        {
-            textStream << "META\tTIMESTAMPS\tUPTIME\n";
-            timeStampColumnText = "Uptime";
-        }
-        textStream << "META\tEND\n";
-
-        textStream << timeStampColumnText + "\t"
-                      "Origin_X\tOrigin_Y\tOrigin_Z\t"
-                      "Basis_XX\tBasis_XY\tBasis_XZ\t"
-                      "Basis_YX\tBasis_YY\tBasis_YZ\t"
-                      "Basis_ZX\tBasis_ZY\tBasis_ZZ\n";
-
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Min = ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value();
-        UBXMessage_RELPOSNED::ITOW iTOWRange_Script_Max = ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value();
-
-        //iTOWRange_Script_Min -= iTOWRange_Script_Min % expectedITOWAlignment; // Round to previous aligned ITOW
-
-        UBXMessage_RELPOSNED::ITOW currentITOW = iTOWRange_Script_Min;
-
-        unsigned int itemCount = 0;
-
-        UBXMessage_RELPOSNED::ITOW iTOWMismatchStart = -1;
-        unsigned int iTOWMismatchCount = 0;
-
-        unsigned int warningCount = 0;
-
-        while (currentITOW <= iTOWRange_Script_Max)
-        {
-            if (warningCount >= 1000)
-            {
-                addLogLine("Error: Maximum number of warnings (1000) reached. "
-                           "Please check your data.");
-
-                iTOWMismatchCount = 0;
-                break;
-            }
-
-            QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterators[3];
-
-            relposIterators[0] = rovers[0].relposnedMessages.lowerBound(currentITOW);
-            relposIterators[1] = rovers[1].relposnedMessages.lowerBound(currentITOW);
-            relposIterators[2] = rovers[2].relposnedMessages.lowerBound(currentITOW);
-
-            bool endOfData = false;
-
-            for (unsigned int i = 0; i < 3; i++)
-            {
-                if (relposIterators[i] == rovers[i].relposnedMessages.end())
-                {
-                    // No more data
-                    endOfData = true;
-                }
-            }
-
-            if (endOfData)
-            {
-                break;
-            }
-
-            UBXMessage_RELPOSNED::ITOW lowestNextRoverITOW = 1e9;
-
-            for (unsigned int i = 0; i < 3; i++)
-            {
-                if (relposIterators[i].value().iTOW < lowestNextRoverITOW)
-                {
-                    lowestNextRoverITOW = relposIterators[i].value().iTOW;
-                }
-            }
-
-            bool roverITOWSInSync = true;
-
-            for (unsigned int i = 0; i < 3; i++)
-            {
-                if (relposIterators[i].value().iTOW != lowestNextRoverITOW)
-                {
-                    roverITOWSInSync = false;
-                }
-            }
-
-            if (!roverITOWSInSync)
-            {
-                if (iTOWMismatchCount == 0)
-                {
-                    // First mismatch in this set
-
-                    iTOWMismatchStart = lowestNextRoverITOW;
-                    iTOWMismatchCount = 1;
-                }
-                else
-                {
-                    iTOWMismatchCount++;
-                }
-
-                currentITOW = lowestNextRoverITOW + 1;
-                continue;
-            }
-            else if (iTOWMismatchCount != 0)
-            {
-                addLogLine("Warning: Mismatch in rover iTOWs, range: \"" +
-                           QString::number(iTOWMismatchStart) + " - " + QString::number(lowestNextRoverITOW - 1) +
-                           ", number of discarded iTOWS: " + QString::number(iTOWMismatchCount));
-
-                iTOWMismatchCount = 0;
-                warningCount++;
-            }
-
-            Eigen::Vector3d points[3];
-
-            for (unsigned int i = 0; i < 3; i++)
-            {
-                points[i] = Eigen::Vector3d(relposIterators[i].value().relPosN, relposIterators[i].value().relPosE, relposIterators[i].value().relPosD);
-            }
-
-            if (!loSolver.setPoints(points))
-            {
-                addLogLine("Warning: Error setting points. ITOW: \"" +
-                           QString::number(lowestNextRoverITOW) +
-                           ", error code: " + QString::number(loSolver.getLastError()));
-
-                currentITOW = lowestNextRoverITOW + 1;
-                warningCount++;
-                continue;
-            }
-
-            Eigen::Transform<double, 3, Eigen::Affine> loTransformNED;
-
-            if (!loSolver.getTransformMatrix(loTransformNED))
-            {
-                addLogLine("Warning: Error calculating transform matrix. ITOW: \"" +
-                           QString::number(lowestNextRoverITOW) +
-                           ", error code: " + QString::number(loSolver.getLastError()));
-
-                currentITOW = lowestNextRoverITOW + 1;
-                warningCount++;
-                continue;
-            }
-
-            Eigen::Transform<double, 3, Eigen::Affine> finalMatrix = transform_NEDToXYZ * loTransformNED * transform_Generated * transform_XYZToNED_NoTranslation;
-
-            QString timeString;
-
-            if (ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1)
-            {
-                qint64 timeSum = 0;
-                bool fail = false;
-
-                for (int i = 0; i < 3; i++)
-                {
-                    if (rovers[i].reverseSync.find(lowestNextRoverITOW) != rovers[i].reverseSync.end())
-                    {
-                        timeSum += rovers[i].reverseSync.find(lowestNextRoverITOW).value();
-                    }
-                    else
-                    {
-                        fail = true;
-                        break;
-                    }
-                }
-
-                if (fail)
-                {
-                    addLogLine("Warning: Can not find reverse sync (ITOW -> uptime) for all rovers. ITOW: \"" +
-                               QString::number(lowestNextRoverITOW));
-
-                    currentITOW = lowestNextRoverITOW + 1;
-                    warningCount++;
-                }
-
-                timeSum /= 3;
-
-                timeString = QString::number(timeSum);
-            }
-            else
-            {
-                timeString = QString::number(lowestNextRoverITOW);
-            }
-
-            const int originDecimals = 4;
-            const int unitVectorDecimals = 6;
-
-            QString lineOut =
-                    timeString +
-
-                    "\t" + QString::number(finalMatrix(0, 3), 'f', originDecimals) +
-                    "\t" + QString::number(finalMatrix(1, 3), 'f', originDecimals) +
-                    "\t" + QString::number(finalMatrix(2, 3), 'f', originDecimals) +
-
-                    "\t" + QString::number(finalMatrix(0, 0), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(1, 0), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(2, 0), 'f', unitVectorDecimals) +
-
-                    "\t" + QString::number(finalMatrix(0, 1), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(1, 1), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(2, 1), 'f', unitVectorDecimals) +
-
-                    "\t" + QString::number(finalMatrix(0, 2), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(1, 2), 'f', unitVectorDecimals) +
-                    "\t" + QString::number(finalMatrix(2, 2), 'f', unitVectorDecimals);
-                    textStream << (lineOut + "\n");
-
-            currentITOW = lowestNextRoverITOW + 1;
-
-            itemCount++;
-        }
-
-        if (iTOWMismatchCount != 0)
-        {
-            addLogLine("Warning: Mismatch in rover iTOWs in the end of rover data, first ITOW: \"" +
-                       QString::number(iTOWMismatchStart) +
-                       ", number of discarded iTOWS: " + QString::number(iTOWMismatchCount));
-
-            warningCount++;
-        }
-
-        addLogLine("Location/orientation script generated. Number of rows: " + QString::number(itemCount));
+        loScriptGenerator.generateScript(params);
     }
 }
 
