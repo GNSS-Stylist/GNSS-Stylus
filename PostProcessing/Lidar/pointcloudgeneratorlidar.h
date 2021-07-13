@@ -44,13 +44,13 @@ public:
         bool normalLengthsAsQuality = false;
         int timeShift = 0;
         const Eigen::Vector3d* boundingSphere_Center;
-        double boundingSphere_Radius;
+        double boundingSphere_Radius = 1e9;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
         const QMap<qint64, PostProcessingForm::LidarRound>* lidarRounds = nullptr;
-        const RPLidarPlausibilityFilter::Settings* lidarFilteringSettings;
-        PostProcessingForm::LOInterpolator* loInterpolator;
+        const RPLidarPlausibilityFilter::Settings* lidarFilteringSettings = nullptr;
+        PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
 
     };
 
