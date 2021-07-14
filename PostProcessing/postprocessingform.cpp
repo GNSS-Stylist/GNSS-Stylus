@@ -24,7 +24,7 @@
 #include <QtMath>
 
 #include "postprocessingform.h"
-#include "ui_postprocessform.h"
+#include "ui_postprocessingform.h"
 #include "transformmatrixgenerator.h"
 #include "Stylus/moviescriptgenerator.h"
 #include "Stylus/pointcloudgeneratorstylus.h"
@@ -1092,8 +1092,6 @@ void PostProcessingForm::addTagData(const QStringList& fileNames)
                 addLogLine("Warning: Line(s) " + QString::number(firstDuplicateTagLine) + "-" +
                            QString::number(lastDuplicateTagLine) +
                            ": Duplicate tag(s). Line(s) skipped.");
-
-                firstDuplicateTagLine = 0;
             }
 
             addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid tags: " +
@@ -1373,7 +1371,12 @@ void PostProcessingForm::handleReplay(bool firstRound)
                 replayRange_Max = lastUptimeToReplay;
             }
 
-            int progress = (lastReplayedUptime_ms - replayRange_Min) * 100 / (replayRange_Max - replayRange_Min);
+            int progress = 0;
+
+            if (replayRange_Max != replayRange_Min)
+            {
+                progress = (lastReplayedUptime_ms - replayRange_Min) * 100 / (replayRange_Max - replayRange_Min);
+            }
 
             ui->progress_ReplayProgress->setValue(progress);
 
@@ -2076,7 +2079,7 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
     {
         int lineNumber = roverId + roverId < numofRovers; // Header at first line
 
-        for (const auto& relposnedData : rovers[roverId].relposnedMessages)
+        for (const auto& relposnedData : ((const Rover)rovers[roverId]).relposnedMessages)
         {
             RoverSyncItem fakeSyncItem;
 
@@ -2157,7 +2160,7 @@ void PostProcessingForm::addAllData(const bool includeParameters)
 
         QStringList baseFileNames;
 
-        for (const auto& fileName : selectedFileNames)
+        for (const auto& fileName : (const QStringList)selectedFileNames)
         {
             struct
             {
@@ -2305,7 +2308,7 @@ QStringList PostProcessingForm::getAppendedFileNames(const QStringList& fileName
 {
     QStringList appendedList;
 
-    for (auto fileName : fileNames)
+    for (const auto& fileName : fileNames)
     {
         appendedList.append(fileName + appendix);
     }
@@ -3133,6 +3136,7 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
     // If using quaternions, rover data should be ITOW-synced.
 
     UBXMessage_RELPOSNED interpolated_Rovers[3];
+    const Rover* crovers = owner->rovers;
 
     for (int i = 0; i < 3; i++)
     {
@@ -3140,16 +3144,16 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
         {
             // "Cache miss" -> Find new limiting values
 
-            QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = owner->rovers[i].roverSyncData.lowerBound(uptime);
+            QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = crovers[i].roverSyncData.lowerBound(uptime);
 
-            if (roverUptimeIter != owner->rovers[i].roverSyncData.end())
+            if (roverUptimeIter != crovers[i].roverSyncData.end())
             {
                 roverUptimeLimits[i][1] = roverUptimeIter.key();
 
                 const RoverSyncItem upperSyncItem = roverUptimeIter.value();
                 RoverSyncItem lowerSyncItem;
                 roverUptimeIter--;
-                if (roverUptimeIter != owner->rovers[i].roverSyncData.end())
+                if (roverUptimeIter != crovers[i].roverSyncData.end())
                 {
                     lowerSyncItem = roverUptimeIter.value();
                     roverUptimeLimits[i][0] = roverUptimeIter.key();
@@ -3161,22 +3165,22 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
                     throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (higher limit).");
                 }
 
-                if (owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
+                if (crovers[i].relposnedMessages.find(upperSyncItem.iTOW) == crovers[i].relposnedMessages.end())
                 {
                     roverUptimeLimits[i][0] = -1;
                     roverUptimeLimits[i][1] = -1;
                     throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (higher limit).");
                 }
 
-                if (owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == owner->rovers[i].relposnedMessages.end())
+                if (crovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == crovers[i].relposnedMessages.end())
                 {
                     roverUptimeLimits[i][0] = -1;
                     roverUptimeLimits[i][1] = -1;
                     throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
                 }
 
-                roverRELPOSNEDS_Lower[i] = owner->rovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
-                roverRELPOSNEDS_Upper[i] = owner->rovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
+                roverRELPOSNEDS_Lower[i] = crovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
+                roverRELPOSNEDS_Upper[i] = crovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
             }
             else
             {

@@ -361,10 +361,6 @@ void LidarChartForm::updateChartData(void)
 
     totalChartUpdateTime_us += elapsed_us;
 
-    const QBrush brush_Valid = QBrush(QColor(128,255,128));
-    const QBrush brush_Indeterminate = QBrush(QColor(255,255,0));
-    const QBrush brush_Invalid = QBrush(QColor(255,128,128));
-
     if ((lastRoundReceivedUptime != 0) && (lastRoundStartUptime !=0) && (lastRoundEndUptime != 0) &&
             (lastRoundEndUptime > lastRoundStartUptime))
     {

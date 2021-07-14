@@ -323,17 +323,21 @@ int NTRIPThread::getargs(const int argc, const char* const* argv, struct Args* c
     case 'R': args->proxyport = optarg; break;
     case 'M':
       args->mode = 0;
-      if (!strcmp(optarg,"n") || !strcmp(optarg,"ntrip1"))
-        args->mode = NTRIP1;
-      else if(!strcmp(optarg,"h") || !strcmp(optarg,"http"))
-        args->mode = HTTP;
-      else if(!strcmp(optarg,"r") || !strcmp(optarg,"rtsp"))
-        args->mode = RTSP;
-      else if(!strcmp(optarg,"u") || !strcmp(optarg,"udp"))
-        args->mode = UDP;
-      else if(!strcmp(optarg,"a") || !strcmp(optarg,"auto"))
-        args->mode = AUTO;
-      else args->mode = atoi(optarg);
+      if (optarg)
+      {
+          if (!strcmp(optarg,"n") || !strcmp(optarg,"ntrip1"))
+            args->mode = NTRIP1;
+          else if(!strcmp(optarg,"h") || !strcmp(optarg,"http"))
+            args->mode = HTTP;
+          else if(!strcmp(optarg,"r") || !strcmp(optarg,"rtsp"))
+            args->mode = RTSP;
+          else if(!strcmp(optarg,"u") || !strcmp(optarg,"udp"))
+            args->mode = UDP;
+          else if(!strcmp(optarg,"a") || !strcmp(optarg,"auto"))
+            args->mode = AUTO;
+          else
+            args->mode = atoi(optarg);
+      }
       if((args->mode == 0) || (args->mode >= END))
       {
         fprintf(stderr, "Mode %s unknown\n", optarg);
@@ -431,6 +435,9 @@ int NTRIPThread::encode(char *buf, int size, const char *user, const char *pwd)
     *out = 0;
   return bytes;
 }
+
+int globalError; // This is just to get rid of some nags from static analyzer
+// (Static analyzer likes to nag about error-variable being set but not used. Store it here to get rid of those).
 
 int NTRIPThread::main(const int argc, const char* const* const argv)
 {
@@ -1032,7 +1039,6 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                                 printf("Sending initial UDP packet\n");
                                 struct sockaddr_in casterRTP;
                                 char rtpbuffer[12];
-                                int i;
                                 rtpbuffer[0] = (2<<6);
                                 /* padding, extension, csrc are empty */
                                 rtpbuffer[1] = 96;
@@ -1054,7 +1060,7 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                                 casterRTP.sin_port   = htons(serverport);
                                 casterRTP.sin_addr   = *((struct in_addr *)he->h_addr);
 
-                                if((i = sendto(sockudp, rtpbuffer, 12, 0,
+                                if((sendto(sockudp, rtpbuffer, 12, 0,
                                                (struct sockaddr *) &casterRTP, sizeof(casterRTP))) != 12)
                                     myperror("WARNING: could not send initial UDP packet");
                             }
@@ -1517,6 +1523,11 @@ int NTRIPThread::main(const int argc, const char* const* const argv)
                         }
                     }
                 }
+
+                // This is just to get rid of some nags from static analyzer
+                // (Static analyzer likes to nag about error-variable being set but not used. Store it to global to get rid of those).
+                // Not nice but I don't want to make too much modifications into the code...
+                globalError = error;
             }
             if(sockfd)
                 closesocket(sockfd);

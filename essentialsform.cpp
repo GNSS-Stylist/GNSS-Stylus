@@ -2049,7 +2049,7 @@ void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
 
         dataStream << dataType << dataChunkLength;
 
-        qint64 chunkStartFileSize = logFile_Lidar.pos();
+//        qint64 chunkStartFileSize = logFile_Lidar.pos();
 
         dataStream << numOfItems << startTime << endTime;
 
@@ -2058,9 +2058,8 @@ void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
             dataStream << data[i].distance << data[i].angle << data[i].quality;
         }
 
-        qint64 chunkEndFileSize = logFile_Lidar.pos();
-
-        Q_ASSERT(chunkEndFileSize - chunkStartFileSize == dataChunkLength);
+//        qint64 chunkEndFileSize = logFile_Lidar.pos();
+//        Q_ASSERT(chunkEndFileSize - chunkStartFileSize == dataChunkLength);
     }
 
     updateTreeItems();
