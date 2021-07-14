@@ -1136,6 +1136,8 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
 
     if (fileDialog_PointCloud.exec())
     {
+        fileDialog_PointCloud.setDirectory(fileDialog_PointCloud.directory());
+
         Stylus::PointCloudGenerator::Params params;
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
@@ -3062,6 +3064,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
     if (fileDialog_PointCloud.exec())
     {
+        fileDialog_PointCloud.setDirectory(fileDialog_PointCloud.directory());
+
         Lidar::PointCloudGenerator::Params params;
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
