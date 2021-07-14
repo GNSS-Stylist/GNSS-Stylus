@@ -10,8 +10,6 @@
 #ifndef EIGEN_PACKET_MATH_ZVECTOR_H
 #define EIGEN_PACKET_MATH_ZVECTOR_H
 
-#include <stdint.h>
-
 namespace Eigen {
 
 namespace internal {
@@ -51,10 +49,10 @@ typedef struct {
 #endif
 
 typedef union {
-  int32_t   i[4];
-  uint32_t ui[4];
-  int64_t   l[2];
-  uint64_t ul[2];
+  numext::int32_t   i[4];
+  numext::uint32_t ui[4];
+  numext::int64_t   l[2];
+  numext::uint64_t ul[2];
   double    d[2];
   float     f[4];
   Packet4i  v4i;
@@ -193,11 +191,7 @@ struct packet_traits<float> : default_packet_traits {
     HasSin = 0,
     HasCos = 0,
     HasLog = 0,
-#if !defined(__ARCH__) || (defined(__ARCH__) && __ARCH__ >= 12)
-    HasExp = 0,
-#else
     HasExp = 1,
-#endif
     HasSqrt = 1,
     HasRsqrt = 1,
     HasTanh = 1,
@@ -741,16 +735,16 @@ template<> EIGEN_STRONG_INLINE Packet4f pand<Packet4f>(const Packet4f& a, const 
 template<> EIGEN_STRONG_INLINE Packet4f por<Packet4f>(const Packet4f& a, const Packet4f& b)
 {
   Packet4f res;
-  res.v4f[0] = pand(a.v4f[0], b.v4f[0]);
-  res.v4f[1] = pand(a.v4f[1], b.v4f[1]);
+  res.v4f[0] = por(a.v4f[0], b.v4f[0]);
+  res.v4f[1] = por(a.v4f[1], b.v4f[1]);
   return res;
 }
 
 template<> EIGEN_STRONG_INLINE Packet4f pxor<Packet4f>(const Packet4f& a, const Packet4f& b)
 {
   Packet4f res;
-  res.v4f[0] = pand(a.v4f[0], b.v4f[0]);
-  res.v4f[1] = pand(a.v4f[1], b.v4f[1]);
+  res.v4f[0] = pxor(a.v4f[0], b.v4f[0]);
+  res.v4f[1] = pxor(a.v4f[1], b.v4f[1]);
   return res;
 }
 
@@ -890,6 +884,31 @@ template<> EIGEN_STRONG_INLINE Packet4f pblend(const Selector<4>& ifPacket, cons
   result.v4f[1] = vec_sel(elsePacket.v4f[1], thenPacket.v4f[1], mask_lo);
   return result;
 }
+
+template<> Packet4f EIGEN_STRONG_INLINE pcmp_le<Packet4f>(const Packet4f& a, const Packet4f& b)
+{
+  Packet4f res;
+  res.v4f[0] = pcmp_le(a.v4f[0], b.v4f[0]);
+  res.v4f[1] = pcmp_le(a.v4f[1], b.v4f[1]);
+  return res;
+}
+
+template<> Packet4f EIGEN_STRONG_INLINE pcmp_lt<Packet4f>(const Packet4f& a, const Packet4f& b)
+{
+  Packet4f res;
+  res.v4f[0] = pcmp_lt(a.v4f[0], b.v4f[0]);
+  res.v4f[1] = pcmp_lt(a.v4f[1], b.v4f[1]);
+  return res;
+}
+
+template<> Packet4f EIGEN_STRONG_INLINE pcmp_eq<Packet4f>(const Packet4f& a, const Packet4f& b)
+{
+  Packet4f res;
+  res.v4f[0] = pcmp_eq(a.v4f[0], b.v4f[0]);
+  res.v4f[1] = pcmp_eq(a.v4f[1], b.v4f[1]);
+  return res;
+}
+
 #else
 template<> EIGEN_STRONG_INLINE Packet4f pload<Packet4f>(const float* from)
 {

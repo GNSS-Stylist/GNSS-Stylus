@@ -391,6 +391,77 @@ public:
     return pgather<Scalar, SubPacket>(&operator()(i, j), m_stride);
   }
 
+  // storePacketBlock_helper defines a way to access values inside the PacketBlock, this is essentially required by the Complex types.
+  template<typename SubPacket, typename ScalarT, int n, int idx>
+  struct storePacketBlock_helper
+  {
+    storePacketBlock_helper<SubPacket, ScalarT, n, idx-1> spbh;
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>* sup, Index i, Index j, const PacketBlock<SubPacket, n>& block) const {
+      spbh.store(sup, i,j,block);
+      for(int l = 0; l < unpacket_traits<SubPacket>::size; l++)
+      {
+        ScalarT *v = &sup->operator()(i+l, j+idx);
+        *v = block.packet[idx][l];
+      }
+    }
+  };
+
+  template<typename SubPacket, int n, int idx>
+  struct storePacketBlock_helper<SubPacket, std::complex<float>, n, idx>
+  {
+    storePacketBlock_helper<SubPacket, std::complex<float>, n, idx-1> spbh;
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>* sup, Index i, Index j, const PacketBlock<SubPacket, n>& block) const {
+      spbh.store(sup,i,j,block);
+      for(int l = 0; l < unpacket_traits<SubPacket>::size; l++)
+      {
+        std::complex<float> *v = &sup->operator()(i+l, j+idx);
+        v->real(block.packet[idx].v[2*l+0]);
+        v->imag(block.packet[idx].v[2*l+1]);
+      }
+    }
+  };
+
+  template<typename SubPacket, int n, int idx>
+  struct storePacketBlock_helper<SubPacket, std::complex<double>, n, idx>
+  {
+    storePacketBlock_helper<SubPacket, std::complex<double>, n, idx-1> spbh;
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>* sup, Index i, Index j, const PacketBlock<SubPacket, n>& block) const {
+      spbh.store(sup,i,j,block);
+      for(int l = 0; l < unpacket_traits<SubPacket>::size; l++)
+      {
+        std::complex<double> *v = &sup->operator()(i+l, j+idx);
+        v->real(block.packet[idx].v[2*l+0]);
+        v->imag(block.packet[idx].v[2*l+1]);
+      }
+    }
+  };
+
+  template<typename SubPacket, typename ScalarT, int n>
+  struct storePacketBlock_helper<SubPacket, ScalarT, n, -1>
+  {
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>*, Index, Index, const PacketBlock<SubPacket, n>& ) const {
+    }
+  };
+
+  template<typename SubPacket, int n>
+  struct storePacketBlock_helper<SubPacket, std::complex<float>, n, -1>
+  {
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>*, Index, Index, const PacketBlock<SubPacket, n>& ) const {
+    }
+  };
+
+  template<typename SubPacket, int n>
+  struct storePacketBlock_helper<SubPacket, std::complex<double>, n, -1>
+  {
+    EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>*, Index, Index, const PacketBlock<SubPacket, n>& ) const {
+    }
+  };
+  // This function stores a PacketBlock on m_data, this approach is really quite slow compare to Incr=1 and should be avoided when possible.
+  template<typename SubPacket, int n>
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void storePacketBlock(Index i, Index j, const PacketBlock<SubPacket, n>&block) const {
+    storePacketBlock_helper<SubPacket, Scalar, n, n-1> spb;
+    spb.store(this, i,j,block);
+  }
 protected:
   Scalar* EIGEN_RESTRICT m_data;
   const Index m_stride;
@@ -546,6 +617,47 @@ template<typename T> const typename T::Scalar* extract_data(const T& m)
 {
   return extract_data_selector<T>::run(m);
 }
+
+/**
+ * \c combine_scalar_factors extracts and multiplies factors from GEMM and GEMV products.
+ * There is a specialization for booleans
+ */
+template<typename ResScalar, typename Lhs, typename Rhs>
+struct combine_scalar_factors_impl
+{
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE static ResScalar run(const Lhs& lhs, const Rhs& rhs)
+  {
+    return blas_traits<Lhs>::extractScalarFactor(lhs) * blas_traits<Rhs>::extractScalarFactor(rhs);
+  }
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE static ResScalar run(const ResScalar& alpha, const Lhs& lhs, const Rhs& rhs)
+  {
+    return alpha * blas_traits<Lhs>::extractScalarFactor(lhs) * blas_traits<Rhs>::extractScalarFactor(rhs);
+  }
+};
+template<typename Lhs, typename Rhs>
+struct combine_scalar_factors_impl<bool, Lhs, Rhs>
+{
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE static bool run(const Lhs& lhs, const Rhs& rhs)
+  {
+    return blas_traits<Lhs>::extractScalarFactor(lhs) && blas_traits<Rhs>::extractScalarFactor(rhs);
+  }
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE static bool run(const bool& alpha, const Lhs& lhs, const Rhs& rhs)
+  {
+    return alpha && blas_traits<Lhs>::extractScalarFactor(lhs) && blas_traits<Rhs>::extractScalarFactor(rhs);
+  }
+};
+
+template<typename ResScalar, typename Lhs, typename Rhs>
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE ResScalar combine_scalar_factors(const ResScalar& alpha, const Lhs& lhs, const Rhs& rhs)
+{
+  return combine_scalar_factors_impl<ResScalar,Lhs,Rhs>::run(alpha, lhs, rhs);
+}
+template<typename ResScalar, typename Lhs, typename Rhs>
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE ResScalar combine_scalar_factors(const Lhs& lhs, const Rhs& rhs)
+{
+  return combine_scalar_factors_impl<ResScalar,Lhs,Rhs>::run(lhs, rhs);
+}
+
 
 } // end namespace internal
 

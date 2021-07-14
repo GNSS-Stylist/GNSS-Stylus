@@ -18,7 +18,7 @@ namespace internal {
 inline uint32x4_t p4ui_CONJ_XOR()
 {
 // See bug 1325, clang fails to call vld1q_u64.
-#if EIGEN_COMP_CLANG
+#if EIGEN_COMP_CLANG || EIGEN_COMP_CASTXML
   uint32x4_t ret = { 0x00000000, 0x80000000, 0x00000000, 0x80000000 };
   return ret;
 #else
@@ -76,6 +76,7 @@ template<> struct unpacket_traits<Packet1cf>
 {
   typedef std::complex<float> type;
   typedef Packet1cf half;
+  typedef Packet2f as_real;
   enum
   {
     size = 1,
@@ -89,6 +90,7 @@ template<> struct unpacket_traits<Packet2cf>
 {
   typedef std::complex<float> type;
   typedef Packet1cf half;
+  typedef Packet4f as_real;
   enum
   {
     size = 2,
@@ -121,6 +123,13 @@ template<> EIGEN_STRONG_INLINE Packet1cf psub<Packet1cf>(const Packet1cf& a, con
 { return Packet1cf(psub<Packet2f>(a.v, b.v)); }
 template<> EIGEN_STRONG_INLINE Packet2cf psub<Packet2cf>(const Packet2cf& a, const Packet2cf& b)
 { return Packet2cf(psub<Packet4f>(a.v, b.v)); }
+
+template<> EIGEN_STRONG_INLINE Packet2cf pxor<Packet2cf>(const Packet2cf& a, const Packet2cf& b);
+template<> EIGEN_STRONG_INLINE Packet2cf paddsub<Packet2cf>(const Packet2cf& a, const Packet2cf& b)
+{
+  Packet4f mask = {-0.0f, -0.0f, 0.0f, 0.0f};
+  return Packet2cf(padd(a.v, pxor(mask, b.v)));  
+}
 
 template<> EIGEN_STRONG_INLINE Packet1cf pnegate(const Packet1cf& a) { return Packet1cf(pnegate<Packet2f>(a.v)); }
 template<> EIGEN_STRONG_INLINE Packet2cf pnegate(const Packet2cf& a) { return Packet2cf(pnegate<Packet4f>(a.v)); }
@@ -430,11 +439,19 @@ EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet2cf, 2>& kernel)
   kernel.packet[1].v = tmp;
 }
 
+template<> EIGEN_STRONG_INLINE Packet1cf psqrt<Packet1cf>(const Packet1cf& a) {
+  return psqrt_complex<Packet1cf>(a);
+}
+
+template<> EIGEN_STRONG_INLINE Packet2cf psqrt<Packet2cf>(const Packet2cf& a) {
+  return psqrt_complex<Packet2cf>(a);
+}
+
 //---------- double ----------
 #if EIGEN_ARCH_ARM64 && !EIGEN_APPLE_DOUBLE_NEON_BUG
 
 // See bug 1325, clang fails to call vld1q_u64.
-#if EIGEN_COMP_CLANG
+#if EIGEN_COMP_CLANG || EIGEN_COMP_CASTXML
   static uint64x2_t p2ul_CONJ_XOR = {0x0, 0x8000000000000000};
 #else
   const uint64_t  p2ul_conj_XOR_DATA[] = { 0x0, 0x8000000000000000 };
@@ -475,6 +492,8 @@ template<> struct packet_traits<std::complex<double> >  : default_packet_traits
 template<> struct unpacket_traits<Packet1cd>
 {
   typedef std::complex<double> type;
+  typedef Packet1cd half;
+  typedef Packet2d as_real;
   enum
   {
     size=1,
@@ -483,7 +502,6 @@ template<> struct unpacket_traits<Packet1cd>
     masked_load_available=false,
     masked_store_available=false
   };
-  typedef Packet1cd half;
 };
 
 template<> EIGEN_STRONG_INLINE Packet1cd pload<Packet1cd>(const std::complex<double>* from)
@@ -640,6 +658,11 @@ EIGEN_STRONG_INLINE void ptranspose(PacketBlock<Packet1cd,2>& kernel)
   kernel.packet[0].v = vcombine_f64(vget_low_f64(kernel.packet[0].v), vget_low_f64(kernel.packet[1].v));
   kernel.packet[1].v = tmp;
 }
+
+template<> EIGEN_STRONG_INLINE Packet1cd psqrt<Packet1cd>(const Packet1cd& a) {
+  return psqrt_complex<Packet1cd>(a);
+}
+
 #endif // EIGEN_ARCH_ARM64
 
 } // end namespace internal

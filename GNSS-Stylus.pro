@@ -23,6 +23,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 # Here lack of vectorization may not be a big issue as speed is probably more
 # limited by IO than math.
+#
+# Seems to be fixed in eigen V 3.4-rc1 at least when using mingw81 on windows.
+# (Leaving these here for now if something still comes up)
+# (You may need to uncomment these also if using older compilers)
+#
 #DEFINES += EIGEN_DONT_VECTORIZE
 #DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 
