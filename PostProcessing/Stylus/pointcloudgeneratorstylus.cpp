@@ -95,7 +95,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                                QString::number(currentTag.sourceFileLine)+
                                ", uptime " + QString::number(uptime) +
                                ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": New object without a name. Ending previous object, but not beginning new nor creating a new file. Ignoring subsequent beginning and ending params.tags->");
+                               ": New object without a name. Ending previous object, but not beginning new nor creating a new file. Ignoring subsequent beginning and ending tags.");
 
                     ignoreBeginningAndEndingTags = true;
 
@@ -114,7 +114,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                                QString::number(currentTag.sourceFileLine)+
                                ", uptime " + QString::number(uptime) +
                                ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending params.tags->");
+                               ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
 
                     ignoreBeginningAndEndingTags = true;
 
@@ -133,7 +133,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                                QString::number(currentTag.sourceFileLine)+
                                ", uptime " + QString::number(uptime) +
                                ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending params.tags->");
+                               ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
 
                     ignoreBeginningAndEndingTags = true;
 
@@ -231,7 +231,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                                    ", uptime " + QString::number(endingTag.iTOW) +
                                    ", iTOW " + QString::number(endingTag.iTOW) +
                                    ", File \"" + endingTag.sourceFile + "\""
-                                   " No points between params.tags->");
+                                   " No points between tags.");
                     }
                 }
 

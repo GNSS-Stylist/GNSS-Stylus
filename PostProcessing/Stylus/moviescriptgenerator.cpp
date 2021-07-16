@@ -117,7 +117,7 @@ void MovieScriptGenerator::GenerateMovieScript(const Params& params)
                                QString::number(currentTag.sourceFileLine)+
                                ", uptime " + QString::number(uptime) +
                                ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": New object without a name. Ending previous object, but not beginning new nor creating a new line. Ignoring subsequent beginning and ending params.tags->");
+                               ": New object without a name. Ending previous object, but not beginning new nor creating a new line. Ignoring subsequent beginning and ending tags.");
 
                     ignoreBeginningAndEndingTags = true;
                     objectName = "N/A";
@@ -550,7 +550,7 @@ void MovieScriptGenerator::GenerateMovieScript(const Params& params)
                                QString::number(endingTag.sourceFileLine) +
                                ", iTOW " + QString::number(currentTag.iTOW) +
                                ", File \"" + endingTag.sourceFile + "\""
-                               " No points between params.tags->");
+                               " No points between tags.");
                 }
 
                 beginningTag.iTOW = -1;
