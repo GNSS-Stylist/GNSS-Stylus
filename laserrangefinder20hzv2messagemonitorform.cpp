@@ -115,44 +115,44 @@ void LaserRangeFinder20HzV2MessageMonitorForm::unidentifiedDataReceived(const QB
 
 void LaserRangeFinder20HzV2MessageMonitorForm::connectSerialThreadSlots(LaserRangeFinder20HzV2SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(infoMessage(const QString&)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::infoMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::infoMessage);
 
-    QObject::connect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(warningMessage(const QString&)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::warningMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::warningMessage);
 
-    QObject::connect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(errorMessage(const QString&)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::errorMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::errorMessage);
 
-    QObject::connect(serThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                     this, SLOT(distanceReceived(const double&, qint64, qint64)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::distanceReceived);
 
-    QObject::connect(serThread, SIGNAL(errorReceived(const QString&, qint64, qint64)),
-                     this, SLOT(errorReceived(const QString&, qint64, qint64)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::errorReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::errorReceived);
 
-    QObject::connect(serThread, SIGNAL(unidentifiedDataReceived(const QByteArray&, qint64, qint64)),
-                     this, SLOT(unidentifiedDataReceived(const QByteArray&, qint64, qint64)));
+    connect(serThread, &LaserRangeFinder20HzV2SerialThread::unidentifiedDataReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::unidentifiedDataReceived);
 }
 
 void LaserRangeFinder20HzV2MessageMonitorForm::disconnectSerialThreadSlots(LaserRangeFinder20HzV2SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(infoMessage(const QString&)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::infoMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::infoMessage);
 
-    QObject::disconnect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(warningMessage(const QString&)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::warningMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::warningMessage);
 
-    QObject::disconnect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(errorMessage(const QString&)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::errorMessage,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::errorMessage);
 
-    QObject::disconnect(serThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                     this, SLOT(distanceReceived(const double&, qint64, qint64)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::distanceReceived);
 
-    QObject::disconnect(serThread, SIGNAL(errorReceived(const QString&, qint64, qint64)),
-                     this, SLOT(errorReceived(const QString&, qint64, qint64)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::errorReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::errorReceived);
 
-    QObject::disconnect(serThread, SIGNAL(unidentifiedDataReceived(const QByteArray&, qint64, qint64)),
-                     this, SLOT(unidentifiedDataReceived(const QByteArray&, qint64, qint64)));
+    disconnect(serThread, &LaserRangeFinder20HzV2SerialThread::unidentifiedDataReceived,
+                     this, &LaserRangeFinder20HzV2MessageMonitorForm::unidentifiedDataReceived);
 }
 
 void LaserRangeFinder20HzV2MessageMonitorForm::on_pushButton_ClearAll_clicked()

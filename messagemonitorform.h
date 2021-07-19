@@ -106,7 +106,8 @@ private slots:
     void ErrorMessage(const QString& errorMessage);
     void WarningMessage(const QString& warningMessage);
     void InfoMessage(const QString& infoMessage);
-    void DataReceived(const QByteArray& bytes);
+    void serialDataReceived(const QByteArray& bytes, qint64, qint64, const SerialThread::DataReceivedEmitReason &);
+    void ntripDataReceived(const QByteArray& bytes);
     void serialTimeout(void);
 
     void on_pushButton_ClearAll_clicked();

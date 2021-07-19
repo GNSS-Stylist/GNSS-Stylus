@@ -163,7 +163,12 @@ void MessageMonitorForm::InfoMessage(const QString& infoMessage)
     addLogLine(QString("Serial thread info: ") + infoMessage);
 }
 
-void MessageMonitorForm::DataReceived(const QByteArray&)
+void MessageMonitorForm::serialDataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)
+{
+
+}
+
+void MessageMonitorForm::ntripDataReceived(const QByteArray&)
 {
 
 }
@@ -177,80 +182,80 @@ void MessageMonitorForm::serialTimeout(void)
 
 void MessageMonitorForm::connectSerialThreadSlots(SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(InfoMessage(const QString&)));
+    connect(serThread, &SerialThread::infoMessage,
+                     this, &MessageMonitorForm::InfoMessage);
 
-    QObject::connect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(WarningMessage(const QString&)));
+    connect(serThread, &SerialThread::warningMessage,
+                     this, &MessageMonitorForm::WarningMessage);
 
-    QObject::connect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(ErrorMessage(const QString&)));
+    connect(serThread, &SerialThread::errorMessage,
+                     this, &MessageMonitorForm::ErrorMessage);
 
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(DataReceived(const QByteArray&)));
+    connect(serThread, &SerialThread::dataReceived,
+                     this, &MessageMonitorForm::serialDataReceived);
 
-    QObject::connect(serThread, SIGNAL(serialTimeout(void)),
-                     this, SLOT(serialTimeout(void)));
+    connect(serThread, &SerialThread::serialTimeout,
+                     this, &MessageMonitorForm::serialTimeout);
 }
 
 void MessageMonitorForm::disconnectSerialThreadSlots(SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(InfoMessage(const QString&)));
+    disconnect(serThread, &SerialThread::infoMessage,
+                     this, &MessageMonitorForm::InfoMessage);
 
-    QObject::disconnect(serThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(WarningMessage(const QString&)));
+    disconnect(serThread, &SerialThread::warningMessage,
+                     this, &MessageMonitorForm::WarningMessage);
 
-    QObject::disconnect(serThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(ErrorMessage(const QString&)));
+    disconnect(serThread, &SerialThread::errorMessage,
+                     this, &MessageMonitorForm::ErrorMessage);
 
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(DataReceived(const QByteArray&)));
+    disconnect(serThread, &SerialThread::dataReceived,
+                     this, &MessageMonitorForm::serialDataReceived);
 
-    QObject::disconnect(serThread, SIGNAL(serialTimeout(void)),
-                     this, SLOT(serialTimeout(void)));
+    disconnect(serThread, &SerialThread::serialTimeout,
+                     this, &MessageMonitorForm::serialTimeout);
 }
 
 void MessageMonitorForm::connectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_nmeaSentenceReceived);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_ubxMessageReceived);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxParseError(const QString&)),
-                     this, SLOT(ubloxProcessor_ubxParseError(const QString&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxParseError,
+                     this, &MessageMonitorForm::ubloxProcessor_ubxParseError);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaParseError(const QString&)),
-                     this, SLOT(ubloxProcessor_nmeaParseError(const QString&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaParseError,
+                     this, &MessageMonitorForm::ubloxProcessor_nmeaParseError);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(ubloxProcessor_rtcmMessageReceived(const RTCMMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_rtcmMessageReceived);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(unidentifiedDataReceived(const QByteArray&)),
-                     this, SLOT(ubloxProcessor_unidentifiedDataReceived(const QByteArray&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::unidentifiedDataReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_unidentifiedDataReceived);
 }
 
 void MessageMonitorForm::disconnectUBloxDataStreamProcessorSlots(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_nmeaSentenceReceived);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_ubxMessageReceived);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxParseError(const QString&)),
-                     this, SLOT(ubloxProcessor_ubxParseError(const QString&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxParseError,
+                     this, &MessageMonitorForm::ubloxProcessor_ubxParseError);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaParseError(const QString&)),
-                     this, SLOT(ubloxProcessor_nmeaParseError(const QString&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaParseError,
+                     this, &MessageMonitorForm::ubloxProcessor_nmeaParseError);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(ubloxProcessor_rtcmMessageReceived(const RTCMMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_rtcmMessageReceived);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(unidentifiedDataReceived(const QByteArray&)),
-                     this, SLOT(ubloxProcessor_unidentifiedDataReceived(const QByteArray&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::unidentifiedDataReceived,
+                     this, &MessageMonitorForm::ubloxProcessor_unidentifiedDataReceived);
 }
 
 void MessageMonitorForm::on_pushButton_ClearAll_clicked()
@@ -260,37 +265,37 @@ void MessageMonitorForm::on_pushButton_ClearAll_clicked()
 
 void MessageMonitorForm::connectNTRIPThreadSlots(NTRIPThread* ntripThread)
 {
-    QObject::connect(ntripThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(InfoMessage(const QString&)));
+    connect(ntripThread, &NTRIPThread::infoMessage,
+                     this, &MessageMonitorForm::InfoMessage);
 
-    QObject::connect(ntripThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(WarningMessage(const QString&)));
+    connect(ntripThread, &NTRIPThread::warningMessage,
+                     this, &MessageMonitorForm::WarningMessage);
 
-    QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(ErrorMessage(const QString&)));
+    connect(ntripThread, &NTRIPThread::errorMessage,
+                     this, &MessageMonitorForm::ErrorMessage);
 
-    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(DataReceived(const QByteArray&)));
+    connect(ntripThread, &NTRIPThread::dataReceived,
+                     this, &MessageMonitorForm::ntripDataReceived);
 
-//    QObject::connect(serThread, SIGNAL(serialTimeout(void)),
+//    connect(serThread, SIGNAL(serialTimeout(void)),
 //                     this, SLOT(commThread_SerialTimeout(void)));
 }
 
 void MessageMonitorForm::disconnectNTRIPThreadSlots(NTRIPThread* ntripThread)
 {
-    QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(InfoMessage(const QString&)));
+    disconnect(ntripThread, &NTRIPThread::infoMessage,
+                     this, &MessageMonitorForm::InfoMessage);
 
-    QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(WarningMessage(const QString&)));
+    disconnect(ntripThread, &NTRIPThread::warningMessage,
+                     this, &MessageMonitorForm::WarningMessage);
 
-    QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(ErrorMessage(const QString&)));
+    disconnect(ntripThread, &NTRIPThread::errorMessage,
+                     this, &MessageMonitorForm::ErrorMessage);
 
-    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(DataReceived(const QByteArray&)));
+    disconnect(ntripThread, &NTRIPThread::dataReceived,
+                     this, &MessageMonitorForm::ntripDataReceived);
 
-//    QObject::disconnect(serThread, SIGNAL(serialTimeout(void)),
+//    disconnect(serThread, SIGNAL(serialTimeout(void)),
 //                     this, SLOT(commThread_SerialTimeout(void)));
 }
 

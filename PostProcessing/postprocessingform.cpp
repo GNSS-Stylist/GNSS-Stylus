@@ -635,23 +635,23 @@ void PostProcessingForm::addRELPOSNEDFileData(const QStringList& fileNames)
 
                 currentRELPOSNEDReadingData.init();
 
-                QObject::connect(&ubloxProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                                 this, SLOT(ubloxProcessor_nmeaSentenceReceived(const NMEAMessage&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                                 this, &PostProcessingForm::ubloxProcessor_nmeaSentenceReceived);
 
-                QObject::connect(&ubloxProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                                 this, SLOT(ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                                 this, &PostProcessingForm::ubloxProcessor_ubxMessageReceived);
 
-                QObject::connect(&ubloxProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                                 this, SLOT(ubloxProcessor_rtcmMessageReceived(const RTCMMessage&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                                 this, &PostProcessingForm::ubloxProcessor_rtcmMessageReceived);
 
-                QObject::connect(&ubloxProcessor, SIGNAL(ubxParseError(const QString&)),
-                                 this, SLOT(ubloxProcessor_ubxParseError(const QString&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::ubxParseError,
+                                 this, &PostProcessingForm::ubloxProcessor_ubxParseError);
 
-                QObject::connect(&ubloxProcessor, SIGNAL(nmeaParseError(const QString&)),
-                                 this, SLOT(ubloxProcessor_nmeaParseError(const QString&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::nmeaParseError,
+                                 this, &PostProcessingForm::ubloxProcessor_nmeaParseError);
 
-                QObject::connect(&ubloxProcessor, SIGNAL(unidentifiedDataReceived(const QByteArray&)),
-                                 this, SLOT(ubloxProcessor_unidentifiedDataReceived(const QByteArray&)));
+                connect(&ubloxProcessor, &UBloxDataStreamProcessor::unidentifiedDataReceived,
+                                 this, &PostProcessingForm::ubloxProcessor_unidentifiedDataReceived);
 
                 for (currentRELPOSNEDReadingData.currentFileByteIndex = 0;
                      currentRELPOSNEDReadingData.currentFileByteIndex < fileLength;
@@ -1154,14 +1154,14 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
 
         Stylus::PointCloudGenerator pointCloudGenerator;
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_infoMessage(const QString&)));
+        connect(&pointCloudGenerator, &Stylus::PointCloudGenerator::infoMessage,
+                         this, &PostProcessingForm::on_infoMessage);
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_warningMessage(const QString&)));
+        connect(&pointCloudGenerator, &Stylus::PointCloudGenerator::warningMessage,
+                         this, &PostProcessingForm::on_warningMessage);
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_errorMessage(const QString&)));
+        connect(&pointCloudGenerator, &Stylus::PointCloudGenerator::errorMessage,
+                         this, &PostProcessingForm::on_errorMessage);
 
         pointCloudGenerator.generatePointClouds(params);
     }
@@ -1619,14 +1619,14 @@ void PostProcessingForm::on_pushButton_Stylus_Movie_GenerateScript_clicked()
 
         Stylus::MovieScriptGenerator movieScriptGenerator;
 
-        QObject::connect(&movieScriptGenerator, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_infoMessage(const QString&)));
+        connect(&movieScriptGenerator, &Stylus::MovieScriptGenerator::infoMessage,
+                         this, &PostProcessingForm::on_infoMessage);
 
-        QObject::connect(&movieScriptGenerator, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_warningMessage(const QString&)));
+        connect(&movieScriptGenerator, &Stylus::MovieScriptGenerator::warningMessage,
+                         this, &PostProcessingForm::on_warningMessage);
 
-        QObject::connect(&movieScriptGenerator, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_errorMessage(const QString&)));
+        connect(&movieScriptGenerator, &Stylus::MovieScriptGenerator::errorMessage,
+                         this, &PostProcessingForm::on_errorMessage);
 
         movieScriptGenerator.GenerateMovieScript(params);
     }
@@ -2829,14 +2829,14 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 
         LOScriptGenerator loScriptGenerator;
 
-        QObject::connect(&loScriptGenerator, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_infoMessage(const QString&)));
+        connect(&loScriptGenerator, &LOScriptGenerator::infoMessage,
+                         this, &PostProcessingForm::on_infoMessage);
 
-        QObject::connect(&loScriptGenerator, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_warningMessage(const QString&)));
+        connect(&loScriptGenerator, &LOScriptGenerator::warningMessage,
+                         this, &PostProcessingForm::on_warningMessage);
 
-        QObject::connect(&loScriptGenerator, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_errorMessage(const QString&)));
+        connect(&loScriptGenerator, &LOScriptGenerator::errorMessage,
+                         this, &PostProcessingForm::on_errorMessage);
 
         loScriptGenerator.generateScript(params);
     }
@@ -3094,14 +3094,14 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_infoMessage(const QString&)));
+        connect(&pointCloudGenerator, &Lidar::PointCloudGenerator::infoMessage,
+                         this, &PostProcessingForm::on_infoMessage);
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_warningMessage(const QString&)));
+        connect(&pointCloudGenerator, &Lidar::PointCloudGenerator::warningMessage,
+                         this, &PostProcessingForm::on_warningMessage);
 
-        QObject::connect(&pointCloudGenerator, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_errorMessage(const QString&)));
+        connect(&pointCloudGenerator, &Lidar::PointCloudGenerator::errorMessage,
+                         this, &PostProcessingForm::on_errorMessage);
 
         pointCloudGenerator.generatePointClouds(params);
     }
@@ -3350,14 +3350,14 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 
         Lidar::LidarScriptGenerator lidarScriptGenerator;
 
-        QObject::connect(&lidarScriptGenerator, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_infoMessage(const QString&)));
+        connect(&lidarScriptGenerator, &Lidar::LidarScriptGenerator::infoMessage,
+                         this, &PostProcessingForm::on_infoMessage);
 
-        QObject::connect(&lidarScriptGenerator, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_warningMessage(const QString&)));
+        connect(&lidarScriptGenerator, &Lidar::LidarScriptGenerator::warningMessage,
+                         this, &PostProcessingForm::on_warningMessage);
 
-        QObject::connect(&lidarScriptGenerator, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_errorMessage(const QString&)));
+        connect(&lidarScriptGenerator, &Lidar::LidarScriptGenerator::errorMessage,
+                         this, &PostProcessingForm::on_errorMessage);
 
         lidarScriptGenerator.generateLidarScript(params);
     }

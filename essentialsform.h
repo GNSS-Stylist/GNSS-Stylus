@@ -101,7 +101,8 @@ private slots:
     void on_pushButton_StartLogging_clicked();
     void on_pushButton_StopLogging_clicked();
 
-    void dataReceived_Base(const QByteArray& bytes);
+    void dataReceived_Base_Serial(const QByteArray& bytes, qint64, qint64, const SerialThread::DataReceivedEmitReason &);
+    void dataReceived_Base_NTRIP(const QByteArray& bytes);
     void nmeaSentenceReceived_Base(const NMEAMessage& nmeaSentence);
     void ubxMessageReceived_Base(const UBXMessage& ubxMessage);
     void rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage);

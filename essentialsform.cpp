@@ -381,7 +381,15 @@ void EssentialsForm::on_pushButton_StopLogging_clicked()
     closeAllLogFiles();
 }
 
-void EssentialsForm::dataReceived_Base(const QByteArray& bytes)
+void EssentialsForm::dataReceived_Base_Serial(const QByteArray& bytes, qint64, qint64, const SerialThread::DataReceivedEmitReason&)
+{
+    if (loggingActive)
+    {
+        logFile_Base_Raw.write(bytes);
+    }
+}
+
+void EssentialsForm::dataReceived_Base_NTRIP(const QByteArray& bytes)
 {
     if (loggingActive)
     {
@@ -549,50 +557,50 @@ void EssentialsForm::postProcessingDistanceReceived(const qint64 uptime, const P
 
 void EssentialsForm::connectSerialThreadSlots_Base(SerialThread* serThread)
 {
-    QObject::connect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(dataReceived_Base(const QByteArray&)));
+    connect(serThread, &SerialThread::dataReceived,
+                     this, &EssentialsForm::dataReceived_Base_Serial);
 }
 
 void EssentialsForm::disconnectSerialThreadSlots_Base(SerialThread* serThread)
 {
-    QObject::disconnect(serThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                     this, SLOT(dataReceived_Base(const QByteArray&)));
+    disconnect(serThread, &SerialThread::dataReceived,
+                     this, &EssentialsForm::dataReceived_Base_Serial);
 }
 
 void EssentialsForm::connectNTRIPThreadSlots_Base(NTRIPThread* ntripThread)
 {
-    QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(dataReceived_Base(const QByteArray&)));
+    connect(ntripThread, &NTRIPThread::dataReceived,
+                     this, &EssentialsForm::dataReceived_Base_NTRIP);
 }
 
 void EssentialsForm::disconnectNTRIPThreadSlots_Base(NTRIPThread* ntripThread)
 {
-    QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                     this, SLOT(dataReceived_Base(const QByteArray&)));
+    disconnect(ntripThread, &NTRIPThread::dataReceived,
+                     this, &EssentialsForm::dataReceived_Base_NTRIP);
 }
 
 void EssentialsForm::connectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_Base(const NMEAMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                     this, &EssentialsForm::nmeaSentenceReceived_Base);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                     this, &EssentialsForm::ubxMessageReceived_Base);
 
-    QObject::connect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(rtcmMessageReceived_Base(const RTCMMessage&)));
+    connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &EssentialsForm::rtcmMessageReceived_Base);
 }
 
 void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Base(UBloxDataStreamProcessor* ubloxDataStreamProcessor)
 {
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(nmeaSentenceReceived(const NMEAMessage&)),
-                     this, SLOT(nmeaSentenceReceived_Base(const NMEAMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+                     this, &EssentialsForm::nmeaSentenceReceived_Base);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(ubxMessageReceived_Base(const UBXMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                     this, &EssentialsForm::ubxMessageReceived_Base);
 
-    QObject::disconnect(ubloxDataStreamProcessor, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(rtcmMessageReceived_Base(const RTCMMessage&)));
+    disconnect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &EssentialsForm::rtcmMessageReceived_Base);
 }
 
 
@@ -604,7 +612,7 @@ void EssentialsForm::connectSerialThreadSlots_Rover(SerialThread* serThread, con
     if (roverId < sizeof(rovers) / sizeof(rovers[0]))
     {
         rovers[roverId].serialThreadConnections.insert(serThread,
-            QObject::connect(serThread, &SerialThread::dataReceived,
+            connect(serThread, &SerialThread::dataReceived,
                 this, [=](const QByteArray& bytes, qint64, qint64, const SerialThread::DataReceivedEmitReason&)
                 {
                     serialDataReceived_Rover(bytes, roverId);
@@ -622,7 +630,7 @@ void EssentialsForm::disconnectSerialThreadSlots_Rover(SerialThread* serThread, 
 
         for (int i = 0; i < connections.size(); i++)
         {
-            QObject::disconnect(connections.at(i));
+            disconnect(connections.at(i));
         }
         rovers[roverId].serialThreadConnections.remove(serThread);
     }
@@ -633,7 +641,7 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamP
     if (roverId < sizeof(rovers) / sizeof(rovers[0]))
     {
         rovers[roverId].ubloxDataStreamProcessorConnections.insert(ubloxDataStreamProcessor,
-            QObject::connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
+            connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::nmeaSentenceReceived,
                 this, [=](const NMEAMessage& message)
                 {
                     nmeaSentenceReceived_Rover(message, roverId);
@@ -642,7 +650,7 @@ void EssentialsForm::connectUBloxDataStreamProcessorSlots_Rover(UBloxDataStreamP
         );
 
         rovers[roverId].ubloxDataStreamProcessorConnections.insert(ubloxDataStreamProcessor,
-            QObject::connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+            connect(ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
                 this, [=](const UBXMessage& message)
                 {
                     ubxMessageReceived_Rover(message, roverId);
@@ -660,7 +668,7 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Rover(UBloxDataStre
 
         for (int i = 0; i < connections.size(); i++)
         {
-            QObject::disconnect(connections.at(i));
+            disconnect(connections.at(i));
         }
         rovers[roverId].ubloxDataStreamProcessorConnections.remove(ubloxDataStreamProcessor);
     }
@@ -668,44 +676,44 @@ void EssentialsForm::disconnectUBloxDataStreamProcessorSlots_Rover(UBloxDataStre
 
 void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
-                     this, SLOT(ubxMessageReceived_Rover(const UBXMessage&, const unsigned int)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Rover,
+                     this, &EssentialsForm::ubxMessageReceived_Rover);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
-                     this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Tag,
+                     this, &EssentialsForm::postProcessingTagReceived);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
-                     this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Distance,
+                     this, &EssentialsForm::postProcessingDistanceReceived);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
+                     this, &EssentialsForm::distanceRoundReceived);
 }
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
-                     this, SLOT(ubxMessageReceived_Rover(const UBXMessage&, const unsigned int)));
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_Rover,
+                     this, &EssentialsForm::ubxMessageReceived_Rover);
 
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Tag(const qint64, const PostProcessingForm::Tag&)),
-                     this, SLOT(postProcessingTagReceived(const qint64, const PostProcessingForm::Tag&)));
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_Tag,
+                     this, &EssentialsForm::postProcessingTagReceived);
 
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&)),
-                     this, SLOT(postProcessingDistanceReceived(const qint64, const PostProcessingForm::DistanceItem&)));
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_Distance,
+                     this, &EssentialsForm::postProcessingDistanceReceived);
 
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
+                     this, &EssentialsForm::distanceRoundReceived);
 }
 
 void EssentialsForm::connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
 {
-    QObject::connect(distanceThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                     this, SLOT(on_measuredDistanceReceived(const double&, qint64, qint64)));
+    connect(distanceThread, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                     this, &EssentialsForm::on_measuredDistanceReceived);
 }
 
 void EssentialsForm::disconnectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
 {
-    QObject::disconnect(distanceThread, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                     this, SLOT(on_measuredDistanceReceived(const double&, qint64, qint64)));
+    disconnect(distanceThread, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                     this, &EssentialsForm::on_measuredDistanceReceived);
 }
 
 void EssentialsForm::addTextTag(qint64 uptime)
@@ -2004,14 +2012,14 @@ void EssentialsForm::on_pushButton_SaveAntennaLocations_clicked()
 
 void EssentialsForm::connectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
-    QObject::connect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    connect(rpLidarThread, &RPLidarThread::distanceRoundReceived,
+                     this, &EssentialsForm::distanceRoundReceived);
 }
 
 void EssentialsForm::disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
-    QObject::disconnect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    disconnect(rpLidarThread, &RPLidarThread::distanceRoundReceived,
+                     this, &EssentialsForm::distanceRoundReceived);
 }
 
 void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)

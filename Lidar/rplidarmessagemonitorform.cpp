@@ -71,17 +71,17 @@ void RPLidarMessageMonitorForm::infoMessage(const QString& infoMessage)
 
 void RPLidarMessageMonitorForm::connectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
-    QObject::connect(rpLidarThread, SIGNAL(infoMessage(const QString&)),
-                     this, SLOT(infoMessage(const QString&)));
+    QObject::connect(rpLidarThread, &RPLidarThread::infoMessage,
+                     this, &RPLidarMessageMonitorForm::infoMessage);
 
-    QObject::connect(rpLidarThread, SIGNAL(warningMessage(const QString&)),
-                     this, SLOT(warningMessage(const QString&)));
+    QObject::connect(rpLidarThread, &RPLidarThread::warningMessage,
+                     this, &RPLidarMessageMonitorForm::warningMessage);
 
-    QObject::connect(rpLidarThread, SIGNAL(errorMessage(const QString&)),
-                     this, SLOT(errorMessage(const QString&)));
+    QObject::connect(rpLidarThread, &RPLidarThread::errorMessage,
+                     this, &RPLidarMessageMonitorForm::errorMessage);
 
-    QObject::connect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    QObject::connect(rpLidarThread, &RPLidarThread::distanceRoundReceived,
+                     this, &RPLidarMessageMonitorForm::distanceRoundReceived);
 
 }
 

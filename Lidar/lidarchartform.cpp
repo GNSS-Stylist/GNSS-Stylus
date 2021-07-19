@@ -191,26 +191,26 @@ LidarChartForm::~LidarChartForm()
 
 void LidarChartForm::connectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
-    QObject::connect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    connect(rpLidarThread, &RPLidarThread::distanceRoundReceived,
+                     this, &LidarChartForm::distanceRoundReceived_RealTime);
 }
 
 void LidarChartForm::disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 {
-    QObject::disconnect(rpLidarThread, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    disconnect(rpLidarThread, &RPLidarThread::distanceRoundReceived,
+                     this, &LidarChartForm::distanceRoundReceived_RealTime);
 }
 
 void LidarChartForm::connectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
+                     this, &LidarChartForm::distanceRoundReceived_Replay);
 }
 
 void LidarChartForm::disconnectRPLidarPostProcessingSlots(PostProcessingForm* postProcessingForm)
 {
-    QObject::disconnect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(distanceRoundReceived_Replay(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
+                     this, &LidarChartForm::distanceRoundReceived_Replay);
 }
 
 void LidarChartForm::distanceRoundReceived_RealTime(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)

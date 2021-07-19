@@ -140,25 +140,25 @@ MainWindow::MainWindow(QWidget *parent) :
     essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[1]->ubloxDataStreamProcessor, 1);
     essentialsForm->connectUBloxDataStreamProcessorSlots_Rover(&rovers[2]->ubloxDataStreamProcessor, 2);
 
-    QObject::connect(this, SIGNAL(distanceChanged(const EssentialsForm::DistanceItem&)),
-                     essentialsForm, SLOT(on_distanceReceived(const EssentialsForm::DistanceItem&)));
+    connect(this, &MainWindow::distanceChanged,
+                     essentialsForm, &EssentialsForm::on_distanceReceived);
 
     postProcessingForm = new PostProcessingForm(parent);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Rover(const UBXMessage&, const unsigned int)),
-                     this, SLOT(ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage&, const unsigned int)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Rover,
+                     this, &MainWindow::ubloxProcessor_Rover_ubxMessageReceived);
 
-    QObject::connect(postProcessingForm, SIGNAL(replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                     this, SLOT(replay_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+    connect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
+                     this, &MainWindow::replay_RPLidar_DistanceRoundReceived);
 
     essentialsForm->connectPostProcessingSlots(postProcessingForm);
     lidarChartForm->connectRPLidarPostProcessingSlots(postProcessingForm);
 
-    QObject::connect(&ubloxDataStreamProcessor_Base_Serial, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&)));
+    connect(&ubloxDataStreamProcessor_Base_Serial, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &MainWindow::ubloxProcessor_Base_rtcmMessageReceived_Serial);
 
-    QObject::connect(&ubloxDataStreamProcessor_Base_NTRIP, SIGNAL(rtcmMessageReceived(const RTCMMessage&)),
-                     this, SLOT(ubloxProcessor_Base_rtcmMessageReceived_NTRIP(const RTCMMessage&)));
+    connect(&ubloxDataStreamProcessor_Base_NTRIP, &UBloxDataStreamProcessor::rtcmMessageReceived,
+                     this, &MainWindow::ubloxProcessor_Base_rtcmMessageReceived_NTRIP);
 
     licencesForm = new LicensesForm(parent);
 
@@ -293,7 +293,7 @@ void MainWindow::ubloxProcessor_Rover_ubxMessageReceived(const UBXMessage& ubxMe
 {
     if (roverId < sizeof(rovers) / sizeof(rovers[0]))
     {
-        rovers[roverId]->on_ubloxProcessor_ubxMessageReceived(ubxMessage);
+        rovers[roverId]->ubloxProcessor_ubxMessageReceived(ubxMessage);
     }
 }
 
@@ -312,7 +312,7 @@ void MainWindow::commThread_Base_WarningMessage(const QString& warningMessage)
     ui->label_LastWarningMessage_Base_Serial->setText(warningMessage);
 }
 
-void MainWindow::commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime)
+void MainWindow::commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime, const SerialThread::DataReceivedEmitReason&)
 {
     ubloxDataStreamProcessor_Base_Serial.process(data, firstCharTime, lastCharTime);
 }
@@ -351,20 +351,20 @@ void MainWindow::on_pushButton_StartThread_Base_Serial_clicked()
             serialThread_Base->suspend();
         }
 
-        QObject::connect(serialThread_Base, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_Base_InfoMessage(const QString&)));
+        connect(serialThread_Base, &SerialThread::infoMessage,
+                         this, &MainWindow::commThread_Base_InfoMessage);
 
-        QObject::connect(serialThread_Base, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_Base_WarningMessage(const QString&)));
+        connect(serialThread_Base, &SerialThread::warningMessage,
+                         this, &MainWindow::commThread_Base_WarningMessage);
 
-        QObject::connect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_Base_ErrorMessage(const QString&)));
+        connect(serialThread_Base, &SerialThread::errorMessage,
+                         this, &MainWindow::commThread_Base_ErrorMessage);
 
-        QObject::connect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_Base_DataReceived(const QByteArray&, qint64, qint64)));
+        connect(serialThread_Base, &SerialThread::dataReceived,
+                         this, &MainWindow::commThread_Base_DataReceived);
 
-        QObject::connect(serialThread_Base, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_Base_SerialTimeout(void)));
+        connect(serialThread_Base, &SerialThread::serialTimeout,
+                         this, &MainWindow::commThread_Base_SerialTimeout);
 
         messageMonitorForm_Base_Serial->connectSerialThreadSlots(serialThread_Base);
         essentialsForm->connectSerialThreadSlots_Base(serialThread_Base);
@@ -393,20 +393,20 @@ void MainWindow::on_pushButton_TerminateThread_Base_Serial_clicked()
         serialThread_Base->requestTerminate();
         serialThread_Base->wait(5000);
 
-        QObject::disconnect(serialThread_Base, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_Base_InfoMessage(const QString&)));
+        disconnect(serialThread_Base, &SerialThread::infoMessage,
+                         this, &MainWindow::commThread_Base_InfoMessage);
 
-        QObject::disconnect(serialThread_Base, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_Base_WarningMessage(const QString&)));
+        disconnect(serialThread_Base, &SerialThread::warningMessage,
+                         this, &MainWindow::commThread_Base_WarningMessage);
 
-        QObject::disconnect(serialThread_Base, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_Base_ErrorMessage(const QString&)));
+        disconnect(serialThread_Base, &SerialThread::errorMessage,
+                         this, &MainWindow::commThread_Base_ErrorMessage);
 
-        QObject::disconnect(serialThread_Base, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(commThread_Base_DataReceived(const QByteArray&, qint64, qint64)));
+        disconnect(serialThread_Base, &SerialThread::dataReceived,
+                         this, &MainWindow::commThread_Base_DataReceived);
 
-        QObject::disconnect(serialThread_Base, SIGNAL(serialTimeout(void)),
-                         this, SLOT(commThread_Base_SerialTimeout(void)));
+        disconnect(serialThread_Base, &SerialThread::serialTimeout,
+                         this, &MainWindow::commThread_Base_SerialTimeout);
 
         messageMonitorForm_Base_Serial->disconnectSerialThreadSlots(serialThread_Base);
         essentialsForm->disconnectSerialThreadSlots_Base(serialThread_Base);
@@ -487,22 +487,22 @@ void MainWindow::on_pushButton_StartThread_Base_NTRIP_clicked()
     {
         ntripThread = new NTRIPThread(ui->lineEdit_Command_Base_NTRIP->text());
 
-        QObject::connect(ntripThread, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_InfoMessage(const QString&)));
+        connect(ntripThread, &NTRIPThread::infoMessage,
+                         this, &MainWindow::ntripThread_Base_InfoMessage);
 
-        QObject::connect(ntripThread, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_WarningMessage(const QString&)));
+        connect(ntripThread, &NTRIPThread::warningMessage,
+                         this, &MainWindow::ntripThread_Base_WarningMessage);
 
-        QObject::connect(ntripThread, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
+        connect(ntripThread, &NTRIPThread::errorMessage,
+                         this, &MainWindow::ntripThread_Base_ErrorMessage);
 
-        QObject::connect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                         this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
+        connect(ntripThread, &NTRIPThread::dataReceived,
+                         this, &MainWindow::ntripThread_Base_DataReceived);
 
-        QObject::connect(ntripThread, SIGNAL(threadEnded(void)),
-                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+        connect(ntripThread, &NTRIPThread::threadEnded,
+                         this, &MainWindow::ntripThread_Base_ThreadEnded);
 
-//        QObject::connect(ntripThread, SIGNAL(serialTimeout(void)),
+//        connect(ntripThread, SIGNAL(serialTimeout(void)),
 //                         this, SLOT(ntripThread_Base_SerialTimeout(void)));
 
         messageMonitorForm_Base_NTRIP->connectNTRIPThreadSlots(ntripThread);
@@ -571,22 +571,22 @@ void MainWindow::ntripThread_Base_ThreadEnded(void)
     {
         ntripThread->wait(5000);
 
-        QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_InfoMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::infoMessage,
+                         this, &MainWindow::ntripThread_Base_InfoMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_WarningMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::warningMessage,
+                         this, &MainWindow::ntripThread_Base_WarningMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::errorMessage,
+                         this, &MainWindow::ntripThread_Base_ErrorMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&)),
-                         this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
+        disconnect(ntripThread, &NTRIPThread::dataReceived,
+                         this, &MainWindow::ntripThread_Base_DataReceived);
 
-        QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
-                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+        disconnect(ntripThread, &NTRIPThread::threadEnded,
+                         this, &MainWindow::ntripThread_Base_ThreadEnded);
 
-//        QObject::disconnect(ntripThread, SIGNAL(serialTimeout(void)),
+//        disconnect(ntripThread, SIGNAL(serialTimeout(void)),
 //                         this, SLOT(ntripThread_SerialTimeout(void)));
 
         messageMonitorForm_Base_NTRIP->disconnectNTRIPThreadSlots(ntripThread);
@@ -638,22 +638,22 @@ void MainWindow::on_pushButton_TerminateThread_NTRIP_clicked()
         ntripThread->requestTerminate();
         ntripThread->wait(5000);
 
-        QObject::disconnect(ntripThread, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_InfoMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::infoMessage,
+                         this, &MainWindow::ntripThread_Base_InfoMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_WarningMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::warningMessage,
+                         this, &MainWindow::ntripThread_Base_WarningMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(ntripThread_Base_ErrorMessage(const QString&)));
+        disconnect(ntripThread, &NTRIPThread::errorMessage,
+                         this, &MainWindow::ntripThread_Base_ErrorMessage);
 
-        QObject::disconnect(ntripThread, SIGNAL(dataReceived(const QByteArray&, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(ntripThread_Base_DataReceived(const QByteArray&)));
+        disconnect(ntripThread, &NTRIPThread::dataReceived,
+                         this, &MainWindow::ntripThread_Base_DataReceived);
 
-        QObject::disconnect(ntripThread, SIGNAL(threadEnded(void)),
-                         this, SLOT(ntripThread_Base_ThreadEnded(void)));
+        disconnect(ntripThread, &NTRIPThread::threadEnded,
+                         this, &MainWindow::ntripThread_Base_ThreadEnded);
 
-//        QObject::disconnect(ntripThread, SIGNAL(serialTimeout(void)),
+//        disconnect(ntripThread, SIGNAL(serialTimeout(void)),
 //                         this, SLOT(commThread_Base_SerialTimeout(void)));
 
         messageMonitorForm_Base_NTRIP->disconnectNTRIPThreadSlots(ntripThread);
@@ -681,23 +681,23 @@ void MainWindow::on_pushButton_StartThread_LaserDist_clicked()
             serialThread_LaserDist->suspend();
         }
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_InfoMessage(const QString&)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::infoMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_InfoMessage);
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_WarningMessage(const QString&)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::warningMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_WarningMessage);
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString&)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::errorMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_ErrorMessage);
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&, qint64, qint64)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_DistanceReceived);
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(errorReceived(const QString&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString&)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::errorReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_ErrorReceived);
 
-        QObject::connect(serialThread_LaserDist, SIGNAL(unidentifiedDataReceived(const QByteArray&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray&)));
+        connect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::unidentifiedDataReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived);
 
         messageMonitorForm_LaserDist->connectSerialThreadSlots(serialThread_LaserDist);
         essentialsForm->connectLaserRangeFinder20HzV2SerialThreadSlots(serialThread_LaserDist);
@@ -752,12 +752,12 @@ void MainWindow::commThread_LaserRangeFinder20HzV2_DistanceReceived(const double
 
 }
 
-void MainWindow::commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString)
+void MainWindow::commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString, qint64, qint64)
 {
     ui->label_Distance_LaserDist->setText(errorString);
 }
 
-void MainWindow::commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data)
+void MainWindow::commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data, qint64, qint64)
 {
     (void) data;
     ui->label_Distance_LaserDist->setText("Unidentified data");
@@ -778,23 +778,23 @@ void MainWindow::on_pushButton_TerminateThread_LaserDist_clicked()
         serialThread_LaserDist->requestTerminate();
         serialThread_LaserDist->wait(5000);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_InfoMessage(const QString&)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::infoMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_InfoMessage);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_WarningMessage(const QString&)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::warningMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_WarningMessage);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorMessage(const QString&)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::errorMessage,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_ErrorMessage);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(distanceReceived(const double&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_DistanceReceived(const double&, qint64, qint64)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::distanceReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_DistanceReceived);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(errorReceived(const QString&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString&)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::errorReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_ErrorReceived);
 
-        QObject::disconnect(serialThread_LaserDist, SIGNAL(unidentifiedDataReceived(const QByteArray&, qint64, qint64)),
-                         this, SLOT(commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray&)));
+        disconnect(serialThread_LaserDist, &LaserRangeFinder20HzV2SerialThread::unidentifiedDataReceived,
+                         this, &MainWindow::commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived);
 
         messageMonitorForm_LaserDist->disconnectSerialThreadSlots(serialThread_LaserDist);
         essentialsForm->disconnectLaserRangeFinder20HzV2SerialThreadSlots(serialThread_LaserDist);
@@ -807,11 +807,6 @@ void MainWindow::on_pushButton_TerminateThread_LaserDist_clicked()
         ui->pushButton_StartThread_LaserDist->setEnabled(true);
         ui->pushButton_TerminateThread_LaserDist->setEnabled(false);
     }
-}
-
-void MainWindow::on_MainWindow_destroyed()
-{
-
 }
 
 void MainWindow::on_doubleSpinBox_Distance_Constant_valueChanged(double distance)
@@ -844,36 +839,36 @@ MainWinRover::MainWinRover(QWidget *parent, const int index, const ExtUIThings& 
     messageMonitorForm->connectUBloxDataStreamProcessorSlots(&ubloxDataStreamProcessor);
     relposnedForm = new RELPOSNEDForm(parent, "RELPOSNED (Rover " + roverString + ")");
 
-    QObject::connect(&ubloxDataStreamProcessor, SIGNAL(ubxMessageReceived(const UBXMessage&)),
-                     this, SLOT(on_ubloxProcessor_ubxMessageReceived(const UBXMessage&)));
+    connect(&ubloxDataStreamProcessor, &UBloxDataStreamProcessor::ubxMessageReceived,
+                     this, &MainWinRover::ubloxProcessor_ubxMessageReceived);
 
-    QObject::connect(extUIThings.pushButton_StartThread, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_StartThread_clicked()));
+    connect(extUIThings.pushButton_StartThread, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_StartThread_clicked);
 
-    QObject::connect(extUIThings.pushButton_TerminateThread, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_TerminateThread_clicked()));
+    connect(extUIThings.pushButton_TerminateThread, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_TerminateThread_clicked);
 
-    QObject::connect(extUIThings.pushButton_ShowMessageWindow, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ShowMessageWindow_clicked()));
+    connect(extUIThings.pushButton_ShowMessageWindow, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ShowMessageWindow_clicked);
 
-    QObject::connect(extUIThings.pushButton_ShowRELPOSNEDWindow, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ShowRELPOSNEDWindow_clicked()));
+    connect(extUIThings.pushButton_ShowRELPOSNEDWindow, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ShowRELPOSNEDWindow_clicked);
 
-    QObject::connect(extUIThings.checkBox_SuspendThread, SIGNAL(stateChanged(int)),
-                     this, SLOT(on_checkBox_SuspendThread_stateChanged(int)));
+    connect(extUIThings.checkBox_SuspendThread, &QCheckBox::stateChanged,
+                     this, &MainWinRover::on_checkBox_SuspendThread_stateChanged);
 
 
-    QObject::connect(extUIThings.pushButton_ClearRELPOSNEDCounter, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ClearRELPOSNEDCounter_clicked()));
+    connect(extUIThings.pushButton_ClearRELPOSNEDCounter, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ClearRELPOSNEDCounter_clicked);
 
-    QObject::connect(extUIThings.pushButton_ClearErrorMessage, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ClearErrorMessage_clicked()));
+    connect(extUIThings.pushButton_ClearErrorMessage, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ClearErrorMessage_clicked);
 
-    QObject::connect(extUIThings.pushButton_ClearWarningMessage, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ClearWarningMessage_clicked()));
+    connect(extUIThings.pushButton_ClearWarningMessage, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ClearWarningMessage_clicked);
 
-    QObject::connect(extUIThings.pushButton_ClearInfoMessage, SIGNAL(clicked(bool)),
-                     this, SLOT(on_pushButton_ClearInfoMessage_clicked()));
+    connect(extUIThings.pushButton_ClearInfoMessage, &QAbstractButton::clicked,
+                     this, &MainWinRover::on_pushButton_ClearInfoMessage_clicked);
 
     QSettings settings;
     extUIThings.lineEdit_SerialPort->setText(settings.value("SerialPort_Rover" + roverString, "\\\\.\\COM").toString());
@@ -902,20 +897,20 @@ void MainWinRover::startSerialThread(void)
             serialThread->suspend();
         }
 
-        QObject::connect(serialThread, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_commThread_InfoMessage(const QString&)));
+        connect(serialThread, &SerialThread::infoMessage,
+                         this, &MainWinRover::commThread_InfoMessage);
 
-        QObject::connect(serialThread, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_commThread_WarningMessage(const QString&)));
+        connect(serialThread, &SerialThread::warningMessage,
+                         this, &MainWinRover::commThread_WarningMessage);
 
-        QObject::connect(serialThread, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_commThread_ErrorMessage(const QString&)));
+        connect(serialThread, &SerialThread::errorMessage,
+                         this, &MainWinRover::commThread_ErrorMessage);
 
-        QObject::connect(serialThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(on_commThread_DataReceived(const QByteArray&, qint64, qint64)));
+        connect(serialThread, &SerialThread::dataReceived,
+                         this, &MainWinRover::commThread_DataReceived);
 
-        QObject::connect(serialThread, SIGNAL(serialTimeout(void)),
-                         this, SLOT(on_commThread_SerialTimeout(void)));
+        connect(serialThread, &SerialThread::serialTimeout,
+                         this, &MainWinRover::commThread_SerialTimeout);
 
         messageMonitorForm->connectSerialThreadSlots(serialThread);
 
@@ -941,20 +936,20 @@ void MainWinRover::terminateSerialThread(void)
         serialThread->requestTerminate();
         serialThread->wait(5000);
 
-        QObject::disconnect(serialThread, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(on_commThread_InfoMessage(const QString&)));
+        disconnect(serialThread, &SerialThread::infoMessage,
+                         this, &MainWinRover::commThread_InfoMessage);
 
-        QObject::disconnect(serialThread, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(on_commThread_WarningMessage(const QString&)));
+        disconnect(serialThread, &SerialThread::warningMessage,
+                         this, &MainWinRover::commThread_WarningMessage);
 
-        QObject::disconnect(serialThread, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(on_commThread_ErrorMessage(const QString&)));
+        disconnect(serialThread, &SerialThread::errorMessage,
+                         this, &MainWinRover::commThread_ErrorMessage);
 
-        QObject::disconnect(serialThread, SIGNAL(dataReceived(const QByteArray&, qint64, qint64, const SerialThread::DataReceivedEmitReason&)),
-                         this, SLOT(on_commThread_DataReceived(const QByteArray&, qint64, qint64)));
+        disconnect(serialThread, &SerialThread::dataReceived,
+                         this, &MainWinRover::commThread_DataReceived);
 
-        QObject::disconnect(serialThread, SIGNAL(serialTimeout(void)),
-                         this, SLOT(on_commThread_SerialTimeout(void)));
+        disconnect(serialThread, &SerialThread::serialTimeout,
+                         this, &MainWinRover::commThread_SerialTimeout);
 
         messageMonitorForm->disconnectSerialThreadSlots(serialThread);
 
@@ -968,27 +963,27 @@ void MainWinRover::terminateSerialThread(void)
     }
 }
 
-void MainWinRover::on_commThread_InfoMessage(const QString& infoMessage)
+void MainWinRover::commThread_InfoMessage(const QString& infoMessage)
 {
     extUIThings.label_LastInfoMessage->setText(infoMessage);
 }
 
-void MainWinRover::on_commThread_ErrorMessage(const QString& errorMessage)
+void MainWinRover::commThread_ErrorMessage(const QString& errorMessage)
 {
     extUIThings.label_LastErrorMessage->setText(errorMessage);
 }
 
-void MainWinRover::on_commThread_WarningMessage(const QString& warningMessage)
+void MainWinRover::commThread_WarningMessage(const QString& warningMessage)
 {
     extUIThings.label_LastWarningMessage->setText(warningMessage);
 }
 
-void MainWinRover::on_commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime)
+void MainWinRover::commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime, const SerialThread::DataReceivedEmitReason&)
 {
     ubloxDataStreamProcessor.process(data, firstCharTime, lastCharTime);
 }
 
-void MainWinRover::on_commThread_SerialTimeout(void)
+void MainWinRover::commThread_SerialTimeout(void)
 {
     if (ubloxDataStreamProcessor.getNumOfUnprocessedBytes() != 0)
     {
@@ -999,7 +994,7 @@ void MainWinRover::on_commThread_SerialTimeout(void)
 }
 
 
-void MainWinRover::on_ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage)
+void MainWinRover::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubxMessage)
 {
     UBXMessage_RELPOSNED relposned(ubxMessage);
 
@@ -1025,26 +1020,26 @@ QString MainWinRover::getRoverIdentString(const unsigned int roverId)
     }
 }
 
-void MainWinRover::on_pushButton_StartThread_clicked()
+void MainWinRover::on_pushButton_StartThread_clicked(bool)
 {
     startSerialThread();
     extUIThings.essentialsForm->connectSerialThreadSlots_Rover(serialThread, index);
 }
 
-void MainWinRover::on_pushButton_TerminateThread_clicked()
+void MainWinRover::on_pushButton_TerminateThread_clicked(bool)
 {
     terminateSerialThread();
     extUIThings.essentialsForm->disconnectSerialThreadSlots_Rover(serialThread, index);
 }
 
-void MainWinRover::on_pushButton_ShowMessageWindow_clicked()
+void MainWinRover::on_pushButton_ShowMessageWindow_clicked(bool)
 {
     messageMonitorForm->show();
     messageMonitorForm->raise();
     messageMonitorForm->activateWindow();
 }
 
-void MainWinRover::on_pushButton_ShowRELPOSNEDWindow_clicked()
+void MainWinRover::on_pushButton_ShowRELPOSNEDWindow_clicked(bool)
 {
     relposnedForm->show();
     relposnedForm->raise();
@@ -1066,23 +1061,23 @@ void MainWinRover::on_checkBox_SuspendThread_stateChanged(int arg1)
     }
 }
 
-void MainWinRover::on_pushButton_ClearRELPOSNEDCounter_clicked()
+void MainWinRover::on_pushButton_ClearRELPOSNEDCounter_clicked(bool)
 {
     messageCounter_RELPOSNED = 0;
     extUIThings.label_RELPOSNEDMessageCount->setText(QString::number(messageCounter_RELPOSNED));
 }
 
-void MainWinRover::on_pushButton_ClearErrorMessage_clicked()
+void MainWinRover::on_pushButton_ClearErrorMessage_clicked(bool)
 {
     extUIThings.label_LastErrorMessage->setText("");
 }
 
-void MainWinRover::on_pushButton_ClearWarningMessage_clicked()
+void MainWinRover::on_pushButton_ClearWarningMessage_clicked(bool)
 {
     extUIThings.label_LastWarningMessage->setText("");
 }
 
-void MainWinRover::on_pushButton_ClearInfoMessage_clicked()
+void MainWinRover::on_pushButton_ClearInfoMessage_clicked(bool)
 {
     extUIThings.label_LastInfoMessage->setText("");
 }
@@ -1097,17 +1092,17 @@ void MainWindow::on_pushButton_StartThread_RPLidar_clicked()
             thread_RPLidar->suspend();
         }
 
-        QObject::connect(thread_RPLidar, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_InfoMessage(const QString&)));
+        connect(thread_RPLidar, &RPLidarThread::infoMessage,
+                         this, &MainWindow::thread_RPLidar_InfoMessage);
 
-        QObject::connect(thread_RPLidar, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_WarningMessage(const QString&)));
+        connect(thread_RPLidar, &RPLidarThread::warningMessage,
+                         this, &MainWindow::thread_RPLidar_WarningMessage);
 
-        QObject::connect(thread_RPLidar, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_ErrorMessage(const QString&)));
+        connect(thread_RPLidar, &RPLidarThread::errorMessage,
+                         this, &MainWindow::thread_RPLidar_ErrorMessage);
 
-        QObject::connect(thread_RPLidar, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                         this, SLOT(thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+        connect(thread_RPLidar, &RPLidarThread::distanceRoundReceived,
+                         this, &MainWindow::thread_RPLidar_DistanceRoundReceived);
 
         messageMonitorForm_RPLidar->connectRPLidarThreadSlots(thread_RPLidar);
         lidarChartForm->connectRPLidarThreadSlots(thread_RPLidar);
@@ -1133,17 +1128,17 @@ void MainWindow::on_pushButton_TerminateThread_RPLidar_clicked()
 
         thread_RPLidar->wait(5000);
 
-        QObject::disconnect(thread_RPLidar, SIGNAL(infoMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_InfoMessage(const QString&)));
+        disconnect(thread_RPLidar, &RPLidarThread::infoMessage,
+                         this, &MainWindow::thread_RPLidar_InfoMessage);
 
-        QObject::disconnect(thread_RPLidar, SIGNAL(warningMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_WarningMessage(const QString&)));
+        disconnect(thread_RPLidar, &RPLidarThread::warningMessage,
+                         this, &MainWindow::thread_RPLidar_WarningMessage);
 
-        QObject::disconnect(thread_RPLidar, SIGNAL(errorMessage(const QString&)),
-                         this, SLOT(thread_RPLidar_ErrorMessage(const QString&)));
+        disconnect(thread_RPLidar, &RPLidarThread::errorMessage,
+                         this, &MainWindow::thread_RPLidar_ErrorMessage);
 
-        QObject::disconnect(thread_RPLidar, SIGNAL(distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)),
-                         this, SLOT(thread_RPLidar_DistanceRoundReceived(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64)));
+        disconnect(thread_RPLidar, &RPLidarThread::distanceRoundReceived,
+                         this, &MainWindow::thread_RPLidar_DistanceRoundReceived);
 
         messageMonitorForm_RPLidar->disconnectRPLidarThreadSlots(thread_RPLidar);
         lidarChartForm->disconnectRPLidarThreadSlots(thread_RPLidar);

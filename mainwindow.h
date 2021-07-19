@@ -94,22 +94,22 @@ public:
 
 
 private slots:
-    void on_commThread_ErrorMessage(const QString& errorMessage);
-    void on_commThread_WarningMessage(const QString& warningMessage);
-    void on_commThread_InfoMessage(const QString& infoMessage);
-    void on_commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
-    void on_commThread_SerialTimeout(void);
-    void on_ubloxProcessor_ubxMessageReceived(const UBXMessage&);
+    void commThread_ErrorMessage(const QString& errorMessage);
+    void commThread_WarningMessage(const QString& warningMessage);
+    void commThread_InfoMessage(const QString& infoMessage);
+    void commThread_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime, const SerialThread::DataReceivedEmitReason &);
+    void commThread_SerialTimeout(void);
+    void ubloxProcessor_ubxMessageReceived(const UBXMessage&);
 
-    void on_pushButton_StartThread_clicked();
-    void on_pushButton_TerminateThread_clicked();
-    void on_pushButton_ShowMessageWindow_clicked();
+    void on_pushButton_StartThread_clicked(bool);
+    void on_pushButton_TerminateThread_clicked(bool);
+    void on_pushButton_ShowMessageWindow_clicked(bool);
     void on_checkBox_SuspendThread_stateChanged(int arg1);
-    void on_pushButton_ClearRELPOSNEDCounter_clicked();
-    void on_pushButton_ClearErrorMessage_clicked();
-    void on_pushButton_ClearWarningMessage_clicked();
-    void on_pushButton_ClearInfoMessage_clicked();
-    void on_pushButton_ShowRELPOSNEDWindow_clicked();
+    void on_pushButton_ClearRELPOSNEDCounter_clicked(bool);
+    void on_pushButton_ClearErrorMessage_clicked(bool);
+    void on_pushButton_ClearWarningMessage_clicked(bool);
+    void on_pushButton_ClearInfoMessage_clicked(bool);
+    void on_pushButton_ShowRELPOSNEDWindow_clicked(bool);
 
     friend class MainWindow;
 };
@@ -136,7 +136,7 @@ private slots:
     void commThread_Base_ErrorMessage(const QString& errorMessage);
     void commThread_Base_WarningMessage(const QString& warningMessage);
     void commThread_Base_InfoMessage(const QString& infoMessage);
-    void commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime);
+    void commThread_Base_DataReceived(const QByteArray& data, const qint64 firstCharTime, const qint64 lastCharTime, const SerialThread::DataReceivedEmitReason &);
     void commThread_Base_SerialTimeout(void);
     void ubloxProcessor_Base_rtcmMessageReceived_Serial(const RTCMMessage&);
 
@@ -151,8 +151,8 @@ private slots:
     void commThread_LaserRangeFinder20HzV2_WarningMessage(const QString& warningMessage);
     void commThread_LaserRangeFinder20HzV2_InfoMessage(const QString& infoMessage);
     void commThread_LaserRangeFinder20HzV2_DistanceReceived(const double& distance, qint64, qint64);
-    void commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString);
-    void commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data);
+    void commThread_LaserRangeFinder20HzV2_ErrorReceived(const QString& errorString, qint64, qint64);
+    void commThread_LaserRangeFinder20HzV2_UnidentifiedDataReceived(const QByteArray& data, qint64, qint64);
 
     void thread_RPLidar_ErrorMessage(const QString& errorMessage);
     void thread_RPLidar_WarningMessage(const QString& warningMessage);
@@ -201,8 +201,6 @@ private slots:
     void on_pushButton_ShowMessageWindow_LaserDist_clicked();
 
     void on_pushButton_TerminateThread_LaserDist_clicked();
-
-    void on_MainWindow_destroyed();
 
     void on_doubleSpinBox_Distance_Constant_valueChanged(double arg1);
 
