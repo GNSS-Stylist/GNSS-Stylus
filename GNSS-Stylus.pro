@@ -45,11 +45,13 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    PostProcessing/EasyEXIF/exif.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
     PostProcessing/loscriptgenerator.cpp \
+    PostProcessing/meshlabrastercameragenerator.cpp \
     PostProcessing/postprocessingform.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
@@ -76,11 +78,13 @@ SOURCES += \
     rightclickpushbutton.cpp
 
 HEADERS += \
+    PostProcessing/EasyEXIF/exif.h \
     PostProcessing/Lidar/lidarscriptgenerator.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
     PostProcessing/loscriptgenerator.h \
+    PostProcessing/meshlabrastercameragenerator.h \
     PostProcessing/postprocessingform.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \

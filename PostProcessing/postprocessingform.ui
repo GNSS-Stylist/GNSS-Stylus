@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>6</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -2908,7 +2908,7 @@ multiply	1	0	0	0
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
         <property name="autoFillBackground">
@@ -3361,6 +3361,247 @@ multiply	1	0	0	0
          </property>
          <property name="text">
           <string>Set max</string>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tab_RasterCameras">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Raster cameras</string>
+      </attribute>
+      <widget class="QTabWidget" name="tabWidget_RasterCameras">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>631</width>
+         <height>401</height>
+        </rect>
+       </property>
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="tab_Operations">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Operations (geometry)</string>
+        </attribute>
+        <widget class="QPushButton" name="pushButton_RasterCameras_Operations_Load">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>300</y>
+           <width>131</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Load from file...</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_RasterCameras_OperationsDescription">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>581</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are performed in object's coordinate system as defined in Settings-&amp;gt;Location/orientation solver.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QPlainTextEdit" name="plainTextEdit_RasterCameras_TransformMatrixScript">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>591</width>
+           <height>251</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// These operations move camera in relation to the rig's origin&lt;br&gt;
+// First move camera's viewing reference point in relation to the mounting point (so we can move the mounting point next):&lt;br&gt;
+translate 0.010 -0.005 -0.030; // Lens' &quot;origin&quot; 10 mm forward, 5 mm left and 30 mm up from the mounting point&lt;br&gt;
+// Now we can operate on mounting point:&lt;br&gt;
+translate -0.200 0.050 -0.150; // Mounting point 200 mm back, 50 mm  right and 150 mm up from the rig's origin&lt;br&gt;
+// Camera is slightly pointing down:&lt;br&gt;
+rotate pitch -5 deg; // Turn the camera 5 degrees down&lt;br&gt;
+// Since the mount may not be perfect, add some calibration values:&lt;br&gt;
+rotate yaw 0.5 deg;&lt;br&gt;
+rotate roll -2 deg;&lt;br&gt;
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting to generate script so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="plainText">
+          <string>// See location/orientation solver script for more information about operations</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_RasterCameras_Operations_Save">
+         <property name="geometry">
+          <rect>
+           <x>150</x>
+           <y>300</y>
+           <width>151</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Save to file...</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="tab_Script">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <attribute name="title">
+         <string>Script</string>
+        </attribute>
+        <widget class="QPlainTextEdit" name="plainTextEdit_RasterCameras_CameraScript">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>591</width>
+           <height>321</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// These operations move camera in relation to the rig's origin&lt;br&gt;
+// First move camera's viewing reference point in relation to the mounting point (so we can move the mounting point next):&lt;br&gt;
+translate 0.010 -0.005 -0.030; // Lens' &quot;origin&quot; 10 mm forward, 5 mm left and 30 mm up from the mounting point&lt;br&gt;
+// Now we can operate on mounting point:&lt;br&gt;
+translate -0.200 0.050 -0.150; // Mounting point 200 mm back, 50 mm  right and 150 mm up from the rig's origin&lt;br&gt;
+// Camera is slightly pointing down:&lt;br&gt;
+rotate pitch -5 deg; // Turn the camera 5 degrees down&lt;br&gt;
+// Since the mount may not be perfect, add some calibration values:&lt;br&gt;
+rotate yaw 0.5 deg;&lt;br&gt;
+rotate roll -2 deg;&lt;br&gt;
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting to generate script so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="plainText">
+          <string>// See location/orientation solver script for more information about operations</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_RasterCameras_Script_Process">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>340</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Process</string>
          </property>
         </widget>
        </widget>

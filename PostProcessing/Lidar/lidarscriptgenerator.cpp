@@ -254,7 +254,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
             try
             {
-                params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix(roverUptime, transform_LoSolver);
+                params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, transform_LoSolver);
             }
             catch (QString& stringThrown)
             {

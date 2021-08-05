@@ -130,15 +130,20 @@ public:
     {
     public:
         LOInterpolator(PostProcessingForm* owner);
-        void getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
+        void getInterpolatedLocationOrientationTransformMatrix_Uptime(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
+        void getInterpolatedLocationOrientationTransformMatrix_ITOW(const UBXMessage_RELPOSNED::ITOW iTOW, Eigen::Transform<double, 3, Eigen::Affine>& transform);
 
         LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
 
     private:
         PostProcessingForm* owner = nullptr;
         qint64 roverUptimeLimits[3][2];
-        UBXMessage_RELPOSNED roverRELPOSNEDS_Lower[3];
-        UBXMessage_RELPOSNED roverRELPOSNEDS_Upper[3];
+        UBXMessage_RELPOSNED roverUptimeBasedRELPOSNEDS_Lower[3];
+        UBXMessage_RELPOSNED roverUptimeBasedRELPOSNEDS_Upper[3];
+
+        UBXMessage_RELPOSNED::ITOW roverITOWLimits[3][2];
+        UBXMessage_RELPOSNED roverITOWBasedRELPOSNEDS_Lower[3];
+        UBXMessage_RELPOSNED roverITOWBasedRELPOSNEDS_Upper[3];
     };
 
 
@@ -258,6 +263,8 @@ private slots:
     void on_pushButton_LoadEditableFieldsFromFile_clicked();
 
     void on_pushButton_SaveEditableFieldsToFile_clicked();
+
+    void on_pushButton_RasterCameras_Script_Process_clicked();
 
 private:
     /**

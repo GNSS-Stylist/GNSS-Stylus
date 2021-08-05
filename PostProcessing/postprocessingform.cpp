@@ -31,6 +31,7 @@
 #include "Lidar/pointcloudgeneratorlidar.h"
 #include "loscriptgenerator.h"
 #include "Lidar/lidarscriptgenerator.h"
+#include "meshlabrastercameragenerator.h"
 
 struct
 {
@@ -2796,9 +2797,6 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
         return;
     }
 
-    Eigen::Transform<double, 3, Eigen::Affine> transform_XYZToNED_NoTranslation;
-    transform_XYZToNED_NoTranslation = transform_NEDToXYZ.linear().transpose();
-
     if (fileDialog_LOSolver_Script.exec())
     {
         QStringList fileNameList = fileDialog_LOSolver_Script.selectedFiles();
@@ -3128,11 +3126,12 @@ PostProcessingForm::LOInterpolator::LOInterpolator(PostProcessingForm* owner)
         for (int ii = 0; ii < 2; ii++)
         {
             roverUptimeLimits[i][ii] = -1;
+            roverITOWLimits[i][ii] = -1;
         }
     }
 }
 
-void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform)
+void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_Uptime(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform)
 {
     // TODO: This should use quaternions to work better.
     // As measurements are received 8 times/s typically,
@@ -3156,18 +3155,17 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
 
                 const RoverSyncItem upperSyncItem = roverUptimeIter.value();
                 RoverSyncItem lowerSyncItem;
-                roverUptimeIter--;
-                if (roverUptimeIter != crovers[i].roverSyncData.end())
-                {
-                    lowerSyncItem = roverUptimeIter.value();
-                    roverUptimeLimits[i][0] = roverUptimeIter.key();
-                }
-                else
+
+                if (roverUptimeIter == crovers[i].roverSyncData.begin())
                 {
                     roverUptimeLimits[i][0] = -1;
                     roverUptimeLimits[i][1] = -1;
                     throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (higher limit).");
                 }
+
+                roverUptimeIter--;
+                lowerSyncItem = roverUptimeIter.value();
+                roverUptimeLimits[i][0] = roverUptimeIter.key();
 
                 if (crovers[i].relposnedMessages.find(upperSyncItem.iTOW) == crovers[i].relposnedMessages.end())
                 {
@@ -3183,8 +3181,8 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
                     throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
                 }
 
-                roverRELPOSNEDS_Lower[i] = crovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
-                roverRELPOSNEDS_Upper[i] = crovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
+                roverUptimeBasedRELPOSNEDS_Lower[i] = crovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
+                roverUptimeBasedRELPOSNEDS_Upper[i] = crovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
             }
             else
             {
@@ -3196,8 +3194,8 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
 
         qint64 timeDiff = uptime - roverUptimeLimits[i][0];
 
-        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(roverRELPOSNEDS_Lower[i],
-                                roverRELPOSNEDS_Upper[i], roverRELPOSNEDS_Lower[i].iTOW + timeDiff);
+        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(roverUptimeBasedRELPOSNEDS_Lower[i],
+                                roverUptimeBasedRELPOSNEDS_Upper[i], roverUptimeBasedRELPOSNEDS_Lower[i].iTOW + timeDiff);
     }
 
     Eigen::Vector3d points[3] =
@@ -3214,7 +3212,69 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
 
     if (!loSolver.getTransformMatrix(transform))
     {
+        throw QString("LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+    }
+}
+
+void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_ITOW(const UBXMessage_RELPOSNED::ITOW iTOW, Eigen::Transform<double, 3, Eigen::Affine>& transform)
+{
+    // TODO: This should use quaternions to work better.
+    // As measurements are received 8 times/s typically,
+    // interpolating coordinates may not be a big issue either.
+    // If using quaternions, rover data should be ITOW-synced.
+
+    UBXMessage_RELPOSNED interpolated_Rovers[3];
+    const Rover* crovers = owner->rovers;
+
+    for (int i = 0; i < 3; i++)
+    {
+        if ((iTOW <= roverITOWLimits[i][0]) || (iTOW > roverITOWLimits[i][1]))
+        {
+            // "Cache miss" -> Find new limiting values
+
+            QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator roverIter;
+
+            roverIter = crovers[i].relposnedMessages.lowerBound(iTOW);
+
+            if (roverIter == crovers[i].relposnedMessages.end())
+            {
+                roverITOWLimits[i][0] = -1;
+                roverITOWLimits[i][1] = -1;
+                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (higher limit).");
+            }
+            else if (roverIter == crovers[i].relposnedMessages.begin())
+            {
+                roverITOWLimits[i][0] = -1;
+                roverITOWLimits[i][1] = -1;
+                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
+}
+            roverITOWBasedRELPOSNEDS_Upper[i] = roverIter.value();
+            roverITOWLimits[i][1] = roverIter.key();
+
+            roverIter--;
+            roverITOWBasedRELPOSNEDS_Lower[i] = roverIter.value();
+            roverITOWLimits[i][0] = roverIter.key();
+        }
+
+        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(roverITOWBasedRELPOSNEDS_Lower[i],
+                                roverITOWBasedRELPOSNEDS_Upper[i], iTOW);
+    }
+
+    Eigen::Vector3d points[3] =
+    {
+        { interpolated_Rovers[0].relPosN, interpolated_Rovers[0].relPosE, interpolated_Rovers[0].relPosD },
+        { interpolated_Rovers[1].relPosN, interpolated_Rovers[1].relPosE, interpolated_Rovers[1].relPosD },
+        { interpolated_Rovers[2].relPosN, interpolated_Rovers[2].relPosE, interpolated_Rovers[2].relPosD },
+    };
+
+    if (!loSolver.setPoints(points))
+    {
         throw QString("LOSolver.setPoints failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+    }
+
+    if (!loSolver.getTransformMatrix(transform))
+    {
+        throw QString("LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
     }
 }
 
@@ -3617,4 +3677,104 @@ void PostProcessingForm::on_pushButton_SaveEditableFieldsToFile_clicked()
     }
 }
 
+void PostProcessingForm::on_pushButton_RasterCameras_Script_Process_clicked()
+{
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
+    LOInterpolator loInterpolator(this);
+
+    if (!generateTransformationMatrix(transform_NEDToXYZ))
+    {
+        return;
+    }
+
+    if (!updateLOSolverReferencePointLocations(loInterpolator.loSolver))
+    {
+        return;
+    }
+
+    TransformMatrixGenerator matrixGenerator;
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform_Generated;
+
+    try
+    {
+        QStringList lines = ui->plainTextEdit_RasterCameras_TransformMatrixScript->document()->toPlainText().split("\n");
+
+        transform_Generated = matrixGenerator.generate(lines).matrix();
+    }
+    catch (TransformMatrixGenerator::Issue& issue)
+    {
+        addLogLine("Generating transform matrix failed. Error: " + issue.text +
+                   " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1));
+
+        QTextCursor cursor = ui->plainTextEdit_RasterCameras_TransformMatrixScript->textCursor();
+        cursor.setPosition(0, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+        if (issue.item.firstCol != -1)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
+
+            if (issue.item.lastCol != -1)
+            {
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
+            }
+        }
+
+        ui->plainTextEdit_RasterCameras_TransformMatrixScript->setTextCursor(cursor);
+        ui->plainTextEdit_RasterCameras_TransformMatrixScript->setFocus();
+
+        return;
+    }
+
+    MeshLabRasterCameraGenerator::Params params;
+
+    params.transform_NEDToXYZ = &transform_NEDToXYZ;
+    params.transform_Generated = &transform_Generated;
+    QStringList lines = ui->plainTextEdit_RasterCameras_CameraScript->document()->toPlainText().split("\n");
+    params.lines = &lines;
+
+    params.rovers = rovers;
+    params.loInterpolator = &loInterpolator;
+
+    MeshLabRasterCameraGenerator meshLabRasterCameraGenerator;
+
+    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::infoMessage,
+                     this, &PostProcessingForm::on_infoMessage);
+
+    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::warningMessage,
+                     this, &PostProcessingForm::on_warningMessage);
+
+    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::errorMessage,
+                     this, &PostProcessingForm::on_errorMessage);
+
+    try
+    {
+        QString meshLabString = meshLabRasterCameraGenerator.generate(params);
+
+        ui->plainTextEdit_Log->appendPlainText(meshLabString);
+    }
+    catch (MeshLabRasterCameraGenerator::Issue& issue)
+    {
+        addLogLine("Generating raster cameras failed. Error: " + issue.text +
+                   " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1));
+
+        QTextCursor cursor = ui->plainTextEdit_RasterCameras_CameraScript->textCursor();
+        cursor.setPosition(0, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+        if (issue.item.firstCol != -1)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
+
+            if (issue.item.lastCol != -1)
+            {
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
+            }
+        }
+
+        ui->plainTextEdit_RasterCameras_CameraScript->setTextCursor(cursor);
+        ui->plainTextEdit_RasterCameras_CameraScript->setFocus();
+
+        return;
+    }
+}
 
