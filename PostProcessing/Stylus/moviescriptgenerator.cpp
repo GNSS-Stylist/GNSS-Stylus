@@ -216,10 +216,8 @@ void MovieScriptGenerator::GenerateMovieScript(const Params& params)
 
                     if (distIter != params.distances->end())
                     {
-                        distIter--;
-
-                        if ((distIter == params.distances->end()) ||
-                                (distIter.value().type != PostProcessingForm::DistanceItem::Type::CONSTANT))
+                        if ((distIter == params.distances->begin()) ||
+                                ((--distIter).value().type != PostProcessingForm::DistanceItem::Type::CONSTANT))
                         {
                             emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
                                        QString::number(currentTag.sourceFileLine)+
@@ -352,10 +350,9 @@ void MovieScriptGenerator::GenerateMovieScript(const Params& params)
                             {
                                 const PostProcessingForm::RoverSyncItem upperSyncItem = roverAUptimeIter.value();
                                 PostProcessingForm::RoverSyncItem lowerSyncItem;
-                                roverAUptimeIter--;
-                                if (roverAUptimeIter != params.rovers[0].roverSyncData.end())
+                                if (roverAUptimeIter != params.rovers[0].roverSyncData.begin())
                                 {
-                                    lowerSyncItem = roverAUptimeIter.value();
+                                    lowerSyncItem = (--roverAUptimeIter).value();
                                 }
                                 else
                                 {
@@ -409,10 +406,9 @@ void MovieScriptGenerator::GenerateMovieScript(const Params& params)
                             {
                                 const PostProcessingForm::RoverSyncItem upperSyncItem = roverBUptimeIter.value();
                                 PostProcessingForm::RoverSyncItem lowerSyncItem;
-                                roverBUptimeIter--;
-                                if (roverBUptimeIter != params.rovers[1].roverSyncData.end())
+                                if (roverBUptimeIter != params.rovers[1].roverSyncData.begin())
                                 {
-                                    lowerSyncItem = roverBUptimeIter.value();
+                                    lowerSyncItem = (--roverBUptimeIter).value();
                                 }
                                 else
                                 {

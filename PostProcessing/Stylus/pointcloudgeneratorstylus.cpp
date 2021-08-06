@@ -298,10 +298,8 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
         if (distIter != params.distances->end())
         {
-            distIter--;
-
-            if ((distIter == params.distances->end()) ||
-                    (distIter.value().type != PostProcessingForm::DistanceItem::Type::CONSTANT))
+            if ((distIter == params.distances->begin()) ||
+                    ((--distIter).value().type != PostProcessingForm::DistanceItem::Type::CONSTANT))
             {
                 emit warningMessage("File \"" + endingTag.sourceFile + "\", line " +
                            QString::number(endingTag.sourceFileLine)+
@@ -428,10 +426,10 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                     {
                         const PostProcessingForm::RoverSyncItem upperSyncItem = roverUptimeIter.value();
                         PostProcessingForm::RoverSyncItem lowerSyncItem;
-                        roverUptimeIter--;
-                        if (roverUptimeIter != params.rovers[i].roverSyncData.end())
+
+                        if (roverUptimeIter != params.rovers[i].roverSyncData.begin())
                         {
-                            lowerSyncItem = roverUptimeIter.value();
+                            lowerSyncItem = (--roverUptimeIter).value();
                         }
                         else
                         {
