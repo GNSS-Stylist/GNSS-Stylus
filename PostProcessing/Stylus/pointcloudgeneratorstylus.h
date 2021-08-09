@@ -40,6 +40,7 @@ public:
         QString tagIdent_EndPoints = "LMB";
         double initialStylusTipDistanceFromRoverA = 0;
         bool includeNormals = false;
+        bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const QMap<qint64, PostProcessingForm::DistanceItem>* distances = nullptr;
@@ -56,6 +57,8 @@ private:
                                     const qint64 beginningUptime, const qint64 endingUptime,
                                     QTextStream* outStream,
                                     int& pointsWritten);
+
+    QFile* createNewOutFile(const QString fileName, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
 
 public:
 

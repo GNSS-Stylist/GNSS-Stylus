@@ -153,6 +153,7 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->doubleSpinBox_Stylus_Movie_FPS->setValue(settings.value("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value()).toDouble());
 
     ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked()).toBool());
+    ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->setChecked(settings.value("PostProcessing_Stylus_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->isChecked()).toBool());
 
     ui->spinBox_LOSolver_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value()).toInt());
     ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Max", ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value()).toInt());
@@ -166,6 +167,7 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
 
     ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked()).toBool());
     ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->setChecked(settings.value("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked()).toBool());
 
 
     ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
@@ -268,8 +270,8 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
 
     settings.setValue("PostProcessing_Stylus_Movie_FPS", ui->doubleSpinBox_Stylus_Movie_FPS->value());
 
-
     settings.setValue("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked());
+    settings.setValue("PostProcessing_Stylus_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->isChecked());
 
 
     settings.setValue("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value());
@@ -283,6 +285,7 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
 
     settings.setValue("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState() == Qt::Checked);
     settings.setValue("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->checkState() == Qt::Checked);
+    settings.setValue("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->checkState() == Qt::Checked);
 
 
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
@@ -1148,6 +1151,7 @@ void PostProcessingForm::on_pushButton_Stylus_GeneratePointClouds_clicked()
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         params.initialStylusTipDistanceFromRoverA = ui->doubleSpinBox_StylusTipDistanceFromRoverA_Fallback->value();
         params.includeNormals = ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked();
+        params.separateFilesForSubScans = ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->isChecked();
 
         params.tags = &tags;
         params.distances = &distances;
@@ -3075,6 +3079,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         params.includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked();
         params.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
+        params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
         params.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
         Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),

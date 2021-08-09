@@ -45,6 +45,7 @@ public:
         int timeShift = 0;
         const Eigen::Vector3d* boundingSphere_Center;
         double boundingSphere_Radius = 1e9;
+        bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
@@ -63,6 +64,8 @@ private:
                                     const qint64 beginningUptime, const qint64 endingUptime,
                                     QTextStream* outStream,
                                     int& pointsWritten);
+
+    QFile* createNewOutFile(const QString fileName, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
 
 signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)

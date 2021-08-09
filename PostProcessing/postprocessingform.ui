@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>6</number>
+      <number>3</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -2145,7 +2145,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab_Stylus_MovieScript">
           <property name="autoFillBackground">
@@ -2563,7 +2563,7 @@
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>40</y>
+             <y>70</y>
              <width>271</width>
              <height>23</height>
             </rect>
@@ -2583,6 +2583,22 @@
            </property>
            <property name="text">
             <string>Include normals (pointing from stylus tip to rovers) into xyz-files</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>40</y>
+             <width>461</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Create separate output filex for &quot;subscans&quot; (between beginning and ending tags)</string>
            </property>
           </widget>
          </widget>
@@ -2908,7 +2924,7 @@ multiply	1	0	0	0
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
         <property name="autoFillBackground">
@@ -3233,7 +3249,7 @@ multiply	1	0	0	0
          <property name="geometry">
           <rect>
            <x>20</x>
-           <y>80</y>
+           <y>110</y>
            <width>271</width>
            <height>23</height>
           </rect>
@@ -3269,6 +3285,22 @@ multiply	1	0	0	0
          </property>
          <property name="text">
           <string>Set normal lengths to multiplicative inverse of measured lidar distance (&quot;Quality&quot;)</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>70</y>
+           <width>461</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Create separate output filex for &quot;subscans&quot; (between beginning and ending tags)</string>
          </property>
         </widget>
        </widget>

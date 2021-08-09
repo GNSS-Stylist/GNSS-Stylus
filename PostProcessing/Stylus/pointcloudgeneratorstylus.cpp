@@ -48,6 +48,10 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     QFile* outFile = nullptr;
     QTextStream* outStream = nullptr;
 
+    QString objectName;
+    QString baseFileName;
+    int fileIndex = 0;
+
     qint64 uptime = -1;
     PostProcessingForm::Tag beginningTag;
 
@@ -79,13 +83,18 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     }
                     if (outFile)
                     {
-                        emit infoMessage("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsWritten));
+                        emit infoMessage("Closing file \"" + outFile->fileName() + "\".");
                         outFile->close();
                         delete outFile;
                         outFile = nullptr;
                     }
+
+                    emit infoMessage("Object \"" + objectName + "\": Total points written: " + QString::number(pointsWritten));
+
                     objectActive = false;
                 }
+
+                objectName = currentTag.text;
 
                 if (currentTag.text.length() == 0)
                 {
@@ -102,51 +111,36 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     continue;
                 }
 
-                QString fileName = QDir::cleanPath(params.directory.path() + "/" + currentTag.text + ".xyz");
+                baseFileName = QDir::cleanPath(params.directory.path() + "/" + currentTag.text);
 
-                outFile = new QFile(fileName);
+                QString fileName = baseFileName + ".xyz";
 
-                if (outFile->exists())
+                if (!params.separateFilesForSubScans)
                 {
-                    // File already exists -> Not allowed
+                    outFile = createNewOutFile(fileName, currentTag, uptime);
 
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    delete outFile;
-                    outFile = nullptr;
-                    continue;
+                    if (!outFile)
+                    {
+                        ignoreBeginningAndEndingTags = true;
+                        continue;
+                    }
+                    else
+                    {
+                        outStream = new QTextStream(outFile);
+                        ignoreBeginningAndEndingTags = false;
+                    }
+                }
+                else
+                {
+                    emit infoMessage("Starting new object \"" +  currentTag.text + "\".");
+                    ignoreBeginningAndEndingTags = false;
                 }
 
-                emit infoMessage("Creating file \"" + fileName + "\"...");
-
-                if (!outFile->open(QIODevice::WriteOnly | QIODevice::Text))
-                {
-                    // Creating the file failed
-
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                    ignoreBeginningAndEndingTags = true;
-
-                    delete outFile;
-                    outFile = nullptr;
-                    continue;
-                }
-
-                outStream = new QTextStream(outFile);
                 objectActive = true;
-                ignoreBeginningAndEndingTags = false;
                 beginningUptime = -1;
                 pointsWritten = 0;
+
+                fileIndex = 0;
             }
             else if ((!(currentTag.ident.compare(params.tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
             {
@@ -212,6 +206,34 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     continue;
                 }
 
+                if (params.separateFilesForSubScans)
+                {
+                    fileIndex++;
+
+                    QString fileIndexString = QString::number(fileIndex);
+
+                    while (fileIndexString.length() < 4)
+                    {
+                        fileIndexString.prepend("0");
+                    }
+
+                    QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + ".xyz");
+
+                    outFile = createNewOutFile(fileName, currentTag, uptime);
+
+                    if (!outFile)
+                    {
+                        ignoreBeginningAndEndingTags = true;
+                        continue;
+                    }
+                    else
+                    {
+                        outStream = new QTextStream(outFile);
+                        objectActive = true;
+                        ignoreBeginningAndEndingTags = false;
+                    }
+                }
+
                 bool generatingOk = false;
                 int prevPointsWritten = pointsWritten;
 
@@ -235,6 +257,23 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     }
                 }
 
+                if (params.separateFilesForSubScans)
+                {
+                    if (outStream)
+                    {
+                        delete outStream;
+                        outStream = nullptr;
+                    }
+                    if (outFile)
+                    {
+                        int pointsBetweenTags = pointsWritten - prevPointsWritten;
+                        emit infoMessage("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsBetweenTags));
+                        outFile->close();
+                        delete outFile;
+                        outFile = nullptr;
+                    }
+                }
+
                 beginningUptime = -1;
             }
         }
@@ -253,12 +292,16 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     {
         delete outStream;
     }
-
     if (outFile)
     {
-        emit infoMessage("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsWritten));
+        emit infoMessage("Closing file \"" + outFile->fileName() + "\".");
         outFile->close();
         delete outFile;
+    }
+
+    if (objectActive)
+    {
+        emit infoMessage("Object \"" + objectName + "\": Total points written: " + QString::number(pointsWritten));
     }
 
     emit infoMessage("Point cloud files generated.");
@@ -562,7 +605,43 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
     return true;
 }
 
+QFile *PointCloudGenerator::createNewOutFile(const QString fileName, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
+{
+    QFile* outFile = new QFile(fileName);
 
+    if (outFile->exists())
+    {
+        // File already exists -> Not allowed
 
+        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
+                   QString::number(currentTag.sourceFileLine)+
+                   ", uptime " + QString::number(uptime) +
+                   ", iTOW " + QString::number(currentTag.iTOW) +
+                   ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+        delete outFile;
+        outFile = nullptr;
+        return outFile;
+    }
+
+    emit infoMessage("Creating file \"" + fileName + "\"...");
+
+    if (!outFile->open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        // Creating the file failed
+
+        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
+                   QString::number(currentTag.sourceFileLine)+
+                   ", uptime " + QString::number(uptime) +
+                   ", iTOW " + QString::number(currentTag.iTOW) +
+                   ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+        delete outFile;
+        outFile = nullptr;
+        return outFile;
+    }
+
+    return outFile;
+}
 
 }; // namespace Stylus
