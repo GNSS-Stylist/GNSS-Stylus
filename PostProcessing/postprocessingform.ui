@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>6</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -2598,7 +2598,7 @@
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Create separate output filex for &quot;subscans&quot; (between beginning and ending tags)</string>
+            <string>Create separate output files for &quot;subscans&quot; (between beginning and ending tags)</string>
            </property>
           </widget>
          </widget>
@@ -3300,7 +3300,7 @@ multiply	1	0	0	0
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Create separate output filex for &quot;subscans&quot; (between beginning and ending tags)</string>
+          <string>Create separate output files for &quot;subscans&quot; (between beginning and ending tags)</string>
          </property>
         </widget>
        </widget>
@@ -3556,7 +3556,7 @@ These operations are calculated only once when starting to generate script so ca
            <x>10</x>
            <y>10</y>
            <width>591</width>
-           <height>321</height>
+           <height>291</height>
           </rect>
          </property>
          <property name="toolTip">
@@ -3634,6 +3634,32 @@ These operations are calculated only once when starting to generate script so ca
          </property>
          <property name="text">
           <string>Process</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_RasterCameras_Script_Save">
+         <property name="geometry">
+          <rect>
+           <x>150</x>
+           <y>310</y>
+           <width>151</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Save to file...</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="pushButton_RasterCameras_Script_Load">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>310</y>
+           <width>131</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Load from file...</string>
          </property>
         </widget>
        </widget>

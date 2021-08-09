@@ -172,6 +172,10 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
 
     ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
     ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text()).toString());
+
+    ui->plainTextEdit_RasterCameras_TransformMatrixScript->setPlainText(settings.value("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText()).toString());
+    ui->plainTextEdit_RasterCameras_CameraScript->setPlainText(settings.value("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText()).toString());
+
 }
 
 
@@ -290,6 +294,9 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
 
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
+
+    settings.setValue("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText());
+    settings.setValue("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText());
 }
 
 
@@ -319,6 +326,9 @@ PostProcessingForm::~PostProcessingForm()
 
     settings.setValue("PostProcessing_Directory_Dialog_Parameters_Load", fileDialog_Parameters_Load.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Parameters_Save", fileDialog_Parameters_Save.directory().path());
+
+    settings.setValue("PostProcessing_Directory_Dialog_RasterCameraScript_Load", fileDialog_RasterCameraScript_Load.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_RasterCameraScript_Save", fileDialog_RasterCameraScript_Save.directory().path());
 
     delete ui;
 }
@@ -489,6 +499,21 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_Parameters_Save.setNameFilters(parametersFilters);
 
 
+        fileDialog_RasterCameraScript_Load.setFileMode(QFileDialog::ExistingFile);
+
+        QStringList rasterCameraScriptFilters;
+
+        rasterCameraScriptFilters << "RasterCameraScript-files (*.RasterCameraScript)"
+                << "Any files (*)";
+
+        fileDialog_RasterCameraScript_Load.setNameFilters(rasterCameraScriptFilters);
+
+        fileDialog_RasterCameraScript_Save.setFileMode(QFileDialog::AnyFile);
+        fileDialog_RasterCameraScript_Save.setDefaultSuffix("RasterCameraScript");
+
+        fileDialog_RasterCameraScript_Save.setNameFilters(rasterCameraScriptFilters);
+
+
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
             ui->comboBox_Presets->addItem(transformationPresets[presetIndex].name);
@@ -518,6 +543,9 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
     fileDialog_Parameters_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Parameters_Load").toString()));
     fileDialog_Parameters_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Parameters_Save").toString()));
+
+    fileDialog_RasterCameraScript_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RasterCameraScript_Load").toString()));
+    fileDialog_RasterCameraScript_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RasterCameraScript_Save").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -3780,6 +3808,112 @@ void PostProcessingForm::on_pushButton_RasterCameras_Script_Process_clicked()
         ui->plainTextEdit_RasterCameras_CameraScript->setFocus();
 
         return;
+    }
+}
+
+
+void PostProcessingForm::on_pushButton_RasterCameras_Operations_Load_clicked()
+{
+    loadOperations(ui->plainTextEdit_RasterCameras_TransformMatrixScript);
+}
+
+void PostProcessingForm::on_pushButton_RasterCameras_Operations_Save_clicked()
+{
+    saveOperations(ui->plainTextEdit_RasterCameras_TransformMatrixScript);
+}
+
+
+void PostProcessingForm::on_pushButton_RasterCameras_Script_Load_clicked()
+{
+    if (fileDialog_RasterCameraScript_Load.exec())
+    {
+        QStringList fileNames = fileDialog_RasterCameraScript_Load.selectedFiles();
+
+        if (fileNames.size() != 0)
+        {
+            fileDialog_RasterCameraScript_Load.setDirectory(QFileInfo(fileNames[0]).path());
+            fileDialog_RasterCameraScript_Save.setDirectory(QFileInfo(fileNames[0]).path());
+
+            QString fileName = fileNames[0];
+
+            QFileInfo fileInfo(fileName);
+            addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
+
+            QFile scriptFile;
+            scriptFile.setFileName(fileName);
+            if (scriptFile.open(QIODevice::ReadOnly))
+            {
+                ui->plainTextEdit_RasterCameras_CameraScript->setPlainText(QString::fromUtf8(scriptFile.readAll()));
+                scriptFile.close();
+                addLogLine("Camera script read.");
+            }
+            else
+            {
+                addLogLine("Error: Can't open file \"" + fileInfo.fileName() + "\".");
+            }
+        }
+        else
+        {
+            addLogLine("Warning: No camera script file selected. Script not read.");
+        }
+    }
+}
+
+
+
+void PostProcessingForm::on_pushButton_RasterCameras_Script_Save_clicked()
+{
+    if (fileDialog_RasterCameraScript_Save.exec())
+    {
+        QStringList fileNameList = fileDialog_RasterCameraScript_Save.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_RasterCameraScript_Load.setDirectory(QFileInfo(fileNameList[0]).path());
+            fileDialog_RasterCameraScript_Save.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Error: Multiple file selection not supported. Script not saved.");
+            return;
+        }
+
+        QFile cameraScriptFile;
+
+        cameraScriptFile.setFileName(fileNameList[0]);
+
+        if (cameraScriptFile.exists())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("File already exists.");
+            msgBox.setInformativeText("How to proceed?");
+
+            QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+            QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+
+            msgBox.setDefaultButton(cancelButton);
+
+            msgBox.exec();
+
+            if (msgBox.clickedButton() != overwriteButton)
+            {
+                addLogLine("Script not saved.");
+                return;
+            }
+        }
+
+        if (!cameraScriptFile.open(QIODevice::WriteOnly))
+        {
+            addLogLine("Error: Can't open script file " + fileNameList[0] + ".");
+            return;
+        }
+
+        cameraScriptFile.write(ui->plainTextEdit_RasterCameras_CameraScript->toPlainText().toUtf8());
+
+        cameraScriptFile.close();
+
+        addLogLine("Camera script saved.");
     }
 }
 

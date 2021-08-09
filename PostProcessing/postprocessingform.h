@@ -266,6 +266,14 @@ private slots:
 
     void on_pushButton_RasterCameras_Script_Process_clicked();
 
+    void on_pushButton_RasterCameras_Operations_Load_clicked();
+
+    void on_pushButton_RasterCameras_Operations_Save_clicked();
+
+    void on_pushButton_RasterCameras_Script_Load_clicked();
+
+    void on_pushButton_RasterCameras_Script_Save_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -330,6 +338,9 @@ private:
 
     QFileDialog fileDialog_Parameters_Load;
     QFileDialog fileDialog_Parameters_Save;
+
+    QFileDialog fileDialog_RasterCameraScript_Load;
+    QFileDialog fileDialog_RasterCameraScript_Save;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;
