@@ -1,5 +1,5 @@
 /*
-    meshlabrastercameragenerator.cpp (part of GNSS-Stylus)
+    rastercameragenerator.cpp (part of GNSS-Stylus)
     Copyright (C) 2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,17 @@
 
 #include <QDebug>
 
-#include "meshlabrastercameragenerator.h"
+#include "rastercameragenerator.h"
 #include "EasyEXIF/exif.h"
 
-MeshLabRasterCameraGenerator::MeshLabRasterCameraGenerator()
+RasterCameraGenerator::RasterCameraGenerator()
 {
     init();
 }
 
-void MeshLabRasterCameraGenerator::init(void)
+void RasterCameraGenerator::init(void)
 {
-    xmlRasterItemFormatString.clear();
+    rasterItemOutputFormatString.clear();
 
     baseDir.setPath("");
     relativeDir.setPath("");
@@ -42,7 +42,7 @@ void MeshLabRasterCameraGenerator::init(void)
     outString.clear();
 }
 
-MeshLabRasterCameraGenerator::Item::Item(const QString& text, const int lineNumber, const int firstCol, const int lastCol)
+RasterCameraGenerator::Item::Item(const QString& text, const int lineNumber, const int firstCol, const int lastCol)
 {
     this->text = text;
     this->lineNumber = lineNumber;
@@ -50,7 +50,7 @@ MeshLabRasterCameraGenerator::Item::Item(const QString& text, const int lineNumb
     this->lastCol = lastCol;
 };
 
-QString MeshLabRasterCameraGenerator::generate(const Params& params)
+QString RasterCameraGenerator::generate(const Params& params)
 {
     init();
 
@@ -228,17 +228,17 @@ QString MeshLabRasterCameraGenerator::generate(const Params& params)
     return outString;
 }
 
-void MeshLabRasterCameraGenerator::processCommand(const QVector<Item>& command, const Params& params)
+void RasterCameraGenerator::processCommand(const QVector<Item>& command, const Params& params)
 {
     QString cmd0 = command.at(0).text.toLower();
 
-    if (cmd0 == "xmlwritestring")
+    if (cmd0 == "writeoutputstring")
     {
-        cmd_XMLWriteString(command);
+        cmd_WriteOutputString(command);
     }
-    else if (cmd0 == "xmlrasteritemformatstring")
+    else if (cmd0 == "rasteritemoutputformatstring")
     {
-        cmd_XMLRasterItemFormatString(command);
+        cmd_RasterItemOutputFormatString(command);
     }
     else if (cmd0 == "basepath")
     {
@@ -269,17 +269,17 @@ void MeshLabRasterCameraGenerator::processCommand(const QVector<Item>& command, 
     }
 }
 
-void MeshLabRasterCameraGenerator::cmd_XMLWriteString(const QVector<Item>& command)
+void RasterCameraGenerator::cmd_WriteOutputString(const QVector<Item>& command)
 {
     outString += command.at(1).text;
 }
 
-void MeshLabRasterCameraGenerator::cmd_XMLRasterItemFormatString(const QVector<Item>& command)
+void RasterCameraGenerator::cmd_RasterItemOutputFormatString(const QVector<Item>& command)
 {
-    genericStringCmd(command, xmlRasterItemFormatString);
+    genericStringCmd(command, rasterItemOutputFormatString);
 }
 
-QDateTime MeshLabRasterCameraGenerator::readEXIFDateTimeFromString(QString dateTimeString)
+QDateTime RasterCameraGenerator::readEXIFDateTimeFromString(QString dateTimeString)
 {
     QDateTime dateTime;
 
@@ -298,7 +298,7 @@ QDateTime MeshLabRasterCameraGenerator::readEXIFDateTimeFromString(QString dateT
     }
 }
 
-QDateTime MeshLabRasterCameraGenerator::readEXIFDateTimeFromFile(const QString fileName)
+QDateTime RasterCameraGenerator::readEXIFDateTimeFromFile(const QString fileName)
 {
     QFile file(fileName);
     file.open(QIODevice::ReadOnly | QIODevice::ExistingOnly);
@@ -328,7 +328,7 @@ QDateTime MeshLabRasterCameraGenerator::readEXIFDateTimeFromFile(const QString f
     return dateTime;
 }
 
-void MeshLabRasterCameraGenerator::genericStringCmd(const QVector<Item>& command, QString& string)
+void RasterCameraGenerator::genericStringCmd(const QVector<Item>& command, QString& string)
 {
     checkArgumentCount(command, 1, 2);
 
@@ -357,21 +357,21 @@ void MeshLabRasterCameraGenerator::genericStringCmd(const QVector<Item>& command
     }
 }
 
-void MeshLabRasterCameraGenerator::cmd_BasePath(const QVector<Item> &command)
+void RasterCameraGenerator::cmd_BasePath(const QVector<Item> &command)
 {
     genericPathCmd(command, baseDir, "Base path");
 
     emit infoMessage("Full path is now \"" + fullPath() + "\".");
 }
 
-void MeshLabRasterCameraGenerator::cmd_RelativePath(const QVector<Item> &command)
+void RasterCameraGenerator::cmd_RelativePath(const QVector<Item> &command)
 {
     genericPathCmd(command, relativeDir, "Relative path");
 
     emit infoMessage("Full path is now \"" + fullPath() + "\".");
 }
 
-void MeshLabRasterCameraGenerator::cmd_ReferenceTimeImage(const QVector<Item>& command)
+void RasterCameraGenerator::cmd_ReferenceTimeImage(const QVector<Item>& command)
 {
     checkArgumentCount(command, 2, 3);
 
@@ -465,7 +465,7 @@ void MeshLabRasterCameraGenerator::cmd_ReferenceTimeImage(const QVector<Item>& c
                      " (-1: value not defined)");
 }
 
-void MeshLabRasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& command, const Params& params)
+void RasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& command, const Params& params)
 {
     checkArgumentCount(command, 1, 2);
 
@@ -593,7 +593,7 @@ void MeshLabRasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& comman
 
         Eigen::Transform<double, 3, Eigen::Affine> finalMatrix = *params.transform_NEDToXYZ * transform_LoSolver * *params.transform_Generated * transform_XYZToNED_NoTranslation;
 
-        QString fileString = xmlRasterItemFormatString;
+        QString fileString = rasterItemOutputFormatString;
 
         const int originDecimals = 4;
         const int unitVectorDecimals = 6;
@@ -640,7 +640,7 @@ void MeshLabRasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& comman
     }
 }
 
-void MeshLabRasterCameraGenerator::cmd_TimeShift(const QVector<Item>& command)
+void RasterCameraGenerator::cmd_TimeShift(const QVector<Item>& command)
 {
     checkArgumentCount(command, 1, 1);
 
@@ -656,7 +656,7 @@ void MeshLabRasterCameraGenerator::cmd_TimeShift(const QVector<Item>& command)
     }
 }
 
-void MeshLabRasterCameraGenerator::genericPathCmd(const QVector<Item>& command, QDir& dir, QString pathTitle)
+void RasterCameraGenerator::genericPathCmd(const QVector<Item>& command, QDir& dir, QString pathTitle)
 {
     checkArgumentCount(command, 1, 2);
 
@@ -706,7 +706,7 @@ void MeshLabRasterCameraGenerator::genericPathCmd(const QVector<Item>& command, 
     }
 }
 
-QString MeshLabRasterCameraGenerator::fullPath(QString fileName)
+QString RasterCameraGenerator::fullPath(QString fileName)
 {
     QString fullPath;
 
@@ -740,7 +740,7 @@ QString MeshLabRasterCameraGenerator::fullPath(QString fileName)
     */
 }
 
-void MeshLabRasterCameraGenerator::checkArgumentCount(const QVector<Item>& command, const int argsNumMin, int argsNumMax)
+void RasterCameraGenerator::checkArgumentCount(const QVector<Item>& command, const int argsNumMin, int argsNumMax)
 {
     if (argsNumMax == -1)
     {

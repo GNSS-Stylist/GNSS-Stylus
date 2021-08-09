@@ -1,5 +1,5 @@
 /*
-    meshlabrastercameragenerator.h (part of GNSS-Stylus)
+    rastercameragenerator.h (part of GNSS-Stylus)
     Copyright (C) 2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,15 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef MESHLABRASTERCAMERAGENERATOR_H
-#define MESHLABRASTERCAMERAGENERATOR_H
+#ifndef RASTERCAMERAGENERATOR_H
+#define RASTERCAMERAGENERATOR_H
 
 #include <QStringList>
 #include <QDir>
 
 #include "postprocessingform.h"
 
-class MeshLabRasterCameraGenerator : public QObject
+class RasterCameraGenerator : public QObject
 {
     Q_OBJECT
 public:
@@ -58,14 +58,14 @@ public:
         QString text;
     };
 
-    MeshLabRasterCameraGenerator();
+    RasterCameraGenerator();
 
     QString generate(const Params& params);
     void init(void);
 
 private:
 
-    QString xmlRasterItemFormatString;
+    QString rasterItemOutputFormatString;
 
     QDir baseDir;
     QDir relativeDir;
@@ -89,8 +89,8 @@ private:
     QDateTime readEXIFDateTimeFromString(QString dateTimeString);
     QDateTime readEXIFDateTimeFromFile(const QString fileName);
 
-    void cmd_XMLWriteString(const QVector<Item>& command);
-    void cmd_XMLRasterItemFormatString(const QVector<Item>& command);
+    void cmd_WriteOutputString(const QVector<Item>& command);
+    void cmd_RasterItemOutputFormatString(const QVector<Item>& command);
 
     void cmd_BasePath(const QVector<Item>& command);
     void cmd_RelativePath(const QVector<Item>& command);
@@ -105,4 +105,4 @@ signals:
     void errorMessage(const QString&);      //!< Signal for error message
 };
 
-#endif // MESHLABRASTERCAMERAGENERATOR_H
+#endif // RASTERCAMERAGENERATOR_H

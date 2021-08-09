@@ -51,8 +51,8 @@ SOURCES += \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
     PostProcessing/loscriptgenerator.cpp \
-    PostProcessing/meshlabrastercameragenerator.cpp \
     PostProcessing/postprocessingform.cpp \
+    PostProcessing/rastercameragenerator.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
     Lidar/lidarchartform.cpp \
@@ -84,8 +84,8 @@ HEADERS += \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
     PostProcessing/loscriptgenerator.h \
-    PostProcessing/meshlabrastercameragenerator.h \
     PostProcessing/postprocessingform.h \
+    PostProcessing/rastercameragenerator.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
     Lidar/lidarchartform.h \

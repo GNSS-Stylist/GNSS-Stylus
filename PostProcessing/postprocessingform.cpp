@@ -31,7 +31,7 @@
 #include "Lidar/pointcloudgeneratorlidar.h"
 #include "loscriptgenerator.h"
 #include "Lidar/lidarscriptgenerator.h"
-#include "meshlabrastercameragenerator.h"
+#include "rastercameragenerator.h"
 
 struct
 {
@@ -3759,7 +3759,7 @@ void PostProcessingForm::on_pushButton_RasterCameras_Script_Process_clicked()
         return;
     }
 
-    MeshLabRasterCameraGenerator::Params params;
+    RasterCameraGenerator::Params params;
 
     params.transform_NEDToXYZ = &transform_NEDToXYZ;
     params.transform_Generated = &transform_Generated;
@@ -3769,24 +3769,24 @@ void PostProcessingForm::on_pushButton_RasterCameras_Script_Process_clicked()
     params.rovers = rovers;
     params.loInterpolator = &loInterpolator;
 
-    MeshLabRasterCameraGenerator meshLabRasterCameraGenerator;
+    RasterCameraGenerator rasterCameraGenerator;
 
-    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::infoMessage,
+    connect(&rasterCameraGenerator, &RasterCameraGenerator::infoMessage,
                      this, &PostProcessingForm::on_infoMessage);
 
-    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::warningMessage,
+    connect(&rasterCameraGenerator, &RasterCameraGenerator::warningMessage,
                      this, &PostProcessingForm::on_warningMessage);
 
-    connect(&meshLabRasterCameraGenerator, &MeshLabRasterCameraGenerator::errorMessage,
+    connect(&rasterCameraGenerator, &RasterCameraGenerator::errorMessage,
                      this, &PostProcessingForm::on_errorMessage);
 
     try
     {
-        QString meshLabString = meshLabRasterCameraGenerator.generate(params);
+        QString rasterCameraString = rasterCameraGenerator.generate(params);
 
-        ui->plainTextEdit_Log->appendPlainText(meshLabString);
+        ui->plainTextEdit_Log->appendPlainText(rasterCameraString);
     }
-    catch (MeshLabRasterCameraGenerator::Issue& issue)
+    catch (RasterCameraGenerator::Issue& issue)
     {
         addLogLine("Generating raster cameras failed. Error: " + issue.text +
                    " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1));
