@@ -38,7 +38,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>6</number>
+      <number>1</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -2145,7 +2145,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab_Stylus_MovieScript">
           <property name="autoFillBackground">
@@ -2725,6 +2725,9 @@
          </rect>
         </property>
         <property name="toolTip">
+         <string>Press Shift-F1 for help</string>
+        </property>
+        <property name="whatsThis">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
 &lt;ul&gt;
 	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
@@ -2943,6 +2946,9 @@ multiply	1	0	0	0
           </rect>
          </property>
          <property name="toolTip">
+          <string>Press shift-F1 for help</string>
+         </property>
+         <property name="whatsThis">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
 &lt;ul&gt;
 	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
@@ -3086,6 +3092,9 @@ multiply	1	0	0	0
           </rect>
          </property>
          <property name="toolTip">
+          <string>Press shift-F1 for help</string>
+         </property>
+         <property name="whatsThis">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
 &lt;ul&gt;
 	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
@@ -3466,6 +3475,9 @@ multiply	1	0	0	0
           </rect>
          </property>
          <property name="toolTip">
+          <string>Press shift-F1 for help</string>
+         </property>
+         <property name="whatsThis">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
 &lt;ul&gt;
 	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
@@ -3560,67 +3572,154 @@ These operations are calculated only once when starting to generate script so ca
           </rect>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+          <string>Press shift-F1 for help</string>
+         </property>
+         <property name="toolTipDuration">
+          <number>-1</number>
+         </property>
+         <property name="whatsThis">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+&lt;p&gt;
+	These are commands used to generate camera location/orientation data. Data is outputted as text to the log where it can be copied from. 
+&lt;/p&gt;
+&lt;p&gt;
+	Each operation must end in &amp;quot;;&amp;quot;-character.
+	Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment).
+	Commands and arguments are case-insensitive.
+	You may enclose arguments in quotes (&amp;quot;) when needed (like using space inside a string).
+&lt;/p&gt;
+&lt;p&gt;
+	Following escape characters can be used:
+	&amp;quot;\\&amp;quot;: Backslash (&amp;quot;\&amp;quot;), 
+	&amp;quot;\&quot;&amp;quot;: Quote mark (&amp;quot;&amp;quot;&amp;quot;),
+	&amp;quot;\n&amp;quot;: New line,
+	&amp;quot;\'&amp;quot;: Single quote (&amp;quot;'&amp;quot;),
+	&amp;quot;\t&amp;quot;: Tabulator
+&lt;/p&gt;
+&lt;p&gt;Available commands:
 &lt;ul&gt;
-	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
-	&lt;br&gt;Where: 
-	&lt;ul&gt;
-		&lt;li&gt;axis = 
+	&lt;li&gt;WriteOutputString &amp;lt;String&amp;gt;
+		&lt;br&gt;Where: 
 		&lt;ul&gt;
-			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
-			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
-			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+			&lt;li&gt;String = string to write directly into output &lt;/li&gt;
 		&lt;/ul&gt;
-		&lt;/li&gt;
-		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
-		&lt;li&gt;unit = 
-		&lt;ul&gt;
-			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
-			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
-		&lt;/ul&gt;
-		&lt;/li&gt;
-	&lt;/ul&gt;
 	&lt;/li&gt;
 
-	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
-	&lt;br&gt;Where:
-	&lt;ul&gt;
-		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
-	&lt;/ul&gt;
+	&lt;li&gt;RasterItemOutputFormatString &amp;lt;SubCommand&amp;gt; &amp;lt;String&amp;gt;
+		&lt;br&gt;Where:
+		&lt;ul&gt;
+			&lt;li&gt;SubCommand =
+				&lt;ul&gt;
+					&lt;li&gt;Clear: Clear existing string&lt;/li&gt;
+					&lt;li&gt;Set: Set format string to &amp;lt;String&amp;gt; &lt;/li&gt;
+					&lt;li&gt;Append: Append &amp;lt;String&amp;gt; to format string&lt;/li&gt;
+				&lt;/ul&gt;
+			&lt;/li&gt;
+			&lt;li&gt;String (used only when &amp;lt;SubCommand&amp;gt; is &quot;Set&quot; or &quot;Append&quot;) = String to set or append to format string. See description below for format string handling.&lt;/li&gt;
+		&lt;/ul&gt;
 	&lt;/li&gt;
 
-	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
-	&lt;br&gt;Where: 
-	&lt;ul&gt;
-		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
-	&lt;/ul&gt;
+	&lt;li&gt;BasePath and RelativePath &amp;lt;SubCommand&amp;gt; &amp;lt;String&amp;gt;
+		&lt;br&gt;Where:
+		&lt;ul&gt;
+			&lt;li&gt;SubCommand =
+				&lt;ul&gt;
+					&lt;li&gt;Clear: Clear existing path&lt;/li&gt;
+					&lt;li&gt;Set: Set path to &amp;lt;String&amp;gt; &lt;/li&gt;
+					&lt;li&gt;Append: Append &amp;lt;String&amp;gt; to path&lt;/li&gt;
+					&lt;li&gt;Home: set path to home path (depends on the OS, not meaningful with RelativePath when BasePath is non-empty)&lt;/li&gt;
+					&lt;li&gt;Root: set path to root path (depends on the OS, not meaningful with RelativePath when BasePath is non-empty)&lt;/li&gt;
+					&lt;li&gt;Cd: Changes path relative to current path to &amp;lt;String&amp;gt; (Note: Directory must exists, otherwise operation will fail. Not meaningful with RelativePath when BasePath is non-empty)&lt;/li&gt;
+				&lt;/ul&gt;
+			&lt;/li&gt;
+			&lt;li&gt;String (used only when &amp;lt;SubCommand&amp;gt; is &quot;Set&quot;, &quot;Append&quot; or &quot;Cd&quot;) = String to set, append or &quot;cd&quot; to base path.&lt;/li&gt;
+		&lt;/ul&gt;
+		Paths can be used when generating raster image data or reading reference image. See description below for format string handling.
+	&lt;/li&gt;
+
+	&lt;li&gt;ReferenceTimeImage &amp;lt;Filename&amp;gt; &amp;lt;Timestamp1&amp;gt; &amp;lt;Timestamp2&amp;gt;
+		&lt;br&gt;Where:
+		&lt;ul&gt;
+			&lt;li&gt;Filename = File name of the file to read EXIF reference date&amp;amp;time from.&lt;/li&gt;
+			&lt;li&gt;Timestampx = Either ITOW (ITOW:value) or uptime (Uptime:value) this image corresponds to. Both can be defined at the same time.&lt;/li&gt;
+		&lt;/ul&gt;
+		Reference time image is used to calculate time difference of other processed still images so that the location/orientation of the camera for them can be solved. You can use placeholders &quot;%{BASEPATH}&quot;, &quot;%{RELATIVEPATH}&quot; and &quot;%{FULLPATH}&quot; in the &amp;lt;Filename&amp;gt; as needed.
+	&lt;/li&gt;
+
+	&lt;li&gt;TimeShift &amp;lt;Shift&amp;gt;
+		&lt;br&gt;Where:
+		&lt;ul&gt;
+			&lt;li&gt;Shift = Time shift to use when processing images&lt;/li&gt;
+		&lt;/ul&gt;
+		Time shift (ms) to use when processing images using &amp;lt;ProcessStills&amp;gt;-command. Smaller/negative values lead to earlier ITOWs/uptimes. Added due to resolution of the EXIF-times being typically only 1 s. It's also possible that the photo shooter (like me) may stay still before taking the photo but forget to stay still afterwards so for more acurate location/orientation it may be wise to use small negative value here.
+	&lt;/li&gt;
+
+	&lt;li&gt;ProcessStills &amp;lt;Filter&amp;gt; &amp;lt;Timestamps&amp;gt;
+		&lt;br&gt;Where:
+		&lt;ul&gt;
+			&lt;li&gt;Filter = Filename filter to use (like &quot;*.jpg&quot;)&lt;/li&gt;
+			&lt;li&gt;Timestamps = either &quot;ITOWS&quot; or &quot;Uptimes&quot;. What type of timestamps to use for sync.&lt;/li&gt;
+		&lt;/ul&gt;
+		Processes still images in directory &quot;basepath/relativepath&quot;. For every file matching the filter, corresponding raster image item is created into the output, using format string defined using command &quot;RasterItemOutputFormatString&quot;. Location/orientation is calculated using rovers' log data and images' EXIF dates/times.
 	&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;
-Example:&lt;br&gt;
-// These operations move camera in relation to the rig's origin&lt;br&gt;
-// First move camera's viewing reference point in relation to the mounting point (so we can move the mounting point next):&lt;br&gt;
-translate 0.010 -0.005 -0.030; // Lens' &quot;origin&quot; 10 mm forward, 5 mm left and 30 mm up from the mounting point&lt;br&gt;
-// Now we can operate on mounting point:&lt;br&gt;
-translate -0.200 0.050 -0.150; // Mounting point 200 mm back, 50 mm  right and 150 mm up from the rig's origin&lt;br&gt;
-// Camera is slightly pointing down:&lt;br&gt;
-rotate pitch -5 deg; // Turn the camera 5 degrees down&lt;br&gt;
-// Since the mount may not be perfect, add some calibration values:&lt;br&gt;
-rotate yaw 0.5 deg;&lt;br&gt;
-rotate roll -2 deg;&lt;br&gt;
-&lt;/p&gt;
-&lt;p&gt;
-These operations are calculated only once when starting to generate script so calculating doesn't affect overall performance noticeably.
+Available format string placeholders:
+&lt;ul&gt;
+&lt;li&gt;&quot;%{TRANSLATION_X/Y/Z}&quot;: Translation (location) of the camera in XYZ-space, X/Y/Z indicating the axis.&lt;/li&gt;
+&lt;li&gt;&quot;%{TRANSLATION_NEGATED_X/Y/Z}&quot;: Negated (* -1) translation (location) of the camera in XYZ-space, X/Y/Z indicating the axis.&lt;/li&gt;
+&lt;li&gt;&quot;%{LINEAR_CR}&quot;: Linear part of the transformation matrix, C/R indicating column and row (1...3).&lt;/li&gt;
+&lt;li&gt;&quot;%{LINEAR_NEGATED_CR}&quot;: Negated (* -1) linear part of the transformation matrix, C/R indicating column and row (1...3).&lt;/li&gt;
+&lt;li&gt;&quot;%{BASEPATH}&quot;: Base path defined by command &quot;BasePath&quot;.&lt;/li&gt;
+&lt;li&gt;&quot;%{RELATIVEPATH}&quot;: Relative path defined by command &quot;RelativePath&quot;.&lt;/li&gt;
+&lt;li&gt;&quot;%{FILENAME}&quot;: Name of the file without a path.&lt;/li&gt;
+&lt;li&gt;&quot;%{FULLPATH}&quot;: Full path defined by commands &quot;Basepath&quot; and &quot;RelativePath&quot;.&lt;/li&gt;
+&lt;li&gt;&quot;%{FULLFILEPATH}&quot;: Full path of the file defined by commands &quot;Basepath&quot; and &quot;RelativePath&quot; and appended with the file name in question.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;/p&gt;
 
-&lt;/body&gt;&lt;/html&gt;</string>
+
+
+&lt;/body&gt;&lt;/html&gt;
+</string>
          </property>
          <property name="lineWrapMode">
           <enum>QPlainTextEdit::NoWrap</enum>
          </property>
          <property name="plainText">
-          <string>// See location/orientation solver script for more information about operations</string>
+          <string>// Example:
+// This outputs MeshLab-compatible (in .mpl-file's section) raster camera definitions
+
+// XML-section header
+WriteOutputString &quot; &lt;RasterGroup&gt;\n&quot;;
+
+// RasterItemOutputString is used for all images processed later.
+RasterItemOutputFormatString Set &quot;  &lt;MLRaster label=\&quot;%{FULLFILEPATH}\&quot;&gt;\n&quot;;
+// Your VCGCamera-values may differ. I recommend setting a reference raster by hand in MeshLab and
+// cloning the line here, replacing the fields needed.
+RasterItemOutputFormatString Append &quot;   &lt;VCGCamera TranslationVector=\&quot;%{TRANSLATION_NEGATED_X} %{TRANSLATION_NEGATED_Y} %{TRANSLATION_NEGATED_Z} 1\&quot; FocalMm=\&quot;32.614948\&quot; CenterPx=\&quot;2448 1836\&quot; CameraType=\&quot;0\&quot; LensDistortion=\&quot;0 0\&quot; RotationMatrix=\&quot;%{LINEAR_11} %{LINEAR_12} %{LINEAR_13} 0 %{LINEAR_21} %{LINEAR_22} %{LINEAR_23} 0 %{LINEAR_31} %{LINEAR_32} %{LINEAR_33} 0 0 0 0 1 \&quot; BinaryData=\&quot;0\&quot; PixelSizeMm=\&quot;0.00891736 0.00891736\&quot; ViewportPx=\&quot;4896 3672\&quot;/&gt;\n&quot;;
+RasterItemOutputFormatString Append &quot;   &lt;Plane fileName=\&quot;%{RELATIVEPATH}/%{FILENAME}\&quot; semantic=\&quot;1\&quot;/&gt;\n&quot;;
+RasterItemOutputFormatString Append &quot;  &lt;/MLRaster&gt;\n&quot;;
+
+// Base- and relative paths can be defined separately to make it easier to handle relative paths in output
+BasePath set &quot;D:/GNSSStylusData/Logs/Test/MeshLab&quot;;
+RelativePath set &quot;Rasters&quot;;
+
+// Reference image is used as a basis for date/time.
+ReferenceTimeImage &quot;%{FULLPATH}/Reference.JPG&quot; ITOW:579198875 uptime:630900;
+
+// TimeShift can be used to fix sync. You may like to use negative values here if, for example you
+// tend to move right after taking a photo. Then the location/orientation will be calculated from a time
+// before the actual EXIF-time. Also the resolution of the time here is only 1 s.
+TimeShift -1500;
+
+// This processes files matching the filter in the directory BasePath/RelativePath
+// My camera uses filenames formatted as DSCxxxxx.JPG
+// Timestamps used are ITOWs
+ProcessStills DSC*.JPG itows;
+
+// XML-section ending tag
+WriteOutputString &quot; &lt;/RasterGroup&gt;&quot;;</string>
          </property>
         </widget>
         <widget class="QPushButton" name="pushButton_RasterCameras_Script_Process">
