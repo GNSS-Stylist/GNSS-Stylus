@@ -271,6 +271,7 @@ void RasterCameraGenerator::processCommand(const QVector<Item>& command, const P
 
 void RasterCameraGenerator::cmd_WriteOutputString(const QVector<Item>& command)
 {
+    checkArgumentCount(command, 1);
     outString += command.at(1).text;
 }
 
@@ -379,6 +380,7 @@ void RasterCameraGenerator::cmd_ReferenceTimeImage(const QVector<Item>& command)
 
     fileName.replace("%{BASEPATH}", baseDir.path());
     fileName.replace("%{RELATIVEPATH}", relativeDir.path());
+    fileName.replace("%{FULLPATH}", fullPath());
 
     emit infoMessage("Opening and parsing time reference image file \"" + fileName + "\"...");
 
@@ -598,9 +600,9 @@ void RasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& command, cons
         const int originDecimals = 4;
         const int unitVectorDecimals = 6;
 
-        fileString.replace("%{ORIGIN_X}", QString::number(finalMatrix(0,3), 'f', originDecimals));
-        fileString.replace("%{ORIGIN_Y}", QString::number(finalMatrix(1,3), 'f', originDecimals));
-        fileString.replace("%{ORIGIN_Z}", QString::number(finalMatrix(2,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_X}", QString::number(finalMatrix(0,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_Y}", QString::number(finalMatrix(1,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_Z}", QString::number(finalMatrix(2,3), 'f', originDecimals));
 
         fileString.replace("%{LINEAR_11}", QString::number(finalMatrix(0,0), 'f', unitVectorDecimals));
         fileString.replace("%{LINEAR_12}", QString::number(finalMatrix(1,0), 'f', unitVectorDecimals));
@@ -614,9 +616,9 @@ void RasterCameraGenerator::cmd_ProcessStills(const QVector<Item>& command, cons
         fileString.replace("%{LINEAR_32}", QString::number(finalMatrix(1,2), 'f', unitVectorDecimals));
         fileString.replace("%{LINEAR_33}", QString::number(finalMatrix(2,2), 'f', unitVectorDecimals));
 
-        fileString.replace("%{ORIGIN_NEGATED_X}", QString::number(-finalMatrix(0,3), 'f', originDecimals));
-        fileString.replace("%{ORIGIN_NEGATED_Y}", QString::number(-finalMatrix(1,3), 'f', originDecimals));
-        fileString.replace("%{ORIGIN_NEGATED_Z}", QString::number(-finalMatrix(2,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_NEGATED_X}", QString::number(-finalMatrix(0,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_NEGATED_Y}", QString::number(-finalMatrix(1,3), 'f', originDecimals));
+        fileString.replace("%{TRANSLATION_NEGATED_Z}", QString::number(-finalMatrix(2,3), 'f', originDecimals));
 
         fileString.replace("%{LINEAR_NEGATED_11}", QString::number(-finalMatrix(0,0), 'f', unitVectorDecimals));
         fileString.replace("%{LINEAR_NEGATED_12}", QString::number(-finalMatrix(1,0), 'f', unitVectorDecimals));
