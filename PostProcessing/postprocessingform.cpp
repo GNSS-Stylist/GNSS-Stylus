@@ -3158,100 +3158,126 @@ PostProcessingForm::LOInterpolator::LOInterpolator(PostProcessingForm* owner)
     {
         for (int ii = 0; ii < 2; ii++)
         {
-            roverUptimeLimits[i][ii] = -1;
             roverITOWLimits[i][ii] = -1;
         }
     }
+    roverUptimeLimit_Low = -1;
+    roverUptimeLimit_High = -1;
 }
 
-void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_Uptime(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform)
+void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_Uptime(
+        const qint64 uptime, const QMap<qint64, UBXMessage_RELPOSNED::ITOW>& averagedRoverUptimeSync,
+        Eigen::Transform<double, 3, Eigen::Affine>& transform,
+        const unsigned int maxInterpolationTimerange)
 {
-    // TODO: This should use quaternions to work better.
-    // As measurements are received 8 times/s typically,
-    // interpolating coordinates may not be a big issue either.
-    // If using quaternions, rover data should be ITOW-synced.
-
-    UBXMessage_RELPOSNED interpolated_Rovers[3];
+    UBXMessage_RELPOSNED roverRELPOSNEDS_Low[3];
+    UBXMessage_RELPOSNED roverRELPOSNEDS_High[3];
     const Rover* crovers = owner->rovers;
 
-    for (int i = 0; i < 3; i++)
+    if ((uptime < roverUptimeLimit_Low) || (uptime >= roverUptimeLimit_High))
     {
-        if ((uptime <= roverUptimeLimits[i][0]) || (uptime > roverUptimeLimits[i][1]))
+        // "Cache miss" -> Find new limiting values
+
+        auto roverUptimeIter = averagedRoverUptimeSync.upperBound(uptime);
+
+        if (roverUptimeIter == averagedRoverUptimeSync.end())
         {
-            // "Cache miss" -> Find new limiting values
-
-            QMap<qint64, RoverSyncItem>::const_iterator roverUptimeIter = crovers[i].roverSyncData.lowerBound(uptime);
-
-            if (roverUptimeIter != crovers[i].roverSyncData.end())
-            {
-                roverUptimeLimits[i][1] = roverUptimeIter.key();
-
-                const RoverSyncItem upperSyncItem = roverUptimeIter.value();
-                RoverSyncItem lowerSyncItem;
-
-                if (roverUptimeIter == crovers[i].roverSyncData.begin())
-                {
-                    roverUptimeLimits[i][0] = -1;
-                    roverUptimeLimits[i][1] = -1;
-                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (higher limit).");
-                }
-
-                roverUptimeIter--;
-                lowerSyncItem = roverUptimeIter.value();
-                roverUptimeLimits[i][0] = roverUptimeIter.key();
-
-                if (crovers[i].relposnedMessages.find(upperSyncItem.iTOW) == crovers[i].relposnedMessages.end())
-                {
-                    roverUptimeLimits[i][0] = -1;
-                    roverUptimeLimits[i][1] = -1;
-                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (higher limit).");
-                }
-
-                if (crovers[i].relposnedMessages.find(lowerSyncItem.iTOW) == crovers[i].relposnedMessages.end())
-                {
-                    roverUptimeLimits[i][0] = -1;
-                    roverUptimeLimits[i][1] = -1;
-                    throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " iTOW (lower limit).");
-                }
-
-                roverUptimeBasedRELPOSNEDS_Lower[i] = crovers[i].relposnedMessages.find(lowerSyncItem.iTOW).value();
-                roverUptimeBasedRELPOSNEDS_Upper[i] = crovers[i].relposnedMessages.find(upperSyncItem.iTOW).value();
-            }
-            else
-            {
-                roverUptimeLimits[i][0] = -1;
-                roverUptimeLimits[i][1] = -1;
-                throw QString("Can not find corresponding rover" + owner->getRoverIdentString(i) + " sync data (upper limit).");
-            }
+            roverUptimeLimit_Low = -1;
+            roverUptimeLimit_High = -1;
+            throw QString("Can not find corresponding rover uptime-averaged sync data (higher limit).");
         }
 
-        qint64 timeDiff = uptime - roverUptimeLimits[i][0];
+        if (roverUptimeIter == averagedRoverUptimeSync.begin())
+        {
+            roverUptimeLimit_Low = -1;
+            roverUptimeLimit_High = -1;
+            throw QString("Can not find corresponding rover uptime-averaged sync data (lower limit).");
+        }
 
-        interpolated_Rovers[i] = UBXMessage_RELPOSNED::interpolateCoordinates(roverUptimeBasedRELPOSNEDS_Lower[i],
-                                roverUptimeBasedRELPOSNEDS_Upper[i], roverUptimeBasedRELPOSNEDS_Lower[i].iTOW + timeDiff);
+        roverUptimeLimit_High = roverUptimeIter.key();
+        UBXMessage_RELPOSNED::ITOW roverITOWLimit_High = roverUptimeIter.value();
+        roverUptimeIter--;
+        roverUptimeLimit_Low = roverUptimeIter.key();
+        UBXMessage_RELPOSNED::ITOW roverITOWLimit_Low = roverUptimeIter.value();
+
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator roverRELPOSNEDS_High[3];
+        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator roverRELPOSNEDS_Low[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            roverRELPOSNEDS_Low[i] = crovers[i].relposnedMessages.lowerBound(roverITOWLimit_Low);
+            roverRELPOSNEDS_High[i] = crovers[i].relposnedMessages.lowerBound(roverITOWLimit_High);
+            Q_ASSERT(roverRELPOSNEDS_Low[i].key() == roverITOWLimit_Low);
+            Q_ASSERT(roverRELPOSNEDS_High[i].key() == roverITOWLimit_High);
+        }
+
+        Eigen::Vector3d points_Low[3] =
+        {
+            { roverRELPOSNEDS_Low[0]->relPosN, roverRELPOSNEDS_Low[0]->relPosE, roverRELPOSNEDS_Low[0]->relPosD },
+            { roverRELPOSNEDS_Low[1]->relPosN, roverRELPOSNEDS_Low[1]->relPosE, roverRELPOSNEDS_Low[1]->relPosD },
+            { roverRELPOSNEDS_Low[2]->relPosN, roverRELPOSNEDS_Low[2]->relPosE, roverRELPOSNEDS_Low[2]->relPosD },
+        };
+
+        if (!loSolver.setPoints(points_Low))
+        {
+            throw QString("LOSolver.setPoints (low limit) failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+        }
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_Low;
+
+        if (!loSolver.getTransformMatrix(transform_Low))
+        {
+            throw QString("LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+        }
+
+        roverUptimeBasedLocation_Low = transform_Low.translation();
+        roverUptimeBasedOrientation_Low = transform_Low.linear();
+
+        Eigen::Vector3d points_High[3] =
+        {
+            { roverRELPOSNEDS_High[0]->relPosN, roverRELPOSNEDS_High[0]->relPosE, roverRELPOSNEDS_High[0]->relPosD },
+            { roverRELPOSNEDS_High[1]->relPosN, roverRELPOSNEDS_High[1]->relPosE, roverRELPOSNEDS_High[1]->relPosD },
+            { roverRELPOSNEDS_High[2]->relPosN, roverRELPOSNEDS_High[2]->relPosE, roverRELPOSNEDS_High[2]->relPosD },
+        };
+
+        if (!loSolver.setPoints(points_High))
+        {
+            throw QString("LOSolver.setPoints (high limit) failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+        }
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_High;
+
+        if (!loSolver.getTransformMatrix(transform_High))
+        {
+            throw QString("LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+        }
+
+        roverUptimeBasedLocation_High = transform_High.translation();
+        roverUptimeBasedOrientation_High = transform_High.linear();
     }
 
-    Eigen::Vector3d points[3] =
+    if (roverUptimeLimit_High - roverUptimeLimit_Low > maxInterpolationTimerange)
     {
-        { interpolated_Rovers[0].relPosN, interpolated_Rovers[0].relPosE, interpolated_Rovers[0].relPosD },
-        { interpolated_Rovers[1].relPosN, interpolated_Rovers[1].relPosE, interpolated_Rovers[1].relPosD },
-        { interpolated_Rovers[2].relPosN, interpolated_Rovers[2].relPosE, interpolated_Rovers[2].relPosD },
-    };
-
-    if (!loSolver.setPoints(points))
-    {
-        throw QString("LOSolver.setPoints failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
+        throw("Maximum allowed time (" + QString::number(maxInterpolationTimerange) +
+                "ms) for interpolation exceeded. (Interpolation time: " +
+                QString::number(roverUptimeLimit_High - roverUptimeLimit_Low) + ").");
     }
 
-    if (!loSolver.getTransformMatrix(transform))
-    {
-        throw QString("LOSolver.getTransformMatrix failed. Error code: " + QString::number(loSolver.getLastError()) + ".");
-    }
+    double fraction = double(uptime - roverUptimeLimit_Low) / (roverUptimeLimit_High - roverUptimeLimit_Low);
+
+    Q_ASSERT(fraction >= 0);
+    Q_ASSERT(fraction <= 1);
+
+    Eigen::Quaterniond slerpedQuat = roverUptimeBasedOrientation_Low.slerp(fraction, roverUptimeBasedOrientation_High);
+    Eigen::Vector3d interpolatedCoords = roverUptimeBasedLocation_Low + fraction * (roverUptimeBasedLocation_High - roverUptimeBasedLocation_Low);
+
+    transform.linear() = slerpedQuat.toRotationMatrix();
+    transform.translation() = interpolatedCoords;
 }
 
 void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_ITOW(const UBXMessage_RELPOSNED::ITOW iTOW, Eigen::Transform<double, 3, Eigen::Affine>& transform)
 {
-    // TODO: This should use quaternions to work better.
+    // TODO: This should use quaternions to work better (see the uptime-version above).
     // As measurements are received 8 times/s typically,
     // interpolating coordinates may not be a big issue either.
     // If using quaternions, rover data should be ITOW-synced.
@@ -3914,6 +3940,79 @@ void PostProcessingForm::on_pushButton_RasterCameras_Script_Save_clicked()
         cameraScriptFile.close();
 
         addLogLine("Camera script saved.");
+    }
+}
+
+void PostProcessingForm::generateAveragedRoverUptimeSync(const Rover* rovers, QMap<qint64, UBXMessage_RELPOSNED::ITOW>& averagedRoverUptimeSync, unsigned int numOfAveragedRovers)
+{
+    // Create a map where uptimes for all equal ITOWs are the same.
+    // This makes processing (like interpolating locations/orientations) easier.
+    // Uptimes here are calculated as averages from rover values (for each ITOW)
+
+    averagedRoverUptimeSync.clear();
+
+    Q_ASSERT(numOfAveragedRovers <= 3);
+
+    for (unsigned int i = 0; i < numOfAveragedRovers; i++)
+    {
+        if (rovers[i].roverSyncData.isEmpty())
+        {
+            // Nothing to do
+            return;
+        }
+    }
+
+    qint64 currentITOW = rovers[0].reverseSync.firstKey();
+
+    QMap<UBXMessage_RELPOSNED::ITOW, qint64>::const_iterator iTOWIterators[3];
+
+    while (1)
+    {
+        for (unsigned int i = 0; i < numOfAveragedRovers; i++)
+        {
+            iTOWIterators[i] = rovers[i].reverseSync.lowerBound(currentITOW);
+        }
+
+        bool dataLeft = false;
+
+        for (unsigned int i = 0; i < numOfAveragedRovers; i++)
+        {
+            if (iTOWIterators[i] != rovers[i].reverseSync.end())
+            {
+                dataLeft = true;
+                break;
+            }
+        }
+
+        if (!dataLeft)
+        {
+            break;
+        }
+
+        qint64 uptimeSum = 0;
+        unsigned int numberOfRoverRELPOSNEDsWithSameITOW = 0;
+
+        for (unsigned int i = 0; i < numOfAveragedRovers; i++)
+        {
+            if ((iTOWIterators[i] != rovers[i].reverseSync.end()) &&
+                    (iTOWIterators[i].key() == currentITOW))
+            {
+                uptimeSum += iTOWIterators[i].value();
+                numberOfRoverRELPOSNEDsWithSameITOW++;
+            }
+            else
+            {
+                // Only allow rovers A, AB or ABC (not AC, BC etc)
+                break;
+            }
+        }
+
+        if (numberOfRoverRELPOSNEDsWithSameITOW >= numOfAveragedRovers)
+        {
+            averagedRoverUptimeSync[uptimeSum / numberOfRoverRELPOSNEDsWithSameITOW] = currentITOW;
+        }
+
+        currentITOW++;
     }
 }
 

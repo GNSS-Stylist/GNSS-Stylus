@@ -31,6 +31,15 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     RPLidarPlausibilityFilter plausibilityFilter;
     plausibilityFilter.setSettings(*params.lidarFilteringSettings);
 
+    // Map where uptimes for all equal ITOWs are the same.
+    // This makes processing later easier
+    // Uptimes here are calculated as averages from rover values (for each ITOW)
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
+
+    emit infoMessage("Generating equalized rover uptime timestamps...");
+    PostProcessingForm::generateAveragedRoverUptimeSync(params.rovers, averagedSync);
+    emit infoMessage("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+
     QFile lidarScriptFile;
 
     lidarScriptFile.setFileName(params.fileName);
@@ -254,7 +263,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
             try
             {
-                params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, transform_LoSolver);
+                params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, averagedSync, transform_LoSolver);
             }
             catch (QString& stringThrown)
             {

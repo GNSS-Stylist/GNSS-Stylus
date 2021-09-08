@@ -335,6 +335,15 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
     plausibilityFilter.setSettings(*params.lidarFilteringSettings);
 
+    // Map where uptimes for all equal ITOWs are the same.
+    // This makes processing later easier
+    // Uptimes here are calculated as averages from rover values (for each ITOW)
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
+
+    emit infoMessage("Generating equalized rover uptime timestamps...");
+    PostProcessingForm::generateAveragedRoverUptimeSync(params.rovers, averagedSync);
+    emit infoMessage("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+
     while ((lidarIter != params.lidarRounds->end()) && (lidarIter.value().startTime < endingUptime))
     {
         plausibilityFilter.filter(lidarIter.value().distanceItems, filteredItems);
@@ -360,7 +369,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 try
                 {
-                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, transform_LoSolver);
+                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, averagedSync, transform_LoSolver);
                 }
                 catch (QString& stringThrown)
                 {

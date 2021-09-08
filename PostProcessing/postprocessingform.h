@@ -130,16 +130,25 @@ public:
     {
     public:
         LOInterpolator(PostProcessingForm* owner);
-        void getInterpolatedLocationOrientationTransformMatrix_Uptime(const qint64 uptime, Eigen::Transform<double, 3, Eigen::Affine>& transform);
+
+        void getInterpolatedLocationOrientationTransformMatrix_Uptime(
+                const qint64 uptime, const QMap<qint64, UBXMessage_RELPOSNED::ITOW>& averagedRoverUptimeSync,
+                Eigen::Transform<double, 3, Eigen::Affine>& transform,
+                const unsigned int maxInterpolationTimeRange = 500);
+
         void getInterpolatedLocationOrientationTransformMatrix_ITOW(const UBXMessage_RELPOSNED::ITOW iTOW, Eigen::Transform<double, 3, Eigen::Affine>& transform);
 
         LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
 
     private:
         PostProcessingForm* owner = nullptr;
-        qint64 roverUptimeLimits[3][2];
-        UBXMessage_RELPOSNED roverUptimeBasedRELPOSNEDS_Lower[3];
-        UBXMessage_RELPOSNED roverUptimeBasedRELPOSNEDS_Upper[3];
+
+        qint64 roverUptimeLimit_Low = -1;
+        qint64 roverUptimeLimit_High = -1;
+        Eigen::Vector3d roverUptimeBasedLocation_Low;
+        Eigen::Vector3d roverUptimeBasedLocation_High;
+        Eigen::Quaterniond roverUptimeBasedOrientation_Low;
+        Eigen::Quaterniond roverUptimeBasedOrientation_High;
 
         UBXMessage_RELPOSNED::ITOW roverITOWLimits[3][2];
         UBXMessage_RELPOSNED roverITOWBasedRELPOSNEDS_Lower[3];
@@ -151,6 +160,7 @@ public:
     ~PostProcessingForm();
 
     static QString getRoverIdentString(const unsigned int roverId);
+    static void generateAveragedRoverUptimeSync(const Rover* rovers, QMap<qint64, UBXMessage_RELPOSNED::ITOW> &averagedRoverUptimeSync, unsigned int numOfAveragedRovers = 3);
 
 protected:
     void showEvent(QShowEvent* event);  //!< Initializes some things that can't be initialized in constructor
