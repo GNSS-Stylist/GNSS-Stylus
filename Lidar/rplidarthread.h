@@ -35,8 +35,9 @@ public:
      * @brief Constructor
      * @param serialPortFileName File name of com port to open
      * @param serialPortBPS Speed (Bits Per Second) of the serial port
+     * @param scanMode Value used in startScanExpress-call's scanMode-parameter or -1 (use startScan-call instead)
      */
-    RPLidarThread(const QString& serialPortFileName, const unsigned int serialPortBPS, const unsigned short motorPWM = 660);
+    RPLidarThread(const QString& serialPortFileName, const unsigned int serialPortBPS, const unsigned short motorPWM = 660, const short scanMode = -1);
     ~RPLidarThread() override;
 
     void run() override;            //!< Thread code
@@ -56,6 +57,7 @@ private:
     QString serialPortFileName;
     unsigned int serialPortBPS;
     unsigned short motorPWM = 0;
+    short scanMode = -1;
 
     bool terminateRequest = false;
     bool suspended = false;

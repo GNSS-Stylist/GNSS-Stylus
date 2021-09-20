@@ -22,11 +22,12 @@
 
 #include "rplidarthread.h"
 
-RPLidarThread::RPLidarThread(const QString& serialPortFileName, const unsigned int serialPortBPS, const unsigned short motorPWM)
+RPLidarThread::RPLidarThread(const QString& serialPortFileName, const unsigned int serialPortBPS, const unsigned short motorPWM, const short scanMode)
 {
     this->serialPortFileName = serialPortFileName;
     this->serialPortBPS = serialPortBPS;
     this->motorPWM = motorPWM;
+    this->scanMode = scanMode;
 
     terminateRequest = false;
     suspended = false;
@@ -177,9 +178,17 @@ void RPLidarThread::run()
             {
                 suspendIfNeeded();
 
-                emit infoMessage("Starting scan...");
-
-                rpResult = lidarDriver->startScan(false, true);
+                if (scanMode == -1)
+                {
+                    // Use startScan-call when scanmode is "standard"
+                    emit infoMessage("Starting scan using startScan-call...");
+                    rpResult = lidarDriver->startScan(false, true);
+                }
+                else
+                {
+                    emit infoMessage("Starting scan using startScanExpress-call, mode: " + QString::number(scanMode) + "...");
+                    rpResult = lidarDriver->startScanExpress(false, scanMode);
+                }
 
                 if (IS_FAIL(rpResult))
                 {

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>626</width>
-    <height>696</height>
+    <height>734</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,9 +24,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-438</y>
          <width>589</width>
-         <height>1121</height>
+         <height>1131</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -994,6 +994,73 @@
            <property name="bottomMargin">
             <number>4</number>
            </property>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_Thread_RoverC">
+             <property name="leftMargin">
+              <number>8</number>
+             </property>
+             <property name="rightMargin">
+              <number>8</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label__SerialPort_RoverC">
+               <property name="text">
+                <string>Serial port:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_SerialPort_RoverC">
+               <property name="text">
+                <string>\\.\COM</string>
+               </property>
+               <property name="maxLength">
+                <number>256</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_SerSpeed_RoverC">
+               <property name="text">
+                <string>Bps:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spinBox_SerialSpeed_RoverC">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="minimum">
+                <number>300</number>
+               </property>
+               <property name="maximum">
+                <number>10000000</number>
+               </property>
+               <property name="value">
+                <number>115200</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_StartThread_RoverC">
+               <property name="text">
+                <string>Start thread</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_TerminateThread_RoverC">
+               <property name="text">
+                <string>Terminate thread</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
            <item row="3" column="0">
             <layout class="QGridLayout" name="gridLayout_Messages_RoverC" columnstretch="0,1,0" columnminimumwidth="0,50,0">
              <property name="leftMargin">
@@ -1144,73 +1211,6 @@
               <widget class="QCheckBox" name="checkBox_SuspendThread_RoverC">
                <property name="text">
                 <string>Suspended</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_Thread_RoverC">
-             <property name="leftMargin">
-              <number>8</number>
-             </property>
-             <property name="rightMargin">
-              <number>8</number>
-             </property>
-             <item>
-              <widget class="QLabel" name="label__SerialPort_RoverC">
-               <property name="text">
-                <string>Serial port:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="lineEdit_SerialPort_RoverC">
-               <property name="text">
-                <string>\\.\COM</string>
-               </property>
-               <property name="maxLength">
-                <number>256</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_SerSpeed_RoverC">
-               <property name="text">
-                <string>Bps:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="spinBox_SerialSpeed_RoverC">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>300</number>
-               </property>
-               <property name="maximum">
-                <number>10000000</number>
-               </property>
-               <property name="value">
-                <number>115200</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_StartThread_RoverC">
-               <property name="text">
-                <string>Start thread</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_TerminateThread_RoverC">
-               <property name="text">
-                <string>Terminate thread</string>
                </property>
               </widget>
              </item>
@@ -1525,74 +1525,129 @@
            <attribute name="title">
             <string>RPLidar</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_Thread_RPLidar">
-              <property name="leftMargin">
-               <number>8</number>
-              </property>
-              <property name="rightMargin">
-               <number>8</number>
-              </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLabel" name="label_SerialPort_RPLidar">
-                <property name="text">
-                 <string>Serial port:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="lineEdit_SerialPort_RPLidar">
-                <property name="text">
-                 <string>\\.\COM</string>
-                </property>
-                <property name="maxLength">
-                 <number>256</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_SerSpeed_RPLidar">
-                <property name="text">
-                 <string>Bps:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="spinBox_SerialSpeed_RPLidar">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="minimum">
-                 <number>300</number>
-                </property>
-                <property name="maximum">
-                 <number>10000000</number>
-                </property>
-                <property name="value">
-                 <number>256000</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_MotorRPM_RPLidar">
-                <property name="text">
-                 <string>Motor PWM:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="spinBox_MotorPWM_RPLidar">
-                <property name="maximum">
-                 <number>1023</number>
-                </property>
-                <property name="value">
-                 <number>660</number>
-                </property>
-               </widget>
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                  <item>
+                   <widget class="QLabel" name="label_SerialPort_RPLidar">
+                    <property name="text">
+                     <string>Serial port:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_SerialPort_RPLidar">
+                    <property name="text">
+                     <string>\\.\COM</string>
+                    </property>
+                    <property name="maxLength">
+                     <number>256</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_SerSpeed_RPLidar">
+                    <property name="text">
+                     <string>Bps:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinBox_SerialSpeed_RPLidar">
+                    <property name="minimumSize">
+                     <size>
+                      <width>80</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="minimum">
+                     <number>300</number>
+                    </property>
+                    <property name="maximum">
+                     <number>10000000</number>
+                    </property>
+                    <property name="value">
+                     <number>256000</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_MotorRPM_RPLidar">
+                    <property name="text">
+                     <string>Motor PWM:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spinBox_MotorPWM_RPLidar">
+                    <property name="maximum">
+                     <number>1023</number>
+                    </property>
+                    <property name="value">
+                     <number>660</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,10">
+                  <item>
+                   <widget class="QLabel" name="label_ExpressScanMode">
+                    <property name="text">
+                     <string>Express scan mode:</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="comboBox_ExpressScanMode">
+                    <item>
+                     <property name="text">
+                      <string>None (use startScan-call instead of Express)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Standard (0)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Express (1)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>HQ (2)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Boost (3)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Stability (4)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Sensitivity (5)</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </item>
               <item>
                <widget class="QPushButton" name="pushButton_StartThread_RPLidar">
@@ -1636,7 +1691,7 @@
              </layout>
             </item>
             <item>
-             <layout class="QGridLayout" name="gridLayout_Messages_RPLidar" columnstretch="0,0,0">
+             <layout class="QGridLayout" name="gridLayout_Messages_RPLidar" columnstretch="0,10,0">
               <property name="leftMargin">
                <number>8</number>
               </property>

@@ -172,6 +172,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_SerialPort_RPLidar->setText(settings.value("SerialPort_RPLidar", "\\\\.\\COM").toString());
     ui->spinBox_SerialSpeed_RPLidar->setValue(settings.value("SerialSpeed_RPLidar", "256000").toInt());
     ui->spinBox_MotorPWM_RPLidar->setValue(settings.value("MotorPWM_RPLidar", "660").toInt());
+    ui->comboBox_ExpressScanMode->setCurrentIndex(settings.value("ExpressScanMode_RPLidar", "0").toInt());
 
     // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
     qRegisterMetaType<SerialThread::DataReceivedEmitReason>();
@@ -188,6 +189,7 @@ MainWindow::~MainWindow()
     settings.setValue("SerialPort_RPLidar", ui->lineEdit_SerialPort_RPLidar->text());
     settings.setValue("SerialSpeed_RPLidar", ui->spinBox_SerialSpeed_RPLidar->value());
     settings.setValue("MotorPWM_RPLidar", ui->spinBox_MotorPWM_RPLidar->value());
+    settings.setValue("ExpressScanMode_RPLidar", ui->comboBox_ExpressScanMode->currentIndex());
 
     delete messageMonitorForm_Base_Serial;
     delete messageMonitorForm_Base_NTRIP;
@@ -1086,7 +1088,7 @@ void MainWindow::on_pushButton_StartThread_RPLidar_clicked()
 {
     if (!thread_RPLidar)
     {
-        thread_RPLidar = new RPLidarThread(ui->lineEdit_SerialPort_RPLidar->text(), ui->spinBox_SerialSpeed_RPLidar->value(), ui->spinBox_MotorPWM_RPLidar->value());
+        thread_RPLidar = new RPLidarThread(ui->lineEdit_SerialPort_RPLidar->text(), ui->spinBox_SerialSpeed_RPLidar->value(), ui->spinBox_MotorPWM_RPLidar->value(), ui->comboBox_ExpressScanMode->currentIndex() - 1);
         if (ui->checkBox_SuspendThread_RPLidar->isChecked())
         {
             thread_RPLidar->suspend();
@@ -1113,6 +1115,7 @@ void MainWindow::on_pushButton_StartThread_RPLidar_clicked()
         ui->lineEdit_SerialPort_RPLidar->setEnabled(false);
         ui->spinBox_SerialSpeed_RPLidar->setEnabled(false);
         ui->spinBox_MotorPWM_RPLidar->setEnabled(false);
+        ui->comboBox_ExpressScanMode->setEnabled(false);
         ui->pushButton_StartThread_RPLidar->setEnabled(false);
         ui->pushButton_TerminateThread_RPLidar->setEnabled(true);
     }
@@ -1150,6 +1153,7 @@ void MainWindow::on_pushButton_TerminateThread_RPLidar_clicked()
         ui->lineEdit_SerialPort_RPLidar->setEnabled(true);
         ui->spinBox_SerialSpeed_RPLidar->setEnabled(true);
         ui->spinBox_MotorPWM_RPLidar->setEnabled(true);
+        ui->comboBox_ExpressScanMode->setEnabled(true);
         ui->pushButton_StartThread_RPLidar->setEnabled(true);
         ui->pushButton_TerminateThread_RPLidar->setEnabled(false);
     }
