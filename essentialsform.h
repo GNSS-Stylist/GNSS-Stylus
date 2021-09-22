@@ -196,7 +196,7 @@ private:
     public:
         bool valid = false;
 
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
+        // Not needed anymore? EIGEN_MAKE_ALIGNED_OPERATOR_NEW // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
         Eigen::Transform<double, 3, Eigen::Affine> transform;  //!< As filled by LOSOlver::getTransformMatrix
 
         UBXMessage_RELPOSNED::ITOW iTOW = -1;   //!< GNSS Time Of Week (-1 if not applicable)

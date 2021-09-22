@@ -23,7 +23,7 @@
 class LOSolver
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
+    // Not needed anymore? EIGEN_MAKE_ALIGNED_OPERATOR_NEW // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
 
     enum ErrorCode
     {
