@@ -2260,26 +2260,7 @@ void PostProcessingForm::addAllData(const bool includeParameters)
             }
         }
 
-        QStringList fileNames = getAppendedFileNames(baseFileNames, "_RoverA_RELPOSNED.ubx");
-        addRELPOSNEDData_Rover(fileNames, 0);
-
-        fileNames = getAppendedFileNames(baseFileNames, "_RoverB_RELPOSNED.ubx");
-        addRELPOSNEDData_Rover(fileNames, 1);
-
-        fileNames = getAppendedFileNames(baseFileNames, "_RoverC_RELPOSNED.ubx");
-        addRELPOSNEDData_Rover(fileNames, 2);
-
-        fileNames = getAppendedFileNames(baseFileNames, "_tags.tags");
-        addTagData(fileNames);
-
-        fileNames = getAppendedFileNames(baseFileNames, ".distances");
-        addDistanceData(fileNames);
-
-        fileNames = getAppendedFileNames(baseFileNames, ".lidar");
-        addLidarData(fileNames);
-
-        fileNames = getAppendedFileNames(baseFileNames, ".sync");
-        addSyncData(fileNames);
+        QStringList fileNames;
 
         if (includeParameters)
         {
@@ -2315,6 +2296,27 @@ void PostProcessingForm::addAllData(const bool includeParameters)
                 }
             }
         }
+
+        fileNames = getAppendedFileNames(baseFileNames, "_RoverA_RELPOSNED.ubx");
+        addRELPOSNEDData_Rover(fileNames, 0);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_RoverB_RELPOSNED.ubx");
+        addRELPOSNEDData_Rover(fileNames, 1);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_RoverC_RELPOSNED.ubx");
+        addRELPOSNEDData_Rover(fileNames, 2);
+
+        fileNames = getAppendedFileNames(baseFileNames, "_tags.tags");
+        addTagData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".distances");
+        addDistanceData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".lidar");
+        addLidarData(fileNames);
+
+        fileNames = getAppendedFileNames(baseFileNames, ".sync");
+        addSyncData(fileNames);
     }
 }
 
