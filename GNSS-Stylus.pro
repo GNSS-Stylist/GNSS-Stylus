@@ -17,19 +17,24 @@ TEMPLATE = app
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# message("QMAKE_HOST.arch: $$QMAKE_HOST.arch")
+
 # Following two defines remove Eigen's vectorization that seems to cause
 # runtime assertion failure (not always, but sometimes, how?!?)
 # By default it tries to use fast (SIMD) instructions for calculation, see:
 # http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
-# Here lack of vectorization may not be a big issue as speed is probably more
-# limited by IO than math.
 #
-# Seems to be fixed in eigen V 3.4-rc1 at least when using mingw81 on windows.
-# (Leaving these here for now if something still comes up)
-# (You may need to uncomment these also if using older compilers)
+# Seems to be fixed in eigen V 3.4-rc1 and 3.4 at least when using mingw81-64bit on windows.
+# V3.4.0 still fails (runtime assertion failure) in win32 so using non-vectorized version there.
+# ("x86" in QMAKE_HOST.arch refers to 32-bit)
 #
-#DEFINES += EIGEN_DONT_VECTORIZE
-#DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+# Speed difference between default, non vectorized 32-bit build and vectorized,
+# 64-bit, optimized with -O3 is only about 23 % (when creating lidarscript)
+# so not worth investigating further.
+win32-g++:contains(QMAKE_HOST.arch, x86):{
+    DEFINES += EIGEN_DONT_VECTORIZE
+    DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+}
 
 INCLUDEPATH += $$PWD/Eigen $$PWD/Lidar
 
@@ -39,6 +44,15 @@ INCLUDEPATH += $$PWD/Eigen $$PWD/Lidar
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 CONFIG += c++17
+
+win32-g++:contains(QMAKE_HOST.arch, x86_64):{
+    # -Optimization -O3 vs -O2 speeds generating of lidarscript about 13 %
+    # (64-bit vectorized) so maybe it's worth using
+    QMAKE_CXXFLAGS_RELEASE -= -O
+    QMAKE_CXXFLAGS_RELEASE -= -O1
+    QMAKE_CXXFLAGS_RELEASE -= -O2
+    QMAKE_CXXFLAGS_RELEASE += -O3
+}
 
 win32:LIBS += -l"ws2_32"
 
