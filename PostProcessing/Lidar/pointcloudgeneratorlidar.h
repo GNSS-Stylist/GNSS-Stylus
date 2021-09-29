@@ -62,6 +62,7 @@ private:
                                     const PostProcessingForm::Tag& beginningTag,
                                     const PostProcessingForm::Tag& endingTag,
                                     const qint64 beginningUptime, const qint64 endingUptime,
+                                    const QMap<qint64, UBXMessage_RELPOSNED::ITOW> &averagedSync,
                                     QTextStream* outStream,
                                     int& pointsWritten);
 
