@@ -9,9 +9,10 @@ GNSS-Stylus application can be used with a GNSS-Stylus (physical device) as show
 Can also used as an location/orientation solver and script generator as in video:
 - Using 3 GNSS-receivers (u-blox ZED-F9P) to track object's (or camera's) location and orientation: https://youtu.be/JqIXpfskCg0
 
-And as a georeferenced 3D-scanner as in videos:
-- DIY Georeferenced 3D-Scanner Using Rotating Lidar and GNSS (="GPS")-devices: https://www.youtube.com/watch?v=WE_fD6qsLKQ
+And as a direct georeferencing 3D-scanner as in videos:
+- Direct georeferencing 3D-scanner using rotating lidar and GNSS (="GPS")-devices (u-blox ZED-F9P): https://www.youtube.com/watch?v=WE_fD6qsLKQ
 - Fan of Tracing Rays - Hogmanay 2020 Wild compo entry: https://www.youtube.com/watch?v=cQeSIT4nxgY
+- Drivable direct georeferencing 3D-scanner: https://youtu.be/4V6TXG68Qa0
 
 You can also run Doom with this (although special version is needed, see below) as in video:
 - Can it run Doom? Yes, but you need to run too!: https://www.youtube.com/watch?v=_vyy6DvKuNs
