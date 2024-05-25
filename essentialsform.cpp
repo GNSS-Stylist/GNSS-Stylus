@@ -50,6 +50,8 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
     ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
     ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
+    ui->horizontalScrollBar_Volume_Accuracy->setValue(settings.value("Volume_Accuracy").toInt());
+    ui->horizontalScrollBar_Volume_RTCMTimeout->setValue(settings.value("Volume_RTCMTimeout").toInt());
 
     // Just some valid values
     const double defaultAntennaLocations[3][3] = {
@@ -85,6 +87,8 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     soundEffect_MMB.setSource(QUrl::fromLocalFile(soundDir + "MiddleMouseButton.wav"));
     soundEffect_MBError.setSource(QUrl::fromLocalFile(soundDir + "ErrorBeep.wav"));
     soundEffect_Distance.setSource(QUrl::fromLocalFile(soundDir + "DistanceClick.wav"));
+    soundEffect_Accuracy.setSource(QUrl::fromLocalFile(soundDir + "AccuracyClick.wav"));
+    soundEffect_RTCMTimeout.setSource(QUrl::fromLocalFile(soundDir + "ErrorBeep.wav"));
 
     qreal volume = ui->horizontalScrollBar_Volume_MouseButtonTagging->value() / 100.;
     soundEffect_LMB.setVolume(volume);
@@ -94,6 +98,12 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
 
     volume = ui->horizontalScrollBar_Volume_DistanceReceived->value() / 100.;
     soundEffect_Distance.setVolume(volume);
+
+    volume = ui->horizontalScrollBar_Volume_Accuracy->value() / 100.;
+    soundEffect_Accuracy.setVolume(volume);
+
+    volume = ui->horizontalScrollBar_Volume_RTCMTimeout->value() / 100.;
+    soundEffect_RTCMTimeout.setVolume(volume);
 
     ui->checkBox_PlaySound->setChecked(settings.value("PlaySound").toBool());
     on_checkBox_PlaySound_stateChanged(ui->checkBox_PlaySound->checkState());
@@ -116,8 +126,10 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     lidarTimeoutTimer.setSingleShot(true);
 
     connect(&lidarTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_lidarTimeoutTimerTimeout);
-
     connect(&sideBarUpdateTimer, &QTimer::timeout, this, &EssentialsForm::on_sideBarUpdateTimerTimeout);
+    connect(&accuracyClickTimer, &QTimer::timeout, this, &EssentialsForm::on_accuracyTimerTimeout);
+    connect(&rtcmTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_rtcmTimeoutTimerTimeout);
+
     sideBarUpdateTimer.start(10);
 }
 
@@ -133,6 +145,8 @@ EssentialsForm::~EssentialsForm()
     settings.setValue("PlaySound", ui->checkBox_PlaySound->isChecked());
     settings.setValue("Volume_MouseButtonTagging", ui->horizontalScrollBar_Volume_MouseButtonTagging->value());
     settings.setValue("Volume_DistanceReceived", ui->horizontalScrollBar_Volume_DistanceReceived->value());
+    settings.setValue("Volume_Accuracy", ui->horizontalScrollBar_Volume_Accuracy->value());
+    settings.setValue("Volume_RTCMTimeout", ui->horizontalScrollBar_Volume_RTCMTimeout->value());
 
     for (int row = 0; row < 3; row++)
     {
@@ -365,10 +379,16 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
     ui->lineEdit_LoggingDirectory->setEnabled(false);
     ui->lineEdit_LoggingFileNamePrefix->setEnabled(false);
     ui->pushButton_AddTag->setEnabled(true);
+
+    accuracyClickTimer.start(1000);
+    rtcmTimeoutTimer.start(5000);
 }
 
 void EssentialsForm::on_pushButton_StopLogging_clicked()
 {
+    accuracyClickTimer.stop();
+    rtcmTimeoutTimer.stop();
+
     ui->pushButton_StartLogging->setEnabled(true);
     ui->pushButton_StopLogging->setEnabled(false);
     ui->lineEdit_LoggingDirectory->setEnabled(true);
@@ -418,6 +438,7 @@ void EssentialsForm::rtcmMessageReceived_Base(const RTCMMessage& rtcmMessage)
     if (loggingActive)
     {
         logFile_Base_RTCM.write(rtcmMessage.rawMessage);
+        rtcmTimeoutTimer.start(5000);
     }
 }
 
@@ -1782,6 +1803,18 @@ void EssentialsForm::on_horizontalScrollBar_Volume_DistanceReceived_valueChanged
     soundEffect_Distance.play();
 }
 
+void EssentialsForm::on_horizontalScrollBar_Volume_Accuracy_valueChanged(int value)
+{
+    soundEffect_Accuracy.setVolume(value/100.);
+    soundEffect_Accuracy.play();
+}
+
+void EssentialsForm::on_horizontalScrollBar_Volume_RTCMTimeout_valueChanged(int value)
+{
+    soundEffect_RTCMTimeout.setVolume(value/100.);
+    soundEffect_RTCMTimeout.play();
+}
+
 void EssentialsForm::on_checkBox_PlaySound_stateChanged(int arg1)
 {
     soundEffect_LMB.setMuted(!arg1);
@@ -1789,6 +1822,8 @@ void EssentialsForm::on_checkBox_PlaySound_stateChanged(int arg1)
     soundEffect_RMB.setMuted(!arg1);
     soundEffect_MBError.setMuted(!arg1);
     soundEffect_Distance.setMuted(!arg1);
+    soundEffect_Accuracy.setMuted(!arg1);
+    soundEffect_RTCMTimeout.setMuted(!arg1);
 }
 
 QString EssentialsForm::getRoverIdentString(const unsigned int roverId)
@@ -2135,6 +2170,16 @@ void EssentialsForm::updateSideBar(void)
     }
 
     ui->label_Side->setText(sideString);
+}
+
+void EssentialsForm::on_accuracyTimerTimeout()
+{
+    soundEffect_Accuracy.play();
+}
+
+void EssentialsForm::on_rtcmTimeoutTimerTimeout()
+{
+    soundEffect_RTCMTimeout.play();
 }
 
 

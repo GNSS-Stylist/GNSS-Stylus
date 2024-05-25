@@ -139,6 +139,15 @@ private slots:
 
     void on_sideBarUpdateTimerTimeout();
 
+    void on_horizontalScrollBar_Volume_Accuracy_valueChanged(int value);
+
+    void on_horizontalScrollBar_Volume_RTCMTimeout_valueChanged(int value);
+
+    void on_accuracyTimerTimeout();
+
+    void on_rtcmTimeoutTimerTimeout();
+
+
 protected:
     void showEvent(QShowEvent* event);  //!< To initialize some things
 
@@ -239,11 +248,13 @@ private:
     QElapsedTimer lastMatchingRELPOSNEDiTOWTimer;               //!< Started every time a matching iTOW is found
     UBXMessage_RELPOSNED::ITOW  lastTaggedRELPOSNEDiTOW = -1;   //!< To prevent multiple tags on same iTOW.
 
-    QSoundEffect soundEffect_LMB;       //!< Sound effect for mouse button tagging (Left Mouse Button)
-    QSoundEffect soundEffect_RMB;       //!< Sound effect for mouse button tagging (Right Mouse Button)
-    QSoundEffect soundEffect_MMB;       //!< Sound effect for mouse button tagging (Middle Mouse Button/"Undo")
-    QSoundEffect soundEffect_MBError;   //!< Sound effect for mouse button tagging (Error)
-    QSoundEffect soundEffect_Distance;  //!< Sound effect for new distance
+    QSoundEffect soundEffect_LMB;           //!< Sound effect for mouse button tagging (Left Mouse Button)
+    QSoundEffect soundEffect_RMB;           //!< Sound effect for mouse button tagging (Right Mouse Button)
+    QSoundEffect soundEffect_MMB;           //!< Sound effect for mouse button tagging (Middle Mouse Button/"Undo")
+    QSoundEffect soundEffect_MBError;       //!< Sound effect for mouse button tagging (Error)
+    QSoundEffect soundEffect_Distance;      //!< Sound effect for new distance
+    QSoundEffect soundEffect_Accuracy;      //!< Sound effect for accuracy click
+    QSoundEffect soundEffect_RTCMTimeout;   //!< Sound effect for RTCM timeout
 
     const int maxLocationHistoryLength = 6000;                  //!< Maximum number of location history items to keep (used to calculate fluctuations)
 
@@ -342,6 +353,8 @@ private:
     float lidarRoundFrequency = 0;
     bool lidarTimeout = true;   //!< Lidar is in timeout (no rounds received in 1s?)
     QTimer lidarTimeoutTimer;
+    QTimer rtcmTimeoutTimer;
+    QTimer accuracyClickTimer;
 
     QTimer sideBarUpdateTimer;
 
