@@ -17,7 +17,7 @@
 */
 
 /**
- * @file laserrangefinder20hzv2messagemonitorform.h
+ * @file rplidarmessagemonitorform.h
  * @brief Declaration for a form that shows some data about messages sent by RPLidar.
  */
 
@@ -32,7 +32,7 @@ class RPLidarMessageMonitorForm;
 }
 
 /**
- * @brief Form used to show some data about messages sent by u-blox-devices.
+ * @brief Form used to show some data about messages sent by RPLidar.
  */
 class RPLidarMessageMonitorForm : public QWidget
 {
@@ -48,14 +48,14 @@ public:
     ~RPLidarMessageMonitorForm();
 
     /**
-     * @brief Connects slots from LaserRangeFinder20HzV2SerialThread
-     * @param serThread SerialThread to connect signals from
+     * @brief Connects slots from RPLidarThread
+     * @param serThread RPLidarThread to connect signals from
      */
     void connectRPLidarThreadSlots(RPLidarThread* rpLidarThread);
 
     /**
-     * @brief Disconnects slots from SerialThread
-     * @param serThread SerialThread to disconnect signals from
+     * @brief Disconnects slots from RPLidarThread
+     * @param serThread RPLidarThread to disconnect signals from
      */
     void disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread);
 
@@ -63,8 +63,8 @@ private:
     Ui::RPLidarMessageMonitorForm *ui;
 
     void addLogLine(const QString& line);
-    QString getTimeDifferenceString(const qint64 startTime, const qint64 endTime);
-    void updateStartAndEndTimes(const qint64 startTime, const qint64 endTime);
+//    QString getTimeDifferenceString(const qint64 startTime, const qint64 endTime);
+//    void updateStartAndEndTimes(const qint64 startTime, const qint64 endTime);
 
     qint64 lastStartTime = 0;
     qint64 lastEndTime = 0;
@@ -75,12 +75,6 @@ private slots:
     void infoMessage(const QString& infoMessage);
 
     void distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime);
-
-#if 0
-    void distanceReceived(const double& distance, qint64 startTime, qint64 endTime);
-    void errorReceived(const QString& errorString, qint64 startTime, qint64 endTime);
-    void unidentifiedDataReceived(const QByteArray& data, qint64 startTime, qint64 endTime);
-#endif
 
     void on_pushButton_ClearAll_clicked();
 };
