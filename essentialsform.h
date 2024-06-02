@@ -38,8 +38,8 @@
 #include "PostProcessing/postprocessingform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "losolver.h"
-#include "Lidar/rplidarthread.h"
-#include "Lidar/livoxmid360thread.h"
+#include "RPLidar/rplidarthread.h"
+#include "LivoxMid360/livoxmid360thread.h"
 
 namespace Ui {
 class EssentialsForm;

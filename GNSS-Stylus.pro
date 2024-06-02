@@ -36,7 +36,7 @@ win32-g++:contains(QMAKE_HOST.arch, x86):{
     DEFINES += EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
 }
 
-INCLUDEPATH += $$PWD/Eigen $$PWD/Lidar
+INCLUDEPATH += $$PWD/Eigen $$PWD/RPLidar $$PWD/LivoxMid360
 
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -59,6 +59,8 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    LivoxMid360/livoxmid360messagemonitorform.cpp \
+    LivoxMid360/livoxmid360thread.cpp \
     PostProcessing/EasyEXIF/exif.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
@@ -69,29 +71,33 @@ SOURCES += \
     PostProcessing/rastercameragenerator.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
-    Lidar/lidarchartform.cpp \
-    Lidar/lidarchartview.cpp \
+    RPLidar/lidarchartform.cpp \
+    RPLidar/lidarchartview.cpp \
     licensesform.cpp \
     losolver.cpp \
         main.cpp \
         mainwindow.cpp \
     gnssmessage.cpp \
     ntripthread.cpp \
-    Lidar/rplidar_sdk/src/arch/rplidarplatforms.cpp \
-    Lidar/rplidar_sdk/src/hal/thread.cpp \
-    Lidar/rplidar_sdk/src/rplidar_driver.cpp \
-    Lidar/rplidarmessagemonitorform.cpp \
-    Lidar/rplidarplausibilityfilter.cpp \
-    Lidar/rplidarthread.cpp \
+    RPLidar/rplidar_sdk/src/arch/rplidarplatforms.cpp \
+    RPLidar/rplidar_sdk/src/hal/thread.cpp \
+    RPLidar/rplidar_sdk/src/rplidar_driver.cpp \
+    RPLidar/rplidarmessagemonitorform.cpp \
+    RPLidar/rplidarplausibilityfilter.cpp \
+    RPLidar/rplidarthread.cpp \
     transformmatrixgenerator.cpp \
     ubloxdatastreamprocessor.cpp \
     serialthread.cpp \
     messagemonitorform.cpp \
     relposnedform.cpp \
     essentialsform.cpp \
-    rightclickpushbutton.cpp
+    rightclickpushbutton.cpp \
+    FastCRC/FastCRCsw.cpp
 
 HEADERS += \
+    LivoxMid360/livoxmid360messagemonitorform.h \
+    LivoxMid360/livoxmid360messagemonitorform.h.autosave \
+    LivoxMid360/livoxmid360thread.h \
     PostProcessing/EasyEXIF/exif.h \
     PostProcessing/Lidar/lidarscriptgenerator.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
@@ -102,34 +108,36 @@ HEADERS += \
     PostProcessing/rastercameragenerator.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
-    Lidar/lidarchartform.h \
-    Lidar/lidarchartview.h \
+    RPLidar/lidarchartform.h \
+    RPLidar/lidarchartview.h \
     licensesform.h \
     losolver.h \
         mainwindow.h \
     gnssmessage.h \
     ntripthread.h \
-    Lidar/rplidarmessagemonitorform.h \
-    Lidar/rplidarplausibilityfilter.h \
-    Lidar/rplidarthread.h \
+    RPLidar/rplidarmessagemonitorform.h \
+    RPLidar/rplidarplausibilityfilter.h \
+    RPLidar/rplidarthread.h \
     transformmatrixgenerator.h \
     ubloxdatastreamprocessor.h \
     serialthread.h \
     messagemonitorform.h \
     relposnedform.h \
     essentialsform.h \
-    rightclickpushbutton.h
+    rightclickpushbutton.h \
+    FastCRC/FastCRC.h
 
 FORMS += \
+    LivoxMid360/livoxmid360messagemonitorform.ui \
     PostProcessing/postprocessingform.ui \
     laserrangefinder20hzv2messagemonitorform.ui \
-    Lidar/lidarchartform.ui \
+    RPLidar/lidarchartform.ui \
     licensesform.ui \
         mainwindow.ui \
     messagemonitorform.ui \
     relposnedform.ui \
     essentialsform.ui \
-    Lidar/rplidarmessagemonitorform.ui
+    RPLidar/rplidarmessagemonitorform.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

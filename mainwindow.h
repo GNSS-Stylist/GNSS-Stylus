@@ -39,12 +39,12 @@
 #include "PostProcessing/postprocessingform.h"
 #include "laserrangefinder20hzv2messagemonitorform.h"
 #include "laserrangefinder20hzv2serialthread.h"
-#include "Lidar/rplidarthread.h"
-#include "Lidar/livoxmid360thread.h"
-#include "Lidar/rplidarmessagemonitorform.h"
-#include "Lidar/livoxmid360messagemonitorform.h"
-#include "Lidar/lidarchartform.h"
+#include "RPLidar/rplidarthread.h"
+#include "RPLidar/rplidarmessagemonitorform.h"
+#include "RPLidar/lidarchartform.h"
 #include "licensesform.h"
+#include "LivoxMid360/livoxmid360thread.h"
+#include "LivoxMid360/livoxmid360messagemonitorform.h"
 
 class MainWinRover : public QObject
 {
