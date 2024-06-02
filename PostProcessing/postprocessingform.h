@@ -34,13 +34,14 @@
 #include <QTextStream>
 #include <QPlainTextEdit>
 #include <QSettings>
+#include <QNetworkDatagram>
 
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
 #include "Eigen/Geometry"
 #include "losolver.h"
-#include "Lidar/rplidarthread.h"
-#include "Lidar/rplidarplausibilityfilter.h"
+#include "RPLidar/rplidarthread.h"
+#include "RPLidar/rplidarplausibilityfilter.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -329,6 +330,7 @@ private:
     Rover rovers[3];
 
     QMap<qint64, LidarRound> lidarRounds;
+    QMultiMap<qint64, QNetworkDatagram> mid360Datagrams;
 
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;
@@ -413,6 +415,8 @@ signals:
     void replayData_Distance(const qint64, const PostProcessingForm::DistanceItem&); //!< New distance
 
     void replayData_Lidar(const QVector<RPLidarThread::DistanceItem>&, qint64, qint64);
+
+    void replayData_LivoxMid360(const QNetworkDatagram&, qint64);
 };
 
 #endif // POSTPROCESSINGFORM_H

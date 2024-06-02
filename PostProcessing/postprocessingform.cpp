@@ -1314,6 +1314,19 @@ void PostProcessingForm::handleReplay(bool firstRound)
             emit replayData_Lidar(lidarRounds[nextUptime_ms].distanceItems, lidarRounds[nextUptime_ms].startTime, lidarRounds[nextUptime_ms].endTime);
         }
 
+        if (mid360Datagrams.find(nextUptime_ms) != mid360Datagrams.end())
+        {
+            QList<QNetworkDatagram> datagramItems = mid360Datagrams.values(nextUptime_ms);
+
+            // Since "The items that share the same key are available from most recently to least recently inserted."
+            // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+            for (int i = datagramItems.size() - 1; i >= 0; i--)
+            {
+                emit replayData_LivoxMid360(datagramItems[i], nextUptime_ms);
+            }
+        }
+
         if (tags.find(nextUptime_ms) != tags.end())
         {
             QList<Tag> tagItems = tags.values(nextUptime_ms);
@@ -1490,6 +1503,11 @@ qint64 PostProcessingForm::getFirstUptime()
         firstUptime = lidarRounds.firstKey();
     }
 
+    if ((!mid360Datagrams.isEmpty()) && (mid360Datagrams.firstKey() < firstUptime))
+    {
+        firstUptime = mid360Datagrams.firstKey();
+    }
+
     if ((!tags.isEmpty()) && (tags.firstKey() < firstUptime))
     {
         firstUptime = tags.firstKey();
@@ -1523,6 +1541,11 @@ qint64 PostProcessingForm::getLastUptime()
     if ((!lidarRounds.isEmpty()) && (lidarRounds.lastKey() > lastUptime))
     {
         lastUptime = lidarRounds.lastKey();
+    }
+
+    if ((!mid360Datagrams.isEmpty()) && (mid360Datagrams.lastKey() > lastUptime))
+    {
+        lastUptime = mid360Datagrams.lastKey();
     }
 
     if ((!tags.isEmpty()) && (tags.lastKey() > lastUptime))
@@ -1562,6 +1585,12 @@ qint64 PostProcessingForm::getNextUptime(const qint64 uptime)
             ((lidarRounds.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
     {
         nextUptime = lidarRounds.upperBound(uptime).key();
+    }
+
+    if ((!mid360Datagrams.empty()) && (mid360Datagrams.upperBound(uptime) != mid360Datagrams.end()) &&
+        ((mid360Datagrams.upperBound(uptime).key() < nextUptime) || (nextUptime == -1)))
+    {
+        nextUptime = mid360Datagrams.upperBound(uptime).key();
     }
 
     if (nextUptime == std::numeric_limits<qint64>::max())
@@ -2910,6 +2939,8 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
             qint64 lastDuplicateUptime = -1;
             int discardedChunks = 0;
 
+            char datagramReadBuffer[0x10000];
+
             while (!dataStream.atEnd())
             {
                 if (parseErrors >= 100)
@@ -3013,6 +3044,39 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                     numberOfRounds++;
                     break;
                 }
+                case 0x10001:
+                {
+                    quint64 timeStamp;
+                    quint32 senderAddress;
+                    quint16 senderPort;
+                    quint32 destinationAddress;
+                    quint16 destinationPort;
+
+                    quint32 datagramHeaderLength = (sizeof(timeStamp) + sizeof(senderAddress) + sizeof(senderPort) + sizeof(destinationAddress) + sizeof(destinationPort));
+
+                    if (dataChunkLength < datagramHeaderLength + 1)
+                    {
+                        addLogLine("Warning: Data chunk length less than the minimum. Skipping chunk.");
+                        dataStream.skipRawData(dataChunkLength);
+                        parseErrors++;
+                        break;
+                    }
+
+                    dataStream >> timeStamp >> senderAddress >> senderPort >> destinationAddress >> destinationPort;
+
+                    quint32 datagramDataLength = dataChunkLength - datagramHeaderLength;
+                    dataStream.readRawData(datagramReadBuffer, datagramDataLength);
+                    QByteArray datagramData(datagramReadBuffer, datagramDataLength);
+
+                    QNetworkDatagram newDatagram;
+
+                    newDatagram.setSender(QHostAddress(senderAddress), senderPort);
+                    newDatagram.setDestination(QHostAddress(destinationAddress), destinationPort);
+                    newDatagram.setData(datagramData);
+
+                    mid360Datagrams.insert(timeStamp, newDatagram);
+                    break;
+                }
                 default:
                     addLogLine("Warning: Unsupported data type (" + QString::number(dataType) + "). Skipping chunk.");
                     dataStream.skipRawData(dataChunkLength);
@@ -3064,6 +3128,7 @@ void PostProcessingForm::on_pushButton_AddLidarData_clicked()
 void PostProcessingForm::on_pushButton_ClearLidarData_clicked()
 {
     lidarRounds.clear();
+    mid360Datagrams.clear();
     addLogLine("Lidar data cleared.");
 }
 
