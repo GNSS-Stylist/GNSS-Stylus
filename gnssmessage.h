@@ -29,6 +29,7 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QObject>
 //#include <QException>
 
 /**
@@ -83,6 +84,7 @@ public:
  */
 class UBXMessage : public GNSSMessage
 {
+//    Q_OBJECT;
 public:
     /**
      * @brief Enum for message data status.
@@ -116,6 +118,8 @@ public:
     UBXMessage(const QByteArray& ubxRawData, qint64 messageStartTime = 0, qint64 messageEndTime = 0);
 
 };
+
+Q_DECLARE_METATYPE(UBXMessage);
 
 /**
  * @brief Class for UBX-RELPOSNED-message.
@@ -201,6 +205,9 @@ private:
     static double interpolateDouble(const double startVal, const double endVal, const ITOW startITOW, const ITOW endITOW, ITOW currITOW);
     static qint64 interpolateQint64(const qint64 startVal, const qint64 endVal, const ITOW startITOW, const ITOW endITOW, ITOW currITOW);
 };
+
+Q_DECLARE_METATYPE(UBXMessage_RELPOSNED);
+
 
 /**
  * @brief Class for RTCM-messages.

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>626</width>
+    <width>709</width>
     <height>630</height>
    </rect>
   </property>
@@ -24,9 +24,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
-         <width>589</width>
-         <height>1131</height>
+         <y>-625</y>
+         <width>675</width>
+         <height>1214</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -1225,14 +1225,14 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab_DistanceProvider_Constant">
            <property name="autoFillBackground">
             <bool>true</bool>
            </property>
            <attribute name="title">
-            <string>Distance provider (constant)</string>
+            <string>Distance (constant)</string>
            </attribute>
            <widget class="QLabel" name="label_Distance_Constant">
             <property name="geometry">
@@ -1278,7 +1278,7 @@
             <bool>true</bool>
            </property>
            <attribute name="title">
-            <string>Distance provider (&quot;20 Hz laser Rangefinder module V2&quot;)</string>
+            <string>Distance (&quot;20 Hz laser Rangefinder module V2&quot;)</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
@@ -1822,6 +1822,224 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_Mid360">
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <attribute name="title">
+            <string>Mid-360</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_Mid360_Top" stretch="1,0,0">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLabel" name="label_HostIPAddress">
+                    <property name="text">
+                     <string>Host IP-address:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_Mid360HostIPAddress"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <item>
+                   <widget class="QLabel" name="label_LidarIPAddresses">
+                    <property name="text">
+                     <string>Lidar IP-addresses (last bytes, comma separated):</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_Mid360IPAddresses"/>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_StartThread_Mid360">
+                <property name="text">
+                 <string>Start thread</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_TerminateThread_Mid360">
+                <property name="text">
+                 <string>Terminate thread</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_Middle_Mid360">
+              <item>
+               <widget class="QPushButton" name="pushButton_ShowMessageWindow_Mid360">
+                <property name="text">
+                 <string>Show message window</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_ShowLidarChartWindow_Mid360">
+                <property name="text">
+                 <string>Show lidar chart-window</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_SuspendThread_Mid360">
+                <property name="text">
+                 <string>Suspended</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_Messages_Mid360" columnstretch="0,10,0">
+              <property name="leftMargin">
+               <number>8</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <item row="3" column="1">
+               <widget class="QLabel" name="label_LastInfoMessage_Mid360">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="label_LastWarningMessage_Mid360">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="pushButton_ClearErrorMessage_Mid360">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="label_LastErrorMessage_Mid360">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_RoundCount_Mid360">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QPushButton" name="pushButton_ClearWarningMessage_Mid360">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_LastWarningMessageLabel_Mid360">
+                <property name="text">
+                 <string>Last warning message:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_LastErrorMessageLabel_Mid360">
+                <property name="text">
+                 <string>Last error message:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="pushButton_ClearRoundCounter_Mid360">
+                <property name="text">
+                 <string>Reset</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_RoundCountLabel_Mid630">
+                <property name="text">
+                 <string>Rounds received:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QPushButton" name="pushButton_ClearInfoMessage_Mid360">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_LastInfoMessageLabel_Mid360">
+                <property name="text">
+                 <string>Last info message:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
         <item>
@@ -1856,7 +2074,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>626</width>
+     <width>709</width>
      <height>21</height>
     </rect>
    </property>

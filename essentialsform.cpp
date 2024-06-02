@@ -131,6 +131,10 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     connect(&rtcmTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_rtcmTimeoutTimerTimeout);
 
     sideBarUpdateTimer.start(10);
+
+    secondTimer.setSingleShot(false);
+    secondTimer.start(1000);
+    connect(&secondTimer, &QTimer::timeout, this, &EssentialsForm::on_SecondTimerTimeout);
 }
 
 EssentialsForm::~EssentialsForm()
@@ -708,6 +712,9 @@ void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessi
 
     connect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
                      this, &EssentialsForm::distanceRoundReceived);
+
+    connect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
+            this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
 }
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
@@ -723,6 +730,9 @@ void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProce
 
     disconnect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
                      this, &EssentialsForm::distanceRoundReceived);
+
+    disconnect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
+               this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
 }
 
 void EssentialsForm::connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)
@@ -1245,8 +1255,14 @@ void EssentialsForm::updateTreeItems(void)
         treeItem_Roll_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
         treeItem_Roll_LOSolver->setText(0, "Roll");
 
-        treeItem_LidarRoundFrequency_LOSolver = new QTreeWidgetItem(ui->treeWidget_LOSolver);
-        treeItem_LidarRoundFrequency_LOSolver->setText(0, "Lidar data frequency");
+        treeItem_RPLidarRoundFrequency = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_RPLidarRoundFrequency->setText(0, "RPLidar data frequency");
+
+        treeItem_Mid360datagramFrequency = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_Mid360datagramFrequency->setText(0, "Livox MID-360 datagrams/s");
+
+        treeItem_Mid360DataRate = new QTreeWidgetItem(ui->treeWidget_LOSolver);
+        treeItem_Mid360DataRate->setText(0, "Livox MID-360 data rate MB/s");
 
         treeItemsCreated = true;
     }
@@ -1465,13 +1481,13 @@ void EssentialsForm::updateTreeItems(void)
 
     if (lidarTimeout)
     {
-        treeItem_LidarRoundFrequency_LOSolver->setText(1, "0");
-        treeItem_LidarRoundFrequency_LOSolver->setBackground(1, brush_Invalid);
+        treeItem_RPLidarRoundFrequency->setText(1, "0");
+        treeItem_RPLidarRoundFrequency->setBackground(1, brush_Invalid);
     }
     else
     {
-        treeItem_LidarRoundFrequency_LOSolver->setText(1, QString::number(lidarRoundFrequency, 'f', 1));
-        treeItem_LidarRoundFrequency_LOSolver->setBackground(1, brush_Valid);
+        treeItem_RPLidarRoundFrequency->setText(1, QString::number(lidarRoundFrequency, 'f', 1));
+        treeItem_RPLidarRoundFrequency->setBackground(1, brush_Valid);
     }
 }
 
@@ -2059,8 +2075,6 @@ void EssentialsForm::disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread)
 
 void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::DistanceItem>& data, qint64 startTime, qint64 endTime)
 {
-    (void) data;
-
     int timeDiff = endTime - startTime;
 
     if (timeDiff > 0)
@@ -2086,7 +2100,7 @@ void EssentialsForm::distanceRoundReceived(const QVector<RPLidarThread::Distance
         QDataStream dataStream(&logFile_Lidar);
         dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
 
-        unsigned int dataType = 1;  // Datatype for possible future extensions (like compression?)
+        unsigned int dataType = 1;  // Datatype for possible future extensions (like other lidar devices and/or compression)
         unsigned int numOfItems = data.size();
         unsigned int dataChunkLength = sizeof(numOfItems) + sizeof(startTime) + sizeof(endTime) + numOfItems * 3 * sizeof(float);
 
@@ -2182,7 +2196,86 @@ void EssentialsForm::on_rtcmTimeoutTimerTimeout()
     soundEffect_RTCMTimeout.play();
 }
 
+void EssentialsForm::connectLivoxMid360ThreadSlots(LivoxMid360Thread* mid360Thread) //!< Connects slots from LivoxMid360Thread
+{
+    connect(mid360Thread, &LivoxMid360Thread::rawDatagramReceived,
+            this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
+}
 
+void EssentialsForm::disconnectLivoxMid360ThreadSlots(LivoxMid360Thread* mid360Thread) //!< Disconnects slots from LivoxMid360Thread
+{
+    disconnect(mid360Thread, &LivoxMid360Thread::rawDatagramReceived,
+               this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
 
+}
 
+void EssentialsForm::on_LivoxMid360RawDatagramReceived(const QNetworkDatagram& datagram, qint64 timeStamp)
+{
+    bool senderAddressOk, destinationAddressOk;
 
+    quint32 senderAddress = datagram.senderAddress().toIPv4Address(&senderAddressOk);
+    quint32 destinationAddress = datagram.senderAddress().toIPv4Address(&destinationAddressOk);
+
+    if ((!senderAddressOk) || (!destinationAddressOk))
+    {
+        // Unlikely to happen, but if either address is not IPv4, just ignore the datagram
+        return;
+    }
+
+    mid360DatagramCounter++;
+    mid360RawDataCounter += datagram.data().size();
+
+    if (logFile_Lidar.isOpen())
+    {
+        QDataStream dataStream(&logFile_Lidar);
+
+//        dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);        // No floats to log here (they are inside the raw data)
+
+        quint16 senderPort = datagram.senderPort();
+        quint16 destinationPort = datagram.destinationPort();
+
+        unsigned int dataType = 0x10001;  // Datatype for possible future extensions (like other lidar devices and/or compression)
+        unsigned int dataChunkLength = sizeof(timeStamp) +
+                                       sizeof(senderAddress) + sizeof(senderPort) +
+                                       sizeof(destinationAddress) + sizeof(destinationPort) +
+                                       datagram.data().size();
+
+        dataStream << dataType << dataChunkLength;
+
+        dataStream << timeStamp << senderAddress << senderPort << destinationAddress << destinationPort;
+        dataStream.writeRawData(datagram.data().constData(), datagram.data().size());   // Can't use << due to zero-termination
+    }
+
+    // Too many datagrams (around 2k / s / device), too many updates! updateTreeItems();
+}
+
+void EssentialsForm::on_SecondTimerTimeout()
+{
+    const QBrush brush_Valid = QBrush(QColor(128,255,128));
+    const QBrush brush_Invalid = QBrush(QColor(255,128,128));
+
+    if (mid360DatagramCounter != 0)
+    {
+        treeItem_Mid360datagramFrequency->setBackground(1, brush_Valid);
+    }
+    else
+    {
+        treeItem_Mid360datagramFrequency->setBackground(1, brush_Invalid);
+    }
+
+    if (mid360RawDataCounter != 0)
+    {
+        treeItem_Mid360DataRate->setBackground(1, brush_Valid);
+    }
+    else
+    {
+        treeItem_Mid360DataRate->setBackground(1, brush_Invalid);
+    }
+
+    treeItem_Mid360datagramFrequency->setText(1, QString::number(mid360DatagramCounter));
+    double dataRate = double(mid360RawDataCounter) / 1.0e6;
+    treeItem_Mid360DataRate->setText(1, QString::number(dataRate));
+
+    mid360DatagramCounter = 0;
+    mid360RawDataCounter = 0;
+}

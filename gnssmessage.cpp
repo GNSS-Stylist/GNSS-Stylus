@@ -142,6 +142,7 @@ UBXMessage_RELPOSNED::UBXMessage_RELPOSNED(const UBXMessage &ubxMessage) : UBXMe
         else
         {
             // Use packed, "memory-mapped" source data in conversion to prevent byte-counting
+            // TODO: This will fail with CPU's using big-endian byte order (see QtEndian for candidate conversion functions).
 
 #pragma pack(push, 1)
             //RELPOSNED-message as it is in the frame (packed)

@@ -40,7 +40,9 @@
 #include "laserrangefinder20hzv2messagemonitorform.h"
 #include "laserrangefinder20hzv2serialthread.h"
 #include "Lidar/rplidarthread.h"
+#include "Lidar/livoxmid360thread.h"
 #include "Lidar/rplidarmessagemonitorform.h"
+#include "Lidar/livoxmid360messagemonitorform.h"
 #include "Lidar/lidarchartform.h"
 #include "licensesform.h"
 
@@ -226,6 +228,16 @@ private slots:
 
     void on_actionLicenses_triggered();
 
+    void on_pushButton_StartThread_Mid360_clicked();
+
+    void thread_LivoxMid360_ErrorMessage(const QString& errorMessage);
+    void thread_LivoxMid360_WarningMessage(const QString& warningMessage);
+    void thread_LivoxMid360_InfoMessage(const QString& infoMessage);
+
+    void on_pushButton_TerminateThread_Mid360_clicked();
+
+    void on_pushButton_ShowMessageWindow_Mid360_clicked();
+
 signals:
     void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 
@@ -253,6 +265,9 @@ private:
     RPLidarThread* thread_RPLidar = nullptr;
     int messageCounter_RPLidar_Rounds;
     LidarChartForm* lidarChartForm = nullptr;
+
+    LivoxMid360MessageMonitorForm* messageMonitorForm_Mid360 = nullptr;
+    LivoxMid360Thread* thread_Mid360 = nullptr;
 
     EssentialsForm* essentialsForm;
 

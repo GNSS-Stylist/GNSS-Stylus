@@ -19,8 +19,9 @@
 #include <QSettings>
 
 #include "mainwindow.h"
+#include "qmessagebox.h"
 #include "ui_mainwindow.h"
-#include "Lidar/rplidar_sdk/include/rplidar.h"
+//#include "Lidar/rplidar_sdk/include/rplidar.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -174,8 +175,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBox_MotorPWM_RPLidar->setValue(settings.value("MotorPWM_RPLidar", "660").toInt());
     ui->comboBox_ExpressScanMode->setCurrentIndex(settings.value("ExpressScanMode_RPLidar", "0").toInt());
 
+    ui->lineEdit_Mid360HostIPAddress->setText(settings.value("HostIPAddress_LivoxMid360", "xxx.xxx.xxx.xxx").toString());
+    ui->lineEdit_Mid360IPAddresses->setText(settings.value("LidarIPAddresses_LivoxMid360", "xxx,yyy,zzz").toString());
+
     // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
     qRegisterMetaType<SerialThread::DataReceivedEmitReason>();
+
+    qRegisterMetaType<QNetworkDatagram>();
+    qRegisterMetaType<UBXMessage>();
+
+    messageMonitorForm_Mid360 = new LivoxMid360MessageMonitorForm(parent, "Message monitor (Livox Mid-360)");
 }
 
 MainWindow::~MainWindow()
@@ -191,10 +200,14 @@ MainWindow::~MainWindow()
     settings.setValue("MotorPWM_RPLidar", ui->spinBox_MotorPWM_RPLidar->value());
     settings.setValue("ExpressScanMode_RPLidar", ui->comboBox_ExpressScanMode->currentIndex());
 
+    settings.setValue("HostIPAddress_LivoxMid360", ui->lineEdit_Mid360HostIPAddress->text());
+    settings.setValue("LidarIPAddresses_LivoxMid360", ui->lineEdit_Mid360IPAddresses->text());
+
     delete messageMonitorForm_Base_Serial;
     delete messageMonitorForm_Base_NTRIP;
     delete messageMonitorForm_LaserDist;
     delete messageMonitorForm_RPLidar;
+    delete messageMonitorForm_Mid360;
     delete lidarChartForm;
 
     for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
@@ -253,6 +266,7 @@ void MainWindow::closeEvent (QCloseEvent *event)
 
     messageMonitorForm_LaserDist->close();
     messageMonitorForm_RPLidar->close();
+    messageMonitorForm_Mid360->close();
     lidarChartForm->close();
 
     if (serialThread_Base)
@@ -1254,3 +1268,144 @@ void MainWindow::on_actionLicenses_triggered()
     licencesForm->raise();
     licencesForm->activateWindow();
 }
+
+void MainWindow::on_pushButton_StartThread_Mid360_clicked()
+{
+    QHostAddress hostAddressNotValidated;
+
+    if (!hostAddressNotValidated.setAddress(ui->lineEdit_Mid360HostIPAddress->text()))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Host IP address not valid. Thread not started.");
+        msgBox.exec();
+        return;
+    }
+
+    bool convOk = false;
+    quint32 hostAddress = hostAddressNotValidated.toIPv4Address(&convOk);
+
+    if (!convOk)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Host IP address not valid IPV4-address. Thread not started.");
+        msgBox.exec();
+        return;
+    }
+
+    QStringList lidarIPStrings = ui->lineEdit_Mid360IPAddresses->text().split(',');
+    QVector<quint32> lidarIPValues;
+
+    for (int i = 0; i < lidarIPStrings.size(); i++)
+    {
+        QString currString = lidarIPStrings[i];
+        int newValue = currString.toInt(&convOk);
+
+        if (!convOk)
+        {
+            QMessageBox msgBox;
+            msgBox.setText("Lidar IP string \"" + currString + "\" not valid. Thread not started.");
+            msgBox.exec();
+            return;
+        }
+
+        if ((newValue < 0) || (newValue > 254))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("Lidar IP string \"" + currString + "\" out of range. Thread not started.");
+            msgBox.exec();
+            return;
+        }
+
+        lidarIPValues.push_back(newValue);
+    }
+
+    if (lidarIPValues.isEmpty())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("No lidar IPs, no point starting the thread.");
+        msgBox.exec();
+        return;
+    }
+
+    if (!thread_Mid360)
+    {
+        thread_Mid360 = new LivoxMid360Thread(hostAddress, &rovers[0]->ubloxDataStreamProcessor);
+        if (ui->checkBox_SuspendThread_Mid360->isChecked())
+        {
+            thread_Mid360->suspend();
+        }
+
+        connect(thread_Mid360, &LivoxMid360Thread::infoMessage,
+                this, &MainWindow::thread_LivoxMid360_InfoMessage);
+
+        connect(thread_Mid360, &LivoxMid360Thread::warningMessage,
+                this, &MainWindow::thread_LivoxMid360_WarningMessage);
+
+        connect(thread_Mid360, &LivoxMid360Thread::errorMessage,
+                this, &MainWindow::thread_LivoxMid360_ErrorMessage);
+
+        messageMonitorForm_Mid360->connectLivoxMid360ThreadSlots(thread_Mid360);
+        essentialsForm->connectLivoxMid360ThreadSlots(thread_Mid360);
+
+        thread_Mid360->start();
+
+        ui->lineEdit_Mid360HostIPAddress->setEnabled(false);
+        ui->lineEdit_Mid360IPAddresses->setEnabled(false);
+        ui->pushButton_StartThread_Mid360->setEnabled(false);
+        ui->pushButton_TerminateThread_Mid360->setEnabled(true);
+    }
+}
+
+void MainWindow::thread_LivoxMid360_InfoMessage(const QString& infoMessage)
+{
+    ui->label_LastInfoMessage_Mid360->setText(infoMessage);
+}
+
+void MainWindow::thread_LivoxMid360_ErrorMessage(const QString& errorMessage)
+{
+    ui->label_LastErrorMessage_Mid360->setText(errorMessage);
+}
+
+void MainWindow::thread_LivoxMid360_WarningMessage(const QString& warningMessage)
+{
+    ui->label_LastWarningMessage_Mid360->setText(warningMessage);
+}
+
+void MainWindow::on_pushButton_TerminateThread_Mid360_clicked()
+{
+    if (thread_Mid360)
+    {
+        thread_Mid360->requestTerminate();
+
+        thread_Mid360->wait(5000);
+
+        disconnect(thread_Mid360, &LivoxMid360Thread::infoMessage,
+                   this, &MainWindow::thread_LivoxMid360_InfoMessage);
+
+        disconnect(thread_Mid360, &LivoxMid360Thread::warningMessage,
+                   this, &MainWindow::thread_LivoxMid360_WarningMessage);
+
+        disconnect(thread_Mid360, &LivoxMid360Thread::errorMessage,
+                   this, &MainWindow::thread_LivoxMid360_ErrorMessage);
+
+        messageMonitorForm_Mid360->disconnectLivoxMid360ThreadSlots(thread_Mid360);
+        essentialsForm->disconnectLivoxMid360ThreadSlots(thread_Mid360);
+
+        delete thread_Mid360;
+        thread_Mid360 = nullptr;
+
+        ui->lineEdit_Mid360HostIPAddress->setEnabled(true);
+        ui->lineEdit_Mid360IPAddresses->setEnabled(true);
+        ui->pushButton_StartThread_Mid360->setEnabled(true);
+        ui->pushButton_TerminateThread_Mid360->setEnabled(false);
+    }
+}
+
+
+void MainWindow::on_pushButton_ShowMessageWindow_Mid360_clicked()
+{
+    messageMonitorForm_Mid360->show();
+    messageMonitorForm_Mid360->raise();
+    messageMonitorForm_Mid360->activateWindow();
+}
+

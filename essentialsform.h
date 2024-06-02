@@ -39,6 +39,7 @@
 #include "laserrangefinder20hzv2serialthread.h"
 #include "losolver.h"
 #include "Lidar/rplidarthread.h"
+#include "Lidar/livoxmid360thread.h"
 
 namespace Ui {
 class EssentialsForm;
@@ -93,6 +94,9 @@ public:
     void connectRPLidarThreadSlots(RPLidarThread* rpLidarThread); //!< Connects slots from LaserRangeFinder20HzV2SerialThread
     void disconnectRPLidarThreadSlots(RPLidarThread* rpLidarThread); //!< Disconnects slots from SerialThread
 
+    void connectLivoxMid360ThreadSlots(LivoxMid360Thread* mid360Thread); //!< Connects slots from LivoxMid360Thread
+    void disconnectLivoxMid360ThreadSlots(LivoxMid360Thread* mid360Thread); //!< Disconnects slots from LivoxMid360Thread
+
 public slots:
     void on_distanceReceived(const EssentialsForm::DistanceItem& item);
     void on_measuredDistanceReceived(const double& distance, qint64 frameStartTime, qint64 frameEndTime);
@@ -146,6 +150,10 @@ private slots:
     void on_accuracyTimerTimeout();
 
     void on_rtcmTimeoutTimerTimeout();
+
+    void on_LivoxMid360RawDatagramReceived(const QNetworkDatagram& datagram, qint64 timeStamp);
+
+    void on_SecondTimerTimeout();
 
 
 protected:
@@ -307,8 +315,10 @@ private:
     QTreeWidgetItem *treeItem_Pitch_LOSolver;
     QTreeWidgetItem *treeItem_Roll_LOSolver;
 
-    QTreeWidgetItem *treeItem_LidarRoundFrequency_LOSolver;
+    QTreeWidgetItem *treeItem_RPLidarRoundFrequency;
 
+    QTreeWidgetItem *treeItem_Mid360datagramFrequency;
+    QTreeWidgetItem *treeItem_Mid360DataRate;
 
     void handleRELPOSNEDQueues(void);   //!< Handles also syncing of rover RELPOSNED-messages
     void closeAllLogFiles(void);
@@ -358,6 +368,9 @@ private:
 
     QTimer sideBarUpdateTimer;
 
+    quint32 mid360DatagramCounter = 0;
+    quint64 mid360RawDataCounter = 0;
+    QTimer secondTimer;
 };
 
 #endif // ESSENTIALSFORM_H
