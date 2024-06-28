@@ -123,12 +123,14 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
 
     treeItem->setText(0, QHostAddress(ipAddress).toString());
     treeItem->setText(1, "0 s");
+    treeItem->setBackground(1, okBrush);
     treeItem->setText(2, info.sn);
     treeItem->setText(3, getTimeValueOrNA(info.local_time_now, info.local_time_now_valid));
     treeItem->setText(4, getTimeValueOrNA(info.last_sync_time, info.last_sync_time_valid));
     treeItem->setText(5, getTimeValueOrNA(info.time_offset, info.time_offset_valid));
 
     QString timeSyncString;
+    const QBrush* timeSyncBrush = &errorBrush;
     if (info.time_sync_type_valid)
     {
         const char *timeSyncStrings[] = { "No sync", "PTP", "GPS" };
@@ -136,15 +138,23 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
         if (info.time_sync_type < sizeof(timeSyncStrings) / sizeof(timeSyncStrings[0]))
         {
             timeSyncString = timeSyncStrings[info.time_sync_type];
+
+            if (info.time_sync_type == LivoxMid360::PushLidarInformation::TIME_SYNC_GPS)
+            {
+                timeSyncBrush = &okBrush;
+            }
         }
         else
         {
             timeSyncString = "Value out of range";
+            timeSyncBrush = &errorBrush;
         }
     }
     treeItem->setText(6, timeSyncString);
+    treeItem->setBackground(6, *timeSyncBrush);
 
     QString workStateString;
+    const QBrush* workStateBrush = &errorBrush;
 
     if (info.cur_work_state_valid)
     {
@@ -165,6 +175,11 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
         if (info.cur_work_state < sizeof(workStateStrings) / sizeof(workStateStrings[0]))
         {
             workStateString = workStateStrings[info.cur_work_state];
+
+            if (info.cur_work_state == LivoxMid360::PushLidarInformation::WORK_STATE_SAMPLING)
+            {
+                workStateBrush = &okBrush;
+            }
         }
         else
         {
@@ -173,6 +188,7 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
     }
 
     treeItem->setText(7, workStateString);
+    treeItem->setBackground(7, *workStateBrush);
 
     treeItem->setText(8, getStringOrNA(QString::number(double(info.core_temp) / 100.0), info.core_temp_valid));
 }
@@ -201,8 +217,13 @@ void LivoxMid360DeviceMonitorForm::on_deviceCounterUpdateTimerTimeout()
         for (int i = 0; i < ui->treeWidget_DataSummary->topLevelItemCount(); i++)
         {
             ui->treeWidget_DataSummary->topLevelItem(i)->setText(2, "0 (N/A)");
+            ui->treeWidget_DataSummary->topLevelItem(i)->setBackground(2, warningBrush);
+
             ui->treeWidget_DataSummary->topLevelItem(i)->setText(4, "0 (N/A)");
+            ui->treeWidget_DataSummary->topLevelItem(i)->setBackground(4, warningBrush);
+
             ui->treeWidget_DataSummary->topLevelItem(i)->setText(6, "0 (N/A)");
+            ui->treeWidget_DataSummary->topLevelItem(i)->setBackground(6, warningBrush);
         }
 
         return;
@@ -243,14 +264,39 @@ void LivoxMid360DeviceMonitorForm::on_deviceCounterUpdateTimerTimeout()
         QTreeWidgetItem* treeItem = counterItem->treeWidget.get();
 
         treeItem->setText(0, QHostAddress(ipAddress).toString());
+
         treeItem->setText(1, QString::number(counterItem->counters.pointCloudPoints, 'g', 4));
         treeItem->setText(2, QString::number(difference.pointCloudPoints, 'g', 3));
+        if ((difference.pointCloudPoints > 100000) && (difference.pointCloudPoints < 300000))
+        {
+            treeItem->setBackground(2, okBrush);
+        }
+        else
+        {
+            treeItem->setBackground(2, warningBrush);
+        }
+
         treeItem->setText(3, QString::number(counterItem->counters.imuDataDatagrams, 'g', 4));
         treeItem->setText(4, QString::number(difference.imuDataDatagrams, 'g', 3));
+        if ((difference.imuDataDatagrams > 100) && (difference.imuDataDatagrams < 300))
+        {
+            treeItem->setBackground(4, okBrush);
+        }
+        else
+        {
+            treeItem->setBackground(4, warningBrush);
+        }
+
         treeItem->setText(5, QString::number(counterItem->counters.totalDatagramBytes, 'g', 4));
         treeItem->setText(6, QString::number(difference.totalDatagramBytes, 'g', 4));
-
-
+        if ((difference.totalDatagramBytes > 1000000) && (difference.totalDatagramBytes < 5000000))
+        {
+            treeItem->setBackground(6, okBrush);
+        }
+        else
+        {
+            treeItem->setBackground(6, warningBrush);
+        }
 
         /*        treeItem->setText(2, info.sn);
         treeItem->setText(3, getTimeValueOrNA(info.local_time_now, info.local_time_now_valid));
@@ -266,7 +312,9 @@ void LivoxMid360DeviceMonitorForm::on_deviceCounterUpdateTimerTimeout()
             // List contains devices not currently active in the thread.
             // Clear the rate-fields.
             counterIter.value()->treeWidget->setText(2, "0 (N/A)");
+            counterIter.value()->treeWidget->setBackground(2, warningBrush);
             counterIter.value()->treeWidget->setText(4, "0 (N/A)");
+            counterIter.value()->treeWidget->setBackground(4, warningBrush);
         }
     }
 }
@@ -304,6 +352,7 @@ void LivoxMid360DeviceMonitorForm::on_silenceTimerMappedTimeout(int ipAddress)
         item->silenceTimeSecs++;
 
         item->treeWidget->setText(1, QString::number(item->silenceTimeSecs) + " s");
+        item->treeWidget->setBackground(1, errorBrush);
 
         // First timeout is 2s, but update the value every second from now on.
         item->silenceTimer.setInterval(1000);

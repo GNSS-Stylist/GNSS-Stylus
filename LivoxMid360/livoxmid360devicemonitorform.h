@@ -24,6 +24,8 @@
 #include <QTreeWidget>
 #include <QTimer>
 #include <QSignalMapper>
+#include <QBrush>
+#include <QColor>
 
 #include "livoxmid360thread.h"
 
@@ -61,6 +63,11 @@ private slots:
     void on_silenceTimerMappedTimeout(int ipAddress);
 
 private:
+    // Background colors to indicate ok/warning/error-states of the fields.
+    const QBrush okBrush = QBrush(QColor(128,255,128));
+    const QBrush errorBrush = QBrush(QColor(255,128,128));
+    const QBrush warningBrush = QBrush(QColor(255,255,0));
+
     Ui::LivoxMid360DeviceMonitorForm *ui;
 
     class DeviceItem
