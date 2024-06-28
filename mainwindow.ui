@@ -1829,9 +1829,9 @@
            <attribute name="title">
             <string>Mid-360</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_13">
+           <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_Mid360_Top" stretch="1,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0">
                 <property name="spacing">
@@ -1868,18 +1868,33 @@
                </layout>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_StartThread_Mid360">
-                <property name="text">
-                 <string>Start thread</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_TerminateThread_Mid360">
-                <property name="text">
-                 <string>Terminate thread</string>
-                </property>
-               </widget>
+               <layout class="QVBoxLayout" name="verticalLayout_9">
+                <item>
+                 <widget class="QCheckBox" name="checkBox_ReplayMode_Mid360">
+                  <property name="text">
+                   <string>Start thread in replay only mode</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <item>
+                   <widget class="QPushButton" name="pushButton_StartThread_Mid360">
+                    <property name="text">
+                     <string>Start thread</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="pushButton_TerminateThread_Mid360">
+                    <property name="text">
+                     <string>Terminate thread</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
@@ -1893,9 +1908,9 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_ShowLidarChartWindow_Mid360">
+               <widget class="QPushButton" name="pushButton_ShowDeviceMonitorWindow_Mid360">
                 <property name="text">
-                 <string>Show lidar chart-window</string>
+                 <string>Show device monitor-window</string>
                 </property>
                </widget>
               </item>

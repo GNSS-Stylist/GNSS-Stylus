@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LivoxMid360DeviceMonitorForm</class>
+ <widget class="QWidget" name="LivoxMid360DeviceMonitorForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>930</width>
+    <height>375</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Livox Mid-360 device monitor</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_DetectedDevices">
+     <property name="text">
+      <string>Detected devices (devices sending &quot;Push lidar information&quot;-datagram):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTreeWidget" name="treeWidget_DetectedDevices">
+     <property name="indentation">
+      <number>0</number>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <column>
+      <property name="text">
+       <string>IP address</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Silence time</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Serial number</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Local time</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Last sync time</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Time offset</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Time sync type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Work state</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Core temp</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton_ClearDevices">
+     <property name="text">
+      <string>Clear devices list and redetect devices as they appear</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_PointCloudAndIMUDataSummary">
+     <property name="text">
+      <string>Point cloud and IMU data summary:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTreeWidget" name="treeWidget_DataSummary">
+     <property name="indentation">
+      <number>0</number>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <column>
+      <property name="text">
+       <string>IP address</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Points</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Point rate (1/s)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>IMU updates</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>IMU rate (1/s)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Data total (B)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Data rate (B/s)</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="pushButton_ClearSummary">
+       <property name="text">
+        <string>Clear summary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_ResetCounter">
+       <property name="text">
+        <string>Reset counters (in the thread)</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

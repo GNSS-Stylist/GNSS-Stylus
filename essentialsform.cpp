@@ -1,6 +1,6 @@
 /*
     essentialsform.cpp (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2024 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "essentialsform.h"
 #include "ui_essentialsform.h"
 #include "Eigen/Geometry"
+#include "LivoxMid360/livoxmid360controlcommand.h"
 
 EssentialsForm::EssentialsForm(QWidget *parent) :
     QWidget(parent),
@@ -713,8 +714,9 @@ void EssentialsForm::connectPostProcessingSlots(PostProcessingForm* postProcessi
     connect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
                      this, &EssentialsForm::distanceRoundReceived);
 
-    connect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
-            this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
+// Livox Mid-360 replay goes through the thread now, so this is not needed.
+//    connect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
+//            this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
 }
 
 void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProcessingForm)
@@ -731,8 +733,9 @@ void EssentialsForm::disconnectPostProcessingSlots(PostProcessingForm* postProce
     disconnect(postProcessingForm, &PostProcessingForm::replayData_Lidar,
                      this, &EssentialsForm::distanceRoundReceived);
 
-    disconnect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
-               this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
+// Livox Mid-360 replay goes through the thread now, so this is not needed.
+//    disconnect(postProcessingForm, &PostProcessingForm::replayData_LivoxMid360,
+//               this, &EssentialsForm::on_LivoxMid360RawDatagramReceived);
 }
 
 void EssentialsForm::connectLaserRangeFinder20HzV2SerialThreadSlots(LaserRangeFinder20HzV2SerialThread* distanceThread)

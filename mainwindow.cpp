@@ -1,6 +1,6 @@
 /*
     mainwindow.cpp (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2024 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -183,8 +183,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     qRegisterMetaType<QNetworkDatagram>();
     qRegisterMetaType<UBXMessage>();
+    qRegisterMetaType<LivoxMid360::PushLidarInformation>();
+    qRegisterMetaType<LivoxMid360::ControlCommand>();
 
     messageMonitorForm_Mid360 = new LivoxMid360MessageMonitorForm(parent, "Message monitor (Livox Mid-360)");
+    livoxMid360DeviceMonitorForm = new LivoxMid360DeviceMonitorForm(parent);
 }
 
 MainWindow::~MainWindow()
@@ -208,6 +211,7 @@ MainWindow::~MainWindow()
     delete messageMonitorForm_LaserDist;
     delete messageMonitorForm_RPLidar;
     delete messageMonitorForm_Mid360;
+    delete livoxMid360DeviceMonitorForm;
     delete lidarChartForm;
 
     for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
@@ -267,6 +271,7 @@ void MainWindow::closeEvent (QCloseEvent *event)
     messageMonitorForm_LaserDist->close();
     messageMonitorForm_RPLidar->close();
     messageMonitorForm_Mid360->close();
+    livoxMid360DeviceMonitorForm->close();
     lidarChartForm->close();
 
     if (serialThread_Base)
@@ -1271,9 +1276,9 @@ void MainWindow::on_actionLicenses_triggered()
 
 void MainWindow::on_pushButton_StartThread_Mid360_clicked()
 {
-    QHostAddress hostAddressNotValidated;
+    QHostAddress ipAddressNotValidated;
 
-    if (!hostAddressNotValidated.setAddress(ui->lineEdit_Mid360HostIPAddress->text()))
+    if (!ipAddressNotValidated.setAddress(ui->lineEdit_Mid360HostIPAddress->text()))
     {
         QMessageBox msgBox;
         msgBox.setText("Host IP address not valid. Thread not started.");
@@ -1282,7 +1287,7 @@ void MainWindow::on_pushButton_StartThread_Mid360_clicked()
     }
 
     bool convOk = false;
-    quint32 hostAddress = hostAddressNotValidated.toIPv4Address(&convOk);
+    quint32 hostAddress = ipAddressNotValidated.toIPv4Address(&convOk);
 
     if (!convOk)
     {
@@ -1293,30 +1298,26 @@ void MainWindow::on_pushButton_StartThread_Mid360_clicked()
     }
 
     QStringList lidarIPStrings = ui->lineEdit_Mid360IPAddresses->text().split(',');
+
     QVector<quint32> lidarIPValues;
 
     for (int i = 0; i < lidarIPStrings.size(); i++)
     {
         QString currString = lidarIPStrings[i];
-        int newValue = currString.toInt(&convOk);
+
+        ipAddressNotValidated.setAddress(currString);
+
+        quint32 newIPAddress = ipAddressNotValidated.toIPv4Address(&convOk);
 
         if (!convOk)
         {
             QMessageBox msgBox;
-            msgBox.setText("Lidar IP string \"" + currString + "\" not valid. Thread not started.");
+            msgBox.setText("Lidar IP string \"" + currString + "\" not valid IPV4-address. Thread not started.");
             msgBox.exec();
             return;
         }
 
-        if ((newValue < 0) || (newValue > 254))
-        {
-            QMessageBox msgBox;
-            msgBox.setText("Lidar IP string \"" + currString + "\" out of range. Thread not started.");
-            msgBox.exec();
-            return;
-        }
-
-        lidarIPValues.push_back(newValue);
+        lidarIPValues.push_back(newIPAddress);
     }
 
     if (lidarIPValues.isEmpty())
@@ -1329,7 +1330,7 @@ void MainWindow::on_pushButton_StartThread_Mid360_clicked()
 
     if (!thread_Mid360)
     {
-        thread_Mid360 = new LivoxMid360Thread(hostAddress, &rovers[0]->ubloxDataStreamProcessor);
+        thread_Mid360 = new LivoxMid360Thread(hostAddress, &rovers[0]->ubloxDataStreamProcessor, ui->checkBox_ReplayMode_Mid360->isChecked(), lidarIPValues);
         if (ui->checkBox_SuspendThread_Mid360->isChecked())
         {
             thread_Mid360->suspend();
@@ -1346,6 +1347,8 @@ void MainWindow::on_pushButton_StartThread_Mid360_clicked()
 
         messageMonitorForm_Mid360->connectLivoxMid360ThreadSlots(thread_Mid360);
         essentialsForm->connectLivoxMid360ThreadSlots(thread_Mid360);
+        livoxMid360DeviceMonitorForm->connectLivoxMid360Thread(thread_Mid360);
+        thread_Mid360->connectPostProcessingSlots(postProcessingForm);
 
         thread_Mid360->start();
 
@@ -1390,6 +1393,8 @@ void MainWindow::on_pushButton_TerminateThread_Mid360_clicked()
 
         messageMonitorForm_Mid360->disconnectLivoxMid360ThreadSlots(thread_Mid360);
         essentialsForm->disconnectLivoxMid360ThreadSlots(thread_Mid360);
+        livoxMid360DeviceMonitorForm->disconnectLivoxMid360Thread(thread_Mid360);
+        thread_Mid360->disconnectPostProcessingSlots(postProcessingForm);
 
         delete thread_Mid360;
         thread_Mid360 = nullptr;
@@ -1407,5 +1412,28 @@ void MainWindow::on_pushButton_ShowMessageWindow_Mid360_clicked()
     messageMonitorForm_Mid360->show();
     messageMonitorForm_Mid360->raise();
     messageMonitorForm_Mid360->activateWindow();
+}
+
+
+void MainWindow::on_pushButton_ShowDeviceMonitorWindow_Mid360_clicked()
+{
+    livoxMid360DeviceMonitorForm->show();
+    livoxMid360DeviceMonitorForm->raise();
+    livoxMid360DeviceMonitorForm->activateWindow();
+}
+
+void MainWindow::on_checkBox_SuspendThread_Mid360_stateChanged(int arg1)
+{
+    if (thread_Mid360)
+    {
+        if (arg1 == Qt::Checked)
+        {
+            thread_Mid360->suspend();
+        }
+        else
+        {
+            thread_Mid360->resume();
+        }
+    }
 }
 

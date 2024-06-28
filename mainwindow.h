@@ -1,6 +1,6 @@
 /*
     mainwindow.h (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-2024 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@
 #include "licensesform.h"
 #include "LivoxMid360/livoxmid360thread.h"
 #include "LivoxMid360/livoxmid360messagemonitorform.h"
+#include "LivoxMid360/livoxmid360devicemonitorform.h"
 
 class MainWinRover : public QObject
 {
@@ -238,6 +239,10 @@ private slots:
 
     void on_pushButton_ShowMessageWindow_Mid360_clicked();
 
+    void on_pushButton_ShowDeviceMonitorWindow_Mid360_clicked();
+
+    void on_checkBox_SuspendThread_Mid360_stateChanged(int arg1);
+
 signals:
     void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 
@@ -268,6 +273,7 @@ private:
 
     LivoxMid360MessageMonitorForm* messageMonitorForm_Mid360 = nullptr;
     LivoxMid360Thread* thread_Mid360 = nullptr;
+    LivoxMid360DeviceMonitorForm* livoxMid360DeviceMonitorForm = nullptr;
 
     EssentialsForm* essentialsForm;
 
