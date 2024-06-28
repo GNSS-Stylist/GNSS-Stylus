@@ -28,6 +28,7 @@ LivoxMid360DeviceMonitorForm::LivoxMid360DeviceMonitorForm(QWidget *parent)
     ui->setupUi(this);
 
     connect(&deviceCounterUpdateTimer, &QTimer::timeout, this, &LivoxMid360DeviceMonitorForm::on_deviceCounterUpdateTimerTimeout);
+    connect(&silenceTimeSignalMapper, &QSignalMapper::mappedInt, this, &LivoxMid360DeviceMonitorForm::on_silenceTimerMappedTimeout);
 
     deviceCounterUpdateTimer.start(1000);
 }
@@ -95,10 +96,6 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
 {
     (void) upTime;
 
-    QElapsedTimer upTimeTimer;
-    upTimeTimer.start();
-    quint64 localUptime = upTimeTimer.msecsSinceReference();
-
     DeviceItem* deviceItem;
 
     if (deviceItems.contains(ipAddress))
@@ -111,10 +108,16 @@ void LivoxMid360DeviceMonitorForm::pushLidarInformationReceived(quint32 ipAddres
 
         deviceItem = new DeviceItem;
         deviceItem->treeWidget = std::make_unique<QTreeWidgetItem>(ui->treeWidget_DetectedDevices);
-        deviceItem->lastMessageTime = localUptime;
 
         deviceItems.insert(ipAddress, deviceItem);
+
+        connect(&deviceItem->silenceTimer, SIGNAL(timeout()), &silenceTimeSignalMapper, SLOT(map()));
+        silenceTimeSignalMapper.setMapping(&deviceItem->silenceTimer, ipAddress);
     }
+
+    // First timeout 2s to prevent flickering ones in the column (so that value 1 is actually shown after 2 s silence)
+    deviceItem->silenceTimer.start(2000);
+    deviceItem->silenceTimeSecs = 0;
 
     QTreeWidgetItem* treeItem = deviceItem->treeWidget.get();
 
@@ -292,3 +295,21 @@ void LivoxMid360DeviceMonitorForm::on_pushButton_ResetCounter_clicked()
     }
 }
 
+void LivoxMid360DeviceMonitorForm::on_silenceTimerMappedTimeout(int ipAddress)
+{
+    if (deviceItems.contains(ipAddress))
+    {
+        DeviceItem* item = deviceItems.value(ipAddress);
+
+        item->silenceTimeSecs++;
+
+        item->treeWidget->setText(1, QString::number(item->silenceTimeSecs) + " s");
+
+        // First timeout is 2s, but update the value every second from now on.
+        item->silenceTimer.setInterval(1000);
+    }
+//    else
+//    {
+//        qFatal("on_silenceTimerMappedTimeout called with IP address not in list.");
+//    }
+}

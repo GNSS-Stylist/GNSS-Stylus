@@ -23,6 +23,8 @@
 #include <QMap>
 #include <QTreeWidget>
 #include <QTimer>
+#include <QSignalMapper>
+
 #include "livoxmid360thread.h"
 
 namespace Ui {
@@ -56,6 +58,7 @@ private slots:
     void on_pushButton_ClearSummary_clicked();
 
     void on_pushButton_ResetCounter_clicked();
+    void on_silenceTimerMappedTimeout(int ipAddress);
 
 private:
     Ui::LivoxMid360DeviceMonitorForm *ui;
@@ -63,11 +66,14 @@ private:
     class DeviceItem
     {
     public:
-        quint64 lastMessageTime;
+        quint32 silenceTimeSecs = 0;
         std::unique_ptr<QTreeWidgetItem> treeWidget;
+        QTimer silenceTimer;
     };
 
     QMap<quint32, DeviceItem*> deviceItems;
+
+    QSignalMapper silenceTimeSignalMapper;
 
     class CounterItem
     {
