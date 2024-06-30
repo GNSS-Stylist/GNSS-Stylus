@@ -207,7 +207,7 @@ bool PushLidarInformation::parseDatagram(const QNetworkDatagram& datagram)
 
         case 0x0005:    // state_info_host_ipcfg
         {
-            for (int ii = 0; ii < 12; ii++)
+            for (int ii = 0; ii < 8; ii++)
             {
                 state_info_host_ipcfg[ii] = datagramData[i + ii];
             }
@@ -218,7 +218,7 @@ bool PushLidarInformation::parseDatagram(const QNetworkDatagram& datagram)
 
         case 0x0006:    // pointcloud_host_ipcfg
         {
-            for (int ii = 0; ii < 12; ii++)
+            for (int ii = 0; ii < 8; ii++)
             {
                 pointcloud_host_ipcfg[ii] = datagramData[i + ii];
             }
@@ -229,7 +229,7 @@ bool PushLidarInformation::parseDatagram(const QNetworkDatagram& datagram)
 
         case 0x0007:    // imu_host_ipcfg
         {
-            for (int ii = 0; ii < 12; ii++)
+            for (int ii = 0; ii < 8; ii++)
             {
                 imu_host_ipcfg[ii] = datagramData[i + ii];
             }
