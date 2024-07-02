@@ -999,10 +999,11 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
         timeElapsedSinceAccuracyClickUpdate.start();
 
 #if 0
+/*
 First tried to twiddle with the timer interval here, but it worked quite erratically.
 Leaving this code here for now, however if any new ideas appear how to fix this.
 (now the interval is only adjusted when timer event is called, therefore it's not very accurate)
-
+*/
         int remaining = accuracyClickTimer.remainingTime();
         int oldInterval = accuracyClickTimer.interval();
 
