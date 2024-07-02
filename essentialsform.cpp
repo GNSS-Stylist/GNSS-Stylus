@@ -48,6 +48,7 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     ui->lineEdit_LoggingFileNamePrefix->setText(settings.value("LoggingFileNamePrefix", "ublox").toString());
 
     ui->spinBox_NumberOfRovers->setValue(settings.value("NumberOfRovers").toInt());
+    ui->checkBox_UpdateSideBar->setCheckState(settings.value("UpdateSideBar").toBool() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     ui->spinBox_FluctuationHistoryLength->setValue(settings.value("FluctuationHistoryLength").toInt());
     ui->horizontalScrollBar_Volume_MouseButtonTagging->setValue(settings.value("Volume_MouseButtonTagging").toInt());
     ui->horizontalScrollBar_Volume_DistanceReceived->setValue(settings.value("Volume_DistanceReceived").toInt());
@@ -125,6 +126,7 @@ EssentialsForm::EssentialsForm(QWidget *parent) :
     fileDialog_AntennaLocations_Save.setNameFilters(antennaLocationsFilters);
 
     lidarTimeoutTimer.setSingleShot(true);
+    accuracyClickTimer.setSingleShot(true);
 
     connect(&lidarTimeoutTimer, &QTimer::timeout, this, &EssentialsForm::on_lidarTimeoutTimerTimeout);
     connect(&sideBarUpdateTimer, &QTimer::timeout, this, &EssentialsForm::on_sideBarUpdateTimerTimeout);
@@ -145,6 +147,7 @@ EssentialsForm::~EssentialsForm()
     settings.setValue("LoggingFileNamePrefix", ui->lineEdit_LoggingFileNamePrefix->text());
 
     settings.setValue("NumberOfRovers", ui->spinBox_NumberOfRovers->value());
+    settings.setValue("UpdateSideBar", ui->checkBox_UpdateSideBar->isChecked());
     settings.setValue("FluctuationHistoryLength", ui->spinBox_FluctuationHistoryLength->value());
 
     settings.setValue("PlaySound", ui->checkBox_PlaySound->isChecked());
@@ -966,6 +969,67 @@ void EssentialsForm::handleRELPOSNEDQueues(void)
         }
 
         ui->progressBar_Accuracy->setValue(static_cast<int>(worstAccuracyInt));
+
+        double accuracyClickIntervalTemp;
+
+        // TODO: These could be user-definable
+        const double accuracyClickLowLimit = 0.02;
+        const double accuracyClickHighLimit = 0.1;
+
+        const double accuracyClickBelowLowInterval = 2000;
+        const double accuracyClickLowInterval = 1000;
+        const double accuracyClickHighInterval = 200;
+
+        if (worstAccuracy < accuracyClickLowLimit)
+        {
+            accuracyClickIntervalTemp = accuracyClickBelowLowInterval;
+        }
+        else if ((worstAccuracy > accuracyClickLowLimit) && (worstAccuracy < accuracyClickHighLimit))
+        {
+            accuracyClickIntervalTemp = accuracyClickLowInterval + (((worstAccuracy - accuracyClickLowLimit) / (accuracyClickHighLimit - accuracyClickLowLimit)) *
+                                     (accuracyClickHighInterval - accuracyClickLowInterval));
+        }
+        else
+        {
+            accuracyClickIntervalTemp = accuracyClickHighInterval;
+        }
+
+        accuracyClickInterval = accuracyClickIntervalTemp;
+
+        timeElapsedSinceAccuracyClickUpdate.start();
+
+#if 0
+First tried to twiddle with the timer interval here, but it worked quite erratically.
+Leaving this code here for now, however if any new ideas appear how to fix this.
+(now the interval is only adjusted when timer event is called, therefore it's not very accurate)
+
+        int remaining = accuracyClickTimer.remainingTime();
+        int oldInterval = accuracyClickTimer.interval();
+
+        if (accuracyClickIntervalTempInt != oldInterval)
+        {
+            if (accuracyClickIntervalInt < oldInterval)
+            {
+                // Interval getting shorter, lets see if we should trigger playing already
+
+                int elapsed = oldInterval - remaining;
+
+                if (elapsed > accuracyClickIntervalInt)
+                {
+                    // Play sound and restart the timer
+                    soundEffect_Accuracy.play();
+                    accuracyClickTimer.setInterval(accuracyClickIntervalInt);
+                }
+            }
+            else if (accuracyClickIntervalTempInt > oldInterval)
+            {
+                int elapsed = oldInterval - remaining;
+
+                // Extend the period
+                accuracyClickTimer.setInterval(accuracyClickIntervalInt - elapsed);
+            }
+        }
+#endif
 
         double distN = rovers[0].lastMatchingRoverRELPOSNED.relPosN - rovers[1].lastMatchingRoverRELPOSNED.relPosN;
         double distE = rovers[0].lastMatchingRoverRELPOSNED.relPosE - rovers[1].lastMatchingRoverRELPOSNED.relPosE;
@@ -2139,6 +2203,11 @@ void EssentialsForm::on_sideBarUpdateTimerTimeout()
 
 void EssentialsForm::updateSideBar(void)
 {
+    if (!ui->checkBox_UpdateSideBar->isChecked())
+    {
+        return;
+    }
+
     QElapsedTimer uptimeTimer;
     uptimeTimer.start();
     qint64 uptime = uptimeTimer.msecsSinceReference();
@@ -2191,7 +2260,12 @@ void EssentialsForm::updateSideBar(void)
 
 void EssentialsForm::on_accuracyTimerTimeout()
 {
-    soundEffect_Accuracy.play();
+    accuracyClickTimer.start(accuracyClickInterval);
+
+    if (timeElapsedSinceAccuracyClickUpdate.elapsed() < 1000)
+    {
+        soundEffect_Accuracy.play();
+    }
 }
 
 void EssentialsForm::on_rtcmTimeoutTimerTimeout()

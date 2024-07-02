@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>960</width>
-    <height>540</height>
+    <height>602</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,6 @@
            <font>
             <family>Consolas</family>
             <pointsize>80</pointsize>
-            <weight>75</weight>
             <bold>true</bold>
            </font>
           </property>
@@ -233,7 +232,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_StylusData">
         <property name="autoFillBackground">
@@ -278,6 +277,9 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tab_LOSolverData">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Location/orientation/Lidar</string>
         </attribute>
@@ -544,8 +546,24 @@
           <number>3</number>
          </property>
         </widget>
+        <widget class="QCheckBox" name="checkBox_UpdateSideBar">
+         <property name="geometry">
+          <rect>
+           <x>100</x>
+           <y>70</y>
+           <width>181</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Update sidebar (right)</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QWidget" name="tab_Settings_Sound">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Sounds</string>
         </attribute>
@@ -565,17 +583,17 @@
           <bool>false</bool>
          </property>
         </widget>
-        <widget class="QGroupBox" name="groupBox">
+        <widget class="QGroupBox" name="groupBox_Volumes">
          <property name="geometry">
           <rect>
            <x>10</x>
            <y>70</y>
            <width>331</width>
-           <height>231</height>
+           <height>141</height>
           </rect>
          </property>
          <property name="title">
-          <string>GroupBox</string>
+          <string>Volumes</string>
          </property>
          <widget class="QScrollBar" name="horizontalScrollBar_Volume_Accuracy">
           <property name="geometry">
@@ -771,7 +789,6 @@ LMB, RMB or MMB</string>
      <property name="font">
       <font>
        <pointsize>20</pointsize>
-       <weight>75</weight>
        <bold>true</bold>
       </font>
      </property>

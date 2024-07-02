@@ -264,6 +264,9 @@ private:
     QSoundEffect soundEffect_Accuracy;      //!< Sound effect for accuracy click
     QSoundEffect soundEffect_RTCMTimeout;   //!< Sound effect for RTCM timeout
 
+    int accuracyClickInterval = 1000;
+    QElapsedTimer timeElapsedSinceAccuracyClickUpdate;
+
     const int maxLocationHistoryLength = 6000;                  //!< Maximum number of location history items to keep (used to calculate fluctuations)
 
     QList<NEDPoint> locationHistory_StylusTip;                  //!< Used to calculate fluctuation of stylus tip's location
