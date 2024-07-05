@@ -34,25 +34,28 @@ public:
     {
     public:
         const Eigen::Transform<double, 3, Eigen::Affine>* transform_NEDToXYZ = nullptr;
-        const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
-        const Eigen::Transform<double, 3, Eigen::Affine>* transform_AfterRotation = nullptr;
         QDir directory;
         QString tagIdent_BeginNewObject = "New object";
         QString tagIdent_BeginPoints = "RMB";
         QString tagIdent_EndPoints = "LMB";
         bool includeNormals = false;
-        bool normalLengthsAsQuality = false;
-        int timeShift = 0;
         const Eigen::Vector3d* boundingSphere_Center;
         double boundingSphere_Radius = 1e9;
         bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
-        const QMap<qint64, PostProcessingForm::LidarRound>* lidarRounds = nullptr;
-        const RPLidarPlausibilityFilter::Settings* lidarFilteringSettings = nullptr;
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
 
+        struct
+        {
+            bool normalLengthsAsQuality = false;
+            int timeShift = 0;
+            const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
+            const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
+            const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
+            const Eigen::Transform<double, 3, Eigen::Affine>* transform_AfterRotation = nullptr;
+        } rpLidar;
     };
 
     void generatePointClouds(const Params& params);

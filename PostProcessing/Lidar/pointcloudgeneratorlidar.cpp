@@ -325,13 +325,13 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                                                      QTextStream* outStream,
                                                      int& pointsWritten)
 {
-    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.lidarRounds->upperBound(beginningUptime);
+    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.rpLidar.rounds->upperBound(beginningUptime);
 
     // As lidar rounds are "mapped" according to their arriving (=end) timestamps,
     // roll here to the first one with a bigger starting timestamp
     // to prevent taking "past" measurements into account
 
-    while ((lidarIter != params.lidarRounds->end()) && (lidarIter.value().startTime < beginningUptime))
+    while ((lidarIter != params.rpLidar.rounds->end()) && (lidarIter.value().startTime < beginningUptime))
     {
         lidarIter++;
     }
@@ -343,9 +343,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
     RPLidarPlausibilityFilter plausibilityFilter;
 
-    plausibilityFilter.setSettings(*params.lidarFilteringSettings);
+    plausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
 
-    while ((lidarIter != params.lidarRounds->end()) && (lidarIter.value().startTime < endingUptime))
+    while ((lidarIter != params.rpLidar.rounds->end()) && (lidarIter.value().startTime < endingUptime))
     {
         plausibilityFilter.filter(lidarIter.value().distanceItems, filteredItems);
 
@@ -364,7 +364,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
                 UBXMessage_RELPOSNED interpolated_Rovers[3];
 
-                qint64 roverUptime = itemUptime + params.timeShift;
+                qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
 
                 Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
 
@@ -390,7 +390,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.transform_AfterRotation * (transform_LaserRotation * (*params.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
@@ -402,7 +402,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.transform_AfterRotation * (transform_LaserRotation * (*params.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
@@ -417,7 +417,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                     Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
 
-                    if (params.normalLengthsAsQuality)
+                    if (params.rpLidar.normalLengthsAsQuality)
                     {
                         normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
                     }

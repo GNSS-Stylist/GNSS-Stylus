@@ -3166,16 +3166,16 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         Lidar::PointCloudGenerator::Params params;
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
-        params.transform_AfterRotation = &transform_LidarGenerated_AfterRotation;
-        params.transform_BeforeRotation = &transform_Lidar_Generated_BeforeRotation;
+        params.rpLidar.transform_AfterRotation = &transform_LidarGenerated_AfterRotation;
+        params.rpLidar.transform_BeforeRotation = &transform_Lidar_Generated_BeforeRotation;
         params.directory = fileDialog_PointCloud.directory();
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         params.includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked();
-        params.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
+        params.rpLidar.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
-        params.timeShift = ui->spinBox_Lidar_TimeShift->value();
+        params.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
         Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
                         ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
@@ -3186,8 +3186,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.tags = &tags;
         params.rovers = rovers;
-        params.lidarRounds = &lidarRounds;
-        params.lidarFilteringSettings = &lidarFilteringSettings;
+        params.rpLidar.rounds = &lidarRounds;
+        params.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.loInterpolator = &loInterpolator_Lidar;
 
         Lidar::PointCloudGenerator pointCloudGenerator;
