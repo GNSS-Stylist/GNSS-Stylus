@@ -138,6 +138,175 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                         outStream = new QTextStream(outFile);
                         ignoreBeginningAndEndingTags = false;
                     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    // Faked barn roofs
+
+                    int prevPointsWritten = pointsWritten;
+
+                    const int roofPointsPerDimension = 1000;
+                    const double roofPointsRise = 0.00;
+
+                    if ((currentTag.text == "FakeRoof_Left") || (currentTag.text == "FakeRoof_Right"))
+                    {
+                        Eigen::Vector3d eave1;
+                        Eigen::Vector3d eave2;
+                        Eigen::Vector3d ridge1;
+                        Eigen::Vector3d ridge2;
+
+                        Eigen::Vector3d normal(0, 1, 0);
+
+                        if (currentTag.text == "FakeRoof_Left")
+                        {
+                            // -45.479656 -7.477979 -58.621906
+                            ridge1 = Eigen::Vector3d(-45.479656, -7.477979 + roofPointsRise, -58.621906);
+                            // -50.616627 -7.618624 -67.222328
+                            ridge2 = Eigen::Vector3d(-50.616627, -7.618624 + 0.02 + roofPointsRise, -67.222328);
+                            // -49.618958 -9.966255 -56.110806
+                            eave1 = Eigen::Vector3d(-49.618958, -9.966255 + roofPointsRise, -56.110806);
+                            // -54.632553 -9.950257 -64.728554
+                            // eave2 = Eigen::Vector3d(-54.632553, -9.950257 + 0.02 + roofPointsRise, -64.728554);
+                            eave2 = Eigen::Vector3d(-54.668766, -9.98805 + 0.02 + roofPointsRise, -64.752899);
+                        }
+                        else if (currentTag.text == "FakeRoof_Right")
+                        {
+                            // -45.479656 -7.477979 -58.621906
+                            ridge1 = Eigen::Vector3d(-45.479656, -7.477979 + roofPointsRise, -58.621906);
+                            // -50.616627 -7.618624 -67.222328
+                            ridge2 = Eigen::Vector3d(-50.616627, -7.618624 + 0.02 + roofPointsRise, -67.222328);
+                            // -41.375065 -9.869793 -61.386906
+                            eave1 = Eigen::Vector3d(-41.375065, -9.869793 + roofPointsRise, -61.386906);
+                            // -46.507347 -9.830709 -69.961296
+                            eave2 = Eigen::Vector3d(-46.507347, -9.830709 + 0.02 + roofPointsRise, -69.961296);
+                        }
+
+/*                        else if (currentTag.text == "FakeRoof_End_East_A")
+                        {
+                            // -45.479656 -7.477979 -58.621906
+                            ridge1 = Eigen::Vector3d(-45.479656, -7.477979 + roofPointsRise, -58.621906);
+                            // -50.616627 -7.618624 -67.222328
+                            ridge2 = Eigen::Vector3d(-50.616627, -7.618624 + roofPointsRise, -67.222328);
+                            // -41.375065 -9.869793 -61.386906
+                            eave1 = Eigen::Vector3d(-41.375065, -9.869793 + roofPointsRise, -61.386906);
+                            // -46.507347 -9.830709 -69.961296
+                            eave2 = Eigen::Vector3d(-46.507347, -9.830709 + roofPointsRise, -69.961296);
+                        }
+*/
+                        bool includeNormals = params.includeNormals;
+
+                        for (int i = 0; i < roofPointsPerDimension; i++)
+                        {
+                            Eigen::Vector3d interp1 = eave1 + (double(i) / (roofPointsPerDimension - 1)) * (eave2 - eave1);
+                            Eigen::Vector3d interp2 = ridge1 + (double(i) / (roofPointsPerDimension - 1)) * (ridge2 - ridge1);
+
+                            for (int ii = 0; ii < roofPointsPerDimension; ii++)
+                            {
+                                Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = interp1 + (double(ii) / (roofPointsPerDimension - 1)) * (interp2 - interp1);
+
+                                QString lineOut;
+                                if (includeNormals)
+                                {
+                                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
+                                            "\t" + QString::number(normal(0), 'f', 4) +
+                                            "\t" + QString::number(normal(1), 'f', 4) +
+                                            "\t" + QString::number(normal(2), 'f', 4);
+                                }
+                                else
+                                {
+                                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                            "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                            "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
+                                }
+
+                                outStream->operator<<(lineOut + "\n");
+                                pointsWritten++;
+                            }
+                        }
+
+                        if (outStream)
+                        {
+                            delete outStream;
+                            outStream = nullptr;
+                        }
+                        if (outFile)
+                        {
+                            int pointsBetweenTags = pointsWritten - prevPointsWritten;
+                            emit infoMessage("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsBetweenTags));
+                            outFile->close();
+                            delete outFile;
+                            outFile = nullptr;
+                        }
+
+                        continue;
+                    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 }
                 else
                 {
