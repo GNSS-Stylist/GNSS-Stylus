@@ -2909,6 +2909,16 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
 
     for (const auto& fileName : fileNames)
     {
+        lidarFileNames.push_back(fileName);
+        int fileNameIndex = lidarFileNames.size() - 1;
+
+        if (fileNameIndex > 65535)
+        {
+            // Very unlikely to happen... Not gonna test this.
+            addLogLine("Error: Maximum number of files (65536) reached on \"" + fileName + "\". Processing stopped.");
+            return;
+        }
+
         QFileInfo fileInfo(fileName);
         addLogLine("Opening file \"" + fileInfo.fileName() + "\"...");
 
@@ -3001,7 +3011,7 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
 
                     newRound.startTime = startTime;
                     newRound.endTime = endTime;
-                    newRound.fileName = fileName;
+                    newRound.fileNameIndex = fileNameIndex;
                     newRound.chunkIndex = chunkIndex;
 
                     if (lidarRounds.find(endTime) != lidarRounds.end())
@@ -3129,6 +3139,7 @@ void PostProcessingForm::on_pushButton_ClearLidarData_clicked()
 {
     lidarRounds.clear();
     mid360Datagrams.clear();
+    lidarFileNames.clear();
     addLogLine("Lidar data cleared.");
 }
 
@@ -3189,6 +3200,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.rpLidar.rounds = &lidarRounds;
         params.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.loInterpolator = &loInterpolator_Lidar;
+        params.lidarFileNames = &lidarFileNames;
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 
@@ -3644,6 +3656,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         params.lidarRounds = &lidarRounds;
         params.lidarFilteringSettings = &lidarFilteringSettings;
         params.loInterpolator = &loInterpolator_Lidar;
+        params.lidarFileNames = &lidarFileNames;
 
         Lidar::LidarScriptGenerator lidarScriptGenerator;
 

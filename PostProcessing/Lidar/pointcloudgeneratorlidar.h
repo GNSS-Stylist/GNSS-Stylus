@@ -46,6 +46,7 @@ public:
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
+        const QVector<QString>* lidarFileNames = nullptr;
 
         struct
         {

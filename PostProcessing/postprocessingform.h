@@ -120,7 +120,7 @@ public:
     class LidarRound
     {
     public:
-        QString fileName;
+        quint16 fileNameIndex;
         int chunkIndex = -1;
         qint64 startTime = -1;
         qint64 endTime = -1;
@@ -329,6 +329,7 @@ private:
 
     Rover rovers[3];
 
+    QVector<QString> lidarFileNames;
     QMap<qint64, LidarRound> lidarRounds;
     QMultiMap<qint64, QNetworkDatagram> mid360Datagrams;
 

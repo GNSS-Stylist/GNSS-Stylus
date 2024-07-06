@@ -267,7 +267,10 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             }
             catch (QString& stringThrown)
             {
-                emit warningMessage("File \"" + lidarIter.value().fileName + "\", chunk index " +
+                Q_ASSERT(params.lidarFileNames);
+                Q_ASSERT(params.lidarFileNames->size() > lidarIter.value().fileNameIndex);
+
+                emit warningMessage("File \"" + params.lidarFileNames->at(lidarIter.value().fileNameIndex) + "\", chunk index " +
                            QString::number(lidarIter.value().chunkIndex)+
                            ", uptime " + QString::number(lidarIter.key()) +
                            ": " + stringThrown + " Lidar script generating terminated.");

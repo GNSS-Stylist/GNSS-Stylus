@@ -43,6 +43,7 @@ public:
         double boundingSphere_Radius = 1e12;
         qint64 uptime_Min = 0;
         qint64 uptime_Max = 1e18;
+        QVector<QString>* lidarFileNames = nullptr;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
