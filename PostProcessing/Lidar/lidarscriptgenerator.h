@@ -32,24 +32,28 @@ public:
     {
     public:
         const Eigen::Transform<double, 3, Eigen::Affine>* transform_NEDToXYZ = nullptr;
-        const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
-        const Eigen::Transform<double, 3, Eigen::Affine>* transform_AfterRotation = nullptr;
         QString fileName;
         QString tagIdent_BeginNewObject = "New object";
         QString tagIdent_BeginPoints = "RMB";
         QString tagIdent_EndPoints = "LMB";
-        int timeShift = 0;
         const Eigen::Vector3d* boundingSphere_Center;
         double boundingSphere_Radius = 1e12;
         qint64 uptime_Min = 0;
         qint64 uptime_Max = 1e18;
-        QVector<QString>* lidarFileNames = nullptr;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
-        const QMap<qint64, PostProcessingForm::LidarRound>* lidarRounds = nullptr;
-        const RPLidarPlausibilityFilter::Settings* lidarFilteringSettings = nullptr;
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
+        QVector<QString>* lidarFileNames = nullptr;
+
+        struct
+        {
+            int timeShift = 0;
+            const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
+            const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
+            const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
+            const Eigen::Transform<double, 3, Eigen::Affine>* transform_AfterRotation = nullptr;
+        } rpLidar;
     };
 
     void generateLidarScript(const Params& params);

@@ -29,7 +29,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     filteredItems.reserve(10000);
 
     RPLidarPlausibilityFilter plausibilityFilter;
-    plausibilityFilter.setSettings(*params.lidarFilteringSettings);
+    plausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
 
     // Map where uptimes for all equal ITOWs are the same.
     // This makes processing later easier
@@ -86,7 +86,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
                   "Origin_X\tOrigin_Y\tOrigin_Z\t"
                   "Hit_X\tHit_Y\tHit_Z\n";
 
-    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.lidarRounds->upperBound(params.uptime_Min);
+    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.rpLidar.rounds->upperBound(params.uptime_Min);
     QMultiMap<qint64, PostProcessingForm::Tag>::const_iterator tagIter = params.tags->begin();
 
     QString objectName;
@@ -98,7 +98,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
     unsigned int pointsWritten = 0;
 
-    while ((lidarIter.key() <= params.uptime_Max) && (lidarIter != params.lidarRounds->end()))
+    while ((lidarIter.key() <= params.uptime_Max) && (lidarIter != params.rpLidar.rounds->end()))
     {
         QString previousObjectName = objectName;
         bool previousObjectActive = objectActive;
@@ -218,27 +218,27 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             {
                 // Note: params.timeShift used here so that LOScript and this use the same timing
 
-                textStream << QString::number(tagIter.key() + params.timeShift) +  "\tOBJECTNAME\t" + objectName + "\n";
+                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) +  "\tOBJECTNAME\t" + objectName + "\n";
             }
 
             if (!previousObjectActive && objectActive)
             {
-                textStream << QString::number(tagIter.key() + params.timeShift) + "\tSTARTOBJECT\n";
+                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tSTARTOBJECT\n";
             }
 
             if (previousObjectActive && !objectActive)
             {
-                textStream << QString::number(tagIter.key() + params.timeShift) + "\tENDOBJECT\n";
+                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tENDOBJECT\n";
             }
 
             if (!previousScanningActive && scanningActive)
             {
-                textStream << QString::number(tagIter.key() + params.timeShift) + "\tSTARTSCAN\n";
+                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tSTARTSCAN\n";
             }
 
             if (previousScanningActive && !scanningActive)
             {
-                textStream << QString::number(tagIter.key() + params.timeShift) + "\tENDSCAN\n";
+                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tENDSCAN\n";
             }
 
             tagIter++;
@@ -257,7 +257,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
             UBXMessage_RELPOSNED interpolated_Rovers[3];
 
-            qint64 roverUptime = itemUptime + params.timeShift;
+            qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
 
             Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
 
@@ -282,11 +282,11 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
             // Lot of parentheses here to keep all calculations as matrix * vector
             // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.transform_AfterRotation * (transform_LaserRotation * (*params.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
+            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
 
             // Lot of parentheses here to keep all calculations as matrix * vector
             // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.transform_AfterRotation * (transform_LaserRotation * (*params.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
             Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
 
