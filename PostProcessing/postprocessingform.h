@@ -127,6 +127,14 @@ public:
         QVector<RPLidarThread::DistanceItem> distanceItems;
     };
 
+    class Mid360Datagram
+    {
+    public:
+        quint16 fileNameIndex;
+        int chunkIndex = -1;
+        QNetworkDatagram datagram;
+    };
+
     class LOInterpolator
     {
     public:
@@ -331,7 +339,7 @@ private:
 
     QVector<QString> lidarFileNames;
     QMap<qint64, LidarRound> lidarRounds;
-    QMultiMap<qint64, QNetworkDatagram> mid360Datagrams;
+    QMultiMap<qint64, Mid360Datagram> mid360Datagrams;
 
     bool onShowInitializationsDone = false;
     QFileDialog fileDialog_UBX;

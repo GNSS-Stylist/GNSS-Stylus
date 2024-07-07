@@ -1316,14 +1316,14 @@ void PostProcessingForm::handleReplay(bool firstRound)
 
         if (mid360Datagrams.find(nextUptime_ms) != mid360Datagrams.end())
         {
-            QList<QNetworkDatagram> datagramItems = mid360Datagrams.values(nextUptime_ms);
+            QList<Mid360Datagram> datagramItems = mid360Datagrams.values(nextUptime_ms);
 
             // Since "The items that share the same key are available from most recently to least recently inserted."
             // (taken from QMultiMap's doc), iterate in "reverse order" here
 
             for (int i = datagramItems.size() - 1; i >= 0; i--)
             {
-                emit replayData_LivoxMid360(datagramItems[i], nextUptime_ms);
+                emit replayData_LivoxMid360(datagramItems[i].datagram, nextUptime_ms);
             }
         }
 
@@ -3078,11 +3078,14 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                     dataStream.readRawData(datagramReadBuffer, datagramDataLength);
                     QByteArray datagramData(datagramReadBuffer, datagramDataLength);
 
-                    QNetworkDatagram newDatagram;
+                    Mid360Datagram newDatagram;
 
-                    newDatagram.setSender(QHostAddress(senderAddress), senderPort);
-                    newDatagram.setDestination(QHostAddress(destinationAddress), destinationPort);
-                    newDatagram.setData(datagramData);
+                    newDatagram.chunkIndex = chunkIndex;
+                    newDatagram.fileNameIndex = fileNameIndex;
+
+                    newDatagram.datagram.setSender(QHostAddress(senderAddress), senderPort);
+                    newDatagram.datagram.setDestination(QHostAddress(destinationAddress), destinationPort);
+                    newDatagram.datagram.setData(datagramData);
 
                     mid360Datagrams.insert(timeStamp, newDatagram);
                     break;
