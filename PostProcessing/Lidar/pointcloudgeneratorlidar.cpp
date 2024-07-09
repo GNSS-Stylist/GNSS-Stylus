@@ -336,12 +336,17 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         lidarIter++;
     }
 
-    int pointsBetweenTags = 0;
-
     QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
     filteredItems.reserve(10000);
 
     RPLidarPlausibilityFilter plausibilityFilter;
+
+    TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
+    Q_ASSERT(params.transforms_BeforeRotation.contains(rpLidarDevice));
+    Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
+
+    auto transform_BeforeRotation_RPLidar = params.transforms_BeforeRotation.value(rpLidarDevice);
+    auto transform_AfterRotation_RPLidar = params.transforms_AfterRotation.value(rpLidarDevice);
 
     plausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
 
@@ -393,7 +398,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * Eigen::Vector3d::Zero()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
@@ -405,7 +410,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
@@ -444,7 +449,6 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                     outStream->operator<<(lineOut + "\n");
                     pointsWritten++;
-                    pointsBetweenTags++;
                 }
             }
         }

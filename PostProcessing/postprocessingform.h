@@ -42,6 +42,7 @@
 #include "losolver.h"
 #include "RPLidar/rplidarthread.h"
 #include "RPLidar/rplidarplausibilityfilter.h"
+#include "transformmatrixgenerator.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -406,8 +407,8 @@ private:
 
     void getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings);
 
-    bool generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_Lidar_Generated_BeforeRotation,
-                                        Eigen::Transform<double, 3, Eigen::Affine>& transform_LidarGenerated_AfterRotation);
+    bool generateLidarTransformMatrices(QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transform_Lidar_Generated_BeforeRotation,
+                                        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transform_LidarGenerated_AfterRotation);
 
     bool loadOperations(QPlainTextEdit* plainTextEdit);
     bool saveOperations(QPlainTextEdit* plainTextEdit);

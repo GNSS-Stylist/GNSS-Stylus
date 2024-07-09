@@ -46,13 +46,14 @@ public:
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
         QVector<QString>* lidarFileNames = nullptr;
 
+        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_BeforeRotation;
+        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
+
         struct
         {
             int timeShift = 0;
             const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
             const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
-            const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
-            const Eigen::Transform<double, 3, Eigen::Affine>* transform_AfterRotation = nullptr;
         } rpLidar;
     };
 

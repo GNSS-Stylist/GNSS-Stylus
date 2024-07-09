@@ -98,6 +98,13 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
     unsigned int pointsWritten = 0;
 
+    TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
+    Q_ASSERT(params.transforms_BeforeRotation.contains(rpLidarDevice));
+    Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
+
+    auto transform_BeforeRotation_RPLidar = params.transforms_BeforeRotation.value(rpLidarDevice);
+    auto transform_AfterRotation_RPLidar = params.transforms_AfterRotation.value(rpLidarDevice);
+
     while ((lidarIter.key() <= params.uptime_Max) && (lidarIter != params.rpLidar.rounds->end()))
     {
         QString previousObjectName = objectName;
@@ -282,11 +289,11 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
             // Lot of parentheses here to keep all calculations as matrix * vector
             // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * Eigen::Vector3d::Zero()))));
+            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * Eigen::Vector3d::Zero()))));
 
             // Lot of parentheses here to keep all calculations as matrix * vector
             // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (*params.rpLidar.transform_AfterRotation * (transform_LaserRotation * (*params.rpLidar.transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
             Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
 
