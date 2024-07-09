@@ -325,48 +325,48 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                                                      QTextStream* outStream,
                                                      int& pointsWritten)
 {
-    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.rpLidar.rounds->upperBound(beginningUptime);
+    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator rpLidarIter = params.rpLidar.rounds->upperBound(beginningUptime);
 
     // As lidar rounds are "mapped" according to their arriving (=end) timestamps,
     // roll here to the first one with a bigger starting timestamp
     // to prevent taking "past" measurements into account
 
-    while ((lidarIter != params.rpLidar.rounds->end()) && (lidarIter.value().startTime < beginningUptime))
+    while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < beginningUptime))
     {
-        lidarIter++;
+        rpLidarIter++;
     }
 
-    QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
-    filteredItems.reserve(10000);
+    QVector<RPLidarPlausibilityFilter::FilteredItem> rpLidarFilteredItems;
+    rpLidarFilteredItems.reserve(10000);
 
-    RPLidarPlausibilityFilter plausibilityFilter;
+    RPLidarPlausibilityFilter rpLidarPlausibilityFilter;
 
     TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
     Q_ASSERT(params.transforms_BeforeRotation.contains(rpLidarDevice));
     Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
 
-    auto transform_BeforeRotation_RPLidar = params.transforms_BeforeRotation.value(rpLidarDevice);
-    auto transform_AfterRotation_RPLidar = params.transforms_AfterRotation.value(rpLidarDevice);
+    auto rpLidarTransform_BeforeRotation = params.transforms_BeforeRotation.value(rpLidarDevice);
+    auto rpLidarTransform_AfterRotation = params.transforms_AfterRotation.value(rpLidarDevice);
 
-    plausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
+    rpLidarPlausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
 
-    while ((lidarIter != params.rpLidar.rounds->end()) && (lidarIter.value().startTime < endingUptime))
+    while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < endingUptime))
     {
-        plausibilityFilter.filter(lidarIter.value().distanceItems, filteredItems);
+        rpLidarPlausibilityFilter.filter(rpLidarIter.value().distanceItems, rpLidarFilteredItems);
 
         // Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
 
-        const PostProcessingForm::LidarRound& round = lidarIter.value();
+        const PostProcessingForm::LidarRound& round = rpLidarIter.value();
 
-        for (int i = 0; i < filteredItems.count(); i++)
+        for (int i = 0; i < rpLidarFilteredItems.count(); i++)
         {
-            const RPLidarPlausibilityFilter::FilteredItem& currentItem = filteredItems[i];
+            const RPLidarPlausibilityFilter::FilteredItem& currentItem = rpLidarFilteredItems[i];
 
             if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
             {
                 // Rover coordinates interpolated according to distance timestamps.
 
-                qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
+                qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / rpLidarIter.value().distanceItems.count();
                 UBXMessage_RELPOSNED interpolated_Rovers[3];
 
                 qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
@@ -380,11 +380,11 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 catch (QString& stringThrown)
                 {
                     Q_ASSERT(params.lidarFileNames);
-                    Q_ASSERT(params.lidarFileNames->size() > lidarIter.value().fileNameIndex);
+                    Q_ASSERT(params.lidarFileNames->size() > rpLidarIter.value().fileNameIndex);
 
-                    emit warningMessage("File \"" + params.lidarFileNames->at(lidarIter.value().fileNameIndex) + "\", chunk index " +
-                               QString::number(lidarIter.value().chunkIndex)+
-                               ", uptime " + QString::number(lidarIter.key()) +
+                    emit warningMessage("File \"" + params.lidarFileNames->at(rpLidarIter.value().fileNameIndex) + "\", chunk index " +
+                               QString::number(rpLidarIter.value().chunkIndex)+
+                               ", uptime " + QString::number(rpLidarIter.key()) +
                                ": " + stringThrown + " Skipped the rest of this set of points " +
                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
                                QString::number(endingTag.sourceFileLine) +
@@ -398,7 +398,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * Eigen::Vector3d::Zero()))));
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * Eigen::Vector3d::Zero()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
@@ -410,7 +410,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 // Lot of parentheses here to keep all calculations as matrix * vector
                 // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
                 /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
@@ -453,7 +453,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
             }
         }
 
-        lidarIter++;
+        rpLidarIter++;
     }
 
     return true;
