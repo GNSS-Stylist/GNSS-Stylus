@@ -2834,7 +2834,8 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
     {
         QStringList lines = ui->plainTextEdit_LOSolver_TransformMatrixScript->document()->toPlainText().split("\n");
 
-        transform_Generated = matrixGenerator.generate(lines).matrix();
+        TransformMatrixGenerator::Device device;
+        transform_Generated = matrixGenerator.generate(lines)[device].matrix();
     }
     catch (TransformMatrixGenerator::Issue& issue)
     {
@@ -3542,12 +3543,15 @@ bool PostProcessingForm::generateLidarTransformMatrices(Eigen::Transform<double,
         currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation;
         currentTabName = "Operations before rotation";
         QStringList lines = currentEditor->document()->toPlainText().split("\n");
-        transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines).matrix();
+        TransformMatrixGenerator::Device device;
+        transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines)[device].matrix();
+     //   transform_Lidar_Generated_BeforeRotation = matrixGenerator.generate(lines).matrix();
 
         currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation;
         currentTabName = "Operations after rotation";
         lines = currentEditor->document()->toPlainText().split("\n");
-        transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines).matrix();
+        transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines)[device].matrix();
+//        transform_LidarGenerated_AfterRotation = matrixGenerator.generate(lines).matrix();
     }
     catch (TransformMatrixGenerator::Issue& issue)
     {
@@ -3953,7 +3957,9 @@ void PostProcessingForm::on_pushButton_RasterCameras_Script_Process_clicked()
     {
         QStringList lines = ui->plainTextEdit_RasterCameras_TransformMatrixScript->document()->toPlainText().split("\n");
 
-        transform_Generated = matrixGenerator.generate(lines).matrix();
+        TransformMatrixGenerator::Device device;
+        transform_Generated = matrixGenerator.generate(lines)[device].matrix();
+//        transform_Generated = matrixGenerator.generate(lines).matrix();
     }
     catch (TransformMatrixGenerator::Issue& issue)
     {

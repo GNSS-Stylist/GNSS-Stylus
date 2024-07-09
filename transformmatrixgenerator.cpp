@@ -18,6 +18,8 @@
 
 #include "transformmatrixgenerator.h"
 
+#include <QHostAddress>
+
 
 #if 0
 #define TRANSFORMMATRIXGENERATORDEBUGOUTPUT
@@ -57,8 +59,10 @@ TransformMatrixGenerator::Item::Item(const QByteArray& text, const int lineNumbe
 };
 
 
-Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generate(const QStringList &lines)
+QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > TransformMatrixGenerator::generate(const QStringList &lines)
 {
+    QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> > deviceMatrices;
+
     int lineNumber = 0;
 
     QVector<Item> command;
@@ -66,7 +70,11 @@ Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generate(co
     QByteArray subString;
     int firstCol = -1;
 
-    QVector<Eigen::Transform<double, 3, Eigen::Affine>> matrices;
+    QVector<Eigen::Transform<double, 3, Eigen::Affine> > matrices;
+
+    Device currentDevice;
+    currentDevice.type = Device::DT_RPLIDAR;
+    currentDevice.data = int(0);
 
     while (lineNumber < lines.count())
     {
@@ -129,6 +137,33 @@ Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generate(co
                 matrices.push_back(processCommand(command));
                 command.clear();
             }
+            else if (character == ':')
+            {
+                if (!subString.isEmpty())
+                {
+                    Item newItem;
+                    newItem.text = subString;
+                    newItem.lineNumber = lineNumber;
+                    newItem.firstCol = firstCol;
+                    newItem.lastCol = i - 1;
+                    command.push_back(newItem);
+                    subString.clear();
+                }
+
+                if (command.size() == 0)
+                {
+                    Issue error;
+                    error.text = "Block type identifier \"" + QString(character) + "\" without definition.";
+                    error.item.text = ":";
+                    error.item.lineNumber = lineNumber;
+                    error.item.firstCol = firstCol;
+                    error.item.lastCol = i - 1;
+                    throw error;
+                }
+
+                processBlockHeader(command, currentDevice, matrices, deviceMatrices);
+                command.clear();
+            }
             else
             {
                 // Non-control character -> add it to the buffer
@@ -167,19 +202,30 @@ Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generate(co
 
     Eigen::Transform<double, 3, Eigen::Affine> matrix;
 
-    matrix = matrix.Identity();
+    auto iter = deviceMatrices.find(currentDevice);
+
+    if (iter != deviceMatrices.end())
+    {
+        matrix = iter.value();
+    }
+    else
+    {
+        matrix = matrix.Identity();
+    }
 
     for (int i = matrices.size() - 1; i >= 0; i--)
     {
         matrix = matrix * matrices.at(i);
     }
 
+    deviceMatrices.insert(currentDevice, matrix);
+
 #ifdef TRANSFORMMATRIXGENERATORDEBUGOUTPUT
     qDebug() << "Final transform matrix generated:";
     qDebug() << matrix;
 #endif
 
-    return matrix;
+    return deviceMatrices;
 }
 
 Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::processCommand(const QVector<Item>& command)
@@ -350,4 +396,118 @@ Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::cmd_Multipl
     return matrix;
 }
 
+void TransformMatrixGenerator::processBlockHeader(const QVector<Item>& command, Device& device, QVector<Eigen::Transform<double, 3, Eigen::Affine> >& matrices, QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >& deviceMatrices)
+{
+    QByteArray cmd = command.at(0).text.toLower();
+    if (cmd == "device")
+    {
+        if (command.size() < 2)
+        {
+            Issue error;
+            error.text = "Device type not defined.";
+            error.item = command.at(0);
+            throw error;
+        }
+
+        QByteArray deviceType = command.at(1).text.toLower();
+
+        QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >::iterator iter;
+
+//        Device device;
+
+        if (deviceType == "rplidar")
+        {
+            if (command.size() > 2)
+            {
+                Issue error;
+                error.text = "No extra parameters allowed for device type \"" + command.at(1).text + "\" (only one active RPLidar device supported currently).";
+                error.item = command.at(1);
+                throw error;
+            }
+
+            device.type = Device::DT_RPLIDAR;
+            device.data = 0;
+            //device.data.clear();    // QVariant-version
+
+            iter = deviceMatrices.find(device);
+        }
+        else if (deviceType == "mid360")
+        {
+            if (command.size() < 3)
+            {
+                Issue error;
+                error.text = "No IP address defined for device type \"" + command.at(1).text + "\".";
+                error.item = command.at(1);
+                throw error;
+            }
+            if (command.size() > 3)
+            {
+                Issue error;
+                error.text = "too many parameters for device type \"" + command.at(1).text + "\". Only numeric IPv4 address allowed.";
+                error.item = command.at(3);
+                throw error;
+            }
+
+            QHostAddress ipAddressNotValidated;
+
+            if (!ipAddressNotValidated.setAddress(QString(command.at(2).text)))
+            {
+                Issue error;
+                error.text = "Can't convert parameter \"" + QString(command.at(2).text) + "\" to IPv4 address. ";
+                error.item = command.at(2);
+                throw error;
+            }
+
+            bool convOk = false;
+            quint32 hostAddress = ipAddressNotValidated.toIPv4Address(&convOk);
+
+            if (!convOk)
+            {
+                Issue error;
+                error.text = "Parameter \"" + QString(command.at(2).text) + "\" is not a valid IPv4 address. ";
+                error.item = command.at(2);
+                throw error;
+            }
+
+            device.type = Device::DT_LIVOX_MID360;
+            device.data = hostAddress;
+
+            iter = deviceMatrices.find(device);
+        }
+        else
+        {
+            Issue error;
+            error.text = "Unknown device type \"" + command.at(1).text + "\".";
+            error.item = command.at(1);
+            throw error;
+        }
+
+        Eigen::Transform<double, 3, Eigen::Affine> matrix;
+
+        if (iter != deviceMatrices.end())
+        {
+            matrix = iter.value();
+        }
+        else
+        {
+            matrix = matrix.Identity();
+        }
+
+        for (int i = matrices.size() - 1; i >= 0; i--)
+        {
+            matrix = matrix * matrices.at(i);
+        }
+
+        deviceMatrices.insert(device, matrix);
+
+        matrices.clear();
+    }
+    else
+    {
+        Issue error;
+        error.text = "Unknown block type \"" + command.at(0).text + "\"";
+        error.item = command.at(0);
+        throw error;
+    }
+}
 

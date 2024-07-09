@@ -20,6 +20,8 @@
 #define TRANSFORMMATRIXGENERATOR_H
 
 #include <QStringList>
+#include <QMap>
+#include <QVariant>
 
 #include "Eigen/Geometry"
 
@@ -45,15 +47,32 @@ public:
         QString text;
     };
 
+    class Device
+    {
+    public:
+        typedef enum
+        {
+            DT_RPLIDAR = 0,
+            DT_LIVOX_MID360,
+        } Type;
+
+        friend bool operator<(const Device& l, const Device& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
+
+        Type type = DT_RPLIDAR;
+//        QVariant data = int(0);
+        quint32 data = 0;
+    };
+
     TransformMatrixGenerator();
 
 //    QList<Issue> warnings;
 
-    Eigen::Transform<double, 3, Eigen::Affine> generate(const QStringList& lines);
+    QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> > generate(const QStringList& lines);
 
 private:
 
     Eigen::Transform<double, 3, Eigen::Affine> processCommand(const QVector<Item>& command);
+    void processBlockHeader(const QVector<Item>& command, Device& device, QVector<Eigen::Transform<double, 3, Eigen::Affine> >& matrices, QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >& deviceMatrices);
     QVector<double> convertItemsToDoubles(const QVector<Item>& command, const unsigned int startItem, const unsigned int numOfItems);
     double getAngleMultiplier(const Item& string);
     void checkArgumentCount(const QVector<Item>& command, const int argsNeeded);
