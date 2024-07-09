@@ -143,6 +143,14 @@ QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine
                     break;
                 }
 
+                if (state.requireDeviceDefinition && (!state.deviceDefined))
+                {
+                    Issue error;
+                    error.text = "Device not defined before command \"" + state.command.at(0).text + "\".";
+                    error.item = state.command.at(0);
+                    throw error;
+                }
+
                 state.subMatrices.push_back(processCommand(state));
                 state.command.clear();
             }
@@ -499,25 +507,29 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
             throw error;
         }
 
-        Eigen::Transform<double, 3, Eigen::Affine> matrix;
-
-        if (iter != state.deviceMatrices.end())
+        if ((state.deviceDefined) || (!state.requireDeviceDefinition))
         {
-            matrix = iter.value();
-        }
-        else
-        {
-            matrix = matrix.Identity();
-        }
+            Eigen::Transform<double, 3, Eigen::Affine> matrix;
 
-        for (int i = state.subMatrices.size() - 1; i >= 0; i--)
-        {
-            matrix = matrix * state.subMatrices.at(i);
-        }
+            if (iter != state.deviceMatrices.end())
+            {
+                matrix = iter.value();
+            }
+            else
+            {
+                matrix = matrix.Identity();
+            }
 
-        state.deviceMatrices.insert(state.currentDevice, matrix);
+            for (int i = state.subMatrices.size() - 1; i >= 0; i--)
+            {
+                matrix = matrix * state.subMatrices.at(i);
+            }
+
+            state.deviceMatrices.insert(state.currentDevice, matrix);
+        }
 
         state.subMatrices.clear();
+        state.deviceDefined = true;
     }
     else
     {

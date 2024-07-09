@@ -57,11 +57,14 @@ public:
             DT_LIVOX_MID360,
         } Type;
 
+        Device() { this->type = DT_UNDEFINED; this->data = 0; };
+        Device(const Type type, const quint32 data = 0) { this->type = type; this->data = data; };
+
         friend bool operator<(const Device& l, const Device& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
 
-        Type type = DT_UNDEFINED;
+        Type type;
 //        QVariant data = int(0);
-        quint32 data = 0;
+        quint32 data;
     };
 
     TransformMatrixGenerator();
