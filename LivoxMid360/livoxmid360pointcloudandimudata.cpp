@@ -248,9 +248,7 @@ void PointCloudData::extractPoints_Cartesian_32Bit(const unsigned char* const da
         pointToAdd.z = temp32 * 0.001;
 
         pointToAdd.reflectivity = data[startOffset + 12];
-        pointToAdd.Properties_other = Confidence((data[startOffset + 13] >> 4) & 3);
-        pointToAdd.Properties_dust = Confidence((data[startOffset + 13] >> 2) & 3);
-        pointToAdd.Properties_glue = Confidence((data[startOffset + 13] >> 0) & 3);
+        pointToAdd.properties = data[startOffset + 13];
 
         points.push_back(pointToAdd);
     }
@@ -275,9 +273,7 @@ void PointCloudData::extractPoints_Cartesian_16Bit(const unsigned char* const da
         pointToAdd.z = temp16 * 0.01;
 
         pointToAdd.reflectivity = data[startOffset + 6];
-        pointToAdd.Properties_other = Confidence((data[startOffset + 7] >> 4) & 3);
-        pointToAdd.Properties_dust = Confidence((data[startOffset + 7] >> 2) & 3);
-        pointToAdd.Properties_glue = Confidence((data[startOffset +7] >> 0) & 3);
+        pointToAdd.properties = data[startOffset + 13];
 
         points.push_back(pointToAdd);
     }
@@ -305,9 +301,6 @@ void PointCloudData::extractPoints_Spherical(const unsigned char* const data, co
         pointToAdd.z = depth * cos(theta);
 
         pointToAdd.reflectivity = data[startOffset + 8];
-        pointToAdd.Properties_other = Confidence((data[startOffset + 9] >> 4) & 3);
-        pointToAdd.Properties_dust = Confidence((data[startOffset + 9] >> 2) & 3);
-        pointToAdd.Properties_glue = Confidence((data[startOffset +9] >> 0) & 3);
 
         points.push_back(pointToAdd);
     }

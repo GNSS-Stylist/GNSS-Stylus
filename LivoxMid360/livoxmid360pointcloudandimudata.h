@@ -104,9 +104,10 @@ class PointCloudData : public PointCloudAndIMUDataHeader
         float y;    // metres
         float z;    // metres
         quint8 reflectivity;
-        Confidence Properties_other:2;
-        Confidence Properties_dust:2;
-        Confidence Properties_glue:2;
+        quint8 properties;
+        Confidence getProperties_other(void) { return Confidence((properties >> 4) & 3); };
+        Confidence getProperties_dust(void) { return Confidence((properties >> 2) & 3); };
+        Confidence getProperties_glue(void) { return Confidence((properties >> 0) & 3); };
     };
 
     QVector<Point> points;
