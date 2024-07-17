@@ -17,6 +17,7 @@
 */
 
 #include "pointcloudgeneratorlidar.h"
+#include "livoxmid360pointcloudandimudata.h"
 
 namespace Lidar
 {
@@ -350,6 +351,8 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
     rpLidarPlausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
 
+    Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
+
     while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < endingUptime))
     {
         rpLidarPlausibilityFilter.filter(rpLidarIter.value().distanceItems, rpLidarFilteredItems);
@@ -371,7 +374,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
 
-                Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
+                // TODO: Implement "uptime cache" (only calculate transform when uptime changes)
 
                 try
                 {
@@ -384,14 +387,13 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                     emit warningMessage("File \"" + params.lidarFileNames->at(rpLidarIter.value().fileNameIndex) + "\", chunk index " +
                                QString::number(rpLidarIter.value().chunkIndex)+
-                               ", uptime " + QString::number(rpLidarIter.key()) +
+                               " (RPLidar), uptime " + QString::number(rpLidarIter.key()) +
                                ": " + stringThrown + " Skipped the rest of this set of points " +
                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
                                QString::number(endingTag.sourceFileLine) +
                                " in file \"" + beginningTag.sourceFile + "\".");
                     return(false);
                 }
-
 
                 Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
                 transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
@@ -454,6 +456,185 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         }
 
         rpLidarIter++;
+    }
+
+    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360Iter = params.mid360.datagrams->upperBound(beginningUptime);
+
+    // As Mid-360 sends over 2k datagrams/s, there's no need for same kind of "time adjustment" as with RPLidar.
+    // (althought having it there probably doesn't make much difference either, only 1/20 s max at the timing)
+
+    UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
+
+    while ((mid360Iter != params.mid360.datagrams->end()) && (mid360Iter.key() < endingUptime))
+    {
+        LivoxMid360::PointCloudAndIMUDataHeader header(mid360Iter.value().datagram);
+
+        if ((header.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
+                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
+                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
+                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
+        {
+            mid360Iter++;
+            continue;
+        }
+        LivoxMid360::PointCloudData pcData(header, mid360Iter.value().datagram);
+
+        if ((pcData.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
+            (pcData.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
+        {
+            mid360Iter++;
+            continue;
+        }
+
+        quint64 pointStartTime_ns = pcData.timestamp;
+        quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
+
+        quint16 pointNum = pcData.dot_num;
+
+        quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
+        TransformMatrixGenerator::Device device(TransformMatrixGenerator::Device::DT_LIVOX_MID360, ipAddress);
+
+        if (!params.transforms_BeforeRotation.contains(device))
+        {
+            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
+                                QString::number(mid360Iter.value().chunkIndex)+
+                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
+                                ", uptime " + QString::number(mid360Iter.key()) +
+                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                ": Operation before rotation not defined. Skipped the rest of this set of points " +
+                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                QString::number(endingTag.sourceFileLine) +
+                                " in file \"" + beginningTag.sourceFile + "\".");
+            return(false);
+        }
+
+        if (!params.transforms_AfterRotation.contains(device))
+        {
+            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
+                                QString::number(mid360Iter.value().chunkIndex)+
+                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
+                                ", uptime " + QString::number(mid360Iter.key()) +
+                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                ": Operation after rotation not defined. Skipped the rest of this set of points " +
+                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                QString::number(endingTag.sourceFileLine) +
+                                " in file \"" + beginningTag.sourceFile + "\".");
+            return(false);
+        }
+
+        auto transform_BeforeRotation = params.transforms_BeforeRotation.value(device);
+        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
+
+        for (int i = 0; i < pointNum; i++)
+        {
+            LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
+
+            if (currentPoint->properties & 0x3f)
+            {
+                // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
+                continue;
+            }
+
+            double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+            if (distance < 0.1)
+            {
+                // Discard points too close to lidar's origin
+                continue;
+            }
+
+            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum - 1))) / 1000000;
+
+            if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+            {
+                try
+                {
+                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
+                }
+                catch (QString& stringThrown)
+                {
+                    Q_ASSERT(params.lidarFileNames);
+                    Q_ASSERT(params.lidarFileNames->size() > mid360Iter.value().fileNameIndex);
+
+                    emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
+                                        QString::number(mid360Iter.value().chunkIndex)+
+                                        " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
+                                        ", uptime " + QString::number(mid360Iter.key()) +
+                                        ", ITOW " + QString::number(pointITOWUptime_ms) +
+                                        ": " + stringThrown + " Skipped the rest of this set of points " +
+                                        "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                        QString::number(endingTag.sourceFileLine) +
+                                        " in file \"" + beginningTag.sourceFile + "\".");
+                    return(false);
+                }
+
+                lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
+            }
+
+            double beamHeading = atan2(currentPoint->x, currentPoint->y);
+            double beamPitch = -atan2(sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y), currentPoint->z);
+
+            // TODO: This AngleAxis-mess is probably overly complex and the whole transform_BeforeRotation
+            // might be an overkill in this Mid-360-case.
+            Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
+            transform_LaserRotation = Eigen::AngleAxisd(beamPitch, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(beamHeading, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+            // Lot of parentheses here to keep all calculations as matrix * vector
+            // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
+            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * Eigen::Vector3d::Zero()))));
+
+            /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
+                Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
+                Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
+                Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
+                Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
+                */
+
+            // Lot of parentheses here to keep all calculations as matrix * vector
+            // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (distance * Eigen::Vector3d::UnitX()))));
+
+            /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
+                Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
+                Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
+                Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
+                */
+
+            if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
+            {
+                Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+
+                Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
+
+                if (params.rpLidar.normalLengthsAsQuality)
+                {
+                    normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
+                }
+
+                QString lineOut;
+                if (params.includeNormals)
+                {
+                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
+                              "\t" + QString::number(normal(0), 'f', 4) +
+                              "\t" + QString::number(normal(1), 'f', 4) +
+                              "\t" + QString::number(normal(2), 'f', 4);
+                }
+                else
+                {
+                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
+                }
+
+                outStream->operator<<(lineOut + "\n");
+                pointsWritten++;
+            }
+        }
+        mid360Iter++;
     }
 
     return true;

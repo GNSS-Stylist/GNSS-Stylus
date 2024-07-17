@@ -3203,6 +3203,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.loInterpolator = &loInterpolator_Lidar;
         params.lidarFileNames = &lidarFileNames;
+        params.mid360.datagrams = &mid360Datagrams;
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 

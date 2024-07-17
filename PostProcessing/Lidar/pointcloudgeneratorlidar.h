@@ -59,6 +59,11 @@ public:
             const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
             const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
         } rpLidar;
+
+        struct
+        {
+            const QMultiMap<qint64, PostProcessingForm::Mid360Datagram>* datagrams = nullptr;
+        } mid360;
     };
 
     void generatePointClouds(const Params& params);
