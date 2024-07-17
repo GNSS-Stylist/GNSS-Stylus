@@ -438,7 +438,7 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
 
         QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >::iterator iter;
 
-//        Device device;
+        Device prevDevice = state.currentDevice;
 
         if (deviceType == "rplidar")
         {
@@ -525,7 +525,7 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
                 matrix = matrix * state.subMatrices.at(i);
             }
 
-            state.deviceMatrices.insert(state.currentDevice, matrix);
+            state.deviceMatrices.insert(prevDevice, matrix);
         }
 
         state.subMatrices.clear();
