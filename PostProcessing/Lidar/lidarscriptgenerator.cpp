@@ -99,10 +99,9 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     unsigned int pointsWritten = 0;
 
     TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
-    Q_ASSERT(params.transforms_BeforeRotation.contains(rpLidarDevice));
     Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
 
-    auto transform_BeforeRotation_RPLidar = params.transforms_BeforeRotation.value(rpLidarDevice);
+    Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation_RPLidar = params.rpLidar.transform_BeforeRotation;
     auto transform_AfterRotation_RPLidar = params.transforms_AfterRotation.value(rpLidarDevice);
 
     while ((lidarIter.key() <= params.uptime_Max) && (lidarIter != params.rpLidar.rounds->end()))

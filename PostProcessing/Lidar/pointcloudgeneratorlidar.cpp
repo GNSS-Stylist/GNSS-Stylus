@@ -343,10 +343,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
     RPLidarPlausibilityFilter rpLidarPlausibilityFilter;
 
     TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
-    Q_ASSERT(params.transforms_BeforeRotation.contains(rpLidarDevice));
     Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
 
-    auto rpLidarTransform_BeforeRotation = params.transforms_BeforeRotation.value(rpLidarDevice);
+    Eigen::Transform<double, 3, Eigen::Affine> rpLidarTransform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
     auto rpLidarTransform_AfterRotation = params.transforms_AfterRotation.value(rpLidarDevice);
 
     rpLidarPlausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
@@ -494,20 +493,6 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
         TransformMatrixGenerator::Device device(TransformMatrixGenerator::Device::DT_LIVOX_MID360, ipAddress);
 
-        if (!params.transforms_BeforeRotation.contains(device))
-        {
-            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
-                                QString::number(mid360Iter.value().chunkIndex)+
-                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
-                                ", uptime " + QString::number(mid360Iter.key()) +
-                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                ": Operation before rotation not defined. Skipped the rest of this set of points " +
-                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                QString::number(endingTag.sourceFileLine) +
-                                " in file \"" + beginningTag.sourceFile + "\".");
-            return(false);
-        }
-
         if (!params.transforms_AfterRotation.contains(device))
         {
             emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
@@ -522,7 +507,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
             return(false);
         }
 
-        auto transform_BeforeRotation = params.transforms_BeforeRotation.value(device);
+//        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
         auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
 
         for (int i = 0; i < pointNum; i++)
@@ -535,9 +520,28 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 continue;
             }
 
+            // Filter for now just using hard-coded operator/rig-discarding limits.
+            // TODO: Add configurable params/zones.
+
+            if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
+                fabs((currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
+                fabs((currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
+            {
+                continue;
+            }
+
+            // Filter out the tube (a bit lossy filtering here...)
+            if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
+                (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
+            {
+                continue;
+            }
+
+
+
             double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
 
-            if (distance < 0.1)
+            if (distance < 0.15)
             {
                 // Discard points too close to lidar's origin
                 continue;
@@ -571,17 +575,10 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
             }
 
-            double beamHeading = atan2(currentPoint->x, currentPoint->y);
-            double beamPitch = -atan2(sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y), currentPoint->z);
-
-            // TODO: This AngleAxis-mess is probably overly complex and the whole transform_BeforeRotation
-            // might be an overkill in this Mid-360-case.
-            Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
-            transform_LaserRotation = Eigen::AngleAxisd(beamPitch, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(beamHeading, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+            Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
 
             // Lot of parentheses here to keep all calculations as matrix * vector
-            // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * Eigen::Vector3d::Zero()))));
+            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation * Eigen::Vector3d::Zero()));
 
             /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
@@ -592,8 +589,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 */
 
             // Lot of parentheses here to keep all calculations as matrix * vector
-            // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (distance * Eigen::Vector3d::UnitX()))));
+            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
+//          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
             /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
@@ -608,6 +606,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
                 Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
 
+                // TODO: Own quality calculation for Mid-360
                 if (params.rpLidar.normalLengthsAsQuality)
                 {
                     normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;

@@ -3149,7 +3149,7 @@ void PostProcessingForm::on_pushButton_ClearLidarData_clicked()
 void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 {
     Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
-    QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_BeforeRotation;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_RPLidar_Generated_BeforeRotation;
     QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_AfterRotation;
     LOInterpolator loInterpolator_Lidar(this);
 
@@ -3160,7 +3160,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
     RPLidarPlausibilityFilter::Settings lidarFilteringSettings;
 
-    if (!generateLidarTransformMatrices(transforms_Lidar_Generated_BeforeRotation, transforms_Lidar_Generated_AfterRotation))
+    if (!generateLidarTransformMatrices(transform_RPLidar_Generated_BeforeRotation, transforms_Lidar_Generated_AfterRotation))
     {
         return;
     }
@@ -3180,7 +3180,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
         params.transforms_AfterRotation = transforms_Lidar_Generated_AfterRotation;
-        params.transforms_BeforeRotation = transforms_Lidar_Generated_BeforeRotation;
+        params.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
         params.directory = fileDialog_PointCloud.directory();
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
@@ -3530,8 +3530,8 @@ void PostProcessingForm::LOInterpolator::getInterpolatedLocationOrientationTrans
     transform.translation() = interpolatedCoords;
 }
 
-bool PostProcessingForm::generateLidarTransformMatrices(QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transform_Lidar_Generated_BeforeRotation,
-                                    QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transform_LidarGenerated_AfterRotation)
+bool PostProcessingForm::generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_RPLidar_Generated_BeforeRotation,
+                                    QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transforms_Lidar_Generated_AfterRotation)
 {
     TransformMatrixGenerator matrixGenerator;
     QPlainTextEdit *currentEditor;
@@ -3544,12 +3544,12 @@ bool PostProcessingForm::generateLidarTransformMatrices(QMap<TransformMatrixGene
         currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation;
         currentTabName = "Operations before rotation";
         QStringList lines = currentEditor->document()->toPlainText().split("\n");
-        transform_Lidar_Generated_BeforeRotation = matrixGenerator.generateMap(lines, defaultDevice, false, false);
+        transform_RPLidar_Generated_BeforeRotation = matrixGenerator.generateSingle(lines);
 
         currentEditor = ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation;
         currentTabName = "Operations after rotation";
         lines = currentEditor->document()->toPlainText().split("\n");
-        transform_LidarGenerated_AfterRotation = matrixGenerator.generateMap(lines, defaultDevice, false, false);
+        transforms_Lidar_Generated_AfterRotation = matrixGenerator.generateMap(lines, defaultDevice, false, false);
     }
     catch (TransformMatrixGenerator::Issue& issue)
     {
@@ -3583,7 +3583,7 @@ bool PostProcessingForm::generateLidarTransformMatrices(QMap<TransformMatrixGene
 void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 {
     Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
-    QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_BeforeRotation;
+    Eigen::Transform<double, 3, Eigen::Affine> transform_RPLidar_Generated_BeforeRotation;
     QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_AfterRotation;
     LOInterpolator loInterpolator_Lidar(this);
 
@@ -3594,7 +3594,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 
     RPLidarPlausibilityFilter::Settings lidarFilteringSettings;
 
-    if (!generateLidarTransformMatrices(transforms_Lidar_Generated_BeforeRotation, transforms_Lidar_Generated_AfterRotation))
+    if (!generateLidarTransformMatrices(transform_RPLidar_Generated_BeforeRotation, transforms_Lidar_Generated_AfterRotation))
     {
         return;
     }
@@ -3625,7 +3625,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
         params.transforms_AfterRotation = transforms_Lidar_Generated_AfterRotation;
-        params.transforms_BeforeRotation = transforms_Lidar_Generated_BeforeRotation;
+        params.rpLidar.transform_BeforeRotation = transform_RPLidar_Generated_BeforeRotation;
         params.fileName = fileNameList[0];
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
