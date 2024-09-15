@@ -16,54 +16,30 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QtTest>
-#include <QCoreApplication>
-
-// add necessary includes here
-
-#include <QRandomGenerator>
-
+#include "tst_lidarfiltering.h"
 #include "../RPLidar/rplidarplausibilityfilter.h"
 
-class LidarFiltering : public QObject
-{
-    Q_OBJECT
-
-public:
-    LidarFiltering();
-    ~LidarFiltering();
-
-private:
-    QRandomGenerator randomGenerator;
-
-private slots:
-    void initTestCase();
-    void cleanupTestCase();
-    void test_Quality_Pre();
-    void test_SlopeFiltering();
-};
-
-LidarFiltering::LidarFiltering()
+TestLidarFiltering::TestLidarFiltering()
 {
 
 }
 
-LidarFiltering::~LidarFiltering()
+TestLidarFiltering::~TestLidarFiltering()
 {
 
 }
 
-void LidarFiltering::initTestCase()
+void TestLidarFiltering::initTestCase()
 {
     randomGenerator.seed(1);
 }
 
-void LidarFiltering::cleanupTestCase()
+void TestLidarFiltering::cleanupTestCase()
 {
 
 }
 
-void LidarFiltering::test_Quality_Pre()
+void TestLidarFiltering::quality_Pre()
 {
     QVector<RPLidarThread::DistanceItem> itemsToFilter;
     QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
@@ -108,7 +84,7 @@ void LidarFiltering::test_Quality_Pre()
     }
 }
 
-void LidarFiltering::test_SlopeFiltering()
+void TestLidarFiltering::test_SlopeFiltering()
 {
     QVector<RPLidarThread::DistanceItem> itemsToFilter;
     QVector<RPLidarPlausibilityFilter::FilteredItem> filteredItems;
@@ -256,6 +232,5 @@ void LidarFiltering::test_SlopeFiltering()
 }
 
 
-QTEST_MAIN(LidarFiltering)
-
-#include "tst_lidarfiltering.moc"
+//QTEST_MAIN(LidarFiltering)
+//#include "tst_lidarfiltering.moc"
