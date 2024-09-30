@@ -5,8 +5,8 @@ CONFIG += qt warn_on depend_includepath testcase
 TEMPLATE = app
 
 # Enable these two for coverage:
-#QMAKE_CXXFLAGS += --coverage
-#QMAKE_LFLAGS += --coverage
+QMAKE_CXXFLAGS += --coverage
+QMAKE_LFLAGS += --coverage
 
 SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.cpp \
