@@ -38,6 +38,11 @@
 // - Danjel McGougan (CRC-Table-Generator)
 //
 
+// This seems to be needed in linux for size_t
+// (Not including for others since this compiled in windows without this)
+#if defined(__linux)
+#include <cstddef>
+#endif
 
 // Set this to 0 for smaller 32BIT-CRC-Tables:
 #if !defined(CRC_BIGTABLES)
