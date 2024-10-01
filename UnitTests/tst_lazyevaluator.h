@@ -42,4 +42,9 @@ private slots:
     void singlePrimaryEvaluator_NoTransform_InvalidateAll();
     void singlePrimaryEvaluator_RandomTransform_Discrete();
     void singlePrimaryEvaluator_RandomTransform_InvalidateAll();
+    void chainOfTwoEvaluators_RandomTransforms_Discrete();
+    void chainOfTwoEvaluators_RandomTransforms_InvalidateAll();
+    void chainOfThreeEvaluators_RandomTransforms_Discrete();
+    void chainOfThreeEvaluators_RandomTransforms_InvalidateAll();
+    void setTransform();
 };
