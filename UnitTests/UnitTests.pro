@@ -9,7 +9,6 @@ QMAKE_CXXFLAGS += --coverage
 QMAKE_LFLAGS += --coverage
 
 SOURCES +=  tst_lidarfiltering.cpp \
-    ../PostProcessing/Lidar/PointFilter/lazyevaluator.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     tst_lazyevaluator.cpp \
     tst_main.cpp

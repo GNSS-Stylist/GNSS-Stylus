@@ -7,23 +7,11 @@
 namespace PointFilter
 {
 
-/*
-class LazyEvaluatorSource
-{
-public:
-    Eigen::Vector3d vector;
-protected:
-    Eigen::Vector3d getVector(void);
-
-};
-*/
-
-//class LazyEvaluator : public LazyEvaluatorSource
 class LazyEvaluator
 {
 public:
-    LazyEvaluator(LazyEvaluator* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
-    LazyEvaluator(Eigen::Vector3d* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
+    inline LazyEvaluator(LazyEvaluator* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
+    inline LazyEvaluator(Eigen::Vector3d* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
     inline void invalidate(void);
 
     inline void setSourceEvaluator(LazyEvaluator* evaluator);
@@ -58,6 +46,18 @@ private:
     // Bitmasks above are used here:
     unsigned char evaluatedFields;
 };
+
+inline LazyEvaluator::LazyEvaluator(LazyEvaluator* source, Eigen::Transform<double, 3, Eigen::Affine> *transform)
+{
+    setSourceEvaluator(source);
+    this->transform = transform;
+}
+
+inline LazyEvaluator::LazyEvaluator(Eigen::Vector3d* source, Eigen::Transform<double, 3, Eigen::Affine> *transform)
+{
+    setPrimarySourceVector(source);
+    this->transform = transform;
+}
 
 inline void LazyEvaluator::invalidate(void)
 {
