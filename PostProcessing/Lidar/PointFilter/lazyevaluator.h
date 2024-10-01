@@ -33,7 +33,7 @@ public:
 
     inline Eigen::Vector3d getSourceVector(void);
 
-    inline void setTransformedVector(Eigen::Vector3d& newVector);
+//    inline void setTransformedVector(Eigen::Vector3d& newVector);
     inline Eigen::Vector3d getTransformedVector(void);
     inline double getDistance(void);
 
@@ -83,10 +83,8 @@ inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d* newVector)
 inline void LazyEvaluator::setTransform(Eigen::Transform<double, 3, Eigen::Affine>* newTransform)
 {
     transform = newTransform;
-    evaluatedFields &= ~(EV_SOURCE_VECTOR);
+    evaluatedFields &= ~(EV_TRANSFORMED_VECTOR | EV_DISTANCE);
 }
-
-
 
 inline Eigen::Vector3d LazyEvaluator::getSourceVector(void)
 {
@@ -112,11 +110,14 @@ inline Eigen::Vector3d LazyEvaluator::getSourceVector(void)
     return sourceVector;
 }
 
+/*
 inline void LazyEvaluator::setTransformedVector(Eigen::Vector3d& newVector)
 {
     transformedVector = newVector;
     evaluatedFields |= EV_TRANSFORMED_VECTOR;
+    evaluatedFields &= ~(EV_DISTANCE);
 }
+*/
 
 inline Eigen::Vector3d LazyEvaluator::getTransformedVector(void)
 {
