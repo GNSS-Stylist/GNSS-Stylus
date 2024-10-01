@@ -38,6 +38,20 @@ Eigen::Transform<double, 3, Eigen::Affine> TestLazyEvaluator::getRandomTransform
     return ret;
 }
 
+bool TestLazyEvaluator::compareVectors(const Eigen::Vector3d vec1, const Eigen::Vector3d& vec2)
+{
+    // Compares if two vectors are close enough (< 1 millionth error)
+    // "Expanded" if/else to allow breakpoints
+
+    if ((vec1 - vec2).norm() < vec1.norm() * 1e-6)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 TestLazyEvaluator::TestLazyEvaluator()
 {
@@ -61,19 +75,26 @@ void TestLazyEvaluator::cleanupTestCase()
 
 void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_Discrete()
 {
+    // Tests single primary evaluator without transforms (so that the transform is always identity).
+    // Evaluator is not manipulated in any way, it is just created and used.
+    // SourceVector is randomized on every round.
+
     for (int i = 0; i < 100; i++)
     {
         Eigen::Vector3d sourceVector = getRandomVec();
         Eigen::Transform<double, 3, Eigen::Affine> transform = Eigen::Affine3d::Identity();
         PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector, &transform);
 
-        QCOMPARE(singlePrimaryEvaluator.getSourceVector(), sourceVector);
-        QCOMPARE(singlePrimaryEvaluator.getTransformedVector(), sourceVector);
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
     }
 }
 
 void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
 {
+    // Tests single primary evaluator without transforms (so that the transform is always identity).
+    // Evaluator's values are invalidated and SourceVector is randomized on every round.
+
     Eigen::Vector3d sourceVector;
     Eigen::Transform<double, 3, Eigen::Affine> transform = Eigen::Affine3d::Identity();
     PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector, &transform);
@@ -83,27 +104,34 @@ void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
         sourceVector = getRandomVec();
         singlePrimaryEvaluator.invalidate();
 
-        QCOMPARE(singlePrimaryEvaluator.getSourceVector(), sourceVector);
-        QCOMPARE(singlePrimaryEvaluator.getTransformedVector(), sourceVector);
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
     }
 }
 
 void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_Discrete()
 {
+    // Tests single primary evaluator.
+    // Evaluator is not manipulated in any way, it is just created and used.
+    // SourceVector and transform are randomized on every round.
+
     for (int i = 0; i < 100; i++)
     {
         Eigen::Vector3d sourceVector = getRandomVec();
         Eigen::Transform<double, 3, Eigen::Affine> transform = getRandomTransform();
         PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector, &transform);
 
-        QCOMPARE(singlePrimaryEvaluator.getSourceVector(), sourceVector);
-        QCOMPARE(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector);
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector));
     }
 }
 
 
 void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_InvalidateAll()
 {
+    // Tests single primary evaluator.
+    // Evaluator's values are invalidated and SourceVector and transform are randomized on every round.
+
     Eigen::Vector3d sourceVector;
     Eigen::Transform<double, 3, Eigen::Affine> transform = Eigen::Affine3d::Identity();
     PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector, &transform);
@@ -114,8 +142,8 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_InvalidateAll()
         transform = getRandomTransform();
         singlePrimaryEvaluator.invalidate();
 
-        QCOMPARE(singlePrimaryEvaluator.getSourceVector(), sourceVector);
-        QCOMPARE(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector);
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+        QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector));
     }
 }
 
