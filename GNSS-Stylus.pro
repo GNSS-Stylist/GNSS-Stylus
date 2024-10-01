@@ -65,7 +65,6 @@ SOURCES += \
     LivoxMid360/livoxmid360pointcloudandimudata.cpp \
     LivoxMid360/livoxmid360thread.cpp \
     PostProcessing/EasyEXIF/exif.cpp \
-    PostProcessing/Lidar/PointFilter/lazyevaluator.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
