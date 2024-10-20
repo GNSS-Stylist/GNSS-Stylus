@@ -9,12 +9,14 @@ QMAKE_CXXFLAGS += --coverage
 QMAKE_LFLAGS += --coverage
 
 SOURCES +=  tst_lidarfiltering.cpp \
+    ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     tst_lazyevaluator.cpp \
     tst_main.cpp
 
 HEADERS += \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.h \
+    ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     tst_lazyevaluator.h \
     tst_lidarfiltering.h
 
