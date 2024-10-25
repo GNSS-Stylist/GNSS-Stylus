@@ -502,6 +502,45 @@ void TestLazyEvaluator::setTransform()
     }
 }
 
+void TestLazyEvaluator::singlePrimaryEvaluator_DefaultConstructor()
+{
+    // Tests single primary evaluator created with the default constructor.
+    // Evaluator is not manipulated in any way, it is just created and used.
+
+    PointFilter::LazyEvaluator primaryEvaluatorCreatedWithDefaultConstructor;
+
+    for (int i = 0; i < 100; i++)
+    {
+        PointFilter::LazyEvaluator singlePrimaryEvaluator;
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), Eigen::Vector3d::Zero()));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), Eigen::Vector3d::Zero()));
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+        }
+    }
+
+    // Test that the transform and sourceVector are overridden correctly
+
+    for (int i = 0; i < 100; i++)
+    {
+        Eigen::Vector3d sourceVector = getRandomVec();
+        Eigen::Transform<double, 3, Eigen::Affine> transform = getRandomTransform();
+
+        primaryEvaluatorCreatedWithDefaultConstructor.setPrimarySourceVector(&sourceVector);
+        primaryEvaluatorCreatedWithDefaultConstructor.setTransform(&transform);
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(primaryEvaluatorCreatedWithDefaultConstructor.getSourceVector(), sourceVector));
+            QVERIFY(compareVectors(primaryEvaluatorCreatedWithDefaultConstructor.getTransformedVector(), transform * sourceVector));
+
+            QCOMPARE(primaryEvaluatorCreatedWithDefaultConstructor.getDistance(), primaryEvaluatorCreatedWithDefaultConstructor.getTransformedVector().norm());
+        }
+    }
+}
 
 
 //QTEST_MAIN(LazyEvaluator)
