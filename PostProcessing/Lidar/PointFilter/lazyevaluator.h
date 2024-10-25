@@ -10,14 +10,15 @@ namespace PointFilter
 class LazyEvaluator
 {
 public:
+    inline LazyEvaluator();
     inline LazyEvaluator(LazyEvaluator* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
     inline LazyEvaluator(Eigen::Vector3d* source, Eigen::Transform<double, 3, Eigen::Affine>* transform);
     inline void invalidate(void);
 
     inline void setSourceEvaluator(LazyEvaluator* evaluator);
-    inline void setPrimarySourceVector(Eigen::Vector3d* newVector);
+    inline void setPrimarySourceVector(Eigen::Vector3d const* newVector);
 
-    inline void setTransform(Eigen::Transform<double, 3, Eigen::Affine>* newTransform);
+    inline void setTransform(Eigen::Transform<double, 3, Eigen::Affine> const* newTransform);
 
     inline Eigen::Vector3d getSourceVector(void);
 
@@ -26,12 +27,15 @@ public:
     inline double getDistance(void);
 
 private:
+    inline static const Eigen::Vector3d defaultNullSourceVector = Eigen::Vector3d();
+    inline static const Eigen::Transform<double, 3, Eigen::Affine> defaultIdentityTransform = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
     bool primarySource; // True: This evaluator doesn't get it's source vector from another evaluator but uses value directly from primarySourceVector instead.
 
     // Sources:
-    Eigen::Vector3d* primarySourceVector;
+    Eigen::Vector3d const* primarySourceVector;
     LazyEvaluator* sourceEvaluator;
-    Eigen::Transform<double, 3, Eigen::Affine>* transform;
+    Eigen::Transform<double, 3, Eigen::Affine> const* transform;
 
     // Cached values:
     Eigen::Vector3d sourceVector;
@@ -46,6 +50,12 @@ private:
     // Bitmasks above are used here:
     unsigned char evaluatedFields;
 };
+
+inline LazyEvaluator::LazyEvaluator()
+{
+    setPrimarySourceVector(&defaultNullSourceVector);
+    this->transform = &defaultIdentityTransform;
+}
 
 inline LazyEvaluator::LazyEvaluator(LazyEvaluator* source, Eigen::Transform<double, 3, Eigen::Affine> *transform)
 {
@@ -72,7 +82,7 @@ inline void LazyEvaluator::setSourceEvaluator(LazyEvaluator* evaluator)
     invalidate();
 }
 
-inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d* newVector)
+inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d const* newVector)
 {
     primarySourceVector = newVector;
     primarySource = true;
@@ -80,7 +90,7 @@ inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d* newVector)
     invalidate();
 }
 
-inline void LazyEvaluator::setTransform(Eigen::Transform<double, 3, Eigen::Affine>* newTransform)
+inline void LazyEvaluator::setTransform(Eigen::Transform<double, 3, Eigen::Affine> const* newTransform)
 {
     transform = newTransform;
     evaluatedFields &= ~(EV_TRANSFORMED_VECTOR | EV_DISTANCE);
