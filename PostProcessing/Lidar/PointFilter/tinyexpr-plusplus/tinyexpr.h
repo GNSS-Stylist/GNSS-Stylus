@@ -74,6 +74,8 @@
     #include <bit>
 #endif
 
+#define TE_BITWISE_OPERATORS
+
 class te_parser;
 
 #if defined(TE_FLOAT) && defined(TE_LONG_DOUBLE)
