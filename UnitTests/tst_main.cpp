@@ -1,5 +1,6 @@
 #include "tst_lidarfiltering.h"
 #include "tst_lazyevaluator.h"
+#include "tst_expressionfilter.h"
 
 int main(int argc, char **argv)
 {
@@ -13,6 +14,11 @@ int main(int argc, char **argv)
 
     {
         TestLazyEvaluator tc;
+        status |= QTest::qExec(&tc, argc, argv);
+    }
+
+    {
+        TestExpressionFilter tc;
         status |= QTest::qExec(&tc, argc, argv);
     }
 
