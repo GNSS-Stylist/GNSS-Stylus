@@ -65,7 +65,9 @@ SOURCES += \
     LivoxMid360/livoxmid360pointcloudandimudata.cpp \
     LivoxMid360/livoxmid360thread.cpp \
     PostProcessing/EasyEXIF/exif.cpp \
+    PostProcessing/Lidar/PointFilter/expressionfilter.cpp \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
+    PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
@@ -106,8 +108,10 @@ HEADERS += \
     LivoxMid360/livoxmid360pointcloudandimudata.h \
     LivoxMid360/livoxmid360thread.h \
     PostProcessing/EasyEXIF/exif.h \
+    PostProcessing/Lidar/PointFilter/expressionfilter.h \
     PostProcessing/Lidar/PointFilter/lazyevaluator.h \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
+    PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     PostProcessing/Lidar/lidarscriptgenerator.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
