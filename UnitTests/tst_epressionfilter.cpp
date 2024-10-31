@@ -57,6 +57,74 @@ LivoxMid360::PointCloudData::Point TestExpressionFilter::getRandomLidarSourcePoi
     return point;
 }
 
+void TestExpressionFilter::expressionValidity_ValidExpressions()
+{
+    PointFilter::ExpressionFilter filter;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    QCOMPARE(filter.setExpression_Filter("1"), true);
+    QCOMPARE(filter.setExpression_Quality("1"), true);
+}
+
+void TestExpressionFilter::expressionValidity_InvalidExpressions()
+{
+    PointFilter::ExpressionFilter filter;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    QCOMPARE(filter.setExpression_Filter("invalid"), false);
+    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+
+    unsigned int index = 0;
+    // Prefill buffer
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), false);
+    }
+
+    for (index = 0; index < defaultTestRounds; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), true);
+        QCOMPARE(out.valid, true);
+        QVERIFY(std::isnan(out.filterResult));
+        QCOMPARE(out.quality, 0);   // Although the expression is invalid, quality is set to 0 if filter expression is invalid
+    }
+
+    QCOMPARE(filter.setExpression_Filter("1"), true);
+    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+
+    for (index = 0; index < defaultTestRounds; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), true);
+        QCOMPARE(out.valid, true);
+        QCOMPARE(out.filterResult, 1);
+        QVERIFY(std::isnan(out.quality));
+    }
+
+    QString errorString;
+    int errorPosition;
+
+    QCOMPARE(filter.setExpression_Filter("#", &errorString, &errorPosition), false);
+    QCOMPARE(errorPosition, 0);
+
+    QCOMPARE(filter.setExpression_Quality("#", &errorString, &errorPosition), false);
+    QCOMPARE(errorPosition, 0);
+
+    for (index = 0; index < defaultTestRounds; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), true);
+        QCOMPARE(out.valid, true);
+        QVERIFY(std::isnan(out.filterResult));
+        QCOMPARE(out.quality, 0);   // Although the expression is invalid, quality is set to 0 if filter expression is invalid
+    }
+}
 
 void TestExpressionFilter::noData()
 {

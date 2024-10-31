@@ -30,6 +30,8 @@ private:
 private slots:
     void initTestCase();
     void cleanupTestCase();
+    void expressionValidity_ValidExpressions();
+    void expressionValidity_InvalidExpressions();
     void noData();
     void defaultExpressions();
     void pureFunctions();
