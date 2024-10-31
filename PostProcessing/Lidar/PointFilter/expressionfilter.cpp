@@ -26,10 +26,16 @@ ExpressionFilter::ExpressionFilter()
 
     std::set<te_variable> customFunctions =
     {
-         { "rad_to_deg", rad_to_deg, TE_PURE },
-         { "deg_to_rad", deg_to_rad, TE_PURE },
-         { "lidar.coord.x", lidar_coord_x, TE_DEFAULT, customFuncHandler },
-         { "lidar.coord.y", lidar_coord_y, TE_DEFAULT, customFuncHandler },
+        { "rad_to_deg", rad_to_deg, TE_PURE },
+        { "deg_to_rad", deg_to_rad, TE_PURE },
+
+        { "lidar.coord.x", lidar_coord_x, TE_DEFAULT, customFuncHandler },
+        { "lidar.coord.y", lidar_coord_y, TE_DEFAULT, customFuncHandler },
+        { "lidar.coord.z", lidar_coord_z, TE_DEFAULT, customFuncHandler },
+
+        { "lidar.coord_indexed.x", lidar_coord_indexed_x, TE_DEFAULT, customFuncHandler },
+        { "lidar.coord_indexed.y", lidar_coord_indexed_y, TE_DEFAULT, customFuncHandler },
+        { "lidar.coord_indexed.z", lidar_coord_indexed_z, TE_DEFAULT, customFuncHandler },
 
         };
 

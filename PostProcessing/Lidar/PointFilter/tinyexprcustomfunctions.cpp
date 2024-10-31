@@ -20,17 +20,35 @@ te_type lidar_coord_x(const te_expr* context)
     return static_cast<te_type>(c->lidar_coord_x());
 }
 
+te_type lidar_coord_indexed_x(const te_expr* context, te_type a)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_coord_indexed_x(a));
+}
+
 te_type lidar_coord_y(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
     return static_cast<te_type>(c->lidar_coord_y());
 }
 
-
-te_type lidar_coord_x_indexed(const te_expr* context, te_type a)
+te_type lidar_coord_indexed_y(const te_expr* context, te_type a)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_coord_x_indexed(a));
+    return static_cast<te_type>(c->lidar_coord_indexed_y(a));
 }
+
+te_type lidar_coord_z(const te_expr* context)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_coord_z());
+}
+
+te_type lidar_coord_indexed_z(const te_expr* context, te_type a)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_coord_indexed_z(a));
+}
+
 
 } // namespace PointFilter

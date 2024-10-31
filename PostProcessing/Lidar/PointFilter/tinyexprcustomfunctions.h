@@ -8,8 +8,11 @@ namespace PointFilter{
 te_type rad_to_deg(te_type a);
 te_type deg_to_rad(te_type a);
 te_type lidar_coord_x(const te_expr* context);
-te_type lidar_coord_x_indexed(const te_expr* context, te_type a);
+te_type lidar_coord_indexed_x(const te_expr* context, te_type a);
 te_type lidar_coord_y(const te_expr* context);
+te_type lidar_coord_indexed_y(const te_expr* context, te_type a);
+te_type lidar_coord_z(const te_expr* context);
+te_type lidar_coord_indexed_z(const te_expr* context, te_type a);
 
 
 

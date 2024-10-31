@@ -23,6 +23,8 @@ private:
 
     PointFilter::ExpressionFilter::OutItem getRandomOutItem(void);
     LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f);
+    unsigned int filterBufferLength = PointFilter::ExpressionFilter::bufferLength;
+
 private slots:
     void initTestCase();
     void cleanupTestCase();
@@ -30,6 +32,7 @@ private slots:
     void defaultExpressions();
     void pureFunctions();
     void lidarCoords();
+    void lidarCoords_Indexed();
 };
 
 #endif // TST_EXPRESSIONFILTER_H

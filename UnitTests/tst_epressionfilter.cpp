@@ -76,7 +76,7 @@ void TestExpressionFilter::defaultExpressions()
     PointFilter::ExpressionFilter filter;
     PointFilter::ExpressionFilter::OutItem out;
 
-    for (unsigned int i = 0; i < filter.bufferLength - 1; i++)
+    for (unsigned int i = 0; i < filterBufferLength - 1; i++)
     {
         out = getRandomOutItem();
         filter.addPoint(getRandomLidarSourcePoint(), i);
@@ -86,11 +86,11 @@ void TestExpressionFilter::defaultExpressions()
     for (int i = 0; i < 10000; i++)
     {
         out = getRandomOutItem();
-        filter.addPoint(getRandomLidarSourcePoint(), i + filter.bufferLength - 1);
+        filter.addPoint(getRandomLidarSourcePoint(), i + filterBufferLength - 1);
         QCOMPARE(filter.getFilteredPoint(out), true);
         QCOMPARE(out.valid, true);
         QCOMPARE(out.filterResult, 1);
-        QCOMPARE(out.uptime_ms, i + 16);
+        QCOMPARE(out.uptime_ms, i + filterBufferLength / 2);
         QCOMPARE(out.quality, 1);
     }
 }
@@ -102,7 +102,7 @@ void TestExpressionFilter::pureFunctions()
 
     unsigned int index = 0;
     // Prefill buffer
-    for (index = 0; index < filter.bufferLength - 1; index++)
+    for (index = 0; index < filterBufferLength - 1; index++)
     {
         out = getRandomOutItem();
         filter.addPoint(getRandomLidarSourcePoint(), index);
@@ -176,45 +176,148 @@ void TestExpressionFilter::lidarCoords()
 
     LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
 
-    PointFilter::ExpressionFilter filter_coord_x;
-    PointFilter::ExpressionFilter filter_coord_y;
+    PointFilter::ExpressionFilter filter_CoordX;
+    PointFilter::ExpressionFilter filter_CoordY;
+    PointFilter::ExpressionFilter filter_CoordZ;
     unsigned int index = 0;
     PointFilter::ExpressionFilter::OutItem out;
 
-    filter_coord_x.setExpression_Filter("lidar.coord.x");
-    filter_coord_y.setExpression_Filter("lidar.coord.y");
+    filter_CoordX.setExpression_Filter("lidar.coord.x");
+    filter_CoordY.setExpression_Filter("lidar.coord.y");
+    filter_CoordZ.setExpression_Filter("lidar.coord.z");
 
     for (int i = 0; i < numOfTestValues; i++)
     {
         sourcePoints[i] = getRandomLidarSourcePoint();
     }
 
-    // Prefill buffer
-    for (index = 0; index < filter_coord_x.bufferLength - 1; index++)
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
     {
-        filter_coord_x.addPoint(sourcePoints[index], index);
-        filter_coord_y.addPoint(sourcePoints[index], index);
-        QCOMPARE(filter_coord_x.getFilteredPoint(out), false);
+        filter_CoordX.addPoint(sourcePoints[index], index);
+        filter_CoordY.addPoint(sourcePoints[index], index);
+        filter_CoordZ.addPoint(sourcePoints[index], index);
     }
 
     for (; index < numOfTestValues; index++)
     {
-        filter_coord_x.addPoint(sourcePoints[index], index);
-        filter_coord_y.addPoint(sourcePoints[index], index);
+        filter_CoordX.addPoint(sourcePoints[index], index);
+        filter_CoordY.addPoint(sourcePoints[index], index);
+        filter_CoordZ.addPoint(sourcePoints[index], index);
 
-        QCOMPARE(filter_coord_x.getFilteredPoint(out), true);
-        QCOMPARE(out.filterResult, sourcePoints[index - (filter_coord_x.bufferLength / 2)].x);
+        QCOMPARE(filter_CoordX.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].x);
 
-        QCOMPARE(filter_coord_y.getFilteredPoint(out), true);
-        QCOMPARE(out.filterResult, sourcePoints[index - (filter_coord_y.bufferLength / 2)].y);
+        QCOMPARE(filter_CoordY.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].y);
+
+        QCOMPARE(filter_CoordZ.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].z);
     }
-
-
-
-
-
 }
 
+void TestExpressionFilter::lidarCoords_Indexed()
+{
+    const int numOfTestValues = 1000;
+
+    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+
+    PointFilter::ExpressionFilter filter_CoordX_Index0;
+    PointFilter::ExpressionFilter filter_CoordY_Index0;
+    PointFilter::ExpressionFilter filter_CoordZ_Index0;
+
+    // Use just some random indexes
+    PointFilter::ExpressionFilter filter_CoordX_IndexMinus1;
+    PointFilter::ExpressionFilter filter_CoordX_IndexPlus2;
+
+    PointFilter::ExpressionFilter filter_CoordY_IndexMinus2;
+    PointFilter::ExpressionFilter filter_CoordY_IndexPlus1;
+
+    // Min/max indexes for z
+    PointFilter::ExpressionFilter filter_CoordZ_IndexMinus7;
+    PointFilter::ExpressionFilter filter_CoordZ_IndexPlus7;
+
+    unsigned int index = 0;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    filter_CoordX_Index0.setExpression_Filter("lidar.coord_indexed.x(0)");
+    filter_CoordY_Index0.setExpression_Filter("lidar.coord_indexed.y(0)");
+    filter_CoordZ_Index0.setExpression_Filter("lidar.coord_indexed.z(0)");
+
+    filter_CoordX_IndexMinus1.setExpression_Filter("lidar.coord_indexed.x(-1)");
+    filter_CoordX_IndexPlus2.setExpression_Filter("lidar.coord_indexed.x(2)");
+
+    filter_CoordY_IndexMinus2.setExpression_Filter("lidar.coord_indexed.y(-2)");
+    filter_CoordY_IndexPlus1.setExpression_Filter("lidar.coord_indexed.y(1)");
+
+    filter_CoordZ_IndexMinus7.setExpression_Filter("lidar.coord_indexed.z(-7)");
+    filter_CoordZ_IndexPlus7.setExpression_Filter("lidar.coord_indexed.z(7)");
+
+    for (int i = 0; i < numOfTestValues; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint();
+    }
+
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        filter_CoordX_Index0.addPoint(sourcePoints[index], index);
+        filter_CoordY_Index0.addPoint(sourcePoints[index], index);
+        filter_CoordZ_Index0.addPoint(sourcePoints[index], index);
+
+        filter_CoordX_IndexMinus1.addPoint(sourcePoints[index], index);
+        filter_CoordX_IndexPlus2.addPoint(sourcePoints[index], index);
+
+        filter_CoordY_IndexMinus2.addPoint(sourcePoints[index], index);
+        filter_CoordY_IndexPlus1.addPoint(sourcePoints[index], index);
+
+        filter_CoordZ_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_CoordZ_IndexPlus7.addPoint(sourcePoints[index], index);
+    }
+
+    for (; index < numOfTestValues; index++)
+    {
+        filter_CoordX_Index0.addPoint(sourcePoints[index], index);
+        filter_CoordY_Index0.addPoint(sourcePoints[index], index);
+        filter_CoordZ_Index0.addPoint(sourcePoints[index], index);
+
+        filter_CoordX_IndexMinus1.addPoint(sourcePoints[index], index);
+        filter_CoordX_IndexPlus2.addPoint(sourcePoints[index], index);
+
+        filter_CoordY_IndexMinus2.addPoint(sourcePoints[index], index);
+        filter_CoordY_IndexPlus1.addPoint(sourcePoints[index], index);
+
+        filter_CoordZ_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_CoordZ_IndexPlus7.addPoint(sourcePoints[index], index);
+
+        QCOMPARE(filter_CoordX_Index0.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].x);
+
+        QCOMPARE(filter_CoordY_Index0.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].y);
+
+        QCOMPARE(filter_CoordZ_Index0.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].z);
+
+        QCOMPARE(filter_CoordX_IndexMinus1.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 1].x);
+
+        QCOMPARE(filter_CoordX_IndexPlus2.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 2].x);
+
+        QCOMPARE(filter_CoordY_IndexMinus2.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 2].y);
+
+        QCOMPARE(filter_CoordY_IndexPlus1.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 1].y);
+
+        QCOMPARE(filter_CoordZ_IndexMinus7.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 7].z);
+
+        QCOMPARE(filter_CoordZ_IndexPlus7.getFilteredPoint(out), true);
+        QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 7].z);
+    }
+}
 
 
 
