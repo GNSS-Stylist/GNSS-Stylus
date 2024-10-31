@@ -16,6 +16,9 @@ public:
     ~TestExpressionFilter();
 
 private:
+    static const unsigned int defaultTestRounds = 10000;
+    static const unsigned int filterBufferLength = PointFilter::ExpressionFilter::bufferLength;
+
     QRandomGenerator randomGenerator;
     Eigen::Vector3d getRandomVec(double lowLimit = -10, double highLimit = 10);
 //    Eigen::Transform<double, 3, Eigen::Affine> getRandomTransform(double translateLowLimit = -10.0, double translateHighLimit = 10.0);
@@ -23,7 +26,6 @@ private:
 
     PointFilter::ExpressionFilter::OutItem getRandomOutItem(void);
     LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f);
-    unsigned int filterBufferLength = PointFilter::ExpressionFilter::bufferLength;
 
 private slots:
     void initTestCase();

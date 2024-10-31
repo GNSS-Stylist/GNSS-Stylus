@@ -83,7 +83,7 @@ void TestExpressionFilter::defaultExpressions()
         QCOMPARE(filter.getFilteredPoint(out), false);
     }
 
-    for (int i = 0; i < 10000; i++)
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
         out = getRandomOutItem();
         filter.addPoint(getRandomLidarSourcePoint(), i + filterBufferLength - 1);
@@ -172,9 +172,7 @@ void TestExpressionFilter::pureFunctions()
 
 void TestExpressionFilter::lidarCoords()
 {
-    const int numOfTestValues = 1000;
-
-    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
     PointFilter::ExpressionFilter filter_CoordX;
     PointFilter::ExpressionFilter filter_CoordY;
@@ -186,7 +184,7 @@ void TestExpressionFilter::lidarCoords()
     filter_CoordY.setExpression_Filter("lidar.coord.y");
     filter_CoordZ.setExpression_Filter("lidar.coord.z");
 
-    for (int i = 0; i < numOfTestValues; i++)
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
         sourcePoints[i] = getRandomLidarSourcePoint();
     }
@@ -199,7 +197,7 @@ void TestExpressionFilter::lidarCoords()
         filter_CoordZ.addPoint(sourcePoints[index], index);
     }
 
-    for (; index < numOfTestValues; index++)
+    for (; index < defaultTestRounds; index++)
     {
         filter_CoordX.addPoint(sourcePoints[index], index);
         filter_CoordY.addPoint(sourcePoints[index], index);
@@ -218,9 +216,7 @@ void TestExpressionFilter::lidarCoords()
 
 void TestExpressionFilter::lidarCoords_Indexed()
 {
-    const int numOfTestValues = 1000;
-
-    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
     PointFilter::ExpressionFilter filter_CoordX_Index0;
     PointFilter::ExpressionFilter filter_CoordY_Index0;
@@ -253,7 +249,7 @@ void TestExpressionFilter::lidarCoords_Indexed()
     filter_CoordZ_IndexMinus7.setExpression_Filter("lidar.coord_indexed.z(-7)");
     filter_CoordZ_IndexPlus7.setExpression_Filter("lidar.coord_indexed.z(7)");
 
-    for (int i = 0; i < numOfTestValues; i++)
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
         sourcePoints[i] = getRandomLidarSourcePoint();
     }
@@ -275,7 +271,7 @@ void TestExpressionFilter::lidarCoords_Indexed()
         filter_CoordZ_IndexPlus7.addPoint(sourcePoints[index], index);
     }
 
-    for (; index < numOfTestValues; index++)
+    for (; index < defaultTestRounds; index++)
     {
         filter_CoordX_Index0.addPoint(sourcePoints[index], index);
         filter_CoordY_Index0.addPoint(sourcePoints[index], index);
@@ -321,9 +317,7 @@ void TestExpressionFilter::lidarCoords_Indexed()
 
 void TestExpressionFilter::lidarDistance()
 {
-    const int numOfTestValues = 1000;
-
-    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
     PointFilter::ExpressionFilter filter_Distance;
 
@@ -332,7 +326,7 @@ void TestExpressionFilter::lidarDistance()
 
     filter_Distance.setExpression_Filter("lidar.distance");
 
-    for (int i = 0; i < numOfTestValues; i++)
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
         sourcePoints[i] = getRandomLidarSourcePoint();
     }
@@ -343,7 +337,7 @@ void TestExpressionFilter::lidarDistance()
         filter_Distance.addPoint(sourcePoints[index], index);
     }
 
-    for (; index < numOfTestValues; index++)
+    for (; index < defaultTestRounds; index++)
     {
         filter_Distance.addPoint(sourcePoints[index], index);
 
@@ -355,9 +349,7 @@ void TestExpressionFilter::lidarDistance()
 
 void TestExpressionFilter::lidarDistance_Indexed()
 {
-    const int numOfTestValues = 1000;
-
-    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
     PointFilter::ExpressionFilter filter_Distance_Index0;
     PointFilter::ExpressionFilter filter_Distance_IndexMinus7;
@@ -370,7 +362,7 @@ void TestExpressionFilter::lidarDistance_Indexed()
     filter_Distance_IndexMinus7.setExpression_Filter("lidar.distance_indexed(-7)");
     filter_Distance_IndexPlus7.setExpression_Filter("lidar.distance_indexed(7)");
 
-    for (int i = 0; i < numOfTestValues; i++)
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
         sourcePoints[i] = getRandomLidarSourcePoint();
     }
@@ -383,7 +375,7 @@ void TestExpressionFilter::lidarDistance_Indexed()
         filter_Distance_IndexPlus7.addPoint(sourcePoints[index], index);
     }
 
-    for (; index < numOfTestValues; index++)
+    for (; index < defaultTestRounds; index++)
     {
         filter_Distance_Index0.addPoint(sourcePoints[index], index);
         filter_Distance_IndexMinus7.addPoint(sourcePoints[index], index);
