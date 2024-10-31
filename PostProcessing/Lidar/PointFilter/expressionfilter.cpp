@@ -15,17 +15,17 @@ ExpressionFilter::ExpressionFilter()
 
     customFuncHandler = new TinyExprCustomFuncHandler(TE_DEFAULT, this);
 
-    for (auto item : buffer)
+    for (BufferItem& item : buffer)
     {
         item.lidarSourceVector = Eigen::Vector3d::Zero();
-        item.Point_Lidar.setPrimarySourceVector(&item.lidarSourceVector);
-        item.Point_Lidar.setTransformedVector(item.lidarSourceVector);
+        item.point_Lidar.setPrimarySourceVector(&item.lidarSourceVector);
+        item.point_Lidar.setTransformedVector(item.lidarSourceVector);
 
-        item.Point_Rig.setSourceEvaluator(&item.Point_Lidar);
-        item.Point_Final.setSourceEvaluator(&item.Point_Rig);
+        item.point_Rig.setSourceEvaluator(&item.point_Lidar);
+        item.point_NED.setSourceEvaluator(&item.point_Rig);
 
-        item.Point_Rig.setTransform(&transformCache_LidarToRig[0]);
-        item.Point_Final.setTransform(&transformCache_RigToNED[0]);
+        item.point_Rig.setTransform(&transformCache_LidarToRig[0]);
+        item.point_NED.setTransform(&transformCache_RigToNED[0]);
     }
 
     std::set<te_variable> customFunctions =
@@ -40,6 +40,22 @@ ExpressionFilter::ExpressionFilter()
         { "lidar.coord_indexed.x", lidar_coord_indexed_x, TE_DEFAULT, customFuncHandler },
         { "lidar.coord_indexed.y", lidar_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "lidar.coord_indexed.z", lidar_coord_indexed_z, TE_DEFAULT, customFuncHandler },
+
+        { "rig.coord.x", rig_coord_x, TE_DEFAULT, customFuncHandler },
+        { "rig.coord.y", rig_coord_y, TE_DEFAULT, customFuncHandler },
+        { "rig.coord.z", rig_coord_z, TE_DEFAULT, customFuncHandler },
+
+        { "rig.coord_indexed.x", rig_coord_indexed_x, TE_DEFAULT, customFuncHandler },
+        { "rig.coord_indexed.y", rig_coord_indexed_y, TE_DEFAULT, customFuncHandler },
+        { "rig.coord_indexed.z", rig_coord_indexed_z, TE_DEFAULT, customFuncHandler },
+
+        { "ned.coord.x", ned_coord_x, TE_DEFAULT, customFuncHandler },
+        { "ned.coord.y", ned_coord_y, TE_DEFAULT, customFuncHandler },
+        { "ned.coord.z", ned_coord_z, TE_DEFAULT, customFuncHandler },
+
+        { "ned.coord_indexed.x", ned_coord_indexed_x, TE_DEFAULT, customFuncHandler },
+        { "ned.coord_indexed.y", ned_coord_indexed_y, TE_DEFAULT, customFuncHandler },
+        { "ned.coord_indexed.z", ned_coord_indexed_z, TE_DEFAULT, customFuncHandler },
 
         { "lidar.distance", lidar_distance, TE_DEFAULT, customFuncHandler },
         { "lidar.distance_indexed", lidar_distance_indexed, TE_DEFAULT, customFuncHandler },
@@ -104,17 +120,32 @@ bool ExpressionFilter::setExpression_Quality(const QString newExpression, QStrin
     }
 }
 
+void ExpressionFilter::setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform)
+{
+    transformCacheIndex_LidarToRig++;
+    transformCache_LidarToRig[transformCacheIndex_LidarToRig] = newTransform;
+}
+
+void ExpressionFilter::setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform)
+{
+    transformCacheIndex_RigToNED++;
+    transformCache_RigToNED[transformCacheIndex_RigToNED] = newTransform;
+}
+
 void ExpressionFilter::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms)
 {
-    buffer[bufferIndex % bufferLength].Point_Lidar_Source = lidarPoint;
+    buffer[bufferIndex % bufferLength].point_Lidar_Source = lidarPoint;
     buffer[bufferIndex % bufferLength].lidarSourceVector = Eigen::Vector3d(lidarPoint.x, lidarPoint.y, lidarPoint.z);
     buffer[bufferIndex % bufferLength].uptime_ms = uptime_ms;
 
-    buffer[bufferIndex % bufferLength].Point_Lidar.invalidate();
-    buffer[bufferIndex % bufferLength].Point_Rig.invalidate();
-    buffer[bufferIndex % bufferLength].Point_Final.invalidate();
+    buffer[bufferIndex % bufferLength].point_Lidar.invalidate();
+    buffer[bufferIndex % bufferLength].point_Rig.invalidate();
+    buffer[bufferIndex % bufferLength].point_NED.invalidate();
 
-    buffer[bufferIndex % bufferLength].Point_Lidar.setTransformedVector(buffer[bufferIndex % bufferLength].lidarSourceVector);
+    buffer[bufferIndex % bufferLength].point_Rig.setTransform(&transformCache_LidarToRig[transformCacheIndex_LidarToRig]);
+    buffer[bufferIndex % bufferLength].point_NED.setTransform(&transformCache_RigToNED[transformCacheIndex_RigToNED]);
+
+    buffer[bufferIndex % bufferLength].point_Lidar.setTransformedVector(buffer[bufferIndex % bufferLength].lidarSourceVector);
 
     bufferIndex++;
 
@@ -142,7 +173,7 @@ bool ExpressionFilter::getFilteredPoint(OutItem& outPoint)
     }
 
     outPoint.uptime_ms = buffer[(bufferIndex - (bufferLength / 2)) % bufferLength].uptime_ms;
-    outPoint.coords = buffer[(bufferIndex - (bufferLength / 2)) % bufferLength].Point_Final.getTransformedVector();
+    outPoint.coords = buffer[(bufferIndex - (bufferLength / 2)) % bufferLength].point_NED.getTransformedVector();
 
     return true;
 }

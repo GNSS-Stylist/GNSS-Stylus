@@ -7,12 +7,27 @@ namespace PointFilter{
 
 te_type rad_to_deg(te_type a);
 te_type deg_to_rad(te_type a);
+
 te_type lidar_coord_x(const te_expr* context);
 te_type lidar_coord_indexed_x(const te_expr* context, te_type a);
 te_type lidar_coord_y(const te_expr* context);
 te_type lidar_coord_indexed_y(const te_expr* context, te_type a);
 te_type lidar_coord_z(const te_expr* context);
 te_type lidar_coord_indexed_z(const te_expr* context, te_type a);
+
+te_type ned_coord_x(const te_expr* context);
+te_type ned_coord_indexed_x(const te_expr* context, te_type a);
+te_type ned_coord_y(const te_expr* context);
+te_type ned_coord_indexed_y(const te_expr* context, te_type a);
+te_type ned_coord_z(const te_expr* context);
+te_type ned_coord_indexed_z(const te_expr* context, te_type a);
+
+te_type rig_coord_x(const te_expr* context);
+te_type rig_coord_indexed_x(const te_expr* context, te_type a);
+te_type rig_coord_y(const te_expr* context);
+te_type rig_coord_indexed_y(const te_expr* context, te_type a);
+te_type rig_coord_z(const te_expr* context);
+te_type rig_coord_indexed_z(const te_expr* context, te_type a);
 
 te_type lidar_distance(const te_expr* context);
 te_type lidar_distance_indexed(const te_expr* context, te_type a);

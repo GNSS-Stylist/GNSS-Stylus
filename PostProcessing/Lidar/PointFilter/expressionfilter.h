@@ -25,6 +25,20 @@ public:
     inline te_type lidar_coord_z() const;
     inline te_type lidar_coord_indexed_z(te_type a) const;
 
+    inline te_type rig_coord_x() const;
+    inline te_type rig_coord_indexed_x(te_type a) const;
+    inline te_type rig_coord_y() const;
+    inline te_type rig_coord_indexed_y(te_type a) const;
+    inline te_type rig_coord_z() const;
+    inline te_type rig_coord_indexed_z(te_type a) const;
+
+    inline te_type ned_coord_x() const;
+    inline te_type ned_coord_indexed_x(te_type a) const;
+    inline te_type ned_coord_y() const;
+    inline te_type ned_coord_indexed_y(te_type a) const;
+    inline te_type ned_coord_z() const;
+    inline te_type ned_coord_indexed_z(te_type a) const;
+
     inline te_type lidar_distance() const;
     inline te_type lidar_distance_indexed(te_type a) const;
 
@@ -52,21 +66,21 @@ public:
 
     bool setExpression_Filter(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
     bool setExpression_Quality(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
+    void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
 
     void addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms);
     bool getFilteredPoint(OutItem& outPoint);
-    void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
-    void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
 
 private:
     class BufferItem
     {
     public:
-        LivoxMid360::PointCloudData::Point Point_Lidar_Source;
+        LivoxMid360::PointCloudData::Point point_Lidar_Source;
         Eigen::Vector3d lidarSourceVector;
-        LazyEvaluator Point_Lidar;
-        LazyEvaluator Point_Rig;
-        LazyEvaluator Point_Final;
+        LazyEvaluator point_Lidar;
+        LazyEvaluator point_Rig;
+        LazyEvaluator point_NED;
         int uptime_ms;
     };
 
@@ -93,49 +107,122 @@ private:
 inline te_type TinyExprCustomFuncHandler::lidar_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].Point_Lidar_Source.x;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.x;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_x(te_type a) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar_Source.x;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.x;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_y() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].Point_Lidar_Source.y;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.y;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_y(te_type a) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar_Source.y;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.y;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_z() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].Point_Lidar_Source.z;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.z;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_z(te_type a) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar_Source.z;
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.z;
 }
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_x() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().x();
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_x(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Rig.getTransformedVector().x();
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_y() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().y();
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_y(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Rig.getTransformedVector().y();
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_z() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().z();
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_z(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Rig.getTransformedVector().z();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_x() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().x();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_x(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_NED.getTransformedVector().x();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_y() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().y();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_y(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_NED.getTransformedVector().y();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_z() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().z();
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_z(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_NED.getTransformedVector().z();
+}
+
 
 inline te_type TinyExprCustomFuncHandler::lidar_distance() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].Point_Lidar.getDistance();
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getDistance();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type a) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar.getDistance();
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar.getDistance();
 }
 
 
