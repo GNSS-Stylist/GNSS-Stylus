@@ -50,5 +50,16 @@ te_type lidar_coord_indexed_z(const te_expr* context, te_type a)
     return static_cast<te_type>(c->lidar_coord_indexed_z(a));
 }
 
+te_type lidar_distance(const te_expr* context)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_distance());
+}
+
+te_type lidar_distance_indexed(const te_expr* context, te_type a)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_distance_indexed(a));
+}
 
 } // namespace PointFilter

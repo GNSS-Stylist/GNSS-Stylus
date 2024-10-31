@@ -14,6 +14,8 @@ te_type lidar_coord_indexed_y(const te_expr* context, te_type a);
 te_type lidar_coord_z(const te_expr* context);
 te_type lidar_coord_indexed_z(const te_expr* context, te_type a);
 
+te_type lidar_distance(const te_expr* context);
+te_type lidar_distance_indexed(const te_expr* context, te_type a);
 
 
 

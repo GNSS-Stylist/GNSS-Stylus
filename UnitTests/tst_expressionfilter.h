@@ -33,6 +33,8 @@ private slots:
     void pureFunctions();
     void lidarCoords();
     void lidarCoords_Indexed();
+    void lidarDistance();
+    void lidarDistance_Indexed();
 };
 
 #endif // TST_EXPRESSIONFILTER_H

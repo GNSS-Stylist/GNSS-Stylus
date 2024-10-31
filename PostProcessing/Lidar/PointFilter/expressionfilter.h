@@ -25,6 +25,9 @@ public:
     inline te_type lidar_coord_z() const;
     inline te_type lidar_coord_indexed_z(te_type a) const;
 
+    inline te_type lidar_distance() const;
+    inline te_type lidar_distance_indexed(te_type a) const;
+
 private:
     ExpressionFilter* filter;
 };
@@ -60,6 +63,7 @@ private:
     {
     public:
         LivoxMid360::PointCloudData::Point Point_Lidar_Source;
+        Eigen::Vector3d lidarSourceVector;
         LazyEvaluator Point_Lidar;
         LazyEvaluator Point_Rig;
         LazyEvaluator Point_Final;
@@ -122,6 +126,17 @@ inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_z(te_type a) const
     return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar_Source.z;
 }
 
+inline te_type TinyExprCustomFuncHandler::lidar_distance() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].Point_Lidar.getDistance();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].Point_Lidar.getDistance();
+}
 
 
 

@@ -17,6 +17,10 @@ ExpressionFilter::ExpressionFilter()
 
     for (auto item : buffer)
     {
+        item.lidarSourceVector = Eigen::Vector3d::Zero();
+        item.Point_Lidar.setPrimarySourceVector(&item.lidarSourceVector);
+        item.Point_Lidar.setTransformedVector(item.lidarSourceVector);
+
         item.Point_Rig.setSourceEvaluator(&item.Point_Lidar);
         item.Point_Final.setSourceEvaluator(&item.Point_Rig);
 
@@ -36,6 +40,9 @@ ExpressionFilter::ExpressionFilter()
         { "lidar.coord_indexed.x", lidar_coord_indexed_x, TE_DEFAULT, customFuncHandler },
         { "lidar.coord_indexed.y", lidar_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "lidar.coord_indexed.z", lidar_coord_indexed_z, TE_DEFAULT, customFuncHandler },
+
+        { "lidar.distance", lidar_distance, TE_DEFAULT, customFuncHandler },
+        { "lidar.distance_indexed", lidar_distance_indexed, TE_DEFAULT, customFuncHandler },
 
         };
 
@@ -100,7 +107,15 @@ bool ExpressionFilter::setExpression_Quality(const QString newExpression, QStrin
 void ExpressionFilter::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms)
 {
     buffer[bufferIndex % bufferLength].Point_Lidar_Source = lidarPoint;
+    buffer[bufferIndex % bufferLength].lidarSourceVector = Eigen::Vector3d(lidarPoint.x, lidarPoint.y, lidarPoint.z);
     buffer[bufferIndex % bufferLength].uptime_ms = uptime_ms;
+
+    buffer[bufferIndex % bufferLength].Point_Lidar.invalidate();
+    buffer[bufferIndex % bufferLength].Point_Rig.invalidate();
+    buffer[bufferIndex % bufferLength].Point_Final.invalidate();
+
+    buffer[bufferIndex % bufferLength].Point_Lidar.setTransformedVector(buffer[bufferIndex % bufferLength].lidarSourceVector);
+
     bufferIndex++;
 
     // TODO: Implement rest

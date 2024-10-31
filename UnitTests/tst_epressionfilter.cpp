@@ -319,6 +319,93 @@ void TestExpressionFilter::lidarCoords_Indexed()
     }
 }
 
+void TestExpressionFilter::lidarDistance()
+{
+    const int numOfTestValues = 1000;
+
+    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+
+    PointFilter::ExpressionFilter filter_Distance;
+
+    unsigned int index = 0;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    filter_Distance.setExpression_Filter("lidar.distance");
+
+    for (int i = 0; i < numOfTestValues; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint();
+    }
+
+    // Prefill buffer
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        filter_Distance.addPoint(sourcePoints[index], index);
+    }
+
+    for (; index < numOfTestValues; index++)
+    {
+        filter_Distance.addPoint(sourcePoints[index], index);
+
+        QCOMPARE(filter_Distance.getFilteredPoint(out), true);
+        Eigen::Vector3d sourceVector = Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, sourceVector.norm());
+    }
+}
+
+void TestExpressionFilter::lidarDistance_Indexed()
+{
+    const int numOfTestValues = 1000;
+
+    LivoxMid360::PointCloudData::Point sourcePoints[numOfTestValues];
+
+    PointFilter::ExpressionFilter filter_Distance_Index0;
+    PointFilter::ExpressionFilter filter_Distance_IndexMinus7;
+    PointFilter::ExpressionFilter filter_Distance_IndexPlus7;
+
+    unsigned int index = 0;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    filter_Distance_Index0.setExpression_Filter("lidar.distance_indexed(0)");
+    filter_Distance_IndexMinus7.setExpression_Filter("lidar.distance_indexed(-7)");
+    filter_Distance_IndexPlus7.setExpression_Filter("lidar.distance_indexed(7)");
+
+    for (int i = 0; i < numOfTestValues; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint();
+    }
+
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        filter_Distance_Index0.addPoint(sourcePoints[index], index);
+        filter_Distance_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_Distance_IndexPlus7.addPoint(sourcePoints[index], index);
+    }
+
+    for (; index < numOfTestValues; index++)
+    {
+        filter_Distance_Index0.addPoint(sourcePoints[index], index);
+        filter_Distance_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_Distance_IndexPlus7.addPoint(sourcePoints[index], index);
+
+        QCOMPARE(filter_Distance_Index0.getFilteredPoint(out), true);
+        int offsettedIndex = index;
+        Eigen::Vector3d sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, sourceVector.norm());
+
+        QCOMPARE(filter_Distance_IndexMinus7.getFilteredPoint(out), true);
+        offsettedIndex = index - 7;
+        sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, sourceVector.norm());
+
+        QCOMPARE(filter_Distance_IndexPlus7.getFilteredPoint(out), true);
+        offsettedIndex = index + 7;
+        sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, sourceVector.norm());
+    }
+}
+
 
 
 
