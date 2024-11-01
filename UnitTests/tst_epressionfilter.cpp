@@ -184,7 +184,7 @@ void TestExpressionFilter::defaultExpressions()
         QCOMPARE(filter.getFilteredPoint(out), true);
         QCOMPARE(out.valid, true);
         QCOMPARE(out.filterResult, 1);
-        QCOMPARE(out.uptime_ms, i + filterBufferLength / 2);
+        QCOMPARE(out.uptime_ms, i + (filterBufferLength / 2) - 1);
         QCOMPARE(out.quality, 1);
     }
 }
@@ -587,14 +587,19 @@ void TestExpressionFilter::nedCoords_DefaultTransform()
         filter_CoordY.addPoint(sourcePoints[index], index);
         filter_CoordZ.addPoint(sourcePoints[index], index);
 
+        Eigen::Vector3d expectedNEDOutVector = Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
+
         QCOMPARE(filter_CoordX.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].x);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordY.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].y);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordZ.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].z);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
     }
 }
 
@@ -670,32 +675,43 @@ void TestExpressionFilter::nedCoords_Indexed_DefaultTransform()
         filter_CoordZ_IndexMinus7.addPoint(sourcePoints[index], index);
         filter_CoordZ_IndexPlus7.addPoint(sourcePoints[index], index);
 
+        Eigen::Vector3d expectedNEDOutVector = Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
+
         QCOMPARE(filter_CoordX_Index0.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].x);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordY_Index0.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].y);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordZ_Index0.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2)].z);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordX_IndexMinus1.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 1].x);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordX_IndexPlus2.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 2].x);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordY_IndexMinus2.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 2].y);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordY_IndexPlus1.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 1].y);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordZ_IndexMinus7.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) - 7].z);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
 
         QCOMPARE(filter_CoordZ_IndexPlus7.getFilteredPoint(out), true);
         QCOMPARE(out.filterResult, sourcePoints[index - (filterBufferLength / 2) + 7].z);
+        QVERIFY(compareVectors(out.coords, expectedNEDOutVector));
     }
 }
 
@@ -842,6 +858,17 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
 
         QVERIFY(compareVectors(transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector, rigVector));
         QVERIFY(compareVectors(transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector), nedVector));
+
+        Eigen::Vector3d expectedNEDOutVector = transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] *
+                                                                                                        Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z));
+
+        QVERIFY(compareVectors(out_NED_X.coords, expectedNEDOutVector));
+        QVERIFY(compareVectors(out_NED_Y.coords, expectedNEDOutVector));
+        QVERIFY(compareVectors(out_NED_Z.coords, expectedNEDOutVector));
+
+        QVERIFY(compareVectors(out_Rig_X.coords, expectedNEDOutVector));
+        QVERIFY(compareVectors(out_Rig_Y.coords, expectedNEDOutVector));
+        QVERIFY(compareVectors(out_Rig_Z.coords, expectedNEDOutVector));
     }
 }
 
@@ -995,8 +1022,19 @@ void TestExpressionFilter::rigAndNEDCoords_Indexed_RandomTransforms()
             Eigen::Vector3d rigVector(out_Rig_X.filterResult, out_Rig_Y.filterResult, out_Rig_Z.filterResult);
             Eigen::Vector3d nedVector(out_NED_X.filterResult, out_NED_Y.filterResult, out_NED_Z.filterResult);
 
-            QVERIFY(compareVectors(transforms_LidarToRig[rigOffsettedIndex] * rigSourceVector, rigVector));
-            QVERIFY(compareVectors(transforms_RigToNED[nedOffsettedIndex] * (transforms_LidarToRig[nedOffsettedIndex] * nedSourceVector), nedVector));
+            QVERIFY(compareVectors(rigVector, transforms_LidarToRig[rigOffsettedIndex] * rigSourceVector));
+            QVERIFY(compareVectors(nedVector, transforms_RigToNED[nedOffsettedIndex] * (transforms_LidarToRig[nedOffsettedIndex] * nedSourceVector)));
+
+            Eigen::Vector3d expectedNEDOutVector = transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] *
+                Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z));
+
+            QVERIFY(compareVectors(out_NED_X.coords, expectedNEDOutVector));
+            QVERIFY(compareVectors(out_NED_Y.coords, expectedNEDOutVector));
+            QVERIFY(compareVectors(out_NED_Z.coords, expectedNEDOutVector));
+
+            QVERIFY(compareVectors(out_Rig_X.coords, expectedNEDOutVector));
+            QVERIFY(compareVectors(out_Rig_Y.coords, expectedNEDOutVector));
+            QVERIFY(compareVectors(out_Rig_Z.coords, expectedNEDOutVector));
         }
     }
 }
