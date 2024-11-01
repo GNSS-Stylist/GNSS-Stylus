@@ -41,6 +41,21 @@ ExpressionFilter::ExpressionFilter()
         { "lidar.coord_indexed.y", lidar_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "lidar.coord_indexed.z", lidar_coord_indexed_z, TE_DEFAULT, customFuncHandler },
 
+        { "lidar.properties", lidar_properties, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties.other", lidar_properties_other, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties.dust", lidar_properties_dust, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties.glue", lidar_properties_glue, TE_DEFAULT, customFuncHandler },
+        { "lidar.reflectivity", lidar_reflectivity, TE_DEFAULT, customFuncHandler },
+
+        { "lidar.properties_indexed", lidar_properties_indexed, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties_indexed.other", lidar_properties_indexed_other, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties_indexed.dust", lidar_properties_indexed_dust, TE_DEFAULT, customFuncHandler },
+        { "lidar.properties_indexed.glue", lidar_properties_indexed_glue, TE_DEFAULT, customFuncHandler },
+        { "lidar.reflectivity_indexed", lidar_reflectivity_indexed, TE_DEFAULT, customFuncHandler },
+
+        { "lidar.distance", lidar_distance, TE_DEFAULT, customFuncHandler },
+        { "lidar.distance_indexed", lidar_distance_indexed, TE_DEFAULT, customFuncHandler },
+
         { "rig.coord.x", rig_coord_x, TE_DEFAULT, customFuncHandler },
         { "rig.coord.y", rig_coord_y, TE_DEFAULT, customFuncHandler },
         { "rig.coord.z", rig_coord_z, TE_DEFAULT, customFuncHandler },
@@ -56,9 +71,6 @@ ExpressionFilter::ExpressionFilter()
         { "ned.coord_indexed.x", ned_coord_indexed_x, TE_DEFAULT, customFuncHandler },
         { "ned.coord_indexed.y", ned_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "ned.coord_indexed.z", ned_coord_indexed_z, TE_DEFAULT, customFuncHandler },
-
-        { "lidar.distance", lidar_distance, TE_DEFAULT, customFuncHandler },
-        { "lidar.distance_indexed", lidar_distance_indexed, TE_DEFAULT, customFuncHandler },
 
         };
 

@@ -15,6 +15,19 @@ te_type lidar_coord_indexed_y(const te_expr* context, te_type a);
 te_type lidar_coord_z(const te_expr* context);
 te_type lidar_coord_indexed_z(const te_expr* context, te_type a);
 
+te_type lidar_properties(const te_expr* context);
+te_type lidar_properties_indexed(const te_expr* context, te_type a);
+te_type lidar_properties_other(const te_expr* context);
+te_type lidar_properties_indexed_other(const te_expr* context, te_type a);
+te_type lidar_properties_dust(const te_expr* context);
+te_type lidar_properties_indexed_dust(const te_expr* context, te_type a);
+te_type lidar_properties_glue(const te_expr* context);
+te_type lidar_properties_indexed_glue(const te_expr* context, te_type a);
+te_type lidar_reflectivity(const te_expr* context);
+te_type lidar_reflectivity_indexed(const te_expr* context, te_type a);
+te_type lidar_distance(const te_expr* context);
+te_type lidar_distance_indexed(const te_expr* context, te_type a);
+
 te_type ned_coord_x(const te_expr* context);
 te_type ned_coord_indexed_x(const te_expr* context, te_type a);
 te_type ned_coord_y(const te_expr* context);
@@ -28,29 +41,6 @@ te_type rig_coord_y(const te_expr* context);
 te_type rig_coord_indexed_y(const te_expr* context, te_type a);
 te_type rig_coord_z(const te_expr* context);
 te_type rig_coord_indexed_z(const te_expr* context, te_type a);
-
-te_type lidar_distance(const te_expr* context);
-te_type lidar_distance_indexed(const te_expr* context, te_type a);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* te_type rad_to_deg(const te_expr* context, te_type a)
-{
-    auto* c = dynamic_cast<const ExpressionFilter*>(context);
-    return static_cast<te_type>(c->m_data[static_cast<size_t>(a)]);
-}
-*/
 
 } // namespace PointFilter
 

@@ -25,6 +25,19 @@ public:
     inline te_type lidar_coord_z() const;
     inline te_type lidar_coord_indexed_z(te_type a) const;
 
+    inline te_type lidar_properties() const;
+    inline te_type lidar_properties_indexed(te_type) const;
+    inline te_type lidar_properties_other() const;
+    inline te_type lidar_properties_other_indexed(te_type) const;
+    inline te_type lidar_properties_dust() const;
+    inline te_type lidar_properties_dust_indexed(te_type) const;
+    inline te_type lidar_properties_glue() const;
+    inline te_type lidar_properties_glue_indexed(te_type) const;
+    inline te_type lidar_reflectivity() const;
+    inline te_type lidar_reflectivity_indexed(te_type) const;
+    inline te_type lidar_distance() const;
+    inline te_type lidar_distance_indexed(te_type a) const;
+
     inline te_type rig_coord_x() const;
     inline te_type rig_coord_indexed_x(te_type a) const;
     inline te_type rig_coord_y() const;
@@ -38,9 +51,6 @@ public:
     inline te_type ned_coord_indexed_y(te_type a) const;
     inline te_type ned_coord_z() const;
     inline te_type ned_coord_indexed_z(te_type a) const;
-
-    inline te_type lidar_distance() const;
-    inline te_type lidar_distance_indexed(te_type a) const;
 
 private:
     ExpressionFilter* filter;
@@ -140,6 +150,68 @@ inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_z(te_type a) const
     return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.z;
 }
 
+inline te_type TinyExprCustomFuncHandler::lidar_properties() const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.properties;
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_indexed(te_type a) const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.properties;
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_other() const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_other();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_other_indexed(te_type a) const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.getProperties_other();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_dust() const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_dust();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_dust_indexed(te_type a) const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.getProperties_dust();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_glue() const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_glue();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_properties_glue_indexed(te_type a) const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.getProperties_glue();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_reflectivity() const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.reflectivity;
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_reflectivity_indexed(te_type a) const
+{
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar_Source.reflectivity;
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_distance() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getDistance();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type a) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar.getDistance();
+}
+
 inline te_type TinyExprCustomFuncHandler::rig_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
@@ -213,17 +285,6 @@ inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_z(te_type a) const
 }
 
 
-inline te_type TinyExprCustomFuncHandler::lidar_distance() const
-{
-    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getDistance();
-}
-
-inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type a) const
-{
-    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(a)) % filter->bufferLength].point_Lidar.getDistance();
-}
 
 
 
