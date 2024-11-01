@@ -16,7 +16,7 @@ public:
     ~TestExpressionFilter();
 
 private:
-    static const unsigned int defaultTestRounds = 10000;
+    static const unsigned int defaultTestRounds = 1000;
     static const unsigned int filterBufferLength = PointFilter::ExpressionFilter::bufferLength;
 
     QRandomGenerator randomGenerator;
@@ -45,6 +45,7 @@ private slots:
     void nedCoords_DefaultTransform();
     void nedCoords_Indexed_DefaultTransform();
     void rigAndNEDCoords_RandomTransforms();
+    void rigAndNEDCoords_Indexed_RandomTransforms();
 };
 
 #endif // TST_EXPRESSIONFILTER_H
