@@ -1,6 +1,7 @@
 #include "tst_lidarfiltering.h"
 #include "tst_lazyevaluator.h"
 #include "tst_expressionfilter.h"
+#include "tst_convexhull.h"
 
 int main(int argc, char **argv)
 {
@@ -19,6 +20,11 @@ int main(int argc, char **argv)
 
     {
         TestExpressionFilter tc;
+        status |= QTest::qExec(&tc, argc, argv);
+    }
+
+    {
+        TestConvexHull tc;
         status |= QTest::qExec(&tc, argc, argv);
     }
 

@@ -86,8 +86,8 @@ void qh_free_mesh(qh_mesh_t mesh);
 
 #endif // QUICKHULL_H
 
-//#ifdef QUICKHULL_IMPLEMENTATION
-#if 1
+#ifdef QUICKHULL_IMPLEMENTATION
+//#if 1
 
 #include <math.h>   // sqrt & fabs
 #include <stdio.h>  // FILE
