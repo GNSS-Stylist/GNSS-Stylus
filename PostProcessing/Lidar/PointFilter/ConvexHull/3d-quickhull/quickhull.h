@@ -544,7 +544,7 @@ int qh__face_can_see_vertex_epsilon(qh_context_t* context, qh_face_t* face, qh_v
     } else {
         dot = fabsf(dot);
 
-        if (dot <= epsilon && dot >= 0) {
+        if (dot <= epsilon && dot > 0) {
             qh_vec3_t n = face->normal;
 
             // allow epsilon degeneration along the face normal
