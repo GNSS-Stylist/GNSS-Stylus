@@ -17,7 +17,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     tst_convexhull.cpp \
-    tst_epressionfilter.cpp \
+    tst_expressionfilter.cpp \
     tst_lazyevaluator.cpp \
     tst_main.cpp
 
