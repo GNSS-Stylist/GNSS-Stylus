@@ -42,6 +42,12 @@ te_type rig_coord_indexed_y(const te_expr* context, te_type pointIndex);
 te_type rig_coord_z(const te_expr* context);
 te_type rig_coord_indexed_z(const te_expr* context, te_type pointIndex);
 
+te_type lidar_in_convex_hull(const te_expr* context, te_type hullIndex);
+te_type lidar_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type pointIndex);
+te_type rig_in_convex_hull(const te_expr* context, te_type hullIndex);
+te_type rig_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type pointIndex);
+te_type ned_in_convex_hull(const te_expr* context, te_type hullIndex);
+te_type ned_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type pointIndex);
 
 
 

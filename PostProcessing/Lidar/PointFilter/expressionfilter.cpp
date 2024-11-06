@@ -38,7 +38,7 @@ void ExpressionFilter::initBuffer(void)
     }
 }
 
-void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& convexHullFilters)
+void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters)
 {
     std::set<te_variable> customFunctions =
     {
@@ -84,13 +84,27 @@ void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFi
         { "ned.coord_indexed.y", ned_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "ned.coord_indexed.z", ned_coord_indexed_z, TE_DEFAULT, customFuncHandler },
 
-         //        { "lidar.in_convex_hull", lidar_in_convex_hull, TE_DEFAULT, customFuncHandler },
+        { "lidar.in_convex_hull", lidar_in_convex_hull, TE_DEFAULT, customFuncHandler },
+        { "lidar.in_convex_hull_indexed", lidar_in_convex_hull_indexed, TE_DEFAULT, customFuncHandler },
+
+        { "rig.in_convex_hull", rig_in_convex_hull, TE_DEFAULT, customFuncHandler },
+        { "rig.in_convex_hull_indexed", rig_in_convex_hull_indexed, TE_DEFAULT, customFuncHandler },
+
+        { "ned.in_convex_hull", ned_in_convex_hull, TE_DEFAULT, customFuncHandler },
+        { "ned.in_convex_hull_indexed", ned_in_convex_hull_indexed, TE_DEFAULT, customFuncHandler },
     };
 
-    for (int i = 0; i < convexHullFilters.size(); i++)
+    convexHullFilterIndexes.clear();
+    convexHullFilters.clear();
+
+    numOfConvexHullFilters = newConvexHullFilters.size();
+    QVector<QByteArray> convexHullFilterNames; // To keep strings alive while adding.
+
+    for (unsigned int i = 0; i < numOfConvexHullFilters; i++)
     {
-        convexHullFilterNames.push_back((QString("chull_") + convexHullFilters[i].Name).toLower().toLocal8Bit());
+        convexHullFilterNames.push_back((QString("chull_") + newConvexHullFilters[i].Name).toLower().toLocal8Bit());
         convexHullFilterIndexes.push_back(double(i));
+        convexHullFilters.push_back(newConvexHullFilters[i].filter);
 
         te_variable newConstant { convexHullFilterNames[i].constData(), &convexHullFilterIndexes[i] };
 

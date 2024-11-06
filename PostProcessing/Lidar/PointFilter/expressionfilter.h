@@ -54,6 +54,13 @@ public:
     inline te_type ned_coord_z() const;
     inline te_type ned_coord_indexed_z(te_type pointIndex) const;
 
+    inline te_type lidar_in_convex_hull(te_type hullIndex) const;
+    inline te_type lidar_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const;
+    inline te_type rig_in_convex_hull(te_type hullIndex) const;
+    inline te_type rig_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const;
+    inline te_type ned_in_convex_hull(te_type hullIndex) const;
+    inline te_type ned_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const;
+
 private:
     ExpressionFilter* filter;
 };
@@ -104,7 +111,7 @@ private:
         int uptime_ms;
     };
 
-    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& convexHullFilters = QVector<ConvexHullFilter>());
+    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters = QVector<ConvexHullFilter>());
 
     QString expression_Filter;
     te_parser parser_Filter;
@@ -123,8 +130,9 @@ private:
 
     TinyExprCustomFuncHandler* customFuncHandler;
 
-    QVector<QByteArray> convexHullFilterNames;
     QVector<te_type> convexHullFilterIndexes; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
+    unsigned int numOfConvexHullFilters; // For speedup.
+    QVector<ConvexHull::Filter> convexHullFilters;
 
     friend class TinyExprCustomFuncHandler;
 };
@@ -300,6 +308,66 @@ inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_z(te_type pointIndex
 }
 
 
+inline te_type TinyExprCustomFuncHandler::lidar_in_convex_hull(te_type hullIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector());
+}
+
+
+inline te_type TinyExprCustomFuncHandler::lidar_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector());
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull(te_type hullIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector());
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector());
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull(te_type hullIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector());
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull_indexed(te_type hullIndex, te_type pointIndex) const
+{
+    if (hullIndex >= filter->numOfConvexHullFilters)
+    {
+        return false;
+    }
+
+    return filter->convexHullFilters[hullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector());
+}
 
 
 
