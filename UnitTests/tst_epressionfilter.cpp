@@ -109,6 +109,15 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
         QCOMPARE(filter.getFilteredPoint(out), false);
     }
 
+    // Test prefill again after buffer init
+    filter.initBuffer();
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), false);
+    }
+
     for (index = 0; index < defaultTestRounds; index++)
     {
         out = getRandomOutItem();
@@ -170,6 +179,16 @@ void TestExpressionFilter::defaultExpressions()
     PointFilter::ExpressionFilter filter;
     PointFilter::ExpressionFilter::OutItem out;
 
+    // Prefill buffer
+    for (unsigned int i = 0; i < filterBufferLength - 1; i++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), i);
+        QCOMPARE(filter.getFilteredPoint(out), false);
+    }
+
+    // Test prefill again after buffer init
+    filter.initBuffer();
     for (unsigned int i = 0; i < filterBufferLength - 1; i++)
     {
         out = getRandomOutItem();
@@ -196,6 +215,15 @@ void TestExpressionFilter::pureFunctions()
 
     unsigned int index = 0;
     // Prefill buffer
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        out = getRandomOutItem();
+        filter.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter.getFilteredPoint(out), false);
+    }
+
+    // Test prefill again after buffer init
+    filter.initBuffer();
     for (index = 0; index < filterBufferLength - 1; index++)
     {
         out = getRandomOutItem();
