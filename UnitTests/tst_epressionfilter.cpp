@@ -1302,6 +1302,71 @@ void TestExpressionFilter::rigAndNEDCoords_Indexed_RandomTransforms()
     }
 }
 
+void TestExpressionFilter::convexHullIndexes()
+{
+    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+
+    PointFilter::ExpressionFilter::ConvexHullFilter firstFilter { .Name = "first", .filter = ConvexHull::Filter() };
+    PointFilter::ExpressionFilter::ConvexHullFilter secondFilter { .Name = "second", .filter = ConvexHull::Filter() };
+    PointFilter::ExpressionFilter::ConvexHullFilter thirdFilter { .Name = "tHiRd", .filter = ConvexHull::Filter() };
+
+    convexHullFilters.push_back(firstFilter);
+    convexHullFilters.push_back(secondFilter);
+    convexHullFilters.push_back(thirdFilter);
+
+    PointFilter::ExpressionFilter filter_First;
+    PointFilter::ExpressionFilter filter_Second;
+    PointFilter::ExpressionFilter filter_Third;
+
+    QVERIFY(filter_First.setConvexHullFilters(convexHullFilters));
+    QVERIFY(filter_Second.setConvexHullFilters(convexHullFilters));
+    QVERIFY(filter_Third.setConvexHullFilters(convexHullFilters));
+
+    // Calling this again should not change anything
+    QVERIFY(filter_Third.setConvexHullFilters(convexHullFilters));
+
+    PointFilter::ExpressionFilter::OutItem out_First;
+    PointFilter::ExpressionFilter::OutItem out_Second;
+    PointFilter::ExpressionFilter::OutItem out_Third;
+
+    QCOMPARE(filter_First.setExpression_Filter("chull_first"), true);
+    QCOMPARE(filter_Second.setExpression_Filter("chull_sEcOnD"), true);
+    QCOMPARE(filter_Third.setExpression_Filter("chull_third"), true);
+
+    unsigned int index = 0;
+    // Prefill buffer
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        out_First = getRandomOutItem();
+        out_Second = getRandomOutItem();
+        out_Third = getRandomOutItem();
+        filter_First.addPoint(getRandomLidarSourcePoint(), index);
+        filter_Second.addPoint(getRandomLidarSourcePoint(), index);
+        filter_Third.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter_First.getFilteredPoint(out_First), false);
+        QCOMPARE(filter_Second.getFilteredPoint(out_Second), false);
+        QCOMPARE(filter_Third.getFilteredPoint(out_Third), false);
+    }
+
+    for (index = 0; index < defaultTestRounds; index++)
+    {
+        out_First = getRandomOutItem();
+        out_Second = getRandomOutItem();
+        out_Third = getRandomOutItem();
+        filter_First.addPoint(getRandomLidarSourcePoint(), index);
+        filter_Second.addPoint(getRandomLidarSourcePoint(), index);
+        filter_Third.addPoint(getRandomLidarSourcePoint(), index);
+        QCOMPARE(filter_First.getFilteredPoint(out_First), true);
+        QCOMPARE(filter_Second.getFilteredPoint(out_Second), true);
+        QCOMPARE(filter_Third.getFilteredPoint(out_Third), true);
+        QCOMPARE(out_First.valid, true);
+        QCOMPARE(out_First.filterResult, 0);
+        QCOMPARE(out_Second.valid, true);
+        QCOMPARE(out_Second.filterResult, 1);
+        QCOMPARE(out_Third.valid, true);
+        QCOMPARE(out_Third.filterResult, 2);
+    }
+}
 
 
 

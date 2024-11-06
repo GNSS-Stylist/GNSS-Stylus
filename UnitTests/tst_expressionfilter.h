@@ -50,6 +50,8 @@ private slots:
     void nedCoords_Indexed_DefaultTransform();
     void rigAndNEDCoords_RandomTransforms();
     void rigAndNEDCoords_Indexed_RandomTransforms();
+
+    void convexHullIndexes();
 };
 
 #endif // TST_EXPRESSIONFILTER_H

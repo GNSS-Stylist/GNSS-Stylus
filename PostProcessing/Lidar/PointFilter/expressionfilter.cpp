@@ -2,10 +2,9 @@
 #include "PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h"
 
 namespace PointFilter{
-
 ExpressionFilter::ExpressionFilter()
 {
-    bufferIndex = 0;
+    initBuffer();
 
     transformCacheIndex_LidarToRig = 0;
     transformCache_LidarToRig[0] = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
@@ -14,6 +13,16 @@ ExpressionFilter::ExpressionFilter()
     transformCache_RigToNED[0] = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
 
     customFuncHandler = new TinyExprCustomFuncHandler(TE_DEFAULT, this);
+
+    setCustomVariablesAndFunctions();
+
+    setExpression_Filter("1");
+    setExpression_Quality("1");
+}
+
+void ExpressionFilter::initBuffer(void)
+{
+    bufferIndex = 0;
 
     for (BufferItem& item : buffer)
     {
@@ -27,7 +36,10 @@ ExpressionFilter::ExpressionFilter()
         item.point_Rig.setTransform(&transformCache_LidarToRig[0]);
         item.point_NED.setTransform(&transformCache_RigToNED[0]);
     }
+}
 
+void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& convexHullFilters)
+{
     std::set<te_variable> customFunctions =
     {
         { "rad_to_deg", rad_to_deg, TE_PURE },
@@ -72,13 +84,21 @@ ExpressionFilter::ExpressionFilter()
         { "ned.coord_indexed.y", ned_coord_indexed_y, TE_DEFAULT, customFuncHandler },
         { "ned.coord_indexed.z", ned_coord_indexed_z, TE_DEFAULT, customFuncHandler },
 
-        };
+         //        { "lidar.in_convex_hull", lidar_in_convex_hull, TE_DEFAULT, customFuncHandler },
+    };
+
+    for (int i = 0; i < convexHullFilters.size(); i++)
+    {
+        convexHullFilterNames.push_back((QString("chull_") + convexHullFilters[i].Name).toLower().toLocal8Bit());
+        convexHullFilterIndexes.push_back(double(i));
+
+        te_variable newConstant { convexHullFilterNames[i].constData(), &convexHullFilterIndexes[i] };
+
+        customFunctions.insert(newConstant);
+    }
 
     parser_Filter.set_variables_and_functions(customFunctions);
     parser_Quality.set_variables_and_functions(customFunctions);
-
-    setExpression_Filter("1");
-    setExpression_Quality("1");
 }
 
 ExpressionFilter::~ExpressionFilter()
@@ -143,6 +163,24 @@ void ExpressionFilter::setTransform_RigToNED(const Eigen::Transform<double, 3, E
     transformCacheIndex_RigToNED++;
     transformCache_RigToNED[transformCacheIndex_RigToNED] = newTransform;
 }
+
+bool ExpressionFilter::setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters)
+{
+    try
+    {
+        setCustomVariablesAndFunctions(newConvexHullFilters);
+    }
+    catch (...)
+    {
+        // tinyexpr++ set_variables_and_functions-function may thow an expection if there's unsupported characters
+        // in the function names etc. Not making any deeper error checking here (should be done on a higher level).
+        return false;
+    }
+
+    return true;
+}
+
+
 
 void ExpressionFilter::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms)
 {

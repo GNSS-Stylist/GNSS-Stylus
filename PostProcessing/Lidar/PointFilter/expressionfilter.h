@@ -2,10 +2,12 @@
 #define EXPRESSIONFILTER_H
 
 #include <QString>
+#include <QVector>
 #include <Eigen/Geometry>
 #include "lazyevaluator.h"
 #include "tinyexpr-plusplus/tinyexpr.h"
 #include "livoxmid360pointcloudandimudata.h"
+#include "ConvexHull/convexhull.h"
 
 namespace PointFilter
 {
@@ -59,6 +61,12 @@ private:
 class ExpressionFilter
 {
 public:
+    struct ConvexHullFilter
+    {
+        QString Name;
+        ConvexHull::Filter filter;
+    };
+
     ExpressionFilter();
     ~ExpressionFilter();
 
@@ -74,10 +82,12 @@ public:
         double quality;
     };
 
+    void initBuffer(void);
     bool setExpression_Filter(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
     bool setExpression_Quality(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
     void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
+    bool setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters);
 
     void addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms);
     bool getFilteredPoint(OutItem& outPoint);
@@ -93,6 +103,8 @@ private:
         LazyEvaluator point_NED;
         int uptime_ms;
     };
+
+    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& convexHullFilters = QVector<ConvexHullFilter>());
 
     QString expression_Filter;
     te_parser parser_Filter;
@@ -110,6 +122,9 @@ private:
     unsigned char transformCacheIndex_RigToNED;
 
     TinyExprCustomFuncHandler* customFuncHandler;
+
+    QVector<QByteArray> convexHullFilterNames;
+    QVector<te_type> convexHullFilterIndexes; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
 
     friend class TinyExprCustomFuncHandler;
 };
