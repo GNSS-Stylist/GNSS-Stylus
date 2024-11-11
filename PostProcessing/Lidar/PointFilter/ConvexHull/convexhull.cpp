@@ -55,7 +55,7 @@ unsigned int ConvexHull::addPoints(const QVector<Eigen::Vector3d>& newPoints)
 
     for (int i = 0; i < newPoints.size(); i++)
     {
-        if (isPointUnique(newPoints[i]))
+        if (!isPointUnique(newPoints[i]))
         {
             // Only add unique points
             continue;
@@ -73,7 +73,7 @@ unsigned int ConvexHull::addPoints(const QVector<Eigen::Vector3d>& newPoints)
 
 bool ConvexHull::addPoint(const Eigen::Vector3d& newPoint)
 {
-    if (isPointUnique(newPoint))
+    if (!isPointUnique(newPoint))
     {
         // Only add unique points
         return false;
@@ -146,7 +146,17 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter)
 
 bool ConvexHull::isPointUnique(const Eigen::Vector3d& newPoint)
 {
-    return points.contains(newPoint);
+/*    for (const Eigen::Vector3d& point : qAsConst(points))
+    {
+        if ((point - newPoint).norm() < 0.001)
+        {
+            // Arbitrary minimum distance since to test if issues with 3d-quickhull could be prevented (not)
+            // (in GNSS-Stylus-case this is 1 mm, so should be far enough).
+            return false;
+        }
+  }
+*/
+    return (!points.contains(newPoint));
 }
 
 unsigned int ConvexHull::getNumOfUniquePoints(void)
