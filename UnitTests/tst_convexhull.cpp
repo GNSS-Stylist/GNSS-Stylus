@@ -259,14 +259,22 @@ void TestConvexHull::randomCubes()
     const double highLimit_TestArea = 10;
 
     // Counters for testing the test
-    int outsides = 0;
-    int insides = 0;
-    int indeterminates = 0;
+    int outsides_NoHullMargin = 0;
+    int insides_NoHullMargin = 0;
+    int indeterminates_NoHullMargin = 0;
+    int outsides_WithHullMargin = 0;
+    int insides_WithHullMargin = 0;
+    int indeterminates_WithHullMargin = 0;
+    int nullHulls_WithHullMargin = 0;
 
     // Disable clang/compiler warnings (set but not used)
-    (void) outsides;
-    (void) insides;
-    (void) indeterminates;
+    (void) outsides_NoHullMargin;
+    (void) insides_NoHullMargin;
+    (void) indeterminates_NoHullMargin;
+    (void) outsides_WithHullMargin;
+    (void) insides_WithHullMargin;
+    (void) indeterminates_WithHullMargin;
+    (void) nullHulls_WithHullMargin;
 
     for (int cube = 0; cube < 10; cube++)
     {
@@ -314,7 +322,7 @@ void TestConvexHull::randomCubes()
         QVERIFY((filter.isValid()));
         QCOMPARE(hull.getNumOfUniquePoints(), 8U);
 
-        double margin = 1.0e-3;
+        double edgeMargin = 1.0e-3;
 
         for (int i = 0; i < 100; i++)
         {
@@ -333,31 +341,31 @@ void TestConvexHull::randomCubes()
 
             bool shouldBeInside = false;
             bool shouldBeOutside = false;
-            if ((pointX > x1 + margin) &&
-                (pointX < x2 - margin) &&
-                (pointY > y1 + margin) &&
-                (pointY < y2 - margin) &&
-                (pointZ > z1 + margin) &&
-                (pointZ < z2 - margin))
+            if ((pointX > x1 + edgeMargin) &&
+                (pointX < x2 - edgeMargin) &&
+                (pointY > y1 + edgeMargin) &&
+                (pointY < y2 - edgeMargin) &&
+                (pointZ > z1 + edgeMargin) &&
+                (pointZ < z2 - edgeMargin))
             {
                 shouldBeInside = true;
-                insides++;
+                insides_NoHullMargin++;
             }
-            if ((pointX < x1 - margin) ||
-                (pointX > x2 + margin) ||
-                (pointY < y1 - margin) ||
-                (pointY > y2 + margin) ||
-                (pointZ < z1 - margin) ||
-                (pointZ > z2 + margin))
+            if ((pointX < x1 - edgeMargin) ||
+                (pointX > x2 + edgeMargin) ||
+                (pointY < y1 - edgeMargin) ||
+                (pointY > y2 + edgeMargin) ||
+                (pointZ < z1 - edgeMargin) ||
+                (pointZ > z2 + edgeMargin))
             {
                 shouldBeOutside = true;
-                outsides++;
+                outsides_NoHullMargin++;
             }
 
             if ((!shouldBeInside) && (!shouldBeOutside))
             {
                 // Inside margin(s) -> just skip
-                indeterminates++;
+                indeterminates_NoHullMargin++;
                 continue;
             }
 
@@ -365,7 +373,84 @@ void TestConvexHull::randomCubes()
 
             QCOMPARE(filter.isInside(vec), shouldBeInside);
         }
+
+        // Separate test with hull margins (to leave the previous loop less obfuscated if something breaks)
+        double minDim = std::min(x2-x1, std::min(y2 - y1, z2 - z1));
+        double minMargin = -minDim * 0.75;   // Margin can be so large that the hull effectively ceases to exists (which is ok)
+        const double maxMargin = 1.0;
+
+        for (int i = 0; i < 100; i++)
+        {
+            double pointX = randomGenerator.generateDouble() * (highLimit_TestArea - lowLimit_TestArea) + lowLimit_TestArea;
+            double pointY = randomGenerator.generateDouble() * (highLimit_TestArea - lowLimit_TestArea) + lowLimit_TestArea;
+            double pointZ = randomGenerator.generateDouble() * (highLimit_TestArea - lowLimit_TestArea) + lowLimit_TestArea;
+            double margin = randomGenerator.generateDouble() * (maxMargin - minMargin) + minMargin;
+
+            double xx1 = x1 - margin;
+            double xx2 = x2 + margin;
+            double yy1 = y1 - margin;
+            double yy2 = y2 + margin;
+            double zz1 = z1 - margin;
+            double zz2 = z2 + margin;
+
+            // Increase the likelihood of insides a bit (seems to be very unlikely otherwise)
+
+            if ((randomGenerator.generate() % 5) == 0)
+            {
+                pointX = randomGenerator.generateDouble() * (xx2 - xx1) + xx1;
+                pointY = randomGenerator.generateDouble() * (yy2 - yy1) + yy1;
+                pointZ = randomGenerator.generateDouble() * (zz2 - zz1) + zz1;
+            }
+
+            bool shouldBeInside = false;
+            bool shouldBeOutside = false;
+            if ((pointX > xx1 + edgeMargin) &&
+                (pointX < xx2 - edgeMargin) &&
+                (pointY > yy1 + edgeMargin) &&
+                (pointY < yy2 - edgeMargin) &&
+                (pointZ > zz1 + edgeMargin) &&
+                (pointZ < zz2 - edgeMargin))
+            {
+                shouldBeInside = true;
+                insides_WithHullMargin++;
+            }
+            if ((pointX < xx1 - edgeMargin) ||
+                (pointX > xx2 + edgeMargin) ||
+                (pointY < yy1 - edgeMargin) ||
+                (pointY > yy2 + edgeMargin) ||
+                (pointZ < zz1 - edgeMargin) ||
+                (pointZ > zz2 + edgeMargin))
+            {
+                shouldBeOutside = true;
+                outsides_WithHullMargin++;
+            }
+
+            if ((xx2 < xx1) || (yy2 < yy1) || (zz2 < zz1))
+            {
+                // Margin is bigger than the dimension of the box in some axis
+                nullHulls_WithHullMargin++;
+            }
+
+            if ((!shouldBeInside) && (!shouldBeOutside))
+            {
+                // Inside margin(s) -> just skip
+                indeterminates_WithHullMargin++;
+                continue;
+            }
+
+            Eigen::Vector3d vec(pointX, pointY, pointZ);
+/*
+            if (filter.isInside(vec, margin) != shouldBeInside)
+            {
+                // debug-trap
+                filter.isValid();
+            }
+*/
+            QCOMPARE(filter.isInside(vec, margin), shouldBeInside);
+        }
     }
+
+    int foo = insides_NoHullMargin; // debug-trap
 }
 
 void TestConvexHull::randomSpheres()
@@ -383,18 +468,37 @@ void TestConvexHull::randomSpheres()
     const double lowLimit_TestArea = -10;
     const double highLimit_TestArea = 10;
 
-    const double inMargin = 0.1; // Needs to be quite big as the hull "extends" inwards from the expected radius.
-    const double outMargin = 1e-6;
+    const double edgeMargin_Inside_NoHullMargins = 0.1; // Needs to be quite big as the hull "extends" inwards from the expected radius.
+    const double edgeMargin_Outside_NoHullMargins = 1e-6;
+
+    // Need separate edge margins for hulls with margins as hull margins in this case affect the faces instead of vertices
+    const double edgeMargin_Inside_WithHullMargins = 0.1; // Needs to be quite big as the hull "extends" inwards from the expected radius.
+    const double edgeMargin_Outside_WithHullMargins = 0.1; // Needs to be quite big as hull margin can extend the hull vertices more than it's value
 
     // Counters for testing the test
-    int outsides = 0;
-    int insides = 0;
-    int indeterminates = 0;
+    int outsides_NoHullMargin = 0;
+    int insides_NoHullMargin = 0;
+    int indeterminates_NoHullMargin = 0;
+    int outsides_WithHullMargin = 0;
+    int insides_WithHullMargin = 0;
+    int indeterminates_WithHullMargin = 0;
+    int nullHulls_WithHullMargin = 0;
 
     // Disable clang/compiler warnings (set but not used)
-    (void) outsides;
-    (void) insides;
-    (void) indeterminates;
+    (void) outsides_NoHullMargin;
+    (void) insides_NoHullMargin;
+    (void) indeterminates_NoHullMargin;
+    (void) outsides_WithHullMargin;
+    (void) insides_WithHullMargin;
+    (void) indeterminates_WithHullMargin;
+    (void) nullHulls_WithHullMargin;
+
+    // There are some issues with 3d-quickhull that are shown very rarely.
+    // Convex hull may just break with some kind of point clouds.
+    // (see https://github.com/karimnaaji/3d-quickhull/issues/2#issuecomment-2468325680 )
+    // Generating one pseudorandom number here works around the issue.
+    // This may happen again if/when the initial state of the generator changes.
+    randomGenerator.generate();
 
     for (int sphere = 0; sphere < 100; sphere++)
     {
@@ -458,7 +562,7 @@ void TestConvexHull::randomSpheres()
             hull.addPoint(point);
         }
 
-//        hull.exportHullToObjFile("hullout/hull_" + QString::number(sphere) + ".obj");
+        hull.exportHullToObjFile("hullout/hull_" + QString::number(sphere) + ".obj");
 
         QVERIFY(hull.getFilter(filter));
 
@@ -478,35 +582,101 @@ void TestConvexHull::randomSpheres()
 
             double dist = (point - centerPoint).norm();
 
-            if (dist < radius * (1.0 - inMargin))
+            if (dist < radius * (1.0 - edgeMargin_Inside_NoHullMargins))
             {
                 shouldBeInside = true;
-                insides++;
+                insides_NoHullMargin++;
             }
 
-            if (dist > radius * (1.0 + outMargin))
+            if (dist > radius * (1.0 + edgeMargin_Outside_NoHullMargins))
             {
                 shouldBeOutside = true;
-                outsides++;
+                outsides_NoHullMargin++;
             }
 
             if ((!shouldBeInside) && (!shouldBeOutside))
             {
                 // Inside margin(s) -> just skip
-                indeterminates++;
+                indeterminates_NoHullMargin++;
                 continue;
             }
 
-/*            if (filter.isInside(point) != shouldBeInside)
+            /*
+            if (filter.isInside(point) != shouldBeInside)
             {
+                // Output for reporting a 3d-quickhull-bug
+                //std::cout << "Broken hull points:\n";
+                //for (int i = 0; i < hull.points.size(); i++)
+                //{
+                //    std::cout << "    { " << QString::number(hull.points[i].x(),'g', 14).toStdString() << ", " << QString::number(hull.points[i].y(),'g', 14).toStdString() << ", " << QString::number(hull.points[i].z(),'g', 14).toStdString() << " },\n";
+                //}
+
                 // Just a debug-trap
-                hull.getNumOfUniquePoints();
+                filter.isInside(point);
             }
-*/
+            */
 
             QCOMPARE(filter.isInside(point), shouldBeInside);
         }
+
+        // Separate test with hull margins (to leave the previous loop less obfuscated if something breaks)
+        double minMargin = -radius * 0.5;   // Margin could be so large that the hull effectively ceases to exists (which is ok).
+                                            // With "non-uniform" spheres, however, the shape can get distorted, so don't go too low with this.
+        const double maxMargin = 1.0;
+
+        for (int i = 0; i < 100; i++)
+        {
+            Eigen::Vector3d point = getRandomVec(lowLimit_TestArea, highLimit_TestArea);
+            double margin = randomGenerator.generateDouble() * (maxMargin - minMargin) + minMargin;
+
+            // Increase the likelihood of insides a bit
+
+            if ((randomGenerator.generate() % 5) == 0)
+            {
+                point = centerPoint + getRandomVec().normalized() * (radius + margin) * randomGenerator.generateDouble();
+            }
+
+            bool shouldBeInside = false;
+            bool shouldBeOutside = false;
+
+            double dist = (point - centerPoint).norm();
+
+            if (dist < (radius + margin) * (1.0 - edgeMargin_Inside_WithHullMargins))
+            {
+                shouldBeInside = true;
+                insides_WithHullMargin++;
+            }
+
+            if (dist > (radius + margin) * (1.0 + edgeMargin_Outside_WithHullMargins))
+            {
+                shouldBeOutside = true;
+                outsides_WithHullMargin++;
+            }
+
+            if ((radius + margin) < 0)
+            {
+                nullHulls_WithHullMargin++;
+                QCOMPARE(filter.isInside(point, margin), false);
+            }
+
+            if ((!shouldBeInside) && (!shouldBeOutside))
+            {
+                // Inside margin(s) -> just skip
+                indeterminates_NoHullMargin++;
+                continue;
+            }
+
+            /*
+            if (filter.isInside(point, margin) != shouldBeInside)
+            {
+                // Just a debug-trap
+                filter.isInside(point, margin);
+            }
+            */
+
+            QCOMPARE(filter.isInside(point, margin), shouldBeInside);
+        }
     }
-    Q_ASSERT(insides > 10);
-    Q_ASSERT(outsides > 10);
+    Q_ASSERT(insides_NoHullMargin > 10);
+    Q_ASSERT(outsides_NoHullMargin > 10);
 }

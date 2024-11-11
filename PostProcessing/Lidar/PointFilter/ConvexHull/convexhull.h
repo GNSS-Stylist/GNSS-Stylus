@@ -21,16 +21,22 @@ public:
         Eigen::AlignedBox3d aabb;
 
     public:
-        bool isInside(const Eigen::Vector3d& pointCoords)
+        bool isInside(const Eigen::Vector3d& pointCoords, const double& margin = 0)
         {
-            if (!aabb.contains(pointCoords) || (faceDefs.size() < 4))
+            if (((pointCoords.x()) < (aabb.min().x() - margin)) ||
+                ((pointCoords.x()) > (aabb.max().x() + margin)) ||
+                ((pointCoords.y()) < (aabb.min().y() - margin)) ||
+                ((pointCoords.y()) > (aabb.max().y() + margin)) ||
+                ((pointCoords.z()) < (aabb.min().z() - margin)) ||
+                ((pointCoords.z()) > (aabb.max().z() + margin)) ||
+                (faceDefs.size() < 4))
             {
                 return false;
             }
 
             for (const FaceDef& face : qAsConst(faceDefs))
             {
-                if ((pointCoords - face.origin).dot(face.normal) > 0)
+                if ((pointCoords - face.origin).dot(face.normal) > margin)
                 {
                     return false;
                 }

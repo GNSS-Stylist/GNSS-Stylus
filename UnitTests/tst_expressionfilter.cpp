@@ -1439,9 +1439,9 @@ void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_NED.setConvexHullFilters(convexHullFilters));
 
-    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox)"));
-    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox)"));
-    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox)"));
+    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox, 0)"));
+    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox, 0)"));
+    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox, 0)"));
 
     unsigned int index;
 
