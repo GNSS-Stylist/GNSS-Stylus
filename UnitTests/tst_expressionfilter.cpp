@@ -40,12 +40,9 @@ PointFilter::ExpressionFilter::OutItem TestExpressionFilter::getRandomOutItem(vo
     return item;
 }
 
-LivoxMid360::PointCloudData::Point TestExpressionFilter::getRandomLidarSourcePoint(const quint8 propertyMask)
+LivoxMid360::PointCloudData::Point TestExpressionFilter::getRandomLidarSourcePoint(const quint8 propertyMask, const double pointCoordLowLimit, const double pointCoordHighLimit)
 {
     LivoxMid360::PointCloudData::Point point;
-
-    const double pointCoordLowLimit = 0.01;
-    const double pointCoordHighLimit = 40.0;
 
     point.x = randomGenerator.generateDouble() * (pointCoordHighLimit - pointCoordLowLimit) + pointCoordLowLimit;
     point.y = randomGenerator.generateDouble() * (pointCoordHighLimit - pointCoordLowLimit) + pointCoordLowLimit;
@@ -1394,6 +1391,122 @@ void TestExpressionFilter::convexHullIndexes()
         QCOMPARE(out_Third.valid, true);
         QCOMPARE(out_Third.filterResult, 2);
     }
+}
+
+static ConvexHull getConvexHullBox(const Eigen::Vector3d& corner1, const Eigen::Vector3d& corner2, const Eigen::Transform<double, 3, Eigen::Affine>& transform = Eigen::Transform<double, 3, Eigen::Affine>::Identity())
+{
+    ConvexHull hull;
+
+    Eigen::Vector3d transformedCorner1 = transform * corner1;
+    Eigen::Vector3d transformedCorner2 = transform * corner2;
+
+    hull.addPoint(transformedCorner1);
+    hull.addPoint(Eigen::Vector3d(transformedCorner1.x(), transformedCorner1.y(), transformedCorner2.z()));
+    hull.addPoint(Eigen::Vector3d(transformedCorner1.x(), transformedCorner2.y(), transformedCorner1.z()));
+    hull.addPoint(Eigen::Vector3d(transformedCorner1.x(), transformedCorner2.y(), transformedCorner2.z()));
+    hull.addPoint(Eigen::Vector3d(transformedCorner2.x(), transformedCorner1.y(), transformedCorner1.z()));
+    hull.addPoint(Eigen::Vector3d(transformedCorner2.x(), transformedCorner1.y(), transformedCorner2.z()));
+    hull.addPoint(Eigen::Vector3d(transformedCorner2.x(), transformedCorner2.y(), transformedCorner1.z()));
+    hull.addPoint(transformedCorner2);
+
+    return hull;
+}
+
+void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
+{
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -1.3, 1.3);
+    }
+
+    ConvexHull hull = getConvexHullBox(Eigen::Vector3d(-1, -1, -1), Eigen::Vector3d(1, 1, 1));
+
+    ConvexHull::Filter cHullFilter;
+
+    QVERIFY(hull.getFilter(cHullFilter));
+
+    PointFilter::ExpressionFilter::ConvexHullFilter originBoxCHullFilter { .Name = "originbox", .filter = cHullFilter };
+
+    PointFilter::ExpressionFilter exprFilter_Lidar;
+    PointFilter::ExpressionFilter exprFilter_Rig;
+    PointFilter::ExpressionFilter exprFilter_NED;
+
+    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    convexHullFilters.push_back(originBoxCHullFilter);
+    QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
+    QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
+    QVERIFY(exprFilter_NED.setConvexHullFilters(convexHullFilters));
+
+    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox)"));
+    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox)"));
+    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox)"));
+
+    unsigned int index;
+
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        exprFilter_Lidar.addPoint(sourcePoints[index], index);
+        exprFilter_Rig.addPoint(sourcePoints[index], index);
+        exprFilter_NED.addPoint(sourcePoints[index], index);
+    }
+
+    const double margin = 0.001;
+
+    int insides = 0;
+    int outsides = 0;
+    int indeterminates = 0;
+
+    (void) indeterminates;
+
+    PointFilter::ExpressionFilter::OutItem out;
+
+    for (; index < defaultTestRounds; index++)
+    {
+        exprFilter_Lidar.addPoint(sourcePoints[index], index);
+        exprFilter_Rig.addPoint(sourcePoints[index], index);
+        exprFilter_NED.addPoint(sourcePoints[index], index);
+
+        Eigen::Vector3d point = Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
+
+        if ((std::abs(point.x() - 1.0) < margin) ||
+            (std::abs(point.y() - 1.0) < margin) ||
+            (std::abs(point.z() - 1.0) < margin))
+        {
+            QVERIFY(exprFilter_Lidar.getFilteredPoint(out));
+            QVERIFY(exprFilter_Rig.getFilteredPoint(out));
+            QVERIFY(exprFilter_NED.getFilteredPoint(out));
+            indeterminates++;
+            continue;
+        }
+        else if ((std::abs(point.x()) < 1.0) &&
+            (std::abs(point.y()) < 1.0) &&
+            (std::abs(point.z()) < 1.0))
+        {
+            QVERIFY(exprFilter_Lidar.getFilteredPoint(out));
+            QCOMPARE(out.filterResult, 1.0);
+            QVERIFY(exprFilter_Rig.getFilteredPoint(out));
+            QVERIFY(out.filterResult);
+            QVERIFY(exprFilter_NED.getFilteredPoint(out));
+            QVERIFY(out.filterResult);
+            insides++;
+        }
+        else
+        {
+            QVERIFY(exprFilter_Lidar.getFilteredPoint(out));
+            QVERIFY(!out.filterResult);
+            QVERIFY(exprFilter_Rig.getFilteredPoint(out));
+            QVERIFY(!out.filterResult);
+            QVERIFY(exprFilter_NED.getFilteredPoint(out));
+            QVERIFY(!out.filterResult);
+            outsides++;
+        }
+    }
+
+    Q_ASSERT(insides > 10);
+    Q_ASSERT(outsides > 10);
 }
 
 

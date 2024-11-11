@@ -25,7 +25,7 @@ private:
     bool compareVectors(const Eigen::Vector3d vec1, const Eigen::Vector3d& vec2);
 
     PointFilter::ExpressionFilter::OutItem getRandomOutItem(void);
-    LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f);
+    LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f, const double pointCoordLowLimit = -40.0, const double pointCoordHighLimit = 40.0);
 
 private slots:
     void initTestCase();
@@ -52,6 +52,7 @@ private slots:
     void rigAndNEDCoords_Indexed_RandomTransforms();
 
     void convexHullIndexes();
+    void convexHulls_SingleCubeOnOrigin_DefaultTransforms();
 };
 
 #endif // TST_EXPRESSIONFILTER_H
