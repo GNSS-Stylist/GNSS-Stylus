@@ -1,3 +1,21 @@
+/*
+    tst_expressionfilter.cpp (part of GNSS-Stylus)
+    Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "tst_expressionfilter.h"
 
 TestExpressionFilter::TestExpressionFilter()
@@ -1342,10 +1360,12 @@ void TestExpressionFilter::convexHullIndexes()
     PointFilter::ExpressionFilter filter_First;
     PointFilter::ExpressionFilter filter_Second;
     PointFilter::ExpressionFilter filter_Third;
+    PointFilter::ExpressionFilter filter_InvalidHullIndexIdent;
 
     QVERIFY(filter_First.setConvexHullFilters(convexHullFilters));
     QVERIFY(filter_Second.setConvexHullFilters(convexHullFilters));
     QVERIFY(filter_Third.setConvexHullFilters(convexHullFilters));
+    QVERIFY(filter_InvalidHullIndexIdent.setConvexHullFilters(convexHullFilters));
 
     // Calling this again should not change anything
     QVERIFY(filter_Third.setConvexHullFilters(convexHullFilters));
@@ -1357,6 +1377,7 @@ void TestExpressionFilter::convexHullIndexes()
     QCOMPARE(filter_First.setExpression_Filter("chull_first"), true);
     QCOMPARE(filter_Second.setExpression_Filter("chull_sEcOnD"), true);
     QCOMPARE(filter_Third.setExpression_Filter("chull_third"), true);
+    QCOMPARE(filter_InvalidHullIndexIdent.setExpression_Filter("chull_InValid"), false);
 
     unsigned int index = 0;
     // Prefill buffer
@@ -1410,6 +1431,67 @@ static ConvexHull getConvexHullBox(const Eigen::Vector3d& corner1, const Eigen::
     hull.addPoint(transformedCorner2);
 
     return hull;
+}
+
+void TestExpressionFilter::invalidConvexHullIndexes()
+{
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -1.3, 1.3);
+    }
+
+    ConvexHull hull = getConvexHullBox(Eigen::Vector3d(-100, -100, -100), Eigen::Vector3d(100, 100, 100));
+
+    ConvexHull::Filter cHullFilter;
+
+    QVERIFY(hull.getFilter(cHullFilter));
+
+    PointFilter::ExpressionFilter::ConvexHullFilter hugeOriginBoxCHullFilter { .Name = "hugeoriginbox", .filter = cHullFilter };
+
+    PointFilter::ExpressionFilter exprFilter_Lidar;
+    PointFilter::ExpressionFilter exprFilter_Rig;
+    PointFilter::ExpressionFilter exprFilter_NED;
+
+    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    convexHullFilters.push_back(hugeOriginBoxCHullFilter);
+    QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
+    QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
+    QVERIFY(exprFilter_NED.setConvexHullFilters(convexHullFilters));
+
+    // Use invalid hull indexes so "in_convex_hull"-functions should always return false (0)
+    // "hugeoriginbox" would be index 0 so that's skipped here
+    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(-1, 0)"));
+    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(1, 0)"));
+    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(2, 0)"));
+
+    unsigned int index;
+
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        exprFilter_Lidar.addPoint(sourcePoints[index], index);
+        exprFilter_Rig.addPoint(sourcePoints[index], index);
+        exprFilter_NED.addPoint(sourcePoints[index], index);
+    }
+
+    PointFilter::ExpressionFilter::OutItem out;
+
+    for (; index < defaultTestRounds; index++)
+    {
+        exprFilter_Lidar.addPoint(sourcePoints[index], index);
+        exprFilter_Rig.addPoint(sourcePoints[index], index);
+        exprFilter_NED.addPoint(sourcePoints[index], index);
+
+        // Invalid hull indexes should always return false
+        QVERIFY(exprFilter_Lidar.getFilteredPoint(out));
+        QVERIFY(!out.filterResult);
+        QVERIFY(exprFilter_Rig.getFilteredPoint(out));
+        QVERIFY(!out.filterResult);
+        QVERIFY(exprFilter_NED.getFilteredPoint(out));
+        QVERIFY(!out.filterResult);
+    }
 }
 
 void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
