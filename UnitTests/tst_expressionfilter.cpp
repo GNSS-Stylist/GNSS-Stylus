@@ -2153,6 +2153,221 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
 }
 
 
+void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Indexed()
+{
+    // This is almost identical to "non-indexed"-version above, only indexing added
+    // and removed some debugging code that would not work with indexing
+    // and added invalid hull indexes (out-of-range "sample indexes" just return undefined values)
+
+    const double edgeMargin = 0.01;
+
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter::OutItem out_Lidar;
+    PointFilter::ExpressionFilter::OutItem out_Rig;
+    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter::OutItem out_InvalidHullIndexes;
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -10, 10);
+    }
+
+    int insides[3] = { 0 };
+    int outsides[3] = { 0 };
+    int indeterminates[3] = { 0 };
+
+    for (int cubeSet = 0; cubeSet < 10; cubeSet++)
+    {
+        PointFilter::ExpressionFilter filter_Lidar;
+        PointFilter::ExpressionFilter filter_Rig;
+        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter filter_InvalidHullIndexes;
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
+        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+
+        filter_Lidar.setTransform_LidarToRig(transform_LidarToRig);
+        filter_Rig.setTransform_LidarToRig(transform_LidarToRig);
+        filter_NED.setTransform_LidarToRig(transform_LidarToRig);
+        filter_InvalidHullIndexes.setTransform_LidarToRig(transform_LidarToRig);
+
+        filter_Lidar.setTransform_RigToNED(transform_RigToNED);
+        filter_Rig.setTransform_RigToNED(transform_RigToNED);
+        filter_NED.setTransform_RigToNED(transform_RigToNED);
+        filter_InvalidHullIndexes.setTransform_RigToNED(transform_RigToNED);
+
+        double hullMargins[3];
+        int indexes[3];
+        Eigen::AlignedBox3d hullBoxes[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            hullMargins[i] = (randomGenerator.generateDouble() - 0.5) * 1.0;
+            indexes[i] = randomGenerator.bounded(-7, 8);
+
+            double x1, x2, y1, y2, z1, z2;
+
+            do
+            {
+                // Randomize until the box is wide/tall/deep enough
+                x1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                x2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                y1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                y2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                z1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                z2 = (randomGenerator.generateDouble() - 0.5) * 20;
+            } while ((fabs(x2 - x1) < 0.5) || (fabs(y2 - y1) < 0.5) || (fabs(z2 - z1) < 0.5));
+
+            hullBoxes[i] = Eigen::AlignedBox3d(Eigen::Vector3d(std::min(x1, x2), std::min(y1, y2), std::min(z1, z2)), Eigen::Vector3d(std::max(x1, x2), std::max(y1, y2), std::max(z1, z2)));
+        }
+
+        ConvexHull::Filter chFilter_Lidar_First;
+        QVERIFY(getConvexHullBox(hullBoxes[0]).getFilter(chFilter_Lidar_First));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_First { .Name = "first", .filter = chFilter_Lidar_First };
+
+        ConvexHull::Filter chFilter_Lidar_Second;
+        QVERIFY(getConvexHullBox(hullBoxes[1]).getFilter(chFilter_Lidar_Second));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_Second { .Name = "second", .filter = chFilter_Lidar_Second };
+
+
+        ConvexHull::Filter chFilter_Rig_First;
+        QVERIFY(getConvexHullBox(hullBoxes[0], transform_LidarToRig).getFilter(chFilter_Rig_First));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
+
+        ConvexHull::Filter chFilter_Rig_Second;
+        QVERIFY(getConvexHullBox(hullBoxes[1], transform_LidarToRig).getFilter(chFilter_Rig_Second));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_Second { .Name = "second_rig", .filter = chFilter_Rig_Second };
+
+
+        ConvexHull::Filter chFilter_NED_First;
+        QVERIFY(getConvexHullBox(hullBoxes[0], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_First));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_First { .Name = "first_ned", .filter = chFilter_NED_First };
+
+        ConvexHull::Filter chFilter_NED_Second;
+        QVERIFY(getConvexHullBox(hullBoxes[1], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Second));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Second { .Name = "second_ned", .filter = chFilter_NED_Second };
+
+        ConvexHull::Filter chFilter_NED_Third;
+        QVERIFY(getConvexHullBox(hullBoxes[2], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Third));
+        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Third { .Name = "third_ned", .filter = chFilter_NED_Third };
+
+        QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+
+        convexHullFilters.push_back(chullFilter_Expr_Lidar_First);
+        convexHullFilters.push_back(chullFilter_Expr_Lidar_Second);
+        convexHullFilters.push_back(chullFilter_Expr_Rig_First);
+        convexHullFilters.push_back(chullFilter_Expr_Rig_Second);
+        convexHullFilters.push_back(chullFilter_Expr_NED_First);
+        convexHullFilters.push_back(chullFilter_Expr_NED_Second);
+        convexHullFilters.push_back(chullFilter_Expr_NED_Third);
+
+        QVERIFY(filter_Lidar.setConvexHullFilters(convexHullFilters));
+        QVERIFY(filter_Rig.setConvexHullFilters(convexHullFilters));
+        QVERIFY(filter_NED.setConvexHullFilters(convexHullFilters));
+        QVERIFY(filter_InvalidHullIndexes.setConvexHullFilters(convexHullFilters));
+
+        QVERIFY(filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull_indexed(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) + ")"));
+
+        QVERIFY(filter_Rig.setExpression_Filter(QString("rig.in_convex_hull_indexed(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+                                                ") || rig.in_convex_hull_indexed(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) + ")"));
+
+        QVERIFY(filter_NED.setExpression_Filter(QString("ned.in_convex_hull_indexed(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+                                                ") || ned.in_convex_hull_indexed(chull_second_ned, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) +
+                                                ") || ned.in_convex_hull_indexed(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ", " + QString::number(indexes[2]) + ")"));
+
+        QVERIFY(filter_InvalidHullIndexes.setExpression_Filter(
+            "lidar.in_convex_hull_indexed(chull_first - 1, 0, 0) || "
+            "lidar.in_convex_hull_indexed(-1, 0, -65) || "
+            "rig.in_convex_hull_indexed(7, 0, 9) || "
+            "rig.in_convex_hull_indexed(8, 0, 42) || "
+            "ned.in_convex_hull_indexed(42, 0, 1337) || "
+            "ned.in_convex_hull_indexed(1337, 0, 0xabba) || "
+            "ned.in_convex_hull_indexed(chull_third_ned + 1, 0, 12345678)"
+            ));
+
+        unsigned int index = 0;
+
+        // Prefill buffers
+        for (index = 0; index < filterBufferLength - 1; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+            filter_InvalidHullIndexes.addPoint(sourcePoints[index], index);
+        }
+
+        for (; index < defaultTestRounds; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+            filter_InvalidHullIndexes.addPoint(sourcePoints[index], index);
+
+            QCOMPARE(filter_Lidar.getFilteredPoint(out_Lidar), true);
+            QCOMPARE(filter_Rig.getFilteredPoint(out_Rig), true);
+            QCOMPARE(filter_NED.getFilteredPoint(out_NED), true);
+            QCOMPARE(filter_InvalidHullIndexes.getFilteredPoint(out_InvalidHullIndexes), true);
+
+            bool shouldBeInside[3] = { 0 };
+            bool shouldBeOutside[3] = { 0 }; (void) shouldBeOutside;    // For debugging
+            bool indeterminate[3] = { 0 };
+
+            for (int i = 0; i < 3; i++)
+            {
+                LivoxMid360::PointCloudData::Point sourcePoint = sourcePoints[index - (filterBufferLength / 2) + indexes[i]];
+
+                if ((sourcePoint.x > hullBoxes[i].min().x() - hullMargins[i] + edgeMargin) &&
+                    (sourcePoint.x < hullBoxes[i].max().x() + hullMargins[i] - edgeMargin) &&
+                    (sourcePoint.y > hullBoxes[i].min().y() - hullMargins[i] + edgeMargin) &&
+                    (sourcePoint.y < hullBoxes[i].max().y() + hullMargins[i] - edgeMargin) &&
+                    (sourcePoint.z > hullBoxes[i].min().z() - hullMargins[i] + edgeMargin) &&
+                    (sourcePoint.z < hullBoxes[i].max().z() + hullMargins[i] - edgeMargin))
+                {
+                    shouldBeInside[i] = true;
+                    insides[i]++;
+                }
+                else if (
+                    (sourcePoint.x < hullBoxes[i].min().x() - hullMargins[i] - edgeMargin) ||
+                    (sourcePoint.x > hullBoxes[i].max().x() + hullMargins[i] + edgeMargin) ||
+                    (sourcePoint.y < hullBoxes[i].min().y() - hullMargins[i] - edgeMargin) ||
+                    (sourcePoint.y > hullBoxes[i].max().y() + hullMargins[i] + edgeMargin) ||
+                    (sourcePoint.z < hullBoxes[i].min().z() - hullMargins[i] - edgeMargin) ||
+                    (sourcePoint.z > hullBoxes[i].max().z() + hullMargins[i] + edgeMargin))
+                {
+                    shouldBeOutside[i] = true;
+                    outsides[i]++;
+                }
+                else
+                {
+                    indeterminate[i] = true;
+                    indeterminates[i]++;
+                }
+            }
+
+            if (!indeterminate[0])
+            {
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0]);
+            }
+
+            if (!indeterminate[0] && !indeterminate[1])
+            {
+                QCOMPARE(out_Rig.filterResult, shouldBeInside[0] || shouldBeInside[1]);
+            }
+
+            if (!indeterminate[0] && !indeterminate[1] && !indeterminate[2])
+            {
+                QCOMPARE(out_NED.filterResult, shouldBeInside[0] || shouldBeInside[1] || shouldBeInside[2]);
+            }
+
+            QVERIFY(out_InvalidHullIndexes.filterResult == 0);
+        }
+    }
+
+    //    int foo = 0; // Debug-trap
+}
+
+
 
 
 

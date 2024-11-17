@@ -75,6 +75,7 @@ private slots:
     void convexHulls_OverwriteHulls();
     void convexHulls_TwoStaticCubes_DefaultTransforms();
     void convexHulls_MultipleRandomCubes_RandomTransforms();
+    void convexHulls_MultipleRandomCubes_RandomTransforms_Indexed();
 };
 
 #endif // TST_EXPRESSIONFILTER_H
