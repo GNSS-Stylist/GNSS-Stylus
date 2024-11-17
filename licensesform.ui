@@ -246,27 +246,27 @@ misrepresented as being the original software.
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_3d_quickhull">
+     <widget class="QWidget" name="tab_convhull_3d">
       <attribute name="title">
-       <string>3d-quickhull</string>
+       <string>convhull_3d</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QLabel" name="label_3_quickhull_License_Title">
+        <widget class="QLabel" name="label_3_convhull_3d_License_Title">
          <property name="text">
-          <string>This application uses 3d-quickhull that has the following license:</string>
+          <string>This application uses convhull_3d that has the following license:</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_3d_quickhull_License">
+        <widget class="QPlainTextEdit" name="plainTextEdit_convhull_3d_License">
          <property name="readOnly">
           <bool>true</bool>
          </property>
          <property name="plainText">
-          <string>MIT License
+          <string>The MIT License (MIT)
 
-Copyright (c) 2016 Karim Naaji
+Copyright (c) 2017-18 Leo McCormack (leo.mccormack@aalto.fi)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal
