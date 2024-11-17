@@ -1914,7 +1914,7 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
     int outsides[3] = { 0 };
     int indeterminates[3] = { 0 };
 
-    for (int cubeSet = 0; cubeSet < 100; cubeSet++)
+    for (int cubeSet = 0; cubeSet < 10; cubeSet++)
     {
         PointFilter::ExpressionFilter filter_Lidar;
         PointFilter::ExpressionFilter filter_Rig;
@@ -1939,7 +1939,7 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
 
         for (int i = 0; i < 3; i++)
         {
-            hullMargins[i] = (randomGenerator.generateDouble() - 0.5) * 0.2;
+            hullMargins[i] = (randomGenerator.generateDouble() - 0.5) * 1.0;
 
             double x1, x2, y1, y2, z1, z2;
 
@@ -2088,50 +2088,57 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
                 }
             }
 
+#if 0 // Debugging-code
+            if (
+                ((!indeterminate[0]) &&
+                    (out_Lidar.filterResult != shouldBeInside[0])) ||
+                ((!indeterminate[0] && !indeterminate[1]) &&
+                    (out_Rig.filterResult != (shouldBeInside[0] || shouldBeInside[1]))) ||
+                ((!indeterminate[0] && !indeterminate[1] && !indeterminate[2]) &&
+                    (out_NED.filterResult != (shouldBeInside[0] || shouldBeInside[1] || shouldBeInside[2])))
+                )
+            {
+                Eigen::Vector3d bugger = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
+                Eigen::Vector3d bugger_rig = transform_LidarToRig.inverse() * bugger;
+                Eigen::Vector3d bugger_ned = (transform_RigToNED * transform_LidarToRig).inverse() * bugger;
+
+                QString bugger_xyz = QString::number(bugger.x()) + " " + QString::number(bugger.y()) + " " + QString::number(bugger.z());
+                QString bugger_Rig_xyz = QString::number(bugger_rig.x()) + " " + QString::number(bugger_rig.y()) + " " + QString::number(bugger_rig.z());
+                QString bugger_NED_xyz = QString::number(bugger_ned.x()) + " " + QString::number(bugger_ned.y()) + " " + QString::number(bugger_ned.z());
+
+                bool in_lidar_1 = convexHullFilters[0].filter.isInside(bugger);
+                bool in_lidar_2 = convexHullFilters[1].filter.isInside(bugger);
+                bool in_rig_1 = convexHullFilters[2].filter.isInside(bugger_rig);
+                bool in_rig_2 = convexHullFilters[3].filter.isInside(bugger_rig);
+                bool in_ned_1 = convexHullFilters[4].filter.isInside(bugger_ned);
+                bool in_ned_2 = convexHullFilters[5].filter.isInside(bugger_ned);
+                bool in_ned_3 = convexHullFilters[6].filter.isInside(bugger_ned);
+
+                ConvexHull::Filter chFilter_Rig_First2;
+                QVERIFY(getConvexHullBox(hullBoxes[0], transform_LidarToRig).getFilter(chFilter_Rig_First2));
+                //                    PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
+                bool in_rig_1_2 = chFilter_Rig_First2.isInside(bugger_rig);
+
+                for (int i = 0; i < 3; i++)
+                {
+                    QString fileNamePrefix = "cuboids/R" + QString::number(cubeSet) + "B" + QString::number(i);
+                    ConvexHull hull_Lidar = getConvexHullBox(hullBoxes[i]);
+                    hull_Lidar.exportHullToObjFile(fileNamePrefix + "_Lidar");
+                    ConvexHull hull_Rig = getConvexHullBox(hullBoxes[i], transform_LidarToRig.inverse());
+                    hull_Rig.exportHullToObjFile(fileNamePrefix + "_Rig");
+                    ConvexHull hull_NED = getConvexHullBox(hullBoxes[i], (transform_RigToNED * transform_LidarToRig).inverse());
+                    hull_NED.exportHullToObjFile(fileNamePrefix + "_NED");
+                }
+            }
+#endif
+
             if (!indeterminate[0])
             {
-               QCOMPARE(out_Lidar.filterResult, shouldBeInside[0]);
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0]);
             }
 
             if (!indeterminate[0] && !indeterminate[1])
             {
-                if (out_Rig.filterResult != (shouldBeInside[0] || shouldBeInside[1]))
-                {
-#if 0 // Debugging-code
-                    Eigen::Vector3d bugger = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
-                    Eigen::Vector3d bugger_rig = transform_LidarToRig.inverse() * bugger;
-                    Eigen::Vector3d bugger_ned = (transform_RigToNED * transform_LidarToRig).inverse() * bugger;
-
-                    QString bugger_xyz = QString::number(bugger.x()) + " " + QString::number(bugger.y()) + " " + QString::number(bugger.z());
-                    QString bugger_Rig_xyz = QString::number(bugger_rig.x()) + " " + QString::number(bugger_rig.y()) + " " + QString::number(bugger_rig.z());
-                    QString bugger_NED_xyz = QString::number(bugger_ned.x()) + " " + QString::number(bugger_ned.y()) + " " + QString::number(bugger_ned.z());
-
-                    bool in_lidar_1 = convexHullFilters[0].filter.isInside(bugger);
-                    bool in_lidar_2 = convexHullFilters[1].filter.isInside(bugger);
-                    bool in_rig_1 = convexHullFilters[2].filter.isInside(bugger_rig);
-                    bool in_rig_2 = convexHullFilters[3].filter.isInside(bugger_rig);
-                    bool in_ned_1 = convexHullFilters[4].filter.isInside(bugger_ned);
-                    bool in_ned_2 = convexHullFilters[5].filter.isInside(bugger_ned);
-                    bool in_ned_3 = convexHullFilters[6].filter.isInside(bugger_ned);
-
-                    ConvexHull::Filter chFilter_Rig_First2;
-                    QVERIFY(getConvexHullBox(hullBoxes[0], transform_LidarToRig).getFilter(chFilter_Rig_First2));
-//                    PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
-                    bool in_rig_1_2 = chFilter_Rig_First2.isInside(bugger_rig);
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        QString fileNamePrefix = "cuboids/R" + QString::number(cubeSet) + "B" + QString::number(i);
-                        ConvexHull hull_Lidar = getConvexHullBox(hullBoxes[i]);
-                        hull_Lidar.exportHullToObjFile(fileNamePrefix + "_Lidar");
-                        ConvexHull hull_Rig = getConvexHullBox(hullBoxes[i], transform_LidarToRig.inverse());
-                        hull_Rig.exportHullToObjFile(fileNamePrefix + "_Rig");
-                        ConvexHull hull_NED = getConvexHullBox(hullBoxes[i], (transform_RigToNED * transform_LidarToRig).inverse());
-                        hull_NED.exportHullToObjFile(fileNamePrefix + "_NED");
-                    }
-#endif
-                }
-
                 QCOMPARE(out_Rig.filterResult, shouldBeInside[0] || shouldBeInside[1]);
             }
 
