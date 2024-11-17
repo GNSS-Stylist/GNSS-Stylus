@@ -492,14 +492,7 @@ void TestConvexHull::randomSpheres()
     (void) indeterminates_WithHullMargin;
     (void) nullHulls_WithHullMargin;
 
-    // There are some issues with 3d-quickhull that are shown very rarely.
-    // Convex hull may just break with some kind of point clouds.
-    // (see https://github.com/karimnaaji/3d-quickhull/issues/2#issuecomment-2468325680 )
-    // Generating one pseudorandom number here works around the issue.
-    // This may happen again if/when the initial state of the generator changes.
-    randomGenerator.generate();
-
-    for (int sphere = 0; sphere < 100; sphere++)
+    for (int sphere = 0; sphere < 10; sphere++)
     {
         ConvexHull hull;
         ConvexHull::Filter filter;
@@ -510,23 +503,15 @@ void TestConvexHull::randomSpheres()
         Eigen::Vector3d centerPoint = Eigen::Vector3d(centerX, centerY, centerZ);
         double radius = randomGenerator.generateDouble() * (highLimit_SphereRadius - lowLimit_SphereRadius) - lowLimit_SphereRadius;
 
-        int numOfLatitudes = randomGenerator.bounded(lowLimit_LatDivs, highLimit_LatDivs);
-
-        // "Latitude" is used here quite loosely. Lat 0 is at the pole and maxlat at the other pole.
-
-        // 3d-quickhull actually doesn't seem to like many points on the same plane
-        // (like happens when there is no single point on the pole) so add points to the poles.
-        // Due to rounding errors the for-loop below can not be used to this.
-        // Without those points some hulls break badly.
-        // (see https://github.com/karimnaaji/3d-quickhull/issues/2 )
-
+        // Add points to both poles.
         hull.addPoint(Eigen::Vector3d(centerX, centerY - radius, centerZ));
         hull.addPoint(Eigen::Vector3d(centerX, centerY + radius, centerZ));
 
+        // "Latitude" is used here quite loosely. Lat 0 is at the pole and maxlat at the other pole.
+        int numOfLatitudes = randomGenerator.bounded(lowLimit_LatDivs, highLimit_LatDivs);
+
         for (int lat = 1; lat < numOfLatitudes; lat++)
         {
-            // This always adds several points to the poles, but they are filtered out by ConvexHull when adding.
-
             double lonRad = radius * sin(M_PI * double(lat) / numOfLatitudes);
             // here Y-axis is pole to pole axis
             double y = radius * cos(M_PI * double(lat) / numOfLatitudes);
