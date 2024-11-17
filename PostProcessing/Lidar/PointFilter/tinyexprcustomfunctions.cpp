@@ -223,7 +223,7 @@ te_type lidar_in_convex_hull(const te_expr* context, te_type hullIndex, te_type 
 te_type lidar_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_in_convex_hull_indexed(hullIndex, pointIndex, margin));
+    return static_cast<te_type>(c->lidar_in_convex_hull_indexed(hullIndex, margin, pointIndex));
 }
 
 te_type rig_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin)
@@ -235,7 +235,7 @@ te_type rig_in_convex_hull(const te_expr* context, te_type hullIndex, te_type ma
 te_type rig_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->rig_in_convex_hull_indexed(hullIndex, pointIndex, margin));
+    return static_cast<te_type>(c->rig_in_convex_hull_indexed(hullIndex, margin, pointIndex));
 }
 
 te_type ned_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin)
@@ -247,7 +247,7 @@ te_type ned_in_convex_hull(const te_expr* context, te_type hullIndex, te_type ma
 te_type ned_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->ned_in_convex_hull_indexed(hullIndex, pointIndex, margin));
+    return static_cast<te_type>(c->ned_in_convex_hull_indexed(hullIndex, margin, pointIndex));
 }
 
 
