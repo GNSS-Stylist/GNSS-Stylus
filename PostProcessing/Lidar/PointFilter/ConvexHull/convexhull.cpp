@@ -151,11 +151,6 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter)
 {
     filter.init();
 
-    if (points.size() < 4)
-    {
-        return false;
-    }
-
     if (!meshGenerated)
     {
         if (!generateMesh())
