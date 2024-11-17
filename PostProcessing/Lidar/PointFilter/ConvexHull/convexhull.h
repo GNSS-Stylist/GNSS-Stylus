@@ -41,15 +41,19 @@ public:
     public:
         bool isInside(const Eigen::Vector3d& pointCoords, const double& margin = 0)
         {
-            if (((pointCoords.x()) < (aabb.min().x() - margin)) ||
-                ((pointCoords.x()) > (aabb.max().x() + margin)) ||
-                ((pointCoords.y()) < (aabb.min().y() - margin)) ||
-                ((pointCoords.y()) > (aabb.max().y() + margin)) ||
-                ((pointCoords.z()) < (aabb.min().z() - margin)) ||
-                ((pointCoords.z()) > (aabb.max().z() + margin)) ||
+            double adjustedMargin = std::max(margin, 0.0) * 2;
+
+            if (((pointCoords.x()) < (aabb.min().x() - adjustedMargin)) ||
+                ((pointCoords.x()) > (aabb.max().x() + adjustedMargin)) ||
+                ((pointCoords.y()) < (aabb.min().y() - adjustedMargin)) ||
+                ((pointCoords.y()) > (aabb.max().y() + adjustedMargin)) ||
+                ((pointCoords.z()) < (aabb.min().z() - adjustedMargin)) ||
+                ((pointCoords.z()) > (aabb.max().z() + adjustedMargin)) ||
                 (faceDefs.size() < 4))
-//            if (faceDefs.size() < 4)
             {
+                // Positive margin can push the real limits of the hull also further than handled here,
+                // especially when using narrow wedges. Let's say that this "bug" is a feature....
+
                 return false;
             }
 
