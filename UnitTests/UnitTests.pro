@@ -22,7 +22,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     tst_main.cpp
 
 HEADERS += \
-    ../PostProcessing/Lidar/PointFilter/ConvexHull/3d-quickhull/quickhull.h \
+    ../PostProcessing/Lidar/PointFilter/ConvexHull/convhull_3d/convhull_3d.h \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.h \
     ../PostProcessing/Lidar/PointFilter/expressionfilter.h \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.h \
