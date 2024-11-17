@@ -148,7 +148,7 @@ private:
 
     TinyExprCustomFuncHandler* customFuncHandler;
 
-    QVector<te_type> convexHullFilterIndexes; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
+    te_type* convexHullFilterIndexes; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
     unsigned int numOfConvexHullFilters; // For speedup.
     QVector<ConvexHull::Filter> convexHullFilters;
 

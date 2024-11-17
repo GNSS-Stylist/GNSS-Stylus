@@ -1,6 +1,6 @@
 /*
-    tst_lidarfiltering.cpp (part of GNSS-Stylus)
-    Copyright (C) 2020-2024 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    tst_convexhull.cpp (part of GNSS-Stylus)
+    Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 */
 
 #include "tst_convexhull.h"
-#include "../RPLidar/rplidarplausibilityfilter.h"
 #include "../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.h"
 
 TestConvexHull::TestConvexHull()
@@ -450,7 +449,7 @@ void TestConvexHull::randomCubes()
         }
     }
 
-    int foo = insides_NoHullMargin; // debug-trap
+//    int foo = insides_NoHullMargin; // debug-trap
 }
 
 void TestConvexHull::randomSpheres()
@@ -562,7 +561,7 @@ void TestConvexHull::randomSpheres()
             hull.addPoint(point);
         }
 
-        hull.exportHullToObjFile("hullout/hull_" + QString::number(sphere) + ".obj");
+//        hull.exportHullToObjFile("hullout/hull_" + QString::number(sphere) + ".obj");
 
         QVERIFY(hull.getFilter(filter));
 

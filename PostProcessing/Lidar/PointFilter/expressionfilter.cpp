@@ -32,6 +32,7 @@ ExpressionFilter::ExpressionFilter()
 
     customFuncHandler = new TinyExprCustomFuncHandler(TE_DEFAULT, this);
 
+    convexHullFilterIndexes = nullptr;
     setCustomVariablesAndFunctions();
 
     setExpression_Filter("1");
@@ -112,19 +113,29 @@ void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFi
         { "ned.in_convex_hull_indexed", ned_in_convex_hull_indexed, TE_DEFAULT, customFuncHandler },
     };
 
-    convexHullFilterIndexes.clear();
     convexHullFilters.clear();
 
     numOfConvexHullFilters = newConvexHullFilters.size();
+
+    if (convexHullFilterIndexes)
+    {
+        delete[] convexHullFilterIndexes;
+        convexHullFilterIndexes = nullptr;
+    }
+    if (numOfConvexHullFilters != 0)
+    {
+        convexHullFilterIndexes = new te_type[numOfConvexHullFilters];
+    }
+
     QVector<QByteArray> convexHullFilterNames; // To keep strings alive while adding.
 
     for (unsigned int i = 0; i < numOfConvexHullFilters; i++)
     {
         convexHullFilterNames.push_back((QString("chull_") + newConvexHullFilters[i].Name).toLower().toLocal8Bit());
-        convexHullFilterIndexes.push_back(double(i));
+        convexHullFilterIndexes[i] = te_type(i);
         convexHullFilters.push_back(newConvexHullFilters[i].filter);
 
-        te_variable newConstant { convexHullFilterNames[i].constData(), &convexHullFilterIndexes[i] };
+        te_variable newConstant { convexHullFilterNames[i].constData(), &convexHullFilterIndexes[i], TE_PURE };
 
         customFunctions.insert(newConstant);
     }
@@ -136,6 +147,11 @@ void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFi
 ExpressionFilter::~ExpressionFilter()
 {
     delete customFuncHandler;
+
+    if (convexHullFilterIndexes)
+    {
+        delete[] convexHullFilterIndexes;
+    }
 }
 
 bool ExpressionFilter::setExpression_Filter(const QString newExpression, QString* const errorMessage, int* const errorPosition)
@@ -230,8 +246,6 @@ void ExpressionFilter::addPoint(const LivoxMid360::PointCloudData::Point& lidarP
     buffer[bufferIndex % bufferLength].point_Lidar.setTransformedVector(buffer[bufferIndex % bufferLength].lidarSourceVector);
 
     bufferIndex++;
-
-    // TODO: Implement rest
 }
 
 bool ExpressionFilter::getFilteredPoint(OutItem& outPoint)
