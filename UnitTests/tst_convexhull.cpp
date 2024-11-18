@@ -723,7 +723,7 @@ void TestConvexHull::filterOptimization()
         // (only one def per end and one for every side section)
         // For cube def count should halve.
         // These ends consisting of 16-gons seem to originally have 14 faces optimized to 1 here.
-//        QCOMPARE(filter.faceDefs.size(), 2 + divs);
+//        QCOMPARE(filter.planes.size(), 2 + divs);
 
         for (int i = 0; i < testPoints; i++)
         {

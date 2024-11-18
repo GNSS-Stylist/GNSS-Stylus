@@ -29,7 +29,7 @@ public:
     class Filter
     {
     private:
-        class FaceDef
+        class Plane
         {
         public:
             Eigen::Vector3d origin;
@@ -49,7 +49,7 @@ public:
                 ((pointCoords.y()) > (aabb.max().y() + adjustedMargin)) ||
                 ((pointCoords.z()) < (aabb.min().z() - adjustedMargin)) ||
                 ((pointCoords.z()) > (aabb.max().z() + adjustedMargin)) ||
-                (faceDefs.size() < 4))
+                (planes.size() < 4))
             {
                 // Positive margin can push the real limits of the hull also further than handled here,
                 // especially when using narrow wedges. Let's say that this "bug" is a feature....
@@ -57,9 +57,9 @@ public:
                 return false;
             }
 
-            for (const FaceDef& face : qAsConst(faceDefs))
+            for (const Plane& plane : qAsConst(planes))
             {
-                if ((pointCoords - face.origin).dot(face.normal) > margin)
+                if ((pointCoords - plane.origin).dot(plane.normal) > margin)
                 {
                     return false;
                 }
@@ -68,11 +68,11 @@ public:
             return true;
         }
 
-        bool isValid(void) { return faceDefs.size() >= 4; };
+        bool isValid(void) { return planes.size() >= 4; };
 
     private:
-        QVector<FaceDef> faceDefs;
-        void init(void) { faceDefs.clear(); };
+        QVector<Plane> planes;
+        void init(void) { planes.clear(); };
         friend class ConvexHull;
     };
 

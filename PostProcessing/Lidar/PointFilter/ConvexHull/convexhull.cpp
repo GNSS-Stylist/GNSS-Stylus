@@ -184,7 +184,7 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
     Eigen::AlignedBox3d newAABB(Eigen::Vector3d(minX, minY, minZ), Eigen::Vector3d(maxX, maxY, maxZ));
     filter.aabb = newAABB;
 
-    std::list<Filter::FaceDef> mainFaceList;
+    std::list<Filter::Plane> mainFaceList;
 
     bool optimize = optimizationLimit > 0;
 
@@ -194,14 +194,14 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
         Eigen::Vector3d pointB(mesh.vertices[mesh.faceIndices[i * 3 + 1]].x(), mesh.vertices[mesh.faceIndices[i * 3 + 1]].y(), mesh.vertices[mesh.faceIndices[i * 3 + 1]].z());
         Eigen::Vector3d pointC(mesh.vertices[mesh.faceIndices[i * 3 + 2]].x(), mesh.vertices[mesh.faceIndices[i * 3 + 2]].y(), mesh.vertices[mesh.faceIndices[i * 3 + 2]].z());
 
-        Filter::FaceDef newFace;
+        Filter::Plane newFace;
 
         newFace.origin = (1.0 / 3.0) * (pointA + pointB + pointC);
         newFace.normal = mesh.normals[i];
 
         if (!optimize)
         {
-            filter.faceDefs.push_back(newFace);
+            filter.planes.push_back(newFace);
         }
         else
         {
@@ -215,9 +215,9 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
         {
             auto mainListIter = mainFaceList.begin();
 
-            Filter::FaceDef compareFace = *mainListIter;
+            Filter::Plane compareFace = *mainListIter;
 
-            QVector<Filter::FaceDef> subFaces;
+            QVector<Filter::Plane> subFaces;
             subFaces.push_back(compareFace);
             mainFaceList.erase(mainListIter);
             mainListIter = mainFaceList.begin();
@@ -249,7 +249,7 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
             newOrigin /= subFaces.size();
             newNormal /= subFaces.size();
 
-            filter.faceDefs.push_back(Filter::FaceDef { .origin = newOrigin, .normal = newNormal });
+            filter.planes.push_back(Filter::Plane { .origin = newOrigin, .normal = newNormal });
         }
     }
 
