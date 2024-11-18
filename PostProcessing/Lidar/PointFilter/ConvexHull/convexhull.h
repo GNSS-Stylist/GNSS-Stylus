@@ -93,7 +93,7 @@ public:
     unsigned int addPoints(const QVector<Eigen::Vector3d>& newPoints); // Returns the number of points added (only adds unique points)
     bool addPoint(const Eigen::Vector3d& newPoint); // Returns true if point was added (only adds unique points)
     void clearPoints(void);
-    bool getFilter(ConvexHull::Filter& filter);
+    bool getFilter(ConvexHull::Filter& filter, double optimizationLimit = 1e-6);
     bool isPointUnique(const Eigen::Vector3d& newPoint);
     unsigned int getNumOfUniquePoints(void);
     void exportHullToObjFile(const QString& filename);

@@ -37,6 +37,18 @@ Eigen::Vector3d TestConvexHull::getRandomVec(double lowLimit, double highLimit)
                            );
 }
 
+Eigen::Transform<double, 3, Eigen::Affine> TestConvexHull::getRandomTransform(double translateLowLimit, double translateHighLimit)
+{
+    // Doesn't return very evenly distributed transforms, but should suffice in this context.
+
+    Eigen::AngleAxisd orientation(randomGenerator.generateDouble() * (2 * M_PI), getRandomVec(-1.0, 1.0).normalized());
+    Eigen::Transform<double, 3, Eigen::Affine> ret;
+    //    ret.fromPositionOrientationScale(getRandomVec(translateLowLimit, translateHighLimit), orientation, getRandomVec(-10.0, 10.0));
+    ret.fromPositionOrientationScale(getRandomVec(translateLowLimit, translateHighLimit), orientation, Eigen::Vector3d(1,1,1));
+
+    return ret;
+}
+
 void TestConvexHull::initTestCase()
 {
     randomGenerator.seed(1337);
@@ -663,4 +675,99 @@ void TestConvexHull::randomSpheres()
     }
     Q_ASSERT(insides_NoHullMargin > 10);
     Q_ASSERT(outsides_NoHullMargin > 10);
+}
+
+void TestConvexHull::filterOptimization()
+{
+    const int rounds = 100;
+    const int testPoints = 100;
+    const double baseEdgeWidth = 1e-3;  // Used for "bar" ends and added to circumference
+    const double edgeWidthMultiplier = 2e-2; // Relative error on the circumference (found by experimenting, too lazy to calculate)
+
+    Eigen::Transform<double, 3, Eigen::Affine> transform = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+    int round = 0;
+    int divs = 16;
+    double height = 1.0;
+    double radius = 1.0;
+    double angleShift = 0.0;
+
+    int insides = 0;
+    int outsides = 0;
+    int indeterminates = 0;
+
+    (void) insides;
+    (void) outsides;
+    (void) indeterminates;
+
+    do
+    {
+        ConvexHull hull;
+
+        for (int i = 0; i < divs; i++)
+        {
+            double angle = angleShift + i * 2 * M_PI / divs;
+            hull.addPoint(transform * Eigen::Vector3d(sin(angle) * radius, cos(angle) * radius, height / 2));
+            hull.addPoint(transform * Eigen::Vector3d(sin(angle) * radius, cos(angle) * radius, -height / 2));
+        }
+
+        // hull.exportHullToObjFile(QString("bars/") + QString::number(round));
+
+        ConvexHull::Filter filter;
+
+        QVERIFY(hull.getFilter(filter));
+
+        // This needs changes to ConvexHull:Filter (facedefs needs to be public)
+        // So not normally tested.
+        // Optimization should combine faces to this
+        // (only one def per end and one for every side section)
+        // For cube def count should halve.
+        // These ends consisting of 16-gons seem to originally have 14 faces optimized to 1 here.
+//        QCOMPARE(filter.faceDefs.size(), 2 + divs);
+
+        for (int i = 0; i < testPoints; i++)
+        {
+            // Limit test points around the bar
+
+            Eigen::Vector3d testPoint((randomGenerator.generateDouble() * 2.0 - 0.5) * 1.2 * radius,
+                                      (randomGenerator.generateDouble() * 2.0 - 0.5) * 1.2 * radius,
+                                      (randomGenerator.generateDouble() * 2.0 - 0.5) / 2 * 1.2 * height);
+
+            double distXY = sqrt(testPoint.x() * testPoint.x() + testPoint.y() * testPoint.y());
+
+            bool shouldBeInside = false;
+            bool indeterminate = false;
+
+            if ((distXY < radius - baseEdgeWidth - edgeWidthMultiplier * radius) &&
+                (testPoint.z() < height / 2.0 - baseEdgeWidth))
+            {
+                shouldBeInside = true;
+                insides++;
+            }
+            else if ((distXY > radius + baseEdgeWidth + edgeWidthMultiplier * radius) ||
+                (fabs(testPoint.z()) > height / 2.0 + baseEdgeWidth))
+
+            {
+                outsides++;
+            }
+            else
+            {
+                indeterminate = true;
+                indeterminates++;
+            }
+
+            if (!indeterminate)
+            {
+                QCOMPARE(filter.isInside(transform * testPoint), shouldBeInside);
+            }
+        }
+
+        transform = getRandomTransform();
+        divs = randomGenerator.bounded(16, 24); // too high number here may cause assertion failure on convhull_3d (apparently convex hull algorithms do not like many coplanar points...)
+        height = 0.1 + randomGenerator.generateDouble() * 5;
+        radius = 0.1 + randomGenerator.generateDouble() * 5;
+        angleShift = randomGenerator.generateDouble() * 2 * M_PI;
+    } while (round++ < rounds);
+
+//    int foo = 42;
 }

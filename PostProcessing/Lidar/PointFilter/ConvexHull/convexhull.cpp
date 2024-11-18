@@ -17,6 +17,7 @@
 */
 
 #include "convexhull.h"
+#include <list>
 
 #define CONVHULL_3D_ENABLE
 #include "convhull_3d/convhull_3d.h"
@@ -147,7 +148,7 @@ void ConvexHull::clearPoints(void)
     points.clear();
 }
 
-bool ConvexHull::getFilter(ConvexHull::Filter& filter)
+bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
 {
     filter.init();
 
@@ -183,6 +184,10 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter)
     Eigen::AlignedBox3d newAABB(Eigen::Vector3d(minX, minY, minZ), Eigen::Vector3d(maxX, maxY, maxZ));
     filter.aabb = newAABB;
 
+    std::list<Filter::FaceDef> mainFaceList;
+
+    bool optimize = optimizationLimit > 0;
+
     for (int i = 0; i < mesh.faceIndices.size() / 3; i++)
     {
         Eigen::Vector3d pointA(mesh.vertices[mesh.faceIndices[i * 3]].x(), mesh.vertices[mesh.faceIndices[i * 3]].y(), mesh.vertices[mesh.faceIndices[i * 3]].z());
@@ -194,7 +199,58 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter)
         newFace.origin = (1.0 / 3.0) * (pointA + pointB + pointC);
         newFace.normal = mesh.normals[i];
 
-        filter.faceDefs.push_back(newFace);
+        if (!optimize)
+        {
+            filter.faceDefs.push_back(newFace);
+        }
+        else
+        {
+            mainFaceList.push_back(newFace);
+        }
+    }
+
+    if (optimize)
+    {
+        while (!mainFaceList.empty())
+        {
+            auto mainListIter = mainFaceList.begin();
+
+            Filter::FaceDef compareFace = *mainListIter;
+
+            QVector<Filter::FaceDef> subFaces;
+            subFaces.push_back(compareFace);
+            mainFaceList.erase(mainListIter);
+            mainListIter = mainFaceList.begin();
+
+            // Find faces that are close enough to this and move them to a new list
+            while (mainListIter != mainFaceList.end())
+            {
+                if ((fabs(compareFace.normal.dot(mainListIter->origin - compareFace.origin)) < optimizationLimit) &&
+                    (fabs(mainListIter->normal.dot(compareFace.origin - mainListIter->origin)) < optimizationLimit))
+                {
+                    auto itemToMove = mainListIter;
+                    mainListIter++;
+                    subFaces.push_back(*itemToMove);
+                    mainFaceList.erase(itemToMove);
+                    continue;
+                }
+                mainListIter++;
+            }
+
+            Eigen::Vector3d newOrigin(0, 0, 0);
+            Eigen::Vector3d newNormal(0, 0, 0);
+
+            for (int i = 0; i < subFaces.size(); i++)
+            {
+                newOrigin += subFaces[i].origin;
+                newNormal += subFaces[i].normal;
+            }
+
+            newOrigin /= subFaces.size();
+            newNormal /= subFaces.size();
+
+            filter.faceDefs.push_back(Filter::FaceDef { .origin = newOrigin, .normal = newNormal });
+        }
     }
 
     return true;
