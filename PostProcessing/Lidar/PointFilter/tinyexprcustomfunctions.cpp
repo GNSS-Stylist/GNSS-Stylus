@@ -287,4 +287,40 @@ te_type ned_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, 
 }
 
 
+te_type lidar_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_in_sphere(centerX, centerY, centerZ, distance));
+}
+
+te_type lidar_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
+}
+
+te_type rig_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->rig_in_sphere(centerX, centerY, centerZ, distance));
+}
+
+te_type rig_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->rig_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
+}
+
+te_type ned_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->ned_in_sphere(centerX, centerY, centerZ, distance));
+}
+
+te_type ned_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->ned_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
+}
+
 } // namespace PointFilter

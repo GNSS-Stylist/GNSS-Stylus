@@ -2368,7 +2368,7 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
 }
 
 
-void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms()
+void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
 {
     const double edgeMargin = 1e-3; // Edges are exact, but there will be some rounding errors on the rotated/translated ones
 
@@ -2599,12 +2599,12 @@ void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms()
         }
     }
 
-        int foo = 0; // Debug-trap
+//        int foo = 0; // Debug-trap
 }
 
-void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms_Indexed()
+void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed()
 {
-    const double edgeMargin = 1e-6; // Edges are exact, but there will be some rounding errors on the rotated/translated ones
+    const double edgeMargin = 1e-3; // Edges are exact, but there will be some rounding errors on the rotated/translated ones
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
@@ -2848,7 +2848,427 @@ void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms_Indexed()
     //    int foo = 0; // Debug-trap
 }
 
+void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
+{
+    const double edgeMargin = 1e-6;
 
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter::OutItem out_Lidar;
+    PointFilter::ExpressionFilter::OutItem out_Rig;
+    PointFilter::ExpressionFilter::OutItem out_NED;
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -10, 10);
+    }
+
+    int insides[3][3] = { { 0, 0, 0 } };
+    int outsides[3][3] = { { 0, 0, 0 } };
+    int indeterminates[3][3] = { { 0, 0, 0 } };
+
+    for (int sphereSet = 0; sphereSet < 10; sphereSet++)
+    {
+        PointFilter::ExpressionFilter filter_Lidar;
+        PointFilter::ExpressionFilter filter_Rig;
+        PointFilter::ExpressionFilter filter_NED;
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
+        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+        filter_Lidar.setTransform_LidarToRig(transform_LidarToRig);
+        filter_Rig.setTransform_LidarToRig(transform_LidarToRig);
+        filter_NED.setTransform_LidarToRig(transform_LidarToRig);
+
+        filter_Lidar.setTransform_RigToNED(transform_RigToNED);
+        filter_Rig.setTransform_RigToNED(transform_RigToNED);
+        filter_NED.setTransform_RigToNED(transform_RigToNED);
+
+        struct Sphere
+        {
+            Eigen::Vector3d centerPoint;
+            double radius;
+        };
+
+        // Indexing: [space (lidar = 0, rig = 1, NED = 2][sphere #]
+        Sphere spheres[3][3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int ii = 0; ii < 3; ii++)
+            {
+                double centerX, centerY, centerZ, radius;
+
+                centerX = (randomGenerator.generateDouble() - 0.5) * 20;
+                centerY = (randomGenerator.generateDouble() - 0.5) * 20;
+                centerZ = (randomGenerator.generateDouble() - 0.5) * 20;
+                radius = randomGenerator.generateDouble() * 10;
+
+                spheres[i][ii] = Sphere { .centerPoint = Eigen::Vector3d(centerX, centerY, centerZ), .radius = radius };
+            }
+        }
+
+        QVERIFY(filter_Lidar.setExpression_Filter(
+            QString("lidar.in_sphere(") +
+            QString::number(spheres[0][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].radius, 'g', 14) +
+            ") || lidar.in_sphere(" +
+            QString::number(spheres[0][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].radius, 'g', 14) +
+            ") || lidar.in_sphere(" +
+            QString::number(spheres[0][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].radius, 'g', 14) +
+            ")"));
+
+        QVERIFY(filter_Rig.setExpression_Filter(
+            QString("rig.in_sphere(") +
+            QString::number(spheres[1][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].radius, 'g', 14) +
+            ") || rig.in_sphere(" +
+            QString::number(spheres[1][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].radius, 'g', 14) +
+            ") || rig.in_sphere(" +
+            QString::number(spheres[1][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].radius, 'g', 14) +
+            ")"));
+
+        QVERIFY(filter_NED.setExpression_Filter(
+            QString("ned.in_sphere(") +
+            QString::number(spheres[2][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].radius, 'g', 14) +
+            ") || ned.in_sphere(" +
+            QString::number(spheres[2][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].radius, 'g', 14) +
+            ") || ned.in_sphere(" +
+            QString::number(spheres[2][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].radius, 'g', 14) +
+            ")"));
+
+        unsigned int index = 0;
+
+        // Prefill buffers
+        for (index = 0; index < filterBufferLength - 1; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+        }
+
+        for (; index < defaultTestRounds; index++)
+        {
+            int filteredItemIndex = index - (filterBufferLength / 2);
+            LivoxMid360::PointCloudData::Point sourcePoint = sourcePoints[filteredItemIndex];
+            Eigen::Vector3d eigenSourcePoint = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
+
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+
+            QCOMPARE(filter_Lidar.getFilteredPoint(out_Lidar), true);
+            QCOMPARE(filter_Rig.getFilteredPoint(out_Rig), true);
+            QCOMPARE(filter_NED.getFilteredPoint(out_NED), true);
+
+            // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+            bool shouldBeInside[3][3] = { {0, 0, 0 } };
+            bool shouldBeOutside[3][3] = { {0, 0, 0 } }; (void) shouldBeOutside;    // For debugging
+            bool indeterminate[3][3] = { {0, 0, 0 } };
+
+            for (int i = 0; i < 3; i++)
+            {
+                Eigen::Vector3d transformedSourcePoint;
+
+                switch (i)
+                {
+                case 0:
+                    transformedSourcePoint = eigenSourcePoint;
+                    break;
+
+                case 1:
+                    transformedSourcePoint = transform_LidarToRig * eigenSourcePoint;
+                    break;
+
+                case 2:
+                    transformedSourcePoint = transform_RigToNED * (transform_LidarToRig * eigenSourcePoint);
+                    break;
+                }
+
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    if ((transformedSourcePoint - spheres[i][ii].centerPoint).norm() < spheres[i][ii].radius - edgeMargin)
+                    {
+                        shouldBeInside[i][ii] = true;
+                        insides[i][ii]++;
+                    }
+                    else if ((transformedSourcePoint - spheres[i][ii].centerPoint).norm() > spheres[i][ii].radius + edgeMargin)
+                    {
+                        shouldBeOutside[i][ii] = true;
+                        outsides[i][ii]++;
+                    }
+                    else
+                    {
+                        indeterminate[i][ii] = true;
+                        indeterminates[i][ii]++;
+                    }
+                }
+            }
+
+            if (!indeterminate[0][0] && !indeterminate[0][1] && !indeterminate[0][2])
+            {
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0][0] || shouldBeInside[0][1] || shouldBeInside[0][2]);
+            }
+
+            if (!indeterminate[1][0] && !indeterminate[1][1] && !indeterminate[1][2])
+            {
+                QCOMPARE(out_Rig.filterResult, shouldBeInside[1][0] || shouldBeInside[1][1] || shouldBeInside[1][2]);
+            }
+
+            if (!indeterminate[2][0] && !indeterminate[2][1] && !indeterminate[2][2])
+            {
+                QCOMPARE(out_NED.filterResult, shouldBeInside[2][0] || shouldBeInside[2][1] || shouldBeInside[2][2]);
+            }
+        }
+    }
+
+//    int foo = 0; // Debug-trap
+}
+
+void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Indexed()
+{
+    const double edgeMargin = 1e-6;
+
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter::OutItem out_Lidar;
+    PointFilter::ExpressionFilter::OutItem out_Rig;
+    PointFilter::ExpressionFilter::OutItem out_NED;
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -10, 10);
+    }
+
+    int insides[3][3] = { { 0, 0, 0 } };
+    int outsides[3][3] = { { 0, 0, 0 } };
+    int indeterminates[3][3] = { { 0, 0, 0 } };
+
+    for (int sphereSet = 0; sphereSet < 10; sphereSet++)
+    {
+        PointFilter::ExpressionFilter filter_Lidar;
+        PointFilter::ExpressionFilter filter_Rig;
+        PointFilter::ExpressionFilter filter_NED;
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
+        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+        filter_Lidar.setTransform_LidarToRig(transform_LidarToRig);
+        filter_Rig.setTransform_LidarToRig(transform_LidarToRig);
+        filter_NED.setTransform_LidarToRig(transform_LidarToRig);
+
+        filter_Lidar.setTransform_RigToNED(transform_RigToNED);
+        filter_Rig.setTransform_RigToNED(transform_RigToNED);
+        filter_NED.setTransform_RigToNED(transform_RigToNED);
+
+        struct Sphere
+        {
+            Eigen::Vector3d centerPoint;
+            double radius;
+        };
+
+        // Indexing: [space (lidar = 0, rig = 1, NED = 2][sphere #]
+        Sphere spheres[3][3];
+        int indexes[3][3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int ii = 0; ii < 3; ii++)
+            {
+                indexes[i][ii] = randomGenerator.bounded(-7, 8);
+
+                double centerX, centerY, centerZ, radius;
+
+                centerX = (randomGenerator.generateDouble() - 0.5) * 20;
+                centerY = (randomGenerator.generateDouble() - 0.5) * 20;
+                centerZ = (randomGenerator.generateDouble() - 0.5) * 20;
+                radius = randomGenerator.generateDouble() * 10;
+
+                spheres[i][ii] = Sphere { .centerPoint = Eigen::Vector3d(centerX, centerY, centerZ), .radius = radius };
+            }
+        }
+
+        QVERIFY(filter_Lidar.setExpression_Filter(
+            QString("lidar.in_sphere_indexed(") +
+            QString::number(spheres[0][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][0].radius, 'g', 14) + ", " +
+            QString::number(indexes[0][0]) +
+            ") || lidar.in_sphere_indexed(" +
+            QString::number(spheres[0][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][1].radius, 'g', 14) + ", " +
+            QString::number(indexes[0][1]) +
+            ") || lidar.in_sphere_indexed(" +
+            QString::number(spheres[0][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[0][2].radius, 'g', 14) + ", " +
+            QString::number(indexes[0][2]) +
+            ")"));
+
+        QVERIFY(filter_Rig.setExpression_Filter(
+            QString("rig.in_sphere_indexed(") +
+            QString::number(spheres[1][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][0].radius, 'g', 14) + ", " +
+            QString::number(indexes[1][0]) +
+            ") || rig.in_sphere_indexed(" +
+            QString::number(spheres[1][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][1].radius, 'g', 14) + ", " +
+            QString::number(indexes[1][1]) +
+            ") || rig.in_sphere_indexed(" +
+            QString::number(spheres[1][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[1][2].radius, 'g', 14) + ", " +
+            QString::number(indexes[1][2]) +
+            ")"));
+
+        QVERIFY(filter_NED.setExpression_Filter(
+            QString("ned.in_sphere_indexed(") +
+            QString::number(spheres[2][0].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][0].radius, 'g', 14) + ", " +
+            QString::number(indexes[2][0]) +
+            ") || ned.in_sphere_indexed(" +
+            QString::number(spheres[2][1].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][1].radius, 'g', 14) + ", " +
+            QString::number(indexes[2][1]) +
+            ") || ned.in_sphere_indexed(" +
+            QString::number(spheres[2][2].centerPoint.x(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].centerPoint.y(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].centerPoint.z(), 'g', 14) + ", " +
+            QString::number(spheres[2][2].radius, 'g', 14) + ", " +
+            QString::number(indexes[2][2]) +
+            ")"));
+
+        unsigned int index = 0;
+
+        // Prefill buffers
+        for (index = 0; index < filterBufferLength - 1; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+        }
+
+        for (; index < defaultTestRounds; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+
+            QCOMPARE(filter_Lidar.getFilteredPoint(out_Lidar), true);
+            QCOMPARE(filter_Rig.getFilteredPoint(out_Rig), true);
+            QCOMPARE(filter_NED.getFilteredPoint(out_NED), true);
+
+            // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+            bool shouldBeInside[3][3] = { {0, 0, 0 } };
+            bool shouldBeOutside[3][3] = { {0, 0, 0 } }; (void) shouldBeOutside;    // For debugging
+            bool indeterminate[3][3] = { {0, 0, 0 } };
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    int filteredItemIndex = index - (filterBufferLength / 2) + indexes[i][ii];
+                    LivoxMid360::PointCloudData::Point sourcePoint = sourcePoints[filteredItemIndex];
+                    Eigen::Vector3d eigenSourcePoint = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
+
+                    Eigen::Vector3d transformedSourcePoint;
+
+                    switch (i)
+                    {
+                    case 0:
+                        transformedSourcePoint = eigenSourcePoint;
+                        break;
+
+                    case 1:
+                        transformedSourcePoint = transform_LidarToRig * eigenSourcePoint;
+                        break;
+
+                    case 2:
+                        transformedSourcePoint = transform_RigToNED * (transform_LidarToRig * eigenSourcePoint);
+                        break;
+                    }
+
+                    if ((transformedSourcePoint - spheres[i][ii].centerPoint).norm() < spheres[i][ii].radius - edgeMargin)
+                    {
+                        shouldBeInside[i][ii] = true;
+                        insides[i][ii]++;
+                    }
+                    else if ((transformedSourcePoint - spheres[i][ii].centerPoint).norm() > spheres[i][ii].radius + edgeMargin)
+                    {
+                        shouldBeOutside[i][ii] = true;
+                        outsides[i][ii]++;
+                    }
+                    else
+                    {
+                        indeterminate[i][ii] = true;
+                        indeterminates[i][ii]++;
+                    }
+                }
+            }
+
+            if (!indeterminate[0][0] && !indeterminate[0][1] && !indeterminate[0][2])
+            {
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0][0] || shouldBeInside[0][1] || shouldBeInside[0][2]);
+            }
+
+            if (!indeterminate[1][0] && !indeterminate[1][1] && !indeterminate[1][2])
+            {
+                QCOMPARE(out_Rig.filterResult, shouldBeInside[1][0] || shouldBeInside[1][1] || shouldBeInside[1][2]);
+            }
+
+            if (!indeterminate[2][0] && !indeterminate[2][1] && !indeterminate[2][2])
+            {
+                QCOMPARE(out_NED.filterResult, shouldBeInside[2][0] || shouldBeInside[2][1] || shouldBeInside[2][2]);
+            }
+        }
+    }
+
+//    int foo = 0; // Debug-trap
+}
 
 
 

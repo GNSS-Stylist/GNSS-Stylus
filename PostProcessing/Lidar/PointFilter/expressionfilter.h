@@ -86,6 +86,13 @@ public:
     inline te_type ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
     inline te_type ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
 
+    inline te_type lidar_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type lidar_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+    inline te_type rig_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type rig_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+    inline te_type ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+
 private:
     ExpressionFilter* filter;
 };
@@ -478,7 +485,53 @@ inline te_type TinyExprCustomFuncHandler::ned_in_aabb_indexed(te_type minX, te_t
         (point.z() <= maxZ));
 }
 
+inline te_type TinyExprCustomFuncHandler::lidar_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector();
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
 
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector();
+
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector();
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
+
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector();
+
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector();
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
+
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector();
+
+    Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
+    return ((point-center).squaredNorm() <= (radius * radius));
+}
 
 
 

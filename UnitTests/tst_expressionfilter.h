@@ -77,9 +77,11 @@ private slots:
     void convexHulls_MultipleRandomCubes_RandomTransforms();
     void convexHulls_MultipleRandomCubes_RandomTransforms_Indexed();
 
-    void aabb_MultipleRandomCubes_RandomTransforms();
-    void aabb_MultipleRandomCubes_RandomTransforms_Indexed();
+    void in_aabb_MultipleRandomCubes_RandomTransforms();
+    void in_aabb_MultipleRandomCubes_RandomTransforms_Indexed();
 
+    void in_sphere_MultipleRandomSpheres_RandomTransforms();
+    void in_sphere_MultipleRandomSpheres_RandomTransforms_Indexed();
 };
 
 #endif // TST_EXPRESSIONFILTER_H

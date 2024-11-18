@@ -121,6 +121,16 @@ void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFi
         { "ned.in_aabb", ned_in_aabb, TE_DEFAULT, customFuncHandler },
         { "ned.in_aabb_indexed", ned_in_aabb_indexed, TE_DEFAULT, customFuncHandler },
 
+        { "lidar.in_sphere", lidar_in_sphere, TE_DEFAULT, customFuncHandler },
+        { "lidar.in_sphere_indexed", lidar_in_sphere_indexed, TE_DEFAULT, customFuncHandler },
+
+        { "rig.in_sphere", rig_in_sphere, TE_DEFAULT, customFuncHandler },
+        { "rig.in_sphere_indexed", rig_in_sphere_indexed, TE_DEFAULT, customFuncHandler },
+
+        { "ned.in_sphere", ned_in_sphere, TE_DEFAULT, customFuncHandler },
+        { "ned.in_sphere_indexed", ned_in_sphere_indexed, TE_DEFAULT, customFuncHandler },
+
+
     };
 
     convexHullFilters.clear();
