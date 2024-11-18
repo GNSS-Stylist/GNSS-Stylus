@@ -2368,6 +2368,486 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
 }
 
 
+void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms()
+{
+    const double edgeMargin = 1e-3; // Edges are exact, but there will be some rounding errors on the rotated/translated ones
+
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter::OutItem out_Lidar;
+    PointFilter::ExpressionFilter::OutItem out_Rig;
+    PointFilter::ExpressionFilter::OutItem out_NED;
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -10, 10);
+    }
+
+    int insides[3] = { 0 };
+    int outsides[3] = { 0 };
+    int indeterminates[3] = { 0 };
+
+    for (int aabbSet = 0; aabbSet < 10; aabbSet++)
+    {
+        PointFilter::ExpressionFilter filter_Lidar;
+        PointFilter::ExpressionFilter filter_Rig;
+        PointFilter::ExpressionFilter filter_NED;
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
+        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+        filter_Lidar.setTransform_LidarToRig(transform_LidarToRig);
+        filter_Rig.setTransform_LidarToRig(transform_LidarToRig);
+        filter_NED.setTransform_LidarToRig(transform_LidarToRig);
+
+        filter_Lidar.setTransform_RigToNED(transform_RigToNED);
+        filter_Rig.setTransform_RigToNED(transform_RigToNED);
+        filter_NED.setTransform_RigToNED(transform_RigToNED);
+
+        // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+        Eigen::AlignedBox3d aabbBoxes[3][3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int ii = 0; ii < 3; ii++)
+            {
+                double x1, x2, y1, y2, z1, z2;
+
+                do
+                {
+                    // Randomize until the box is wide/tall/deep enough
+                    x1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    x2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    y1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    y2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    z1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    z2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                } while ((fabs(x2 - x1) < 0.5) || (fabs(y2 - y1) < 0.5) || (fabs(z2 - z1) < 0.5));
+
+                aabbBoxes[i][ii] = Eigen::AlignedBox3d(Eigen::Vector3d(std::min(x1, x2), std::min(y1, y2), std::min(z1, z2)), Eigen::Vector3d(std::max(x1, x2), std::max(y1, y2), std::max(z1, z2)));
+            }
+        }
+
+        QVERIFY(filter_Lidar.setExpression_Filter(
+            QString("lidar.in_aabb(") +
+                QString::number(aabbBoxes[0][0].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][0].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][0].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][0].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][0].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][0].max().z(), 'g', 14) +
+            ") || lidar.in_aabb(" +
+                QString::number(aabbBoxes[0][1].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][1].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][1].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][1].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][1].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][1].max().z(), 'g', 14) +
+            ") || lidar.in_aabb(" +
+                QString::number(aabbBoxes[0][2].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][2].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][2].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][2].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][2].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[0][2].max().z(), 'g', 14) +
+            ")"));
+
+        QVERIFY(filter_Rig.setExpression_Filter(
+            QString("rig.in_aabb(") +
+                QString::number(aabbBoxes[1][0].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][0].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][0].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][0].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][0].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][0].max().z(), 'g', 14) +
+            ") || rig.in_aabb(" +
+                QString::number(aabbBoxes[1][1].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][1].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][1].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][1].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][1].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][1].max().z(), 'g', 14) +
+            ") || rig.in_aabb(" +
+                QString::number(aabbBoxes[1][2].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][2].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][2].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][2].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][2].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[1][2].max().z(), 'g', 14) +
+            ")"));
+
+        QVERIFY(filter_NED.setExpression_Filter(
+            QString("ned.in_aabb(") +
+                QString::number(aabbBoxes[2][0].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][0].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][0].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][0].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][0].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][0].max().z(), 'g', 14) +
+            ") || ned.in_aabb(" +
+                QString::number(aabbBoxes[2][1].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][1].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][1].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][1].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][1].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][1].max().z(), 'g', 14) +
+            ") || ned.in_aabb(" +
+                QString::number(aabbBoxes[2][2].min().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][2].min().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][2].min().z(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][2].max().x(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][2].max().y(), 'g', 14) + ", " +
+                QString::number(aabbBoxes[2][2].max().z(), 'g', 14) +
+            ")"));
+
+        unsigned int index = 0;
+
+        // Prefill buffers
+        for (index = 0; index < filterBufferLength - 1; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+        }
+
+        for (; index < defaultTestRounds; index++)
+        {
+            int filteredItemIndex = index - (filterBufferLength / 2);
+            LivoxMid360::PointCloudData::Point sourcePoint = sourcePoints[filteredItemIndex];
+            Eigen::Vector3d eigenSourcePoint = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
+
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+
+            QCOMPARE(filter_Lidar.getFilteredPoint(out_Lidar), true);
+            QCOMPARE(filter_Rig.getFilteredPoint(out_Rig), true);
+            QCOMPARE(filter_NED.getFilteredPoint(out_NED), true);
+
+            // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+            bool shouldBeInside[3][3] = { {0, 0, 0 } };
+            bool shouldBeOutside[3][3] = { {0, 0, 0 } }; (void) shouldBeOutside;    // For debugging
+            bool indeterminate[3][3] = { {0, 0, 0 } };
+
+            for (int i = 0; i < 3; i++)
+            {
+                Eigen::Vector3d transformedSourcePoint;
+
+                switch (i)
+                {
+                    case 0:
+                        transformedSourcePoint = eigenSourcePoint;
+                        break;
+
+                    case 1:
+                        transformedSourcePoint = transform_LidarToRig * eigenSourcePoint;
+                        break;
+
+                    case 2:
+                        transformedSourcePoint = transform_RigToNED * (transform_LidarToRig * eigenSourcePoint);
+                        break;
+                }
+
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    if ((transformedSourcePoint.x() > aabbBoxes[i][ii].min().x() + edgeMargin) &&
+                        (transformedSourcePoint.x() < aabbBoxes[i][ii].max().x() - edgeMargin) &&
+                        (transformedSourcePoint.y() > aabbBoxes[i][ii].min().y() + edgeMargin) &&
+                        (transformedSourcePoint.y() < aabbBoxes[i][ii].max().y() - edgeMargin) &&
+                        (transformedSourcePoint.z() > aabbBoxes[i][ii].min().z() + edgeMargin) &&
+                        (transformedSourcePoint.z() < aabbBoxes[i][ii].max().z() - edgeMargin))
+                    {
+                        shouldBeInside[i][ii] = true;
+                        insides[i]++;
+                    }
+                    else if (
+                        (transformedSourcePoint.x() < aabbBoxes[i][ii].min().x() - edgeMargin) ||
+                        (transformedSourcePoint.x() > aabbBoxes[i][ii].max().x() + edgeMargin) ||
+                        (transformedSourcePoint.y() < aabbBoxes[i][ii].min().y() - edgeMargin) ||
+                        (transformedSourcePoint.y() > aabbBoxes[i][ii].max().y() + edgeMargin) ||
+                        (transformedSourcePoint.z() < aabbBoxes[i][ii].min().z() - edgeMargin) ||
+                        (transformedSourcePoint.z() > aabbBoxes[i][ii].max().z() + edgeMargin))
+                    {
+                        shouldBeOutside[i][ii] = true;
+                        outsides[i]++;
+                    }
+                    else
+                    {
+                        indeterminate[i][ii] = true;
+                        indeterminates[i]++;
+                    }
+                }
+            }
+
+            if (!indeterminate[0][0] && !indeterminate[0][1] && !indeterminate[0][2])
+            {
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0][0] || shouldBeInside[0][1] || shouldBeInside[0][2]);
+            }
+
+            if (!indeterminate[1][0] && !indeterminate[1][1] && !indeterminate[1][2])
+            {
+                QCOMPARE(out_Rig.filterResult, shouldBeInside[1][0] || shouldBeInside[1][1] || shouldBeInside[1][2]);
+            }
+
+            if (!indeterminate[2][0] && !indeterminate[2][1] && !indeterminate[2][2])
+            {
+                QCOMPARE(out_NED.filterResult, shouldBeInside[2][0] || shouldBeInside[2][1] || shouldBeInside[2][2]);
+            }
+        }
+    }
+
+        int foo = 0; // Debug-trap
+}
+
+void TestExpressionFilter::aabb_MultipleRandomCubes_RandomTransforms_Indexed()
+{
+    const double edgeMargin = 1e-6; // Edges are exact, but there will be some rounding errors on the rotated/translated ones
+
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter::OutItem out_Lidar;
+    PointFilter::ExpressionFilter::OutItem out_Rig;
+    PointFilter::ExpressionFilter::OutItem out_NED;
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -10, 10);
+    }
+
+    int insides[3] = { 0 };
+    int outsides[3] = { 0 };
+    int indeterminates[3] = { 0 };
+
+    for (int aabbSet = 0; aabbSet < 10; aabbSet++)
+    {
+        PointFilter::ExpressionFilter filter_Lidar;
+        PointFilter::ExpressionFilter filter_Rig;
+        PointFilter::ExpressionFilter filter_NED;
+
+        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
+        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+        filter_Lidar.setTransform_LidarToRig(transform_LidarToRig);
+        filter_Rig.setTransform_LidarToRig(transform_LidarToRig);
+        filter_NED.setTransform_LidarToRig(transform_LidarToRig);
+
+        filter_Lidar.setTransform_RigToNED(transform_RigToNED);
+        filter_Rig.setTransform_RigToNED(transform_RigToNED);
+        filter_NED.setTransform_RigToNED(transform_RigToNED);
+
+        // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+        Eigen::AlignedBox3d aabbBoxes[3][3];
+        int indexes[3][3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int ii = 0; ii < 3; ii++)
+            {
+                indexes[i][ii] = randomGenerator.bounded(-7, 8);
+
+                double x1, x2, y1, y2, z1, z2;
+
+                do
+                {
+                    // Randomize until the box is wide/tall/deep enough
+                    x1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    x2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    y1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    y2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    z1 = (randomGenerator.generateDouble() - 0.5) * 20;
+                    z2 = (randomGenerator.generateDouble() - 0.5) * 20;
+                } while ((fabs(x2 - x1) < 0.5) || (fabs(y2 - y1) < 0.5) || (fabs(z2 - z1) < 0.5));
+
+                aabbBoxes[i][ii] = Eigen::AlignedBox3d(Eigen::Vector3d(std::min(x1, x2), std::min(y1, y2), std::min(z1, z2)), Eigen::Vector3d(std::max(x1, x2), std::max(y1, y2), std::max(z1, z2)));
+            }
+        }
+
+        QVERIFY(filter_Lidar.setExpression_Filter(
+            QString("lidar.in_aabb_indexed(") +
+            QString::number(aabbBoxes[0][0].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][0].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][0].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][0].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][0].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][0].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[0][0]) +
+            ") || lidar.in_aabb_indexed(" +
+            QString::number(aabbBoxes[0][1].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][1].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][1].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][1].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][1].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][1].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[0][1]) +
+            ") || lidar.in_aabb_indexed(" +
+            QString::number(aabbBoxes[0][2].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][2].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][2].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][2].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][2].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[0][2].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[0][2]) +
+            ")"));
+
+        QVERIFY(filter_Rig.setExpression_Filter(
+            QString("rig.in_aabb_indexed(") +
+            QString::number(aabbBoxes[1][0].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][0].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][0].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][0].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][0].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][0].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[1][0]) +
+            ") || rig.in_aabb_indexed(" +
+            QString::number(aabbBoxes[1][1].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][1].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][1].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][1].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][1].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][1].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[1][1]) +
+            ") || rig.in_aabb_indexed(" +
+            QString::number(aabbBoxes[1][2].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][2].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][2].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][2].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][2].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[1][2].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[1][2]) +
+            ")"));
+
+        QVERIFY(filter_NED.setExpression_Filter(
+            QString("ned.in_aabb_indexed(") +
+            QString::number(aabbBoxes[2][0].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][0].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][0].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][0].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][0].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][0].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[2][0]) +
+            ") || ned.in_aabb_indexed(" +
+            QString::number(aabbBoxes[2][1].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][1].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][1].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][1].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][1].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][1].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[2][1]) +
+            ") || ned.in_aabb_indexed(" +
+            QString::number(aabbBoxes[2][2].min().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][2].min().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][2].min().z(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][2].max().x(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][2].max().y(), 'g', 14) + ", " +
+            QString::number(aabbBoxes[2][2].max().z(), 'g', 14) + ", " +
+            QString::number(indexes[2][2]) +
+            ")"));
+
+        unsigned int index = 0;
+
+        // Prefill buffers
+        for (index = 0; index < filterBufferLength - 1; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+        }
+
+        for (; index < defaultTestRounds; index++)
+        {
+            filter_Lidar.addPoint(sourcePoints[index], index);
+            filter_Rig.addPoint(sourcePoints[index], index);
+            filter_NED.addPoint(sourcePoints[index], index);
+
+            QCOMPARE(filter_Lidar.getFilteredPoint(out_Lidar), true);
+            QCOMPARE(filter_Rig.getFilteredPoint(out_Rig), true);
+            QCOMPARE(filter_NED.getFilteredPoint(out_NED), true);
+
+            // Indexing: [space (lidar = 0, rig = 1, NED = 2][box #]
+            bool shouldBeInside[3][3] = { {0, 0, 0 } };
+            bool shouldBeOutside[3][3] = { {0, 0, 0 } }; (void) shouldBeOutside;    // For debugging
+            bool indeterminate[3][3] = { {0, 0, 0 } };
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    int filteredItemIndex = index - (filterBufferLength / 2) + indexes[i][ii];
+                    LivoxMid360::PointCloudData::Point sourcePoint = sourcePoints[filteredItemIndex];
+                    Eigen::Vector3d eigenSourcePoint = Eigen::Vector3d(sourcePoint.x, sourcePoint.y, sourcePoint.z);
+
+                    Eigen::Vector3d transformedSourcePoint;
+
+                    switch (i)
+                    {
+                    case 0:
+                        transformedSourcePoint = eigenSourcePoint;
+                        break;
+
+                    case 1:
+                        transformedSourcePoint = transform_LidarToRig * eigenSourcePoint;
+                        break;
+
+                    case 2:
+                        transformedSourcePoint = transform_RigToNED * (transform_LidarToRig * eigenSourcePoint);
+                        break;
+                    }
+
+                    if ((transformedSourcePoint.x() > aabbBoxes[i][ii].min().x() + edgeMargin) &&
+                        (transformedSourcePoint.x() < aabbBoxes[i][ii].max().x() - edgeMargin) &&
+                        (transformedSourcePoint.y() > aabbBoxes[i][ii].min().y() + edgeMargin) &&
+                        (transformedSourcePoint.y() < aabbBoxes[i][ii].max().y() - edgeMargin) &&
+                        (transformedSourcePoint.z() > aabbBoxes[i][ii].min().z() + edgeMargin) &&
+                        (transformedSourcePoint.z() < aabbBoxes[i][ii].max().z() - edgeMargin))
+                    {
+                        shouldBeInside[i][ii] = true;
+                        insides[i]++;
+                    }
+                    else if (
+                        (transformedSourcePoint.x() < aabbBoxes[i][ii].min().x() - edgeMargin) ||
+                        (transformedSourcePoint.x() > aabbBoxes[i][ii].max().x() + edgeMargin) ||
+                        (transformedSourcePoint.y() < aabbBoxes[i][ii].min().y() - edgeMargin) ||
+                        (transformedSourcePoint.y() > aabbBoxes[i][ii].max().y() + edgeMargin) ||
+                        (transformedSourcePoint.z() < aabbBoxes[i][ii].min().z() - edgeMargin) ||
+                        (transformedSourcePoint.z() > aabbBoxes[i][ii].max().z() + edgeMargin))
+                    {
+                        shouldBeOutside[i][ii] = true;
+                        outsides[i]++;
+                    }
+                    else
+                    {
+                        indeterminate[i][ii] = true;
+                        indeterminates[i]++;
+                    }
+                }
+            }
+
+            if (!indeterminate[0][0] && !indeterminate[0][1] && !indeterminate[0][2])
+            {
+                QCOMPARE(out_Lidar.filterResult, shouldBeInside[0][0] || shouldBeInside[0][1] || shouldBeInside[0][2]);
+            }
+
+            if (!indeterminate[1][0] && !indeterminate[1][1] && !indeterminate[1][2])
+            {
+                QCOMPARE(out_Rig.filterResult, shouldBeInside[1][0] || shouldBeInside[1][1] || shouldBeInside[1][2]);
+            }
+
+            if (!indeterminate[2][0] && !indeterminate[2][1] && !indeterminate[2][2])
+            {
+                QCOMPARE(out_NED.filterResult, shouldBeInside[2][0] || shouldBeInside[2][1] || shouldBeInside[2][2]);
+            }
+        }
+    }
+
+    //    int foo = 0; // Debug-trap
+}
+
 
 
 

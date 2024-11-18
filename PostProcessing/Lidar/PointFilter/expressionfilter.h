@@ -79,6 +79,13 @@ public:
     inline te_type ned_in_convex_hull(te_type hullIndex, te_type margin) const;
     inline te_type ned_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
 
+    inline te_type lidar_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type lidar_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+    inline te_type rig_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type rig_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+    inline te_type ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+
 private:
     ExpressionFilter* filter;
 };
@@ -399,7 +406,77 @@ inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull_indexed(te_type hul
     return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector(), margin);
 }
 
+inline te_type TinyExprCustomFuncHandler::lidar_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+           (point.y() >= minY) &&
+           (point.y() <= maxY) &&
+           (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
 
+inline te_type TinyExprCustomFuncHandler::lidar_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+        (point.y() >= minY) &&
+        (point.y() <= maxY) &&
+        (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+        (point.y() >= minY) &&
+        (point.y() <= maxY) &&
+        (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
+
+inline te_type TinyExprCustomFuncHandler::rig_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+        (point.y() >= minY) &&
+        (point.y() <= maxY) &&
+        (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+        (point.y() >= minY) &&
+        (point.y() <= maxY) &&
+        (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
+
+inline te_type TinyExprCustomFuncHandler::ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
+{
+    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector();
+    return (
+        (point.x() >= minX) &&
+        (point.x() <= maxX) &&
+        (point.y() >= minY) &&
+        (point.y() <= maxY) &&
+        (point.z() >= minZ) &&
+        (point.z() <= maxZ));
+}
 
 
 
