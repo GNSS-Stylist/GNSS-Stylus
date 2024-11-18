@@ -30,72 +30,6 @@
 namespace PointFilter
 {
 
-class ExpressionFilter;
-
-class TinyExprCustomFuncHandler : public te_expr
-{
-public:
-    explicit TinyExprCustomFuncHandler(const te_variable_flags type, ExpressionFilter* const filter) noexcept :
-        te_expr(type) { this->filter = filter; }
-
-    inline te_type lidar_coord_x() const;
-    inline te_type lidar_coord_indexed_x(te_type pointIndex) const;
-    inline te_type lidar_coord_y() const;
-    inline te_type lidar_coord_indexed_y(te_type pointIndex) const;
-    inline te_type lidar_coord_z() const;
-    inline te_type lidar_coord_indexed_z(te_type pointIndex) const;
-
-    inline te_type lidar_properties() const;
-    inline te_type lidar_properties_indexed(te_type pointIndex) const;
-    inline te_type lidar_properties_other() const;
-    inline te_type lidar_properties_other_indexed(te_type pointIndex) const;
-    inline te_type lidar_properties_dust() const;
-    inline te_type lidar_properties_dust_indexed(te_type pointIndex) const;
-    inline te_type lidar_properties_glue() const;
-    inline te_type lidar_properties_glue_indexed(te_type pointIndex) const;
-    inline te_type lidar_reflectivity() const;
-    inline te_type lidar_reflectivity_indexed(te_type pointIndex) const;
-    inline te_type lidar_distance() const;
-    inline te_type lidar_distance_indexed(te_type pointIndex) const;
-
-    inline te_type rig_coord_x() const;
-    inline te_type rig_coord_indexed_x(te_type pointIndex) const;
-    inline te_type rig_coord_y() const;
-    inline te_type rig_coord_indexed_y(te_type pointIndex) const;
-    inline te_type rig_coord_z() const;
-    inline te_type rig_coord_indexed_z(te_type pointIndex) const;
-
-    inline te_type ned_coord_x() const;
-    inline te_type ned_coord_indexed_x(te_type pointIndex) const;
-    inline te_type ned_coord_y() const;
-    inline te_type ned_coord_indexed_y(te_type pointIndex) const;
-    inline te_type ned_coord_z() const;
-    inline te_type ned_coord_indexed_z(te_type pointIndex) const;
-
-    inline te_type lidar_in_convex_hull(te_type hullIndex, te_type margin) const;
-    inline te_type lidar_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
-    inline te_type rig_in_convex_hull(te_type hullIndex, te_type margin) const;
-    inline te_type rig_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
-    inline te_type ned_in_convex_hull(te_type hullIndex, te_type margin) const;
-    inline te_type ned_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
-
-    inline te_type lidar_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
-    inline te_type lidar_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
-    inline te_type rig_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
-    inline te_type rig_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
-    inline te_type ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
-    inline te_type ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
-
-    inline te_type lidar_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
-    inline te_type lidar_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
-    inline te_type rig_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
-    inline te_type rig_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
-    inline te_type ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
-    inline te_type ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
-
-private:
-    ExpressionFilter* filter;
-};
 
 class ExpressionFilter
 {
@@ -160,7 +94,7 @@ private:
     Eigen::Transform<double, 3, Eigen::Affine> transformCache_RigToNED[256];
     unsigned char transformCacheIndex_RigToNED;
 
-    TinyExprCustomFuncHandler* customFuncHandler;
+    class TinyExprCustomFuncHandler* customFuncHandler;
 
     te_type* convexHullFilterIndexes; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
     unsigned int numOfConvexHullFilters; // For speedup.
@@ -169,174 +103,246 @@ private:
     friend class TinyExprCustomFuncHandler;
 };
 
+class TinyExprCustomFuncHandler : public te_expr
+{
+public:
+    explicit TinyExprCustomFuncHandler(const te_variable_flags type, ExpressionFilter* const filter) noexcept :
+        te_expr(type) { this->filter = filter; }
+
+    ExpressionFilter::BufferItem& getCurrentBufferItem(void) const
+        { return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength]; };
+
+    ExpressionFilter::BufferItem& getIndexedBufferItem(const te_type& pointIndex) const
+        { return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength]; };
+
+    inline te_type lidar_coord_x() const;
+    inline te_type lidar_coord_indexed_x(te_type pointIndex) const;
+    inline te_type lidar_coord_y() const;
+    inline te_type lidar_coord_indexed_y(te_type pointIndex) const;
+    inline te_type lidar_coord_z() const;
+    inline te_type lidar_coord_indexed_z(te_type pointIndex) const;
+
+    inline te_type lidar_properties() const;
+    inline te_type lidar_properties_indexed(te_type pointIndex) const;
+    inline te_type lidar_properties_other() const;
+    inline te_type lidar_properties_other_indexed(te_type pointIndex) const;
+    inline te_type lidar_properties_dust() const;
+    inline te_type lidar_properties_dust_indexed(te_type pointIndex) const;
+    inline te_type lidar_properties_glue() const;
+    inline te_type lidar_properties_glue_indexed(te_type pointIndex) const;
+    inline te_type lidar_reflectivity() const;
+    inline te_type lidar_reflectivity_indexed(te_type pointIndex) const;
+    inline te_type lidar_distance() const;
+    inline te_type lidar_distance_indexed(te_type pointIndex) const;
+
+    inline te_type rig_coord_x() const;
+    inline te_type rig_coord_indexed_x(te_type pointIndex) const;
+    inline te_type rig_coord_y() const;
+    inline te_type rig_coord_indexed_y(te_type pointIndex) const;
+    inline te_type rig_coord_z() const;
+    inline te_type rig_coord_indexed_z(te_type pointIndex) const;
+
+    inline te_type ned_coord_x() const;
+    inline te_type ned_coord_indexed_x(te_type pointIndex) const;
+    inline te_type ned_coord_y() const;
+    inline te_type ned_coord_indexed_y(te_type pointIndex) const;
+    inline te_type ned_coord_z() const;
+    inline te_type ned_coord_indexed_z(te_type pointIndex) const;
+
+    inline te_type lidar_in_convex_hull(te_type hullIndex, te_type margin) const;
+    inline te_type lidar_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
+    inline te_type rig_in_convex_hull(te_type hullIndex, te_type margin) const;
+    inline te_type rig_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
+    inline te_type ned_in_convex_hull(te_type hullIndex, te_type margin) const;
+    inline te_type ned_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const;
+
+    inline te_type lidar_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type lidar_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+    inline te_type rig_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type rig_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+    inline te_type ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const;
+    inline te_type ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const;
+
+    inline te_type lidar_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type lidar_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+    inline te_type rig_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type rig_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+    inline te_type ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
+    inline te_type ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
+
+private:
+    ExpressionFilter* filter;
+};
+
+
 inline te_type TinyExprCustomFuncHandler::lidar_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.x;
+    return getCurrentBufferItem().point_Lidar_Source.x;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_x(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.x;
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.x;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_y() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.y;
+    return getCurrentBufferItem().point_Lidar_Source.y;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_y(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.y;
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.y;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_z() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.z;
+    return getCurrentBufferItem().point_Lidar_Source.z;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_z(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.z;
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.z;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties() const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.properties;
+    return getCurrentBufferItem().point_Lidar_Source.properties;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_indexed(te_type pointIndex) const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.properties;
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.properties;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_other() const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_other();
+    return getCurrentBufferItem().point_Lidar_Source.getProperties_other();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_other_indexed(te_type pointIndex) const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.getProperties_other();
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.getProperties_other();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_dust() const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_dust();
+    return getCurrentBufferItem().point_Lidar_Source.getProperties_dust();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_dust_indexed(te_type pointIndex) const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.getProperties_dust();
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.getProperties_dust();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_glue() const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.getProperties_glue();
+    return getCurrentBufferItem().point_Lidar_Source.getProperties_glue();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties_glue_indexed(te_type pointIndex) const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.getProperties_glue();
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.getProperties_glue();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_reflectivity() const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar_Source.reflectivity;
+    return getCurrentBufferItem().point_Lidar_Source.reflectivity;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_reflectivity_indexed(te_type pointIndex) const
 {
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar_Source.reflectivity;
+    return getIndexedBufferItem(pointIndex).point_Lidar_Source.reflectivity;
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_distance() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getDistance();
+    return getCurrentBufferItem().point_Lidar.getDistance();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getDistance();
+    return getIndexedBufferItem(pointIndex).point_Lidar.getDistance();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().x();
+    return getCurrentBufferItem().point_Rig.getTransformedVector().x();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_x(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector().x();
+    return getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector().x();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_y() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().y();
+    return getCurrentBufferItem().point_Rig.getTransformedVector().y();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_y(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector().y();
+    return getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector().y();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_z() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector().z();
+    return getCurrentBufferItem().point_Rig.getTransformedVector().z();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_indexed_z(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector().z();
+    return getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector().z();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().x();
+    return getCurrentBufferItem().point_NED.getTransformedVector().x();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_x(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector().x();
+    return getIndexedBufferItem(pointIndex).point_NED.getTransformedVector().x();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_y() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().y();
+    return getCurrentBufferItem().point_NED.getTransformedVector().y();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_y(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector().y();
+    return getIndexedBufferItem(pointIndex).point_NED.getTransformedVector().y();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_z() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector().z();
+    return getCurrentBufferItem().point_NED.getTransformedVector().z();
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_coord_indexed_z(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector().z();
+    return getIndexedBufferItem(pointIndex).point_NED.getTransformedVector().z();
 }
 
 
@@ -349,7 +355,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_convex_hull(te_type hullIndex
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getCurrentBufferItem().point_Lidar.getTransformedVector(), margin);
 }
 
 
@@ -362,7 +368,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_convex_hull_indexed(te_type h
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getIndexedBufferItem(pointIndex).point_Lidar.getTransformedVector(), margin);
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull(te_type hullIndex, te_type margin) const
@@ -374,7 +380,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull(te_type hullIndex, 
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getCurrentBufferItem().point_Rig.getTransformedVector(), margin);
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const
@@ -386,7 +392,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_convex_hull_indexed(te_type hul
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector(), margin);
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull(te_type hullIndex, te_type margin) const
@@ -398,7 +404,7 @@ inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull(te_type hullIndex, 
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getCurrentBufferItem().point_NED.getTransformedVector(), margin);
 }
 
 inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull_indexed(te_type hullIndex, te_type margin, te_type pointIndex) const
@@ -410,12 +416,12 @@ inline te_type TinyExprCustomFuncHandler::ned_in_convex_hull_indexed(te_type hul
         return false;
     }
 
-    return filter->convexHullFilters[intHullIndex].isInside(filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector(), margin);
+    return filter->convexHullFilters[intHullIndex].isInside(getIndexedBufferItem(pointIndex).point_NED.getTransformedVector(), margin);
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_Lidar.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -427,7 +433,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_aabb(te_type minX, te_type mi
 
 inline te_type TinyExprCustomFuncHandler::lidar_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_Lidar.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -439,7 +445,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_aabb_indexed(te_type minX, te
 
 inline te_type TinyExprCustomFuncHandler::rig_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_Rig.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -451,7 +457,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_aabb(te_type minX, te_type minY
 
 inline te_type TinyExprCustomFuncHandler::rig_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -463,7 +469,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_aabb_indexed(te_type minX, te_t
 
 inline te_type TinyExprCustomFuncHandler::ned_in_aabb(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_NED.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -475,7 +481,7 @@ inline te_type TinyExprCustomFuncHandler::ned_in_aabb(te_type minX, te_type minY
 
 inline te_type TinyExprCustomFuncHandler::ned_in_aabb_indexed(te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_NED.getTransformedVector();
     return (
         (point.x() >= minX) &&
         (point.x() <= maxX) &&
@@ -487,7 +493,7 @@ inline te_type TinyExprCustomFuncHandler::ned_in_aabb_indexed(te_type minX, te_t
 
 inline te_type TinyExprCustomFuncHandler::lidar_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Lidar.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_Lidar.getTransformedVector();
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
 
     return ((point-center).squaredNorm() <= (radius * radius));
@@ -495,7 +501,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_sphere(te_type centerX, te_ty
 
 inline te_type TinyExprCustomFuncHandler::lidar_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Lidar.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_Lidar.getTransformedVector();
 
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
     return ((point-center).squaredNorm() <= (radius * radius));
@@ -503,7 +509,7 @@ inline te_type TinyExprCustomFuncHandler::lidar_in_sphere_indexed(te_type center
 
 inline te_type TinyExprCustomFuncHandler::rig_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_Rig.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_Rig.getTransformedVector();
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
 
     return ((point-center).squaredNorm() <= (radius * radius));
@@ -511,7 +517,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_sphere(te_type centerX, te_type
 
 inline te_type TinyExprCustomFuncHandler::rig_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_Rig.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_Rig.getTransformedVector();
 
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
     return ((point-center).squaredNorm() <= (radius * radius));
@@ -519,7 +525,7 @@ inline te_type TinyExprCustomFuncHandler::rig_in_sphere_indexed(te_type centerX,
 
 inline te_type TinyExprCustomFuncHandler::ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength].point_NED.getTransformedVector();
+    Eigen::Vector3d point = getCurrentBufferItem().point_NED.getTransformedVector();
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
 
     return ((point-center).squaredNorm() <= (radius * radius));
@@ -527,7 +533,7 @@ inline te_type TinyExprCustomFuncHandler::ned_in_sphere(te_type centerX, te_type
 
 inline te_type TinyExprCustomFuncHandler::ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const
 {
-    Eigen::Vector3d point = filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength].point_NED.getTransformedVector();
+    Eigen::Vector3d point = getIndexedBufferItem(pointIndex).point_NED.getTransformedVector();
 
     Eigen::Vector3d center = Eigen::Vector3d(centerX, centerY, centerZ);
     return ((point-center).squaredNorm() <= (radius * radius));
