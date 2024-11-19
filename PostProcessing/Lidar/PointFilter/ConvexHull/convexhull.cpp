@@ -25,6 +25,7 @@
 
 ConvexHull::ConvexHull()
 {
+    meshGenerated = false;
 }
 
 ConvexHull::~ConvexHull()
