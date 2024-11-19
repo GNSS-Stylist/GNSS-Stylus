@@ -39,6 +39,7 @@ private slots:
     void cleanupTestCase();
     void uninitialized();
     void pointCountCheck();
+    void tetrahedron();
     void cubeInTheOrigin();
     void randomCubes();
     void randomSpheres();

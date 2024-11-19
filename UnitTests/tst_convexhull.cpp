@@ -261,6 +261,59 @@ void TestConvexHull::cubeInTheOrigin()
     }
 }
 
+
+void TestConvexHull::tetrahedron()
+{
+    ConvexHull hull;
+    ConvexHull::Filter filter;
+
+    Eigen::Vector3d vertices[4] =
+    {
+        { 0,  0, -1 },
+        {-1, -1,  1 },
+        {-1,  1,  1 },
+        { 1,  0,  1 }
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        hull.addPoint(vertices[i]);
+    }
+
+    QVERIFY((hull.getFilter(filter)));
+    QVERIFY((filter.isValid()));
+    QCOMPARE(hull.getNumOfUniquePoints(), 4U);
+
+    // Test some points that should definitely be inside the hull
+
+    QVERIFY(filter.isInside(Eigen::Vector3d(0, 0, 0)));
+    QVERIFY(filter.isInside(Eigen::Vector3d(0, 0, -0.5)));
+    QVERIFY(filter.isInside(Eigen::Vector3d(0, 0, 0.5)));
+
+    // Test some points that should definitely be outside the hull
+
+    QVERIFY(!filter.isInside(Eigen::Vector3d(0, 0, -2)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(0, 0, -20)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(0, 0, 2)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(-2, 0, 0)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(2, 0, 0)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(0, 2, 0)));
+    QVERIFY(!filter.isInside(Eigen::Vector3d(0, -2, 0)));
+
+    // Close to vertices themselves ("close calls"):
+
+    QVERIFY(filter.isInside(0.999999 * vertices[0]));
+    QVERIFY(filter.isInside(0.999999 * vertices[1]));
+    QVERIFY(filter.isInside(0.999999 * vertices[2]));
+    QVERIFY(filter.isInside(0.999999 * vertices[3]));
+
+    QVERIFY(!filter.isInside(1.000001 * vertices[0]));
+    QVERIFY(!filter.isInside(1.000001 * vertices[1]));
+    QVERIFY(!filter.isInside(1.000001 * vertices[2]));
+    QVERIFY(!filter.isInside(1.000001 * vertices[3]));
+}
+
+
 void TestConvexHull::randomCubes()
 {
     const double lowLimit_Hull = -10;
