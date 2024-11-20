@@ -735,7 +735,7 @@ void TestConvexHull::filterOptimization()
     const int rounds = 100;
     const int testPoints = 100;
     const double baseEdgeWidth = 1e-3;  // Used for "bar" ends and added to circumference
-    const double edgeWidthMultiplier = 2e-2; // Relative error on the circumference (found by experimenting, too lazy to calculate)
+    const double edgeWidthMultiplier_Circumference = 2e-2; // Relative error on the circumference (found by experimenting, too lazy to calculate)
 
     Eigen::Transform<double, 3, Eigen::Affine> transform = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
 
@@ -753,6 +753,7 @@ void TestConvexHull::filterOptimization()
     (void) outsides;
     (void) indeterminates;
 
+    // Test first with flat bar ends
     do
     {
         ConvexHull hull;
@@ -766,17 +767,20 @@ void TestConvexHull::filterOptimization()
 
         // hull.exportHullToObjFile(QString("bars/") + QString::number(round));
 
-        ConvexHull::Filter filter;
+        ConvexHull::Filter filter_NotOptimized;
+        ConvexHull::Filter filter_Optimized;
 
-        QVERIFY(hull.getFilter(filter));
+        QVERIFY(hull.getFilter(filter_NotOptimized, 0));
+        QVERIFY(hull.getFilter(filter_Optimized));
 
         // This needs changes to ConvexHull:Filter (facedefs needs to be public)
         // So not normally tested.
-        // Optimization should combine faces to this
+        // Optimization should combine faces to this number
         // (only one def per end and one for every side section)
         // For cube def count should halve.
         // These ends consisting of 16-gons seem to originally have 14 faces optimized to 1 here.
-//        QCOMPARE(filter.planes.size(), 2 + divs);
+//        QVERIFY(filter_NotOptimized.planes.size() > 2 + divs);
+//        QCOMPARE(filter_Optimized.planes.size(), 2 + divs);
 
         for (int i = 0; i < testPoints; i++)
         {
@@ -791,13 +795,13 @@ void TestConvexHull::filterOptimization()
             bool shouldBeInside = false;
             bool indeterminate = false;
 
-            if ((distXY < radius - baseEdgeWidth - edgeWidthMultiplier * radius) &&
+            if ((distXY < radius - baseEdgeWidth - edgeWidthMultiplier_Circumference * radius) &&
                 (testPoint.z() < height / 2.0 - baseEdgeWidth))
             {
                 shouldBeInside = true;
                 insides++;
             }
-            else if ((distXY > radius + baseEdgeWidth + edgeWidthMultiplier * radius) ||
+            else if ((distXY > radius + baseEdgeWidth + edgeWidthMultiplier_Circumference * radius) ||
                 (fabs(testPoint.z()) > height / 2.0 + baseEdgeWidth))
 
             {
@@ -811,7 +815,8 @@ void TestConvexHull::filterOptimization()
 
             if (!indeterminate)
             {
-                QCOMPARE(filter.isInside(transform * testPoint), shouldBeInside);
+                QCOMPARE(filter_NotOptimized.isInside(transform * testPoint), shouldBeInside);
+                QCOMPARE(filter_Optimized.isInside(transform * testPoint), shouldBeInside);
             }
         }
 
@@ -822,5 +827,94 @@ void TestConvexHull::filterOptimization()
         angleShift = randomGenerator.generateDouble() * 2 * M_PI;
     } while (round++ < rounds);
 
-//    int foo = 42;
+    transform = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
+    round = 0;
+    divs = 16;
+    height = 1.0;
+    radius = 1.0;
+    angleShift = 0.0;
+
+    // Test also with slightly non-flat bar ends (add slightly displaced points to centerpoints of both ends)
+    do
+    {
+        ConvexHull hull;
+
+        for (int i = 0; i < divs; i++)
+        {
+            double angle = angleShift + i * 2 * M_PI / divs;
+            hull.addPoint(transform * Eigen::Vector3d(sin(angle) * radius, cos(angle) * radius, height / 2));
+            hull.addPoint(transform * Eigen::Vector3d(sin(angle) * radius, cos(angle) * radius, -height / 2));
+        }
+
+        // Too lazy to calculate exact limits for this, so just use small enough value (-0.001...0.001)
+        // (and keep other dimensions large enough)
+        hull.addPoint(transform * Eigen::Vector3d(0, 0, height / 2 - 0.001 + randomGenerator.generateDouble() * 0.002));
+        hull.addPoint(transform * Eigen::Vector3d(0, 0, -height / 2 - 0.001 + randomGenerator.generateDouble() * 0.002));
+
+        // hull.exportHullToObjFile(QString("bars/Displaced_") + QString::number(round));
+
+        ConvexHull::Filter filter_NotOptimized;
+        ConvexHull::Filter filter_Optimized;
+
+        QVERIFY(hull.getFilter(filter_NotOptimized, 0));
+        QVERIFY(hull.getFilter(filter_Optimized, 0.004));
+
+        // This needs changes to ConvexHull:Filter (facedefs needs to be public)
+        // So not normally tested.
+        // Optimization should combine faces to this number
+        // (only one def per end and one for every side section)
+        // For cube def count should halve.
+        // These ends consisting of 16-gons seem to originally have 14 faces optimized to 1 here.
+//        QVERIFY(filter_NotOptimized.planes.size() > 2 + divs);
+//        QCOMPARE(filter_Optimized.planes.size(), 2 + divs);
+
+        for (int i = 0; i < testPoints; i++)
+        {
+            // Limit test points around the bar
+
+            Eigen::Vector3d testPoint((randomGenerator.generateDouble() * 2.0 - 0.5) * 1.2 * radius,
+                                      (randomGenerator.generateDouble() * 2.0 - 0.5) * 1.2 * radius,
+                                      (randomGenerator.generateDouble() * 2.0 - 0.5) / 2 * 1.2 * height);
+
+            double distXY = sqrt(testPoint.x() * testPoint.x() + testPoint.y() * testPoint.y());
+
+            bool shouldBeInside = false;
+            bool indeterminate = false;
+
+            if ((distXY < radius - baseEdgeWidth - edgeWidthMultiplier_Circumference * radius) &&
+                (testPoint.z() < height / 2.0 - baseEdgeWidth))
+            {
+                shouldBeInside = true;
+                insides++;
+            }
+            else if ((distXY > radius + baseEdgeWidth + edgeWidthMultiplier_Circumference * radius) ||
+                     (fabs(testPoint.z()) > height / 2.0 + baseEdgeWidth))
+
+            {
+                outsides++;
+            }
+            else
+            {
+                indeterminate = true;
+                indeterminates++;
+            }
+
+            if (!indeterminate)
+            {
+                QCOMPARE(filter_NotOptimized.isInside(transform * testPoint), shouldBeInside);
+                QCOMPARE(filter_Optimized.isInside(transform * testPoint), shouldBeInside);
+            }
+        }
+
+        transform = getRandomTransform();
+        divs = randomGenerator.bounded(16, 24); // too high number here may cause assertion failure on convhull_3d (apparently convex hull algorithms do not like many coplanar points...)
+        height = 0.1 + randomGenerator.generateDouble() * 5;
+        radius = 0.5 + randomGenerator.generateDouble() * 5;
+        angleShift = randomGenerator.generateDouble() * 2 * M_PI;
+    } while (round++ < rounds);
+
+
+
+    //    int foo = 42;
 }
