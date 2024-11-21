@@ -248,9 +248,8 @@ bool ConvexHull::getFilter(ConvexHull::Filter& filter, double optimizationLimit)
             }
 
             newOrigin /= subFaces.size();
-            newNormal /= subFaces.size();
 
-            filter.planes.push_back(Filter::Plane { .origin = newOrigin, .normal = newNormal });
+            filter.planes.push_back(Filter::Plane { .origin = newOrigin, .normal = newNormal.normalized() });
         }
     }
 
