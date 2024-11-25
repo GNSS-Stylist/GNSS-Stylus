@@ -47,7 +47,6 @@ void ExpressionFilter::initBuffer(void)
     {
         item.lidarSourceVector = Eigen::Vector3d::Zero();
         item.point_Lidar.setPrimarySourceVector(&item.lidarSourceVector);
-        item.point_Lidar.setTransformedVector(item.lidarSourceVector);
 
         item.point_Rig.setSourceEvaluator(&item.point_Lidar);
         item.point_NED.setSourceEvaluator(&item.point_Rig);
@@ -262,8 +261,6 @@ void ExpressionFilter::addPoint(const LivoxMid360::PointCloudData::Point& lidarP
 
     buffer[bufferIndex % bufferLength].point_Rig.setTransform(&transformCache_LidarToRig[transformCacheIndex_LidarToRig]);
     buffer[bufferIndex % bufferLength].point_NED.setTransform(&transformCache_RigToNED[transformCacheIndex_RigToNED]);
-
-    buffer[bufferIndex % bufferLength].point_Lidar.setTransformedVector(buffer[bufferIndex % bufferLength].lidarSourceVector);
 
     bufferIndex++;
 }

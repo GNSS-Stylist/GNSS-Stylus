@@ -19,6 +19,17 @@
 #include "tst_lazyevaluator.h"
 #include "../PostProcessing/Lidar/PointFilter/lazyevaluator.h"
 
+static double getHorizontalAngle(const Eigen::Vector3d& vec)
+{
+    return atan2(vec.x(), vec.y());
+}
+
+static double getVerticalAngle(const Eigen::Vector3d& vec)
+{
+    return atan2(vec.z(), sqrt(vec.x() * vec.x()) + vec.y() * vec.y());
+}
+
+
 Eigen::Vector3d TestLazyEvaluator::getRandomVec(double lowLimit, double highLimit)
 {
     return Eigen::Vector3d(randomGenerator.generateDouble() * (highLimit - lowLimit) + lowLimit,
@@ -73,9 +84,9 @@ void TestLazyEvaluator::cleanupTestCase()
 
 }
 
-void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_Discrete()
+void TestLazyEvaluator::singlePrimaryEvaluator_IdentityTransform_Discrete()
 {
-    // Tests single primary evaluator without transforms (so that the transform is always identity).
+    // Tests single primary evaluator so that the transform is always identity.
     // Evaluator is not manipulated in any way, it is just created and used.
     // SourceVector is randomized on every round.
 
@@ -88,7 +99,53 @@ void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_Discrete()
         for (int ii = 0; ii < 5; ii++)
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), sourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), sourceVector.norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+        }
+
+        // Evaluator's output should not react to changed source vector before invalidation so test it
+        // (Works also as a caching test)
+
+        Eigen::Vector3d prevSourceVector = sourceVector;
+        sourceVector = getRandomVec();
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), prevSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevSourceVector.norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+        }
+    }
+}
+
+void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_Discrete()
+{
+    // This is identical to the test above, but instead of identity transform, no transform is defined
+    // (so the transform should be skipped altogether on LazyEvaluator)
+
+    for (int i = 0; i < 100; i++)
+    {
+        Eigen::Vector3d sourceVector = getRandomVec();
+        PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector);
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), sourceVector.norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
@@ -103,15 +160,19 @@ void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_Discrete()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevSourceVector.norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
     }
 }
 
-void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
+void TestLazyEvaluator::singlePrimaryEvaluator_IdentityTransform_InvalidateAll()
 {
-    // Tests single primary evaluator without transforms (so that the transform is always identity).
+    // Tests single primary evaluator so that the transform is always identity.
     // Evaluator's values are invalidated and SourceVector is randomized on every round.
 
     Eigen::Vector3d sourceVector;
@@ -127,8 +188,13 @@ void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), sourceVector.norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
         }
 
         // Evaluator's output should not react to changed source vector before invalidation so test it
@@ -141,13 +207,62 @@ void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevSourceVector.norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
     }
 }
 
-void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_Discrete()
+void TestLazyEvaluator::singlePrimaryEvaluator_NoTransform_InvalidateAll()
+{
+    // This is identical to the test above, but instead of identity transform, no transform is defined
+    // (so the transform should be skipped altogether on LazyEvaluator)
+
+    Eigen::Vector3d sourceVector;
+    PointFilter::LazyEvaluator singlePrimaryEvaluator(&sourceVector);
+
+    for (int i = 0; i < 100; i++)
+    {
+        sourceVector = getRandomVec();
+        singlePrimaryEvaluator.invalidate();
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), sourceVector.norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
+        }
+
+        // Evaluator's output should not react to changed source vector before invalidation so test it
+        // (Works also as a caching test)
+
+        Eigen::Vector3d prevSourceVector = sourceVector;
+        sourceVector = getRandomVec();
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevSourceVector.norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+        }
+    }
+}
+
+
+void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransforms_Discrete()
 {
     // Tests single primary evaluator.
     // Evaluator is not manipulated in any way, it is just created and used.
@@ -163,8 +278,13 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_Discrete()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (transform * sourceVector).norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
         }
 
         // Evaluator's output should not react to changed source vector or transform before invalidation so test these
@@ -179,6 +299,9 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_Discrete()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (prevTransform * prevSourceVector).norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
@@ -186,7 +309,7 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_Discrete()
 }
 
 
-void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_InvalidateAll()
+void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransforms_InvalidateAll()
 {
     // Tests single primary evaluator.
     // Evaluator's values are invalidated and SourceVector and transform are randomized on every round.
@@ -205,8 +328,13 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_InvalidateAll()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), transform * sourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(transform * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (transform * sourceVector).norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
         }
 
         // Evaluator's output should not react to changed source vector or transform before invalidation so test these
@@ -221,8 +349,13 @@ void TestLazyEvaluator::singlePrimaryEvaluator_RandomTransform_InvalidateAll()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevTransform * prevSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (prevTransform * prevSourceVector).norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
         }
     }
 }
@@ -249,6 +382,10 @@ void TestLazyEvaluator::chainOfTwoEvaluators_RandomTransforms_Discrete()
 
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorB.getHorizontalAngle(), getHorizontalAngle(transformB * (transformA * sourceVector)));
+            QCOMPARE(evaluatorB.getVerticalAngle(), getVerticalAngle(transformB * (transformA * sourceVector)));
+            QCOMPARE(evaluatorB.getDistance(), (transformB * (transformA * sourceVector)).norm());
         }
 
         // Evaluators' output should not react to changed source vector or transform before invalidation so test these
@@ -271,6 +408,10 @@ void TestLazyEvaluator::chainOfTwoEvaluators_RandomTransforms_Discrete()
 
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorB.getHorizontalAngle(), getHorizontalAngle(prevTransformB * (prevTransformA * prevSourceVector)));
+            QCOMPARE(evaluatorB.getVerticalAngle(), getVerticalAngle(prevTransformB * (prevTransformA * prevSourceVector)));
+            QCOMPARE(evaluatorB.getDistance(), (prevTransformB * (prevTransformA * prevSourceVector)).norm());
         }
     }
 }
@@ -304,6 +445,10 @@ void TestLazyEvaluator::chainOfTwoEvaluators_RandomTransforms_InvalidateAll()
 
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorB.getHorizontalAngle(), getHorizontalAngle(transformB * (transformA * sourceVector)));
+            QCOMPARE(evaluatorB.getVerticalAngle(), getVerticalAngle(transformB * (transformA * sourceVector)));
+            QCOMPARE(evaluatorB.getDistance(), (transformB * (transformA * sourceVector)).norm());
         }
 
         // Evaluators' output should not react to changed source vector or transform before invalidation so test these
@@ -326,6 +471,10 @@ void TestLazyEvaluator::chainOfTwoEvaluators_RandomTransforms_InvalidateAll()
 
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorB.getHorizontalAngle(), getHorizontalAngle(prevTransformB * (prevTransformA * prevSourceVector)));
+            QCOMPARE(evaluatorB.getVerticalAngle(), getVerticalAngle(prevTransformB * (prevTransformA * prevSourceVector)));
+            QCOMPARE(evaluatorB.getDistance(), (prevTransformB * (prevTransformA * prevSourceVector)).norm());
         }
     }
 }
@@ -357,6 +506,10 @@ void TestLazyEvaluator::chainOfThreeEvaluators_RandomTransforms_Discrete()
             QCOMPARE(evaluatorC.getDistance(), evaluatorC.getTransformedVector().norm());
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorC.getHorizontalAngle(), getHorizontalAngle(transformC * (transformB * (transformA * sourceVector))));
+            QCOMPARE(evaluatorC.getVerticalAngle(), getVerticalAngle(transformC * (transformB * (transformA * sourceVector))));
+            QCOMPARE(evaluatorC.getDistance(), (transformC * (transformB * (transformA * sourceVector))).norm());
         }
 
         // Evaluators' output should not react to changed source vector or transform before invalidation so test these
@@ -383,6 +536,10 @@ void TestLazyEvaluator::chainOfThreeEvaluators_RandomTransforms_Discrete()
             QCOMPARE(evaluatorC.getDistance(), evaluatorC.getTransformedVector().norm());
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorC.getHorizontalAngle(), getHorizontalAngle(prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))));
+            QCOMPARE(evaluatorC.getVerticalAngle(), getVerticalAngle(prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))));
+            QCOMPARE(evaluatorC.getDistance(), (prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))).norm());
         }
     }
 }
@@ -423,6 +580,10 @@ void TestLazyEvaluator::chainOfThreeEvaluators_RandomTransforms_InvalidateAll()
             QCOMPARE(evaluatorC.getDistance(), evaluatorC.getTransformedVector().norm());
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorC.getHorizontalAngle(), getHorizontalAngle(transformC * (transformB * (transformA * sourceVector))));
+            QCOMPARE(evaluatorC.getVerticalAngle(), getVerticalAngle(transformC * (transformB * (transformA * sourceVector))));
+            QCOMPARE(evaluatorC.getDistance(), (transformC * (transformB * (transformA * sourceVector))).norm());
         }
 
         // Evaluators' output should not react to changed source vector or transform before invalidation so test these
@@ -449,11 +610,15 @@ void TestLazyEvaluator::chainOfThreeEvaluators_RandomTransforms_InvalidateAll()
             QCOMPARE(evaluatorC.getDistance(), evaluatorC.getTransformedVector().norm());
             QCOMPARE(evaluatorB.getDistance(), evaluatorB.getTransformedVector().norm());
             QCOMPARE(evaluatorA.getDistance(), evaluatorA.getTransformedVector().norm());
+
+            QCOMPARE(evaluatorC.getHorizontalAngle(), getHorizontalAngle(prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))));
+            QCOMPARE(evaluatorC.getVerticalAngle(), getVerticalAngle(prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))));
+            QCOMPARE(evaluatorC.getDistance(), (prevTransformC * (prevTransformB * (prevTransformA * prevSourceVector))).norm());
         }
     }
 }
 
-void TestLazyEvaluator::setTransform()
+void TestLazyEvaluator::singlePrimaryEvaluator_SetTransform()
 {
     // Tests setting a new (randomized) transform using single primary evaluator.
 
@@ -478,6 +643,10 @@ void TestLazyEvaluator::setTransform()
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), sourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), transforms[i] * sourceVector));
 
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(transforms[i] * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(transforms[i] * sourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (transforms[i] * sourceVector).norm());
+
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
 
@@ -493,6 +662,10 @@ void TestLazyEvaluator::setTransform()
         {
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), prevSourceVector));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), prevTransform * prevSourceVector));
+
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), getHorizontalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), getVerticalAngle(prevTransform * prevSourceVector));
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), (prevTransform * prevSourceVector).norm());
 
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
@@ -518,6 +691,10 @@ void TestLazyEvaluator::singlePrimaryEvaluator_DefaultConstructor()
             QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), Eigen::Vector3d::Zero()));
             QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), Eigen::Vector3d::Zero()));
 
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), 0);
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), 0);
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), 0);
+
             QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
         }
     }
@@ -537,7 +714,120 @@ void TestLazyEvaluator::singlePrimaryEvaluator_DefaultConstructor()
             QVERIFY(compareVectors(primaryEvaluatorCreatedWithDefaultConstructor.getSourceVector(), sourceVector));
             QVERIFY(compareVectors(primaryEvaluatorCreatedWithDefaultConstructor.getTransformedVector(), transform * sourceVector));
 
+            QCOMPARE(primaryEvaluatorCreatedWithDefaultConstructor.getHorizontalAngle(), getHorizontalAngle(transform * sourceVector));
+            QCOMPARE(primaryEvaluatorCreatedWithDefaultConstructor.getVerticalAngle(), getVerticalAngle(transform * sourceVector));
+            QCOMPARE(primaryEvaluatorCreatedWithDefaultConstructor.getDistance(), (transform * sourceVector).norm());
+
             QCOMPARE(primaryEvaluatorCreatedWithDefaultConstructor.getDistance(), primaryEvaluatorCreatedWithDefaultConstructor.getTransformedVector().norm());
+        }
+    }
+}
+
+void TestLazyEvaluator::singlePrimaryEvaluator_2DInput_NoTransform_Discrete()
+{
+    // Test 2D-data input (for 2D-lidar like RPLidar A3M1)
+
+    for (int i = 0; i < 100; i++)
+    {
+        double horizontalAngle = randomGenerator.generateDouble() * 2.0 * M_PI;
+        double distance = 1 + randomGenerator.generateDouble() * 99;
+
+        PointFilter::LazyEvaluator singlePrimaryEvaluator(&horizontalAngle, &distance);
+
+        Eigen::Vector3d expectedSourceVector(distance * sin(horizontalAngle), distance * cos(horizontalAngle), 0);
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), expectedSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), expectedSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), expectedSourceVector));
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), distance);
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), horizontalAngle);
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), 0);
+        }
+
+        // Evaluator's output should not react to changed source values before invalidation so test it
+        // (Works also as a caching test)
+
+        double prevHorizAngle = horizontalAngle;
+        double prevDistance = distance;
+
+        horizontalAngle = randomGenerator.generateDouble() * 2.0 * M_PI;
+        distance = 1 + randomGenerator.generateDouble() * 99;
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), expectedSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), expectedSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), expectedSourceVector));
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevDistance);
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), prevHorizAngle);
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), 0);
+        }
+    }
+}
+
+void TestLazyEvaluator::singlePrimaryEvaluator_2DInput_NoTransform_InvalidateAll()
+{
+    // Test 2D-data input (for 2D-lidar like RPLidar A3M1)
+
+    double horizontalAngle = randomGenerator.generateDouble() * 2.0 * M_PI;
+    double distance = 1 + randomGenerator.generateDouble() * 99;
+
+    PointFilter::LazyEvaluator singlePrimaryEvaluator(&horizontalAngle, &distance);
+
+    for (int i = 0; i < 100; i++)
+    {
+        horizontalAngle = randomGenerator.generateDouble() * 2.0 * M_PI;
+        distance = 1 + randomGenerator.generateDouble() * 99;
+
+        singlePrimaryEvaluator.invalidate();
+
+        Eigen::Vector3d expectedSourceVector(distance * sin(horizontalAngle), distance * cos(horizontalAngle), 0);
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), expectedSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), expectedSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), expectedSourceVector));
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), distance);
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), horizontalAngle);
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), 0);
+        }
+
+        // Evaluator's output should not react to changed source values before invalidation so test it
+        // (Works also as a caching test)
+
+        double prevHorizAngle = horizontalAngle;
+        double prevDistance = distance;
+
+        horizontalAngle = randomGenerator.generateDouble() * 2.0 * M_PI;
+        distance = 1 + randomGenerator.generateDouble() * 99;
+
+        for (int ii = 0; ii < 5; ii++)
+        {
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getSourceVector(), expectedSourceVector));
+            QVERIFY(compareVectors(singlePrimaryEvaluator.getTransformedVector(), expectedSourceVector));
+            QVERIFY(compareVectors(*singlePrimaryEvaluator.getTransformedVectorPtr(), expectedSourceVector));
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVector().norm());
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), singlePrimaryEvaluator.getTransformedVectorPtr()->norm());
+
+            QCOMPARE(singlePrimaryEvaluator.getDistance(), prevDistance);
+            QCOMPARE(singlePrimaryEvaluator.getHorizontalAngle(), prevHorizAngle);
+            QCOMPARE(singlePrimaryEvaluator.getVerticalAngle(), 0);
         }
     }
 }

@@ -38,14 +38,18 @@ private:
 private slots:
     void initTestCase();
     void cleanupTestCase();
+    void singlePrimaryEvaluator_IdentityTransform_Discrete();
     void singlePrimaryEvaluator_NoTransform_Discrete();
+    void singlePrimaryEvaluator_IdentityTransform_InvalidateAll();
     void singlePrimaryEvaluator_NoTransform_InvalidateAll();
-    void singlePrimaryEvaluator_RandomTransform_Discrete();
-    void singlePrimaryEvaluator_RandomTransform_InvalidateAll();
+    void singlePrimaryEvaluator_RandomTransforms_Discrete();
+    void singlePrimaryEvaluator_RandomTransforms_InvalidateAll();
     void chainOfTwoEvaluators_RandomTransforms_Discrete();
     void chainOfTwoEvaluators_RandomTransforms_InvalidateAll();
     void chainOfThreeEvaluators_RandomTransforms_Discrete();
     void chainOfThreeEvaluators_RandomTransforms_InvalidateAll();
+    void singlePrimaryEvaluator_SetTransform();
     void singlePrimaryEvaluator_DefaultConstructor();
-    void setTransform();
+    void singlePrimaryEvaluator_2DInput_NoTransform_Discrete();
+    void singlePrimaryEvaluator_2DInput_NoTransform_InvalidateAll();
 };
