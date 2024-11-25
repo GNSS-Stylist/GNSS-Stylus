@@ -311,14 +311,14 @@ inline const double* LazyEvaluator::getVerticalAnglePtr(void)
         if ((transformIsInUse) || (sourceType != ST_ANGLE_DIST_2D))
         {
             const Eigen::Vector3d* vec = getTransformedVectorPtr();
-            verticalAngle = atan2(vec->z(), sqrt(vec->x() * vec->x()) + vec->y() * vec->y());
-            evaluatedFields |= EV_VERTICAL_ANGLE;
+            verticalAngle = atan2(vec->z(), sqrt(vec->x() * vec->x() + vec->y() * vec->y()));
         }
         else
         {
             // If source is 2D-angle&distance and no transform is in use, vertical angle is always 0
             verticalAngle = 0;
         }
+        evaluatedFields |= EV_VERTICAL_ANGLE;
     }
 
     return &verticalAngle;

@@ -26,7 +26,7 @@ static double getHorizontalAngle(const Eigen::Vector3d& vec)
 
 static double getVerticalAngle(const Eigen::Vector3d& vec)
 {
-    return atan2(vec.z(), sqrt(vec.x() * vec.x()) + vec.y() * vec.y());
+    return atan2(vec.z(), sqrt(vec.x() * vec.x() + vec.y() * vec.y()));
 }
 
 
