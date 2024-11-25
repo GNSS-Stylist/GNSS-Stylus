@@ -56,21 +56,33 @@ public:
 private:
     inline static const Eigen::Vector3d defaultNullSourceVector = Eigen::Vector3d(0, 0, 0);
 
-    enum
+    enum SourceType
     {
-        ST_EVALUATOR,
+        ST_EVALUATOR = 0,
         ST_VECTOR,
         ST_ANGLE_DIST_2D,
-    } sourceType;
+    };
 
-    // Sources (pointers used to prevent unnecessary copying):
-    Eigen::Vector3d const* primarySourceVector;
-    // Angles & distance (used for RPLidar, when vertical angle is 0):
-    double const* primaryHorizontalAngle2D;
-    double const* primaryHorizontalDistance2D;
-    // TODO: Add 3D angles & distance if/when needed
+    struct
+    {
+        SourceType type;
 
-    LazyEvaluator* sourceEvaluator;
+        union
+        {
+            // Sources (pointers used to prevent unnecessary copying):
+            Eigen::Vector3d const* primarySourceVector;
+            // Angles & distance (used for RPLidar, when vertical angle is 0):
+            struct
+            {
+                double const* primaryHorizontalAngle2D;
+                double const* primaryHorizontalDistance2D;
+            } angleDistance2D;
+            // TODO: Add 3D angles & distance if/when needed
+            LazyEvaluator* sourceEvaluator;
+        };
+    } source;
+
+
     Eigen::Transform<double, 3, Eigen::Affine> const* transform;
     bool transformIsInUse;
 
@@ -100,7 +112,7 @@ inline LazyEvaluator::LazyEvaluator()
 {
     setPrimarySourceVector(&defaultNullSourceVector);
     clearTransform();
-    sourceType = ST_VECTOR;
+    source.type = ST_VECTOR;
     evaluatedFields = 0;
 }
 
@@ -109,7 +121,7 @@ inline LazyEvaluator::LazyEvaluator(LazyEvaluator* source, Eigen::Transform<doub
     setSourceEvaluator(source);
     this->transform = transform;
     transformIsInUse = transform != nullptr;
-    sourceType = ST_EVALUATOR;
+    this->source.type = ST_EVALUATOR;
     evaluatedFields = 0;
 }
 
@@ -118,7 +130,7 @@ inline LazyEvaluator::LazyEvaluator(const Eigen::Vector3d *source, Eigen::Transf
     setPrimarySourceVector(source);
     this->transform = transform;
     transformIsInUse = transform != nullptr;
-    sourceType = ST_VECTOR;
+    this->source.type = ST_VECTOR;
     evaluatedFields = 0;
 }
 
@@ -127,7 +139,7 @@ inline LazyEvaluator::LazyEvaluator(double const* horizontalAngle2D, double cons
     setPrimarySourceVector2D(horizontalAngle2D, horizontalDistance2D);
     this->transform = transform;
     transformIsInUse = transform != nullptr;
-    sourceType = ST_ANGLE_DIST_2D;
+    source.type = ST_ANGLE_DIST_2D;
     evaluatedFields = 0;
 }
 
@@ -138,25 +150,25 @@ inline void LazyEvaluator::invalidate(void)
 
 inline void LazyEvaluator::setSourceEvaluator(LazyEvaluator* evaluator)
 {
-    sourceEvaluator = evaluator;
-    sourceType = ST_EVALUATOR;
+    source.sourceEvaluator = evaluator;
+    source.type = ST_EVALUATOR;
 
     invalidate();
 }
 
 inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d const* newVector)
 {
-    primarySourceVector = newVector;
-    sourceType = ST_VECTOR;
+    source.primarySourceVector = newVector;
+    source.type = ST_VECTOR;
 
     invalidate();
 }
 
 inline void LazyEvaluator::setPrimarySourceVector2D(const double *horizontalAngle2D, const double *horizontalDistance2D)
 {
-    this->primaryHorizontalAngle2D = horizontalAngle2D;
-    this->primaryHorizontalDistance2D = horizontalDistance2D;
-    sourceType = ST_ANGLE_DIST_2D;
+    source.angleDistance2D.primaryHorizontalAngle2D = horizontalAngle2D;
+    source.angleDistance2D.primaryHorizontalDistance2D = horizontalDistance2D;
+    source.type = ST_ANGLE_DIST_2D;
 
     invalidate();
 }
@@ -186,24 +198,24 @@ inline const Eigen::Vector3d* LazyEvaluator::getSourceVectorPtr(void)
     {
         // This value could not be found from the cache yet so evaluate it
 
-        switch (sourceType)
+        switch (source.type)
         {
         case ST_EVALUATOR:
-            Q_ASSERT(sourceEvaluator);
-            sourceVector = sourceEvaluator->getTransformedVector();
+            Q_ASSERT(source.sourceEvaluator);
+            sourceVector = source.sourceEvaluator->getTransformedVector();
             break;
 
         case ST_VECTOR:
             // Value for primary source can be returned right away.
-            Q_ASSERT(primarySourceVector);
-            sourceVector = *primarySourceVector;
+            Q_ASSERT(source.primarySourceVector);
+            sourceVector = *source.primarySourceVector;
             break;
 
         case ST_ANGLE_DIST_2D:
         {
-            Q_ASSERT(primaryHorizontalDistance2D);
-            Q_ASSERT(primaryHorizontalAngle2D);
-            sourceVector = Eigen::Vector3d(*primaryHorizontalDistance2D * sin(*primaryHorizontalAngle2D), *primaryHorizontalDistance2D * cos(*primaryHorizontalAngle2D), 0.0);
+            Q_ASSERT(source.angleDistance2D.primaryHorizontalDistance2D);
+            Q_ASSERT(source.angleDistance2D.primaryHorizontalAngle2D);
+            sourceVector = Eigen::Vector3d(*source.angleDistance2D.primaryHorizontalDistance2D * sin(*source.angleDistance2D.primaryHorizontalAngle2D), *source.angleDistance2D.primaryHorizontalDistance2D * cos(*source.angleDistance2D.primaryHorizontalAngle2D), 0.0);
             break;
         }
 
@@ -255,14 +267,14 @@ inline const double* LazyEvaluator::getDistancePtr(void)
 {
     if (!(evaluatedFields & EV_DISTANCE))
     {
-        if ((transformIsInUse) || (sourceType != ST_ANGLE_DIST_2D))
+        if ((transformIsInUse) || (source.type != ST_ANGLE_DIST_2D))
         {
             distance = getTransformedVectorPtr()->norm();
         }
         else
         {
             // If source is 2D-angle&distance and no transform is in use, we can read the distance straight away
-            distance = *primaryHorizontalDistance2D;
+            distance = *source.angleDistance2D.primaryHorizontalDistance2D;
             evaluatedFields |= EV_SOURCE_DISTANCE_2D;
         }
 
@@ -281,7 +293,7 @@ inline const double* LazyEvaluator::getHorizontalAnglePtr(void)
 {
     if (!(evaluatedFields & EV_HORIZONTAL_ANGLE))
     {
-        if ((transformIsInUse) || (sourceType != ST_ANGLE_DIST_2D))
+        if ((transformIsInUse) || (source.type != ST_ANGLE_DIST_2D))
         {
             const Eigen::Vector3d* vec = getTransformedVectorPtr();
             horizontalAngle = atan2(vec->x(), vec->y());
@@ -289,7 +301,7 @@ inline const double* LazyEvaluator::getHorizontalAnglePtr(void)
         else
         {
             // If source is 2D-angle&distance and no transform is in use, we can read the angle straight away
-            horizontalAngle = *primaryHorizontalAngle2D;
+            horizontalAngle = *source.angleDistance2D.primaryHorizontalAngle2D;
             evaluatedFields |= EV_SOURCE_ANGLE_2D;
         }
         evaluatedFields |= EV_HORIZONTAL_ANGLE;
@@ -308,7 +320,7 @@ inline const double* LazyEvaluator::getVerticalAnglePtr(void)
 {
     if (!(evaluatedFields & EV_VERTICAL_ANGLE))
     {
-        if ((transformIsInUse) || (sourceType != ST_ANGLE_DIST_2D))
+        if ((transformIsInUse) || (source.type != ST_ANGLE_DIST_2D))
         {
             const Eigen::Vector3d* vec = getTransformedVectorPtr();
             verticalAngle = atan2(vec->z(), sqrt(vec->x() * vec->x() + vec->y() * vec->y()));
