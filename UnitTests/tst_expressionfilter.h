@@ -57,6 +57,8 @@ private slots:
     void lidarCoords_Indexed();
     void lidarDistance();
     void lidarDistance_Indexed();
+    void lidarAngles();
+    void lidarAngles_Indexed();
     void lidarProperties();
     void lidarProperties_Indexed();
     void lidarReflectivity();

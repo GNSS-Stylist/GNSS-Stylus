@@ -46,6 +46,10 @@ te_type lidar_reflectivity(const te_expr* context);
 te_type lidar_reflectivity_indexed(const te_expr* context, te_type pointIndex);
 te_type lidar_distance(const te_expr* context);
 te_type lidar_distance_indexed(const te_expr* context, te_type pointIndex);
+te_type lidar_angle_horizontal(const te_expr* context);
+te_type lidar_angle_indexed_horizontal(const te_expr* context, te_type pointIndex);
+te_type lidar_angle_vertical(const te_expr* context);
+te_type lidar_angle_indexed_vertical(const te_expr* context, te_type pointIndex);
 
 te_type ned_coord_x(const te_expr* context);
 te_type ned_coord_indexed_x(const te_expr* context, te_type pointIndex);

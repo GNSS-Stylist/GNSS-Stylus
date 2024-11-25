@@ -536,6 +536,97 @@ void TestExpressionFilter::lidarDistance_Indexed()
     }
 }
 
+void TestExpressionFilter::lidarAngles()
+{
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter filter_Angle_Horizontal;
+    PointFilter::ExpressionFilter filter_Angle_Vertical;
+
+    unsigned int index = 0;
+    PointFilter::ExpressionFilter::OutItem out_Horizontal;
+    PointFilter::ExpressionFilter::OutItem out_Vertical;
+
+    QVERIFY(filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal"));
+    QVERIFY(filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical"));
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint();
+    }
+
+    // Prefill buffer
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        filter_Angle_Horizontal.addPoint(sourcePoints[index], index);
+        filter_Angle_Vertical.addPoint(sourcePoints[index], index);
+    }
+
+    for (; index < defaultTestRounds; index++)
+    {
+        filter_Angle_Horizontal.addPoint(sourcePoints[index], index);
+        filter_Angle_Vertical.addPoint(sourcePoints[index], index);
+
+        QCOMPARE(filter_Angle_Horizontal.getFilteredPoint(out_Horizontal), true);
+        QCOMPARE(filter_Angle_Vertical.getFilteredPoint(out_Vertical), true);
+        Eigen::Vector3d sourceVector = Eigen::Vector3d(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
+        QCOMPARE(out_Horizontal.filterResult, atan2(sourceVector.x(), sourceVector.y()));
+        QCOMPARE(out_Vertical.filterResult, atan2(sourceVector.z(), sqrt(sourceVector.x() * sourceVector.x() + sourceVector.y() * sourceVector.y())));
+    }
+}
+
+void TestExpressionFilter::lidarAngles_Indexed()
+{
+    LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
+
+    PointFilter::ExpressionFilter filter_Angle_Horizontal_Index0;
+    PointFilter::ExpressionFilter filter_Angle_Horizontal_IndexMinus7;
+    PointFilter::ExpressionFilter filter_Angle_Vertical_IndexPlus7;
+
+    unsigned int index = 0;
+    PointFilter::ExpressionFilter::OutItem out;
+
+    QVERIFY(filter_Angle_Horizontal_Index0.setExpression_Filter("lidar.angle_indexed.horizontal(0)"));
+    QVERIFY(filter_Angle_Horizontal_IndexMinus7.setExpression_Filter("lidar.angle_indexed.horizonTal(-7)"));
+    QVERIFY(filter_Angle_Vertical_IndexPlus7.setExpression_Filter("lidar.angle_InDexed.vertiCal(7)"));
+
+    for (unsigned int i = 0; i < defaultTestRounds; i++)
+    {
+        sourcePoints[i] = getRandomLidarSourcePoint();
+    }
+
+    // Prefill buffers
+    for (index = 0; index < filterBufferLength - 1; index++)
+    {
+        filter_Angle_Horizontal_Index0.addPoint(sourcePoints[index], index);
+        filter_Angle_Horizontal_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_Angle_Vertical_IndexPlus7.addPoint(sourcePoints[index], index);
+    }
+
+    for (; index < defaultTestRounds; index++)
+    {
+        filter_Angle_Horizontal_Index0.addPoint(sourcePoints[index], index);
+        filter_Angle_Horizontal_IndexMinus7.addPoint(sourcePoints[index], index);
+        filter_Angle_Vertical_IndexPlus7.addPoint(sourcePoints[index], index);
+
+        QCOMPARE(filter_Angle_Horizontal_Index0.getFilteredPoint(out), true);
+        int offsettedIndex = index;
+        Eigen::Vector3d sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, atan2(sourceVector.x(), sourceVector.y()));
+
+        QCOMPARE(filter_Angle_Horizontal_IndexMinus7.getFilteredPoint(out), true);
+        offsettedIndex = index - 7;
+        sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, atan2(sourceVector.x(), sourceVector.y()));
+
+        QCOMPARE(filter_Angle_Vertical_IndexPlus7.getFilteredPoint(out), true);
+        offsettedIndex = index + 7;
+        sourceVector = Eigen::Vector3d(sourcePoints[offsettedIndex - (filterBufferLength / 2)].x, sourcePoints[offsettedIndex - (filterBufferLength / 2)].y, sourcePoints[offsettedIndex - (filterBufferLength / 2)].z);
+        QCOMPARE(out.filterResult, atan2(sourceVector.z(), sqrt(sourceVector.x() * sourceVector.x() + sourceVector.y() * sourceVector.y())));
+    }
+}
+
+
 void TestExpressionFilter::lidarProperties()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];

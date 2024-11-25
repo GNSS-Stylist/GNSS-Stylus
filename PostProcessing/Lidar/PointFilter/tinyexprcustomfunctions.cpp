@@ -140,6 +140,30 @@ te_type lidar_distance_indexed(const te_expr* context, te_type pointIndex)
     return static_cast<te_type>(c->lidar_distance_indexed(pointIndex));
 }
 
+te_type lidar_angle_horizontal(const te_expr* context)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_angle_horizontal());
+}
+
+te_type lidar_angle_indexed_horizontal(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_angle_horizontal_indexed(pointIndex));
+}
+
+te_type lidar_angle_vertical(const te_expr* context)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_angle_vertical());
+}
+
+te_type lidar_angle_indexed_vertical(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_angle_vertical_indexed(pointIndex));
+}
+
 te_type rig_coord_x(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);

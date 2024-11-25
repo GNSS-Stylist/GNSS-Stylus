@@ -134,6 +134,10 @@ public:
     inline te_type lidar_reflectivity_indexed(te_type pointIndex) const;
     inline te_type lidar_distance() const;
     inline te_type lidar_distance_indexed(te_type pointIndex) const;
+    inline te_type lidar_angle_horizontal() const;
+    inline te_type lidar_angle_horizontal_indexed(te_type pointIndex) const;
+    inline te_type lidar_angle_vertical() const;
+    inline te_type lidar_angle_vertical_indexed(te_type pointIndex) const;
 
     inline te_type rig_coord_x() const;
     inline te_type rig_coord_indexed_x(te_type pointIndex) const;
@@ -271,6 +275,30 @@ inline te_type TinyExprCustomFuncHandler::lidar_distance_indexed(te_type pointIn
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
     return getIndexedBufferItem(pointIndex).point_Lidar.getDistance();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_angle_horizontal() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getCurrentBufferItem().point_Lidar.getHorizontalAngle();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_angle_horizontal_indexed(te_type pointIndex) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getIndexedBufferItem(pointIndex).point_Lidar.getHorizontalAngle();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_angle_vertical() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getCurrentBufferItem().point_Lidar.getVerticalAngle();
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_angle_vertical_indexed(te_type pointIndex) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getIndexedBufferItem(pointIndex).point_Lidar.getVerticalAngle();
 }
 
 inline te_type TinyExprCustomFuncHandler::rig_coord_x() const

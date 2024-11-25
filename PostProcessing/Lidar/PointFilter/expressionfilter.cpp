@@ -85,6 +85,10 @@ void ExpressionFilter::setCustomVariablesAndFunctions(const QVector<ConvexHullFi
 
         { "lidar.distance", lidar_distance, TE_DEFAULT, customFuncHandler },
         { "lidar.distance_indexed", lidar_distance_indexed, TE_DEFAULT, customFuncHandler },
+        { "lidar.angle.horizontal", lidar_angle_horizontal, TE_DEFAULT, customFuncHandler },
+        { "lidar.angle_indexed.horizontal", lidar_angle_indexed_horizontal, TE_DEFAULT, customFuncHandler },
+        { "lidar.angle.vertical", lidar_angle_vertical, TE_DEFAULT, customFuncHandler },
+        { "lidar.angle_indexed.vertical", lidar_angle_indexed_vertical, TE_DEFAULT, customFuncHandler },
 
         { "rig.coord.x", rig_coord_x, TE_DEFAULT, customFuncHandler },
         { "rig.coord.y", rig_coord_y, TE_DEFAULT, customFuncHandler },
