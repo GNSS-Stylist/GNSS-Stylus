@@ -23,7 +23,7 @@
 #include <QCoreApplication>
 #include <QRandomGenerator>
 #include "Eigen/Geometry"
-#include "../PostProcessing/Lidar/PointFilter/expressionfilter.h"
+#include "../PostProcessing/Lidar/PointFilter/expressionfilter_mid360.h"
 
 class TestExpressionFilter : public QObject
 {
@@ -35,14 +35,14 @@ public:
 
 private:
     static const unsigned int defaultTestRounds = 1000;
-    static const unsigned int filterBufferLength = PointFilter::ExpressionFilter::bufferLength;
+    static const unsigned int filterBufferLength = PointFilter::ExpressionFilter_Mid360::bufferLength;
 
     QRandomGenerator randomGenerator;
     Eigen::Vector3d getRandomVec(double lowLimit = -10, double highLimit = 10);
     Eigen::Transform<double, 3, Eigen::Affine> getRandomTransform(double translateLowLimit = -10.0, double translateHighLimit = 10.0);
     bool compareVectors(const Eigen::Vector3d vec1, const Eigen::Vector3d& vec2);
 
-    PointFilter::ExpressionFilter::OutItem getRandomOutItem(void);
+    PointFilter::ExpressionFilter_Mid360::OutItem getRandomOutItem(void);
     LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f, const double pointCoordLowLimit = -40.0, const double pointCoordHighLimit = 40.0);
 
 private slots:

@@ -17,7 +17,7 @@
 */
 
 #include "tinyexprcustomfunctions.h"
-#include "expressionfilter.h"
+#include "expressionfilter_base.h"
 #include "qmath.h"
 
 namespace PointFilter{

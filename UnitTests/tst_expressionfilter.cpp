@@ -46,9 +46,9 @@ Eigen::Vector3d TestExpressionFilter::getRandomVec(double lowLimit, double highL
                            );
 }
 
-PointFilter::ExpressionFilter::OutItem TestExpressionFilter::getRandomOutItem(void)
+PointFilter::ExpressionFilter_Mid360::OutItem TestExpressionFilter::getRandomOutItem(void)
 {
-    PointFilter::ExpressionFilter::OutItem item;
+    PointFilter::ExpressionFilter_Mid360::OutItem item;
     item.valid = randomGenerator.generate() & 1;
     item.filterResult = randomGenerator.bounded(2e9) - 1e9;
     item.uptime_ms = randomGenerator.generate();
@@ -101,8 +101,8 @@ bool TestExpressionFilter::compareVectors(const Eigen::Vector3d vec1, const Eige
 
 void TestExpressionFilter::expressionValidity_ValidExpressions()
 {
-    PointFilter::ExpressionFilter filter;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360 filter;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     QCOMPARE(filter.setExpression_Filter("1"), true);
     QCOMPARE(filter.setExpression_Quality("1"), true);
@@ -110,8 +110,8 @@ void TestExpressionFilter::expressionValidity_ValidExpressions()
 
 void TestExpressionFilter::expressionValidity_InvalidExpressions()
 {
-    PointFilter::ExpressionFilter filter;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360 filter;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     QCOMPARE(filter.setExpression_Filter("invalid"), false);
     QCOMPARE(filter.setExpression_Quality("invalid"), false);
@@ -179,8 +179,8 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
 
 void TestExpressionFilter::noData()
 {
-    PointFilter::ExpressionFilter filter;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360 filter;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     for (int i = 0; i < 100; i++)
     {
@@ -192,8 +192,8 @@ void TestExpressionFilter::noData()
 
 void TestExpressionFilter::defaultExpressions()
 {
-    PointFilter::ExpressionFilter filter;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360 filter;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     // Prefill buffer
     for (unsigned int i = 0; i < filterBufferLength - 1; i++)
@@ -226,8 +226,8 @@ void TestExpressionFilter::defaultExpressions()
 
 void TestExpressionFilter::pureFunctions()
 {
-    PointFilter::ExpressionFilter filter;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360 filter;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     unsigned int index = 0;
     // Prefill buffer
@@ -312,11 +312,11 @@ void TestExpressionFilter::lidarCoords()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX;
-    PointFilter::ExpressionFilter filter_CoordY;
-    PointFilter::ExpressionFilter filter_CoordZ;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ;
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX.setExpression_Filter("lidar.coord.x");
     filter_CoordY.setExpression_Filter("lidar.coord.y");
@@ -356,23 +356,23 @@ void TestExpressionFilter::lidarCoords_Indexed()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX_Index0;
-    PointFilter::ExpressionFilter filter_CoordY_Index0;
-    PointFilter::ExpressionFilter filter_CoordZ_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_Index0;
 
     // Use just some random indexes
-    PointFilter::ExpressionFilter filter_CoordX_IndexMinus1;
-    PointFilter::ExpressionFilter filter_CoordX_IndexPlus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexMinus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexPlus2;
 
-    PointFilter::ExpressionFilter filter_CoordY_IndexMinus2;
-    PointFilter::ExpressionFilter filter_CoordY_IndexPlus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexMinus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexPlus1;
 
     // Min/max indexes for z
-    PointFilter::ExpressionFilter filter_CoordZ_IndexMinus7;
-    PointFilter::ExpressionFilter filter_CoordZ_IndexPlus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexMinus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexPlus7;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX_Index0.setExpression_Filter("lidar.coord_indexed.x(0)");
     filter_CoordY_Index0.setExpression_Filter("lidar.coord_indexed.y(0)");
@@ -457,10 +457,10 @@ void TestExpressionFilter::lidarDistance()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Distance;
+    PointFilter::ExpressionFilter_Mid360 filter_Distance;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_Distance.setExpression_Filter("lidar.distance");
 
@@ -489,12 +489,12 @@ void TestExpressionFilter::lidarDistance_Indexed()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Distance_Index0;
-    PointFilter::ExpressionFilter filter_Distance_IndexMinus7;
-    PointFilter::ExpressionFilter filter_Distance_IndexPlus7;
+    PointFilter::ExpressionFilter_Mid360 filter_Distance_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_Distance_IndexMinus7;
+    PointFilter::ExpressionFilter_Mid360 filter_Distance_IndexPlus7;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_Distance_Index0.setExpression_Filter("lidar.distance_indexed(0)");
     filter_Distance_IndexMinus7.setExpression_Filter("lidar.distance_indexed(-7)");
@@ -540,12 +540,12 @@ void TestExpressionFilter::lidarAngles()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Angle_Horizontal;
-    PointFilter::ExpressionFilter filter_Angle_Vertical;
+    PointFilter::ExpressionFilter_Mid360 filter_Angle_Horizontal;
+    PointFilter::ExpressionFilter_Mid360 filter_Angle_Vertical;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out_Horizontal;
-    PointFilter::ExpressionFilter::OutItem out_Vertical;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Horizontal;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Vertical;
 
     QVERIFY(filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal"));
     QVERIFY(filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical"));
@@ -579,12 +579,12 @@ void TestExpressionFilter::lidarAngles_Indexed()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Angle_Horizontal_Index0;
-    PointFilter::ExpressionFilter filter_Angle_Horizontal_IndexMinus7;
-    PointFilter::ExpressionFilter filter_Angle_Vertical_IndexPlus7;
+    PointFilter::ExpressionFilter_Mid360 filter_Angle_Horizontal_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_Angle_Horizontal_IndexMinus7;
+    PointFilter::ExpressionFilter_Mid360 filter_Angle_Vertical_IndexPlus7;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     QVERIFY(filter_Angle_Horizontal_Index0.setExpression_Filter("lidar.angle_indexed.horizontal(0)"));
     QVERIFY(filter_Angle_Horizontal_IndexMinus7.setExpression_Filter("lidar.angle_indexed.horizonTal(-7)"));
@@ -631,16 +631,16 @@ void TestExpressionFilter::lidarProperties()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Properties;
-    PointFilter::ExpressionFilter filter_Properties_other;
-    PointFilter::ExpressionFilter filter_Properties_dust;
-    PointFilter::ExpressionFilter filter_Properties_glue;
+    PointFilter::ExpressionFilter_Mid360 filter_Properties;
+    PointFilter::ExpressionFilter_Mid360 filter_Properties_other;
+    PointFilter::ExpressionFilter_Mid360 filter_Properties_dust;
+    PointFilter::ExpressionFilter_Mid360 filter_Properties_glue;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out_Properties;
-    PointFilter::ExpressionFilter::OutItem out_Properties_other;
-    PointFilter::ExpressionFilter::OutItem out_Properties_dust;
-    PointFilter::ExpressionFilter::OutItem out_Properties_glue;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Properties;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_other;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_dust;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_glue;
 
     filter_Properties.setExpression_Filter("lidar.properties");
     filter_Properties_other.setExpression_Filter("lidar.properties.other");
@@ -686,16 +686,16 @@ void TestExpressionFilter::lidarProperties_Indexed()
     {
         LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-        PointFilter::ExpressionFilter filter_Properties;
-        PointFilter::ExpressionFilter filter_Properties_other;
-        PointFilter::ExpressionFilter filter_Properties_dust;
-        PointFilter::ExpressionFilter filter_Properties_glue;
+        PointFilter::ExpressionFilter_Mid360 filter_Properties;
+        PointFilter::ExpressionFilter_Mid360 filter_Properties_other;
+        PointFilter::ExpressionFilter_Mid360 filter_Properties_dust;
+        PointFilter::ExpressionFilter_Mid360 filter_Properties_glue;
 
         unsigned int index = 0;
-        PointFilter::ExpressionFilter::OutItem out_Properties;
-        PointFilter::ExpressionFilter::OutItem out_Properties_other;
-        PointFilter::ExpressionFilter::OutItem out_Properties_dust;
-        PointFilter::ExpressionFilter::OutItem out_Properties_glue;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Properties;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_other;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_dust;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_glue;
 
         filter_Properties.setExpression_Filter(QString("lidar.properties_indexed(") + QString::number(offset) + ")");
         filter_Properties_other.setExpression_Filter(QString("lidar.properties_indexed.other(") + QString::number(offset) + ")");
@@ -742,10 +742,10 @@ void TestExpressionFilter::lidarReflectivity()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Reflectivity;
+    PointFilter::ExpressionFilter_Mid360 filter_Reflectivity;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out_Reflectivity;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Reflectivity;
 
     filter_Reflectivity.setExpression_Filter("lidar.reflectivity");
 
@@ -776,10 +776,10 @@ void TestExpressionFilter::lidarReflectivity_Indexed()
     {
         LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-        PointFilter::ExpressionFilter filter_Reflectivity;
+        PointFilter::ExpressionFilter_Mid360 filter_Reflectivity;
 
         unsigned int index = 0;
-        PointFilter::ExpressionFilter::OutItem out_Reflectivity;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Reflectivity;
 
         filter_Reflectivity.setExpression_Filter(QString("lidar.reflectivity_indexed(") + QString::number(offset) + ")");
 
@@ -811,11 +811,11 @@ void TestExpressionFilter::rigCoords_DefaultTransform()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX;
-    PointFilter::ExpressionFilter filter_CoordY;
-    PointFilter::ExpressionFilter filter_CoordZ;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ;
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX.setExpression_Filter("rig.coord.x");
     filter_CoordY.setExpression_Filter("rig.coord.y");
@@ -855,23 +855,23 @@ void TestExpressionFilter::rigCoords_Indexed_DefaultTransform()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX_Index0;
-    PointFilter::ExpressionFilter filter_CoordY_Index0;
-    PointFilter::ExpressionFilter filter_CoordZ_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_Index0;
 
     // Use just some random indexes
-    PointFilter::ExpressionFilter filter_CoordX_IndexMinus1;
-    PointFilter::ExpressionFilter filter_CoordX_IndexPlus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexMinus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexPlus2;
 
-    PointFilter::ExpressionFilter filter_CoordY_IndexMinus2;
-    PointFilter::ExpressionFilter filter_CoordY_IndexPlus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexMinus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexPlus1;
 
     // Min/max indexes for z
-    PointFilter::ExpressionFilter filter_CoordZ_IndexMinus7;
-    PointFilter::ExpressionFilter filter_CoordZ_IndexPlus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexMinus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexPlus7;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX_Index0.setExpression_Filter("rig.coord_indexed.x(0)");
     filter_CoordY_Index0.setExpression_Filter("rig.coord_indexed.y(0)");
@@ -956,11 +956,11 @@ void TestExpressionFilter::nedCoords_DefaultTransform()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX;
-    PointFilter::ExpressionFilter filter_CoordY;
-    PointFilter::ExpressionFilter filter_CoordZ;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ;
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX.setExpression_Filter("ned.coord.x");
     filter_CoordY.setExpression_Filter("ned.coord.y");
@@ -1005,23 +1005,23 @@ void TestExpressionFilter::nedCoords_Indexed_DefaultTransform()
 {
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_CoordX_Index0;
-    PointFilter::ExpressionFilter filter_CoordY_Index0;
-    PointFilter::ExpressionFilter filter_CoordZ_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_Index0;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_Index0;
 
     // Use just some random indexes
-    PointFilter::ExpressionFilter filter_CoordX_IndexMinus1;
-    PointFilter::ExpressionFilter filter_CoordX_IndexPlus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexMinus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordX_IndexPlus2;
 
-    PointFilter::ExpressionFilter filter_CoordY_IndexMinus2;
-    PointFilter::ExpressionFilter filter_CoordY_IndexPlus1;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexMinus2;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordY_IndexPlus1;
 
     // Min/max indexes for z
-    PointFilter::ExpressionFilter filter_CoordZ_IndexMinus7;
-    PointFilter::ExpressionFilter filter_CoordZ_IndexPlus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexMinus7;
+    PointFilter::ExpressionFilter_Mid360 filter_CoordZ_IndexPlus7;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     filter_CoordX_Index0.setExpression_Filter("ned.coord_indexed.x(0)");
     filter_CoordY_Index0.setExpression_Filter("ned.coord_indexed.y(0)");
@@ -1119,21 +1119,21 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
     Eigen::Transform<double, 3, Eigen::Affine> transforms_LidarToRig[defaultTestRounds];
     Eigen::Transform<double, 3, Eigen::Affine> transforms_RigToNED[defaultTestRounds];
 
-    PointFilter::ExpressionFilter filter_Rig_CoordX;
-    PointFilter::ExpressionFilter filter_Rig_CoordY;
-    PointFilter::ExpressionFilter filter_Rig_CoordZ;
+    PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordZ;
 
-    PointFilter::ExpressionFilter::OutItem out_Rig_X;
-    PointFilter::ExpressionFilter::OutItem out_Rig_Y;
-    PointFilter::ExpressionFilter::OutItem out_Rig_Z;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_X;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_Y;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_Z;
 
-    PointFilter::ExpressionFilter filter_NED_CoordX;
-    PointFilter::ExpressionFilter filter_NED_CoordY;
-    PointFilter::ExpressionFilter filter_NED_CoordZ;
+    PointFilter::ExpressionFilter_Mid360 filter_NED_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_NED_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_NED_CoordZ;
 
-    PointFilter::ExpressionFilter::OutItem out_NED_X;
-    PointFilter::ExpressionFilter::OutItem out_NED_Y;
-    PointFilter::ExpressionFilter::OutItem out_NED_Z;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED_X;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Y;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Z;
 
     filter_Rig_CoordX.setExpression_Filter("rig.coord.x");
     filter_Rig_CoordY.setExpression_Filter("rig.coord.y");
@@ -1280,21 +1280,21 @@ void TestExpressionFilter::rigAndNEDCoords_Indexed_RandomTransforms()
         Eigen::Transform<double, 3, Eigen::Affine> transforms_LidarToRig[defaultTestRounds];
         Eigen::Transform<double, 3, Eigen::Affine> transforms_RigToNED[defaultTestRounds];
 
-        PointFilter::ExpressionFilter filter_Rig_CoordX;
-        PointFilter::ExpressionFilter filter_Rig_CoordY;
-        PointFilter::ExpressionFilter filter_Rig_CoordZ;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordX;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordY;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordZ;
 
-        PointFilter::ExpressionFilter::OutItem out_Rig_X;
-        PointFilter::ExpressionFilter::OutItem out_Rig_Y;
-        PointFilter::ExpressionFilter::OutItem out_Rig_Z;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_X;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_Y;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_Rig_Z;
 
-        PointFilter::ExpressionFilter filter_NED_CoordX;
-        PointFilter::ExpressionFilter filter_NED_CoordY;
-        PointFilter::ExpressionFilter filter_NED_CoordZ;
+        PointFilter::ExpressionFilter_Mid360 filter_NED_CoordX;
+        PointFilter::ExpressionFilter_Mid360 filter_NED_CoordY;
+        PointFilter::ExpressionFilter_Mid360 filter_NED_CoordZ;
 
-        PointFilter::ExpressionFilter::OutItem out_NED_X;
-        PointFilter::ExpressionFilter::OutItem out_NED_Y;
-        PointFilter::ExpressionFilter::OutItem out_NED_Z;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_NED_X;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Y;
+        PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Z;
 
         filter_Rig_CoordX.setExpression_Filter(QString("rig.coord_indexed.x(" + QString::number(rigOffset) + ")"));
         filter_Rig_CoordY.setExpression_Filter(QString("rig.coord_indexed.y(" + QString::number(rigOffset) + ")"));
@@ -1439,20 +1439,20 @@ void TestExpressionFilter::rigAndNEDCoords_Indexed_RandomTransforms()
 
 void TestExpressionFilter::convexHullIndexes()
 {
-    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
 
-    PointFilter::ExpressionFilter::ConvexHullFilter firstFilter { .Name = "first", .filter = ConvexHull::Filter() };
-    PointFilter::ExpressionFilter::ConvexHullFilter secondFilter { .Name = "second", .filter = ConvexHull::Filter() };
-    PointFilter::ExpressionFilter::ConvexHullFilter thirdFilter { .Name = "tHiRd", .filter = ConvexHull::Filter() };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter firstFilter { .Name = "first", .filter = ConvexHull::Filter() };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter secondFilter { .Name = "second", .filter = ConvexHull::Filter() };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter thirdFilter { .Name = "tHiRd", .filter = ConvexHull::Filter() };
 
     convexHullFilters.push_back(firstFilter);
     convexHullFilters.push_back(secondFilter);
     convexHullFilters.push_back(thirdFilter);
 
-    PointFilter::ExpressionFilter filter_First;
-    PointFilter::ExpressionFilter filter_Second;
-    PointFilter::ExpressionFilter filter_Third;
-    PointFilter::ExpressionFilter filter_InvalidHullIndexIdent;
+    PointFilter::ExpressionFilter_Mid360 filter_First;
+    PointFilter::ExpressionFilter_Mid360 filter_Second;
+    PointFilter::ExpressionFilter_Mid360 filter_Third;
+    PointFilter::ExpressionFilter_Mid360 filter_InvalidHullIndexIdent;
 
     QVERIFY(filter_First.setConvexHullFilters(convexHullFilters));
     QVERIFY(filter_Second.setConvexHullFilters(convexHullFilters));
@@ -1462,9 +1462,9 @@ void TestExpressionFilter::convexHullIndexes()
     // Calling this again should not change anything
     QVERIFY(filter_Third.setConvexHullFilters(convexHullFilters));
 
-    PointFilter::ExpressionFilter::OutItem out_First;
-    PointFilter::ExpressionFilter::OutItem out_Second;
-    PointFilter::ExpressionFilter::OutItem out_Third;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_First;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Second;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Third;
 
     QCOMPARE(filter_First.setExpression_Filter("chull_first"), true);
     QCOMPARE(filter_Second.setExpression_Filter("chull_sEcOnD"), true);
@@ -1543,13 +1543,13 @@ void TestExpressionFilter::invalidConvexHullIndexes()
 
     QVERIFY(hull.getFilter(cHullFilter));
 
-    PointFilter::ExpressionFilter::ConvexHullFilter hugeOriginBoxCHullFilter { .Name = "hugeoriginbox", .filter = cHullFilter };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter hugeOriginBoxCHullFilter { .Name = "hugeoriginbox", .filter = cHullFilter };
 
-    PointFilter::ExpressionFilter exprFilter_Lidar;
-    PointFilter::ExpressionFilter exprFilter_Rig;
-    PointFilter::ExpressionFilter exprFilter_NED;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Lidar;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Rig;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_NED;
 
-    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
     convexHullFilters.push_back(hugeOriginBoxCHullFilter);
     QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
@@ -1571,7 +1571,7 @@ void TestExpressionFilter::invalidConvexHullIndexes()
         exprFilter_NED.addPoint(sourcePoints[index], index);
     }
 
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     for (; index < defaultTestRounds; index++)
     {
@@ -1604,13 +1604,13 @@ void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
 
     QVERIFY(hull.getFilter(cHullFilter));
 
-    PointFilter::ExpressionFilter::ConvexHullFilter originBoxCHullFilter { .Name = "originbox", .filter = cHullFilter };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter originBoxCHullFilter { .Name = "originbox", .filter = cHullFilter };
 
-    PointFilter::ExpressionFilter exprFilter_Lidar;
-    PointFilter::ExpressionFilter exprFilter_Rig;
-    PointFilter::ExpressionFilter exprFilter_NED;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Lidar;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Rig;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_NED;
 
-    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
     convexHullFilters.push_back(originBoxCHullFilter);
     QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
@@ -1638,7 +1638,7 @@ void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
 
     (void) indeterminates;
 
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     for (; index < defaultTestRounds; index++)
     {
@@ -1698,9 +1698,9 @@ void TestExpressionFilter::convexHulls_OverwriteHulls()
         sourcePoints[i] = getRandomLidarSourcePoint(0x3f, -1.3, 1.3);
     }
 
-    PointFilter::ExpressionFilter exprFilter_Lidar;
-    PointFilter::ExpressionFilter exprFilter_Rig;
-    PointFilter::ExpressionFilter exprFilter_NED;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Lidar;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Rig;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_NED;
 
     for (int i = 0; i < 10; i++)
     {
@@ -1713,10 +1713,10 @@ void TestExpressionFilter::convexHulls_OverwriteHulls()
         QVERIFY(hull1.getFilter(cHullFilter1));
         QVERIFY(hull1.getFilter(cHullFilter2));
 
-        PointFilter::ExpressionFilter::ConvexHullFilter originBoxCHullFilter1 { .Name = "originbox", .filter = cHullFilter1 };
-        PointFilter::ExpressionFilter::ConvexHullFilter originBoxCHullFilter2 { .Name = "anothername", .filter = cHullFilter2 };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter originBoxCHullFilter1 { .Name = "originbox", .filter = cHullFilter1 };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter originBoxCHullFilter2 { .Name = "anothername", .filter = cHullFilter2 };
 
-        QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+        QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
         convexHullFilters.push_back(originBoxCHullFilter1);
         convexHullFilters.push_back(originBoxCHullFilter2);
         QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
@@ -1732,10 +1732,10 @@ void TestExpressionFilter::convexHulls_OverwriteHulls()
 
     QVERIFY(hull.getFilter(cHullFilter));
 
-    PointFilter::ExpressionFilter::ConvexHullFilter originBoxCHullFilter { .Name = "originbox", .filter = cHullFilter };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter originBoxCHullFilter { .Name = "originbox", .filter = cHullFilter };
 
 
-    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
     convexHullFilters.push_back(originBoxCHullFilter);
     QVERIFY(exprFilter_Lidar.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
@@ -1763,7 +1763,7 @@ void TestExpressionFilter::convexHulls_OverwriteHulls()
 
     (void) indeterminates;
 
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     for (; index < defaultTestRounds; index++)
     {
@@ -1830,17 +1830,17 @@ void TestExpressionFilter::convexHulls_TwoStaticCubes_DefaultTransforms()
     QVERIFY(hull1.getFilter(cHullFilter1));
     QVERIFY(hull2.getFilter(cHullFilter2));
 
-    PointFilter::ExpressionFilter::ConvexHullFilter boxCHullFilter1 { .Name = "box1", .filter = cHullFilter1 };
-    PointFilter::ExpressionFilter::ConvexHullFilter boxCHullFilter2 { .Name = "box2", .filter = cHullFilter2 };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter boxCHullFilter1 { .Name = "box1", .filter = cHullFilter1 };
+    PointFilter::ExpressionFilter_Mid360::ConvexHullFilter boxCHullFilter2 { .Name = "box2", .filter = cHullFilter2 };
 
-    PointFilter::ExpressionFilter exprFilter_Lidar1;
-    PointFilter::ExpressionFilter exprFilter_Rig1;
-    PointFilter::ExpressionFilter exprFilter_NED1;
-    PointFilter::ExpressionFilter exprFilter_Lidar2;
-    PointFilter::ExpressionFilter exprFilter_Rig2;
-    PointFilter::ExpressionFilter exprFilter_NED2;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Lidar1;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Rig1;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_NED1;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Lidar2;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_Rig2;
+    PointFilter::ExpressionFilter_Mid360 exprFilter_NED2;
 
-    QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+    QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
     convexHullFilters.push_back(boxCHullFilter1);
     convexHullFilters.push_back(boxCHullFilter2);
     QVERIFY(exprFilter_Lidar1.setConvexHullFilters(convexHullFilters));
@@ -1885,7 +1885,7 @@ void TestExpressionFilter::convexHulls_TwoStaticCubes_DefaultTransforms()
     int indeterminates2 = 0;
     (void) indeterminates2;
 
-    PointFilter::ExpressionFilter::OutItem out;
+    PointFilter::ExpressionFilter_Mid360::OutItem out;
 
     for (; index < defaultTestRounds; index++)
     {
@@ -1992,9 +1992,9 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2007,9 +2007,9 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
 
     for (int cubeSet = 0; cubeSet < 10; cubeSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
@@ -2059,35 +2059,35 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
 
         ConvexHull::Filter chFilter_Lidar_First;
         QVERIFY(getConvexHullBox(hullBoxes[0]).getFilter(chFilter_Lidar_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_First { .Name = "first", .filter = chFilter_Lidar_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Lidar_First { .Name = "first", .filter = chFilter_Lidar_First };
 
         ConvexHull::Filter chFilter_Lidar_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1]).getFilter(chFilter_Lidar_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_Second { .Name = "second", .filter = chFilter_Lidar_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Lidar_Second { .Name = "second", .filter = chFilter_Lidar_Second };
 
 
         ConvexHull::Filter chFilter_Rig_First;
         QVERIFY(getConvexHullBox(hullBoxes[0], transform_LidarToRig).getFilter(chFilter_Rig_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
 
         ConvexHull::Filter chFilter_Rig_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1], transform_LidarToRig).getFilter(chFilter_Rig_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_Second { .Name = "second_rig", .filter = chFilter_Rig_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Rig_Second { .Name = "second_rig", .filter = chFilter_Rig_Second };
 
 
         ConvexHull::Filter chFilter_NED_First;
         QVERIFY(getConvexHullBox(hullBoxes[0], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_First { .Name = "first_ned", .filter = chFilter_NED_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_First { .Name = "first_ned", .filter = chFilter_NED_First };
 
         ConvexHull::Filter chFilter_NED_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Second { .Name = "second_ned", .filter = chFilter_NED_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_Second { .Name = "second_ned", .filter = chFilter_NED_Second };
 
         ConvexHull::Filter chFilter_NED_Third;
         QVERIFY(getConvexHullBox(hullBoxes[2], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Third));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Third { .Name = "third_ned", .filter = chFilter_NED_Third };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_Third { .Name = "third_ned", .filter = chFilter_NED_Third };
 
-        QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+        QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
 
         convexHullFilters.push_back(chullFilter_Expr_Lidar_First);
         convexHullFilters.push_back(chullFilter_Expr_Lidar_Second);
@@ -2254,10 +2254,10 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
-    PointFilter::ExpressionFilter::OutItem out_InvalidHullIndexes;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_InvalidHullIndexes;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2270,10 +2270,10 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
 
     for (int cubeSet = 0; cubeSet < 10; cubeSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
-        PointFilter::ExpressionFilter filter_InvalidHullIndexes;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_InvalidHullIndexes;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
@@ -2315,35 +2315,35 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
 
         ConvexHull::Filter chFilter_Lidar_First;
         QVERIFY(getConvexHullBox(hullBoxes[0]).getFilter(chFilter_Lidar_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_First { .Name = "first", .filter = chFilter_Lidar_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Lidar_First { .Name = "first", .filter = chFilter_Lidar_First };
 
         ConvexHull::Filter chFilter_Lidar_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1]).getFilter(chFilter_Lidar_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Lidar_Second { .Name = "second", .filter = chFilter_Lidar_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Lidar_Second { .Name = "second", .filter = chFilter_Lidar_Second };
 
 
         ConvexHull::Filter chFilter_Rig_First;
         QVERIFY(getConvexHullBox(hullBoxes[0], transform_LidarToRig).getFilter(chFilter_Rig_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Rig_First { .Name = "first_rig", .filter = chFilter_Rig_First };
 
         ConvexHull::Filter chFilter_Rig_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1], transform_LidarToRig).getFilter(chFilter_Rig_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_Rig_Second { .Name = "second_rig", .filter = chFilter_Rig_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_Rig_Second { .Name = "second_rig", .filter = chFilter_Rig_Second };
 
 
         ConvexHull::Filter chFilter_NED_First;
         QVERIFY(getConvexHullBox(hullBoxes[0], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_First));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_First { .Name = "first_ned", .filter = chFilter_NED_First };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_First { .Name = "first_ned", .filter = chFilter_NED_First };
 
         ConvexHull::Filter chFilter_NED_Second;
         QVERIFY(getConvexHullBox(hullBoxes[1], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Second));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Second { .Name = "second_ned", .filter = chFilter_NED_Second };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_Second { .Name = "second_ned", .filter = chFilter_NED_Second };
 
         ConvexHull::Filter chFilter_NED_Third;
         QVERIFY(getConvexHullBox(hullBoxes[2], transform_RigToNED * transform_LidarToRig).getFilter(chFilter_NED_Third));
-        PointFilter::ExpressionFilter::ConvexHullFilter chullFilter_Expr_NED_Third { .Name = "third_ned", .filter = chFilter_NED_Third };
+        PointFilter::ExpressionFilter_Mid360::ConvexHullFilter chullFilter_Expr_NED_Third { .Name = "third_ned", .filter = chFilter_NED_Third };
 
-        QVector<PointFilter::ExpressionFilter::ConvexHullFilter> convexHullFilters;
+        QVector<PointFilter::ExpressionFilter_Mid360::ConvexHullFilter> convexHullFilters;
 
         convexHullFilters.push_back(chullFilter_Expr_Lidar_First);
         convexHullFilters.push_back(chullFilter_Expr_Lidar_Second);
@@ -2465,9 +2465,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2480,9 +2480,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
 
     for (int aabbSet = 0; aabbSet < 10; aabbSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
@@ -2699,9 +2699,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2714,9 +2714,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
 
     for (int aabbSet = 0; aabbSet < 10; aabbSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
@@ -2945,9 +2945,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2960,9 +2960,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
 
     for (int sphereSet = 0; sphereSet < 10; sphereSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
@@ -3150,9 +3150,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
 
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
 
-    PointFilter::ExpressionFilter::OutItem out_Lidar;
-    PointFilter::ExpressionFilter::OutItem out_Rig;
-    PointFilter::ExpressionFilter::OutItem out_NED;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Lidar;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_Rig;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_NED;
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -3165,9 +3165,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
 
     for (int sphereSet = 0; sphereSet < 10; sphereSet++)
     {
-        PointFilter::ExpressionFilter filter_Lidar;
-        PointFilter::ExpressionFilter filter_Rig;
-        PointFilter::ExpressionFilter filter_NED;
+        PointFilter::ExpressionFilter_Mid360 filter_Lidar;
+        PointFilter::ExpressionFilter_Mid360 filter_Rig;
+        PointFilter::ExpressionFilter_Mid360 filter_NED;
 
         Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
         Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();

@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef EXPRESSIONFILTER_H
-#define EXPRESSIONFILTER_H
+#ifndef EXPRESSIONFILTER_BASE_H
+#define EXPRESSIONFILTER_BASE_H
 
 #include <QString>
 #include <QVector>
@@ -30,18 +30,17 @@
 namespace PointFilter
 {
 
-
-class ExpressionFilter
+class ExpressionFilter_Base
 {
 public:
+    ExpressionFilter_Base();
+    ~ExpressionFilter_Base();
+
     struct ConvexHullFilter
     {
         QString Name;
         ConvexHull::Filter filter;
     };
-
-    ExpressionFilter();
-    ~ExpressionFilter();
 
     static const unsigned int bufferLength = 16;
 
@@ -55,17 +54,15 @@ public:
         double quality;
     };
 
-    void initBuffer(void);
     bool setExpression_Filter(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
     bool setExpression_Quality(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
     void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     bool setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters);
-
-    void addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms);
     bool getFilteredPoint(OutItem& outPoint);
 
-private:
+protected:
+
     class BufferItem
     {
     public:
@@ -77,7 +74,8 @@ private:
         int uptime_ms;
     };
 
-    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters = QVector<ConvexHullFilter>());
+//    virtual void initBuffer(void) = 0;
+    virtual void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters = QVector<ConvexHullFilter>()) = 0;
 
     QString expression_Filter;
     te_parser parser_Filter;
@@ -103,16 +101,18 @@ private:
     friend class TinyExprCustomFuncHandler;
 };
 
+
+
 class TinyExprCustomFuncHandler : public te_expr
 {
 public:
-    explicit TinyExprCustomFuncHandler(const te_variable_flags type, ExpressionFilter* const filter) noexcept :
+    explicit TinyExprCustomFuncHandler(const te_variable_flags type, ExpressionFilter_Base* const filter) noexcept :
         te_expr(type) { this->filter = filter; }
 
-    ExpressionFilter::BufferItem& getCurrentBufferItem(void) const
+    ExpressionFilter_Base::BufferItem& getCurrentBufferItem(void) const
         { return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1) % filter->bufferLength]; };
 
-    ExpressionFilter::BufferItem& getIndexedBufferItem(const te_type& pointIndex) const
+    ExpressionFilter_Base::BufferItem& getIndexedBufferItem(const te_type& pointIndex) const
         { return filter->buffer[(filter->bufferIndex - (filter->bufferLength / 2) - 1 + int(pointIndex)) % filter->bufferLength]; };
 
     inline te_type lidar_coord_x() const;
@@ -175,7 +175,7 @@ public:
     inline te_type ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
 
 private:
-    ExpressionFilter* filter;
+    ExpressionFilter_Base* filter;
 };
 
 
@@ -570,4 +570,4 @@ inline te_type TinyExprCustomFuncHandler::ned_in_sphere_indexed(te_type centerX,
 
 
 }; // namespace PointFilter
-#endif // EXPRESSIONFILTER_H
+#endif // EXPRESSIONFILTER_BASE_H
