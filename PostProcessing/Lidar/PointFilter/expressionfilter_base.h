@@ -99,6 +99,8 @@ protected:
     QVector<ConvexHull::Filter> convexHullFilters;
 
     friend class TinyExprCustomFuncHandler;
+
+    std::set<te_variable> getCommonCustomFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters);
 };
 
 
