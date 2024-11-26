@@ -642,10 +642,10 @@ void TestExpressionFilter::lidarProperties()
     PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_dust;
     PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_glue;
 
-    filter_Properties.setExpression_Filter("lidar.properties");
-    filter_Properties_other.setExpression_Filter("lidar.properties.other");
-    filter_Properties_dust.setExpression_Filter("lidar.properties.dust");
-    filter_Properties_glue.setExpression_Filter("lidar.properties.glue");
+    filter_Properties.setExpression_Filter("lidar.mid360.properties");
+    filter_Properties_other.setExpression_Filter("lidar.mid360.properties.other");
+    filter_Properties_dust.setExpression_Filter("lidar.mid360.properties.dust");
+    filter_Properties_glue.setExpression_Filter("lidar.mid360.properties.glue");
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -697,10 +697,10 @@ void TestExpressionFilter::lidarProperties_Indexed()
         PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_dust;
         PointFilter::ExpressionFilter_Mid360::OutItem out_Properties_glue;
 
-        filter_Properties.setExpression_Filter(QString("lidar.properties_indexed(") + QString::number(offset) + ")");
-        filter_Properties_other.setExpression_Filter(QString("lidar.properties_indexed.other(") + QString::number(offset) + ")");
-        filter_Properties_dust.setExpression_Filter(QString("lidar.properties_indexed.dust(") + QString::number(offset) + ")");
-        filter_Properties_glue.setExpression_Filter(QString("lidar.properties_indexed.glue(") + QString::number(offset) + ")");
+        filter_Properties.setExpression_Filter(QString("lidar.mid360.properties_indexed(") + QString::number(offset) + ")");
+        filter_Properties_other.setExpression_Filter(QString("lidar.mid360.properties_indexed.other(") + QString::number(offset) + ")");
+        filter_Properties_dust.setExpression_Filter(QString("lidar.mid360.properties_indexed.dust(") + QString::number(offset) + ")");
+        filter_Properties_glue.setExpression_Filter(QString("lidar.mid360.properties_indexed.glue(") + QString::number(offset) + ")");
 
         for (unsigned int i = 0; i < defaultTestRounds; i++)
         {
@@ -747,7 +747,7 @@ void TestExpressionFilter::lidarReflectivity()
     unsigned int index = 0;
     PointFilter::ExpressionFilter_Mid360::OutItem out_Reflectivity;
 
-    filter_Reflectivity.setExpression_Filter("lidar.reflectivity");
+    filter_Reflectivity.setExpression_Filter("lidar.mid360.reflectivity");
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -781,7 +781,7 @@ void TestExpressionFilter::lidarReflectivity_Indexed()
         unsigned int index = 0;
         PointFilter::ExpressionFilter_Mid360::OutItem out_Reflectivity;
 
-        filter_Reflectivity.setExpression_Filter(QString("lidar.reflectivity_indexed(") + QString::number(offset) + ")");
+        filter_Reflectivity.setExpression_Filter(QString("lidar.mid360.reflectivity_indexed(") + QString::number(offset) + ")");
 
         for (unsigned int i = 0; i < defaultTestRounds; i++)
         {

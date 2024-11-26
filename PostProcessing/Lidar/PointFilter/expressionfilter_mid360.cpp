@@ -39,17 +39,17 @@ void ExpressionFilter_Mid360::setCustomVariablesAndFunctions(const QVector<Conve
 {
     std::set<te_variable> customFunctions =
     {
-         { "lidar.properties", lidar_properties, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties.other", lidar_properties_other, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties.dust", lidar_properties_dust, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties.glue", lidar_properties_glue, TE_DEFAULT, customFuncHandler },
-         { "lidar.reflectivity", lidar_reflectivity, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties", lidar_properties, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties.other", lidar_properties_other, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties.dust", lidar_properties_dust, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties.glue", lidar_properties_glue, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.reflectivity", lidar_reflectivity, TE_DEFAULT, customFuncHandler },
 
-         { "lidar.properties_indexed", lidar_properties_indexed, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties_indexed.other", lidar_properties_indexed_other, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties_indexed.dust", lidar_properties_indexed_dust, TE_DEFAULT, customFuncHandler },
-         { "lidar.properties_indexed.glue", lidar_properties_indexed_glue, TE_DEFAULT, customFuncHandler },
-         { "lidar.reflectivity_indexed", lidar_reflectivity_indexed, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties_indexed", lidar_properties_indexed, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties_indexed.other", lidar_properties_indexed_other, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties_indexed.dust", lidar_properties_indexed_dust, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties_indexed.glue", lidar_properties_indexed_glue, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.reflectivity_indexed", lidar_reflectivity_indexed, TE_DEFAULT, customFuncHandler },
     };
 
     customFunctions.merge(getCommonCustomFunctions(newConvexHullFilters));
