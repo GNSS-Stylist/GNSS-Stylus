@@ -3,6 +3,7 @@ QT += gui
 QT += network
 
 CONFIG += qt warn_on depend_includepath testcase
+CONFIG += c++17
 
 TEMPLATE = app
 
