@@ -43,6 +43,11 @@ ExpressionFilter_Base::ExpressionFilter_Base()
 
 ExpressionFilter_Base::~ExpressionFilter_Base()
 {
+    if (convexHullFilterIndexes)
+    {
+        delete[] convexHullFilterIndexes;
+    }
+
     delete customFuncHandler;
 }
 

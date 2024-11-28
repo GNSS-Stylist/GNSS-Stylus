@@ -347,4 +347,18 @@ te_type ned_in_sphere_indexed(const te_expr* context, te_type centerX, te_type c
     return static_cast<te_type>(c->ned_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
 }
 
+// RPLidar:
+
+te_type lidar_rplidar_quality(const te_expr* context)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_rplidar_quality());
+}
+
+te_type lidar_rplidar_quality_indexed(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
+    return static_cast<te_type>(c->lidar_rplidar_quality_indexed(pointIndex));}
+
+
 } // namespace PointFilter

@@ -14,6 +14,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_base.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_mid360.cpp \
+    ../PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.h \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_base.h \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_mid360.h \
+    ../PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.h \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.h \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \

@@ -25,6 +25,7 @@
 #include "lazyevaluator.h"
 #include "tinyexpr-plusplus/tinyexpr.h"
 #include "livoxmid360pointcloudandimudata.h"
+#include "../RPLidar/rplidarthread.h"
 #include "ConvexHull/convexhull.h"
 
 namespace PointFilter
@@ -66,8 +67,16 @@ protected:
     class BufferItem
     {
     public:
+        // Livox Mid-360-related data
         LivoxMid360::PointCloudData::Point point_Lidar_Source;
         Eigen::Vector3d lidarSourceVector;
+
+        // RPLidar-related data
+//        RPLidarThread::DistanceItem point_RPLidar;
+        double angle_RPLidar;
+        double distance_RPLidar;
+        double quality_RPLidar;
+
         LazyEvaluator point_Lidar;
         LazyEvaluator point_Rig;
         LazyEvaluator point_NED;
@@ -176,6 +185,9 @@ public:
     inline te_type ned_in_sphere(te_type centerX, te_type centerY, te_type centerZ, te_type radius) const;
     inline te_type ned_in_sphere_indexed(te_type centerX, te_type centerY, te_type centerZ, te_type radius, te_type pointIndex) const;
 
+// RPLidar:
+    inline te_type lidar_rplidar_quality() const;
+    inline te_type lidar_rplidar_quality_indexed(te_type pointIndex) const;
 private:
     ExpressionFilter_Base* filter;
 };
@@ -184,37 +196,37 @@ private:
 inline te_type TinyExprCustomFuncHandler::lidar_coord_x() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getCurrentBufferItem().point_Lidar_Source.x;
+    return getCurrentBufferItem().point_Lidar.getSourceVectorPtr()->x();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_x(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getIndexedBufferItem(pointIndex).point_Lidar_Source.x;
+    return getIndexedBufferItem(pointIndex).point_Lidar.getSourceVectorPtr()->x();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_y() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getCurrentBufferItem().point_Lidar_Source.y;
+    return getCurrentBufferItem().point_Lidar.getSourceVectorPtr()->y();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_y(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getIndexedBufferItem(pointIndex).point_Lidar_Source.y;
+    return getIndexedBufferItem(pointIndex).point_Lidar.getSourceVectorPtr()->y();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_z() const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getCurrentBufferItem().point_Lidar_Source.z;
+    return getCurrentBufferItem().point_Lidar.getSourceVectorPtr()->z();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_coord_indexed_z(te_type pointIndex) const
 {
     Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
-    return getIndexedBufferItem(pointIndex).point_Lidar_Source.z;
+    return getIndexedBufferItem(pointIndex).point_Lidar.getSourceVectorPtr()->z();
 }
 
 inline te_type TinyExprCustomFuncHandler::lidar_properties() const
@@ -569,6 +581,18 @@ inline te_type TinyExprCustomFuncHandler::ned_in_sphere_indexed(te_type centerX,
     return ((point-center).squaredNorm() <= (radius * radius));
 }
 
+// RPLidar:
+inline te_type TinyExprCustomFuncHandler::lidar_rplidar_quality() const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getCurrentBufferItem().quality_RPLidar;
+}
+
+inline te_type TinyExprCustomFuncHandler::lidar_rplidar_quality_indexed(te_type pointIndex) const
+{
+    Q_ASSERT(filter->bufferIndex >= filter->bufferLength);
+    return getIndexedBufferItem(pointIndex).quality_RPLidar;
+}
 
 
 }; // namespace PointFilter

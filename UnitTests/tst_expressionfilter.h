@@ -24,6 +24,7 @@
 #include <QRandomGenerator>
 #include "Eigen/Geometry"
 #include "../PostProcessing/Lidar/PointFilter/expressionfilter_mid360.h"
+#include "../PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.h"
 
 class TestExpressionFilter : public QObject
 {
@@ -45,31 +46,45 @@ private:
     PointFilter::ExpressionFilter_Mid360::OutItem getRandomOutItem(void);
     LivoxMid360::PointCloudData::Point getRandomLidarSourcePoint(const quint8 propertyMask = 0x3f, const double pointCoordLowLimit = -40.0, const double pointCoordHighLimit = 40.0);
 
+    RPLidarThread::DistanceItem getRandomRPLidarDistanceItem(const float minDistance = 0, const float maxDistance = 40, const float minQuality = 0, const float maxQuality = 1);
+
 private slots:
     void initTestCase();
     void cleanupTestCase();
     void expressionValidity_ValidExpressions();
+    void expressionValidity_ValidExpressions_RPLidar();
     void expressionValidity_InvalidExpressions();
+    void expressionValidity_InvalidExpressions_RPLidar();
     void noData();
+    void noData_RPLidar();
     void defaultExpressions();
+    void defaultExpressions_RPLidar();
     void pureFunctions();
+    void pureFunctions_RPLidar();
     void lidarCoords();
+    void lidarCoords_RPLidar();
     void lidarCoords_Indexed();
     void lidarDistance();
+    void lidarDistance_RPLidar();
     void lidarDistance_Indexed();
     void lidarAngles();
+    void lidarAngles_RPLidar();
     void lidarAngles_Indexed();
     void lidarProperties();
     void lidarProperties_Indexed();
     void lidarReflectivity();
     void lidarReflectivity_Indexed();
+    void lidarQuality_RPLidar();
+    void lidarQuality_Indexed_RPLidar();
 
     void rigCoords_DefaultTransform();
     void rigCoords_Indexed_DefaultTransform();
     void nedCoords_DefaultTransform();
     void nedCoords_Indexed_DefaultTransform();
     void rigAndNEDCoords_RandomTransforms();
+    void rigAndNEDCoords_RandomTransforms_RPLidar();
     void rigAndNEDCoords_Indexed_RandomTransforms();
+    void rigAndNEDCoords_Indexed_RandomTransforms_RPLidar();
 
     void convexHullIndexes();
     void invalidConvexHullIndexes();

@@ -86,6 +86,10 @@ te_type rig_in_sphere_indexed(const te_expr* context, te_type centerX, te_type c
 te_type ned_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance);
 te_type ned_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex);
 
+// RPLidar:
+
+te_type lidar_rplidar_quality(const te_expr* context);
+te_type lidar_rplidar_quality_indexed(const te_expr* context, te_type pointIndex);
 
 } // namespace PointFilter
 

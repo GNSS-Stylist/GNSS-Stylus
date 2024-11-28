@@ -12,10 +12,6 @@ ExpressionFilter_Mid360::ExpressionFilter_Mid360()
 
 ExpressionFilter_Mid360::~ExpressionFilter_Mid360()
 {
-    if (convexHullFilterIndexes)
-    {
-        delete[] convexHullFilterIndexes;
-    }
 }
 
 void ExpressionFilter_Mid360::initBuffer(void)
