@@ -249,10 +249,6 @@ std::set<te_variable> ExpressionFilter_Base::getCommonCustomFunctions(const QVec
     return customFunctions;
 }
 
-
-
-
-
 }; // namespace PointFilter
 
 

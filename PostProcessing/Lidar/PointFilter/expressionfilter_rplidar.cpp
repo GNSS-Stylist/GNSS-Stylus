@@ -22,26 +22,26 @@
 namespace PointFilter
 {
 
-ExpressionFilter_RPLIDAR::ExpressionFilter_RPLIDAR()
+ExpressionFilter_RPLidar::ExpressionFilter_RPLidar()
 {
     initBuffer();
-    ExpressionFilter_RPLIDAR::setCustomVariablesAndFunctions();
+    ExpressionFilter_RPLidar::setCustomVariablesAndFunctions();
 }
 
-ExpressionFilter_RPLIDAR::~ExpressionFilter_RPLIDAR()
+ExpressionFilter_RPLidar::~ExpressionFilter_RPLidar()
 {
 }
 
-void ExpressionFilter_RPLIDAR::initBuffer(void)
+void ExpressionFilter_RPLidar::initBuffer(void)
 {
     bufferIndex = 0;
 
     for (BufferItem& item : buffer)
     {
-        item.angle_RPLidar = 0;
+        item.horizontalAngle_RPLidar = 0;
         item.distance_RPLidar = 0;
         item.quality_RPLidar = 0;
-        item.point_Lidar.setPrimarySourceVector2D(&item.angle_RPLidar, &item.distance_RPLidar);
+        item.point_Lidar.setPrimarySourceVector2D(&item.horizontalAngle_RPLidar, &item.distance_RPLidar);
 
         item.point_Rig.setSourceEvaluator(&item.point_Lidar);
         item.point_NED.setSourceEvaluator(&item.point_Rig);
@@ -51,7 +51,7 @@ void ExpressionFilter_RPLIDAR::initBuffer(void)
     }
 }
 
-void ExpressionFilter_RPLIDAR::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters)
+void ExpressionFilter_RPLidar::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters)
 {
     std::set<te_variable> customFunctions =
     {
@@ -65,9 +65,9 @@ void ExpressionFilter_RPLIDAR::setCustomVariablesAndFunctions(const QVector<Conv
     parser_Quality.set_variables_and_functions(customFunctions);
 }
 
-void ExpressionFilter_RPLIDAR::addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms)
+void ExpressionFilter_RPLidar::addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms)
 {
-    buffer[bufferIndex % bufferLength].angle_RPLidar = lidarPoint.angle;
+    buffer[bufferIndex % bufferLength].horizontalAngle_RPLidar = lidarPoint.angle;
     buffer[bufferIndex % bufferLength].distance_RPLidar = lidarPoint.distance;
     buffer[bufferIndex % bufferLength].quality_RPLidar = lidarPoint.quality;
 

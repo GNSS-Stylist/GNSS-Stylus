@@ -71,61 +71,61 @@ te_type lidar_coord_indexed_z(const te_expr* context, te_type pointIndex)
 te_type lidar_properties(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties());
+    return static_cast<te_type>(c->lidar_mid360_properties());
 }
 
 te_type lidar_properties_indexed(const te_expr* context, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_indexed(pointIndex));
+    return static_cast<te_type>(c->lidar_mid360_properties_indexed(pointIndex));
 }
 
 te_type lidar_properties_other(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_other());
+    return static_cast<te_type>(c->lidar_mid360_properties_other());
 }
 
 te_type lidar_properties_indexed_other(const te_expr* context, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_other_indexed(pointIndex));
+    return static_cast<te_type>(c->lidar_mid360_properties_other_indexed(pointIndex));
 }
 
 te_type lidar_properties_dust(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_dust());
+    return static_cast<te_type>(c->lidar_mid360_properties_dust());
 }
 
 te_type lidar_properties_indexed_dust(const te_expr* context, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_dust_indexed(pointIndex));
+    return static_cast<te_type>(c->lidar_mid360_properties_dust_indexed(pointIndex));
 }
 
 te_type lidar_properties_glue(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_glue());
+    return static_cast<te_type>(c->lidar_mid360_properties_glue());
 }
 
 te_type lidar_properties_indexed_glue(const te_expr* context, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_properties_glue_indexed(pointIndex));
+    return static_cast<te_type>(c->lidar_mid360_properties_glue_indexed(pointIndex));
 }
 
 te_type lidar_reflectivity(const te_expr* context)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_reflectivity());
+    return static_cast<te_type>(c->lidar_mid360_reflectivity());
 }
 
 te_type lidar_reflectivity_indexed(const te_expr* context, te_type pointIndex)
 {
     auto* c = dynamic_cast<const TinyExprCustomFuncHandler*>(context);
-    return static_cast<te_type>(c->lidar_reflectivity_indexed(pointIndex));
+    return static_cast<te_type>(c->lidar_mid360_reflectivity_indexed(pointIndex));
 }
 
 te_type lidar_distance(const te_expr* context)

@@ -120,7 +120,7 @@ void TestExpressionFilter::expressionValidity_ValidExpressions()
 
 void TestExpressionFilter::expressionValidity_ValidExpressions_RPLidar()
 {
-    PointFilter::ExpressionFilter_RPLIDAR filter;
+    PointFilter::ExpressionFilter_RPLidar filter;
 
     QCOMPARE(filter.setExpression_Filter("1"), true);
     QCOMPARE(filter.setExpression_Quality("1"), true);
@@ -201,8 +201,8 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
 
 void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
 {
-    PointFilter::ExpressionFilter_RPLIDAR filter;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar filter;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     QCOMPARE(filter.setExpression_Filter("invalid"), false);
     QCOMPARE(filter.setExpression_Quality("invalid"), false);
@@ -286,8 +286,8 @@ void TestExpressionFilter::noData()
 
 void TestExpressionFilter::noData_RPLidar()
 {
-    PointFilter::ExpressionFilter_RPLIDAR filter;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar filter;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     for (int i = 0; i < 100; i++)
     {
@@ -333,8 +333,8 @@ void TestExpressionFilter::defaultExpressions()
 
 void TestExpressionFilter::defaultExpressions_RPLidar()
 {
-    PointFilter::ExpressionFilter_RPLIDAR filter;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar filter;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     // Prefill buffer
     for (unsigned int i = 0; i < filterBufferLength - 1; i++)
@@ -451,8 +451,8 @@ void TestExpressionFilter::pureFunctions()
 
 void TestExpressionFilter::pureFunctions_RPLidar()
 {
-    PointFilter::ExpressionFilter_RPLIDAR filter;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar filter;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     unsigned int index = 0;
     // Prefill buffer
@@ -581,11 +581,11 @@ void TestExpressionFilter::lidarCoords_RPLidar()
 {
     RPLidarThread::DistanceItem sourceItems[defaultTestRounds];
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_CoordX;
-    PointFilter::ExpressionFilter_RPLIDAR filter_CoordY;
-    PointFilter::ExpressionFilter_RPLIDAR filter_CoordZ;
+    PointFilter::ExpressionFilter_RPLidar filter_CoordX;
+    PointFilter::ExpressionFilter_RPLidar filter_CoordY;
+    PointFilter::ExpressionFilter_RPLidar filter_CoordZ;
     unsigned int index = 0;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     filter_CoordX.setExpression_Filter("lidar.coord.x");
     filter_CoordY.setExpression_Filter("lidar.coord.y");
@@ -760,10 +760,10 @@ void TestExpressionFilter::lidarDistance_RPLidar()
 {
     RPLidarThread::DistanceItem sourceItems[defaultTestRounds];
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_Distance;
+    PointFilter::ExpressionFilter_RPLidar filter_Distance;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
     filter_Distance.setExpression_Filter("lidar.distance");
 
@@ -882,12 +882,12 @@ void TestExpressionFilter::lidarAngles_RPLidar()
 {
     RPLidarThread::DistanceItem sourceItems[defaultTestRounds];
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_Angle_Horizontal;
-    PointFilter::ExpressionFilter_RPLIDAR filter_Angle_Vertical;
+    PointFilter::ExpressionFilter_RPLidar filter_Angle_Horizontal;
+    PointFilter::ExpressionFilter_RPLidar filter_Angle_Vertical;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Horizontal;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Vertical;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Horizontal;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Vertical;
 
     QVERIFY(filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal"));
     QVERIFY(filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical"));
@@ -1153,10 +1153,10 @@ void TestExpressionFilter::lidarQuality_RPLidar()
 {
     RPLidarThread::DistanceItem sourceItems[defaultTestRounds];
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_Quality;
+    PointFilter::ExpressionFilter_RPLidar filter_Quality;
 
     unsigned int index = 0;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Quality;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Quality;
 
     filter_Quality.setExpression_Filter("lidar.rplidar.quality");
 
@@ -1187,10 +1187,10 @@ void TestExpressionFilter::lidarQuality_Indexed_RPLidar()
     {
         RPLidarThread::DistanceItem sourceItems[defaultTestRounds];
 
-        PointFilter::ExpressionFilter_RPLIDAR filter_Quality;
+        PointFilter::ExpressionFilter_RPLidar filter_Quality;
 
         unsigned int index = 0;
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Quality;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_Quality;
 
         filter_Quality.setExpression_Filter(QString("lidar.rplidar.quality_indexed(") + QString::number(offset) + ")");
 
@@ -1687,21 +1687,21 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms_RPLidar()
     Eigen::Transform<double, 3, Eigen::Affine> transforms_LidarToRig[defaultTestRounds];
     Eigen::Transform<double, 3, Eigen::Affine> transforms_RigToNED[defaultTestRounds];
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordX;
-    PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordY;
-    PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordZ;
+    PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordX;
+    PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordY;
+    PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordZ;
 
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_X;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_Y;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_Z;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_X;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_Y;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_Z;
 
-    PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordX;
-    PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordY;
-    PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordZ;
+    PointFilter::ExpressionFilter_RPLidar filter_NED_CoordX;
+    PointFilter::ExpressionFilter_RPLidar filter_NED_CoordY;
+    PointFilter::ExpressionFilter_RPLidar filter_NED_CoordZ;
 
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_X;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_Y;
-    PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_Z;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_X;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_Y;
+    PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_Z;
 
     filter_Rig_CoordX.setExpression_Filter("rig.coord.x");
     filter_Rig_CoordY.setExpression_Filter("rig.coord.y");
@@ -2016,21 +2016,21 @@ void TestExpressionFilter::rigAndNEDCoords_Indexed_RandomTransforms_RPLidar()
         Eigen::Transform<double, 3, Eigen::Affine> transforms_LidarToRig[defaultTestRounds];
         Eigen::Transform<double, 3, Eigen::Affine> transforms_RigToNED[defaultTestRounds];
 
-        PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordX;
-        PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordY;
-        PointFilter::ExpressionFilter_RPLIDAR filter_Rig_CoordZ;
+        PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordX;
+        PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordY;
+        PointFilter::ExpressionFilter_RPLidar filter_Rig_CoordZ;
 
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_X;
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_Y;
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_Rig_Z;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_X;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_Y;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_Rig_Z;
 
-        PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordX;
-        PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordY;
-        PointFilter::ExpressionFilter_RPLIDAR filter_NED_CoordZ;
+        PointFilter::ExpressionFilter_RPLidar filter_NED_CoordX;
+        PointFilter::ExpressionFilter_RPLidar filter_NED_CoordY;
+        PointFilter::ExpressionFilter_RPLidar filter_NED_CoordZ;
 
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_X;
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_Y;
-        PointFilter::ExpressionFilter_RPLIDAR::OutItem out_NED_Z;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_X;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_Y;
+        PointFilter::ExpressionFilter_RPLidar::OutItem out_NED_Z;
 
         filter_Rig_CoordX.setExpression_Filter(QString("rig.coord_indexed.x(" + QString::number(rigOffset) + ")"));
         filter_Rig_CoordY.setExpression_Filter(QString("rig.coord_indexed.y(" + QString::number(rigOffset) + ")"));

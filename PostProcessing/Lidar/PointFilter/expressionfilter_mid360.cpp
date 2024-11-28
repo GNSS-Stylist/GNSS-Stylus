@@ -38,8 +38,8 @@ void ExpressionFilter_Mid360::initBuffer(void)
 
     for (BufferItem& item : buffer)
     {
-        item.lidarSourceVector = Eigen::Vector3d::Zero();
-        item.point_Lidar.setPrimarySourceVector(&item.lidarSourceVector);
+        item.lidarSourceVector3D = Eigen::Vector3d::Zero();
+        item.point_Lidar.setPrimarySourceVector(&item.lidarSourceVector3D);
 
         item.point_Rig.setSourceEvaluator(&item.point_Lidar);
         item.point_NED.setSourceEvaluator(&item.point_Rig);
@@ -74,8 +74,8 @@ void ExpressionFilter_Mid360::setCustomVariablesAndFunctions(const QVector<Conve
 
 void ExpressionFilter_Mid360::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms)
 {
-    buffer[bufferIndex % bufferLength].point_Lidar_Source = lidarPoint;
-    buffer[bufferIndex % bufferLength].lidarSourceVector = Eigen::Vector3d(lidarPoint.x, lidarPoint.y, lidarPoint.z);
+    buffer[bufferIndex % bufferLength].point_Mid360_Source = lidarPoint;
+    buffer[bufferIndex % bufferLength].lidarSourceVector3D = Eigen::Vector3d(lidarPoint.x, lidarPoint.y, lidarPoint.z);
     buffer[bufferIndex % bufferLength].uptime_ms = uptime_ms;
 
     buffer[bufferIndex % bufferLength].point_Lidar.invalidate();

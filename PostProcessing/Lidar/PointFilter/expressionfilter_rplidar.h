@@ -16,19 +16,20 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef ExpressionFilter_RPLIDAR_H
-#define ExpressionFilter_RPLIDAR_H
+#ifndef EXPRESSIONFILTER_RPLIDAR_H
+#define EXPRESSIONFILTER_RPLIDAR_H
 
 #include "expressionfilter_base.h"
+#include "../RPLidar/rplidarthread.h"
 
 namespace PointFilter
 {
 
-class ExpressionFilter_RPLIDAR : public ExpressionFilter_Base
+class ExpressionFilter_RPLidar : public ExpressionFilter_Base
 {
 public:
-    ExpressionFilter_RPLIDAR();
-    ~ExpressionFilter_RPLIDAR();
+    ExpressionFilter_RPLidar();
+    ~ExpressionFilter_RPLidar();
 
     void addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms);
     void initBuffer(void);
@@ -39,4 +40,4 @@ private:
 
 }; // namespace PointFilter
 
-#endif // ExpressionFilter_RPLIDAR_H
+#endif // EXPRESSIONFILTER_RPLIDAR_H

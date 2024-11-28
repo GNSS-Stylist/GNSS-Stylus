@@ -70,7 +70,7 @@ private:
         union
         {
             // Sources (pointers used to prevent unnecessary copying):
-            Eigen::Vector3d const* primarySourceVector;
+            Eigen::Vector3d const* primarySourceVector3D;
             // Angles & distance (used for RPLidar, when vertical angle is 0):
             struct
             {
@@ -158,7 +158,7 @@ inline void LazyEvaluator::setSourceEvaluator(LazyEvaluator* evaluator)
 
 inline void LazyEvaluator::setPrimarySourceVector(Eigen::Vector3d const* newVector)
 {
-    source.primarySourceVector = newVector;
+    source.primarySourceVector3D = newVector;
     source.type = ST_VECTOR;
 
     invalidate();
@@ -207,8 +207,8 @@ inline const Eigen::Vector3d* LazyEvaluator::getSourceVectorPtr(void)
 
         case ST_VECTOR:
             // Value for primary source can be returned right away.
-            Q_ASSERT(source.primarySourceVector);
-            sourceVector = *source.primarySourceVector;
+            Q_ASSERT(source.primarySourceVector3D);
+            sourceVector = *source.primarySourceVector3D;
             break;
 
         case ST_ANGLE_DIST_2D:
