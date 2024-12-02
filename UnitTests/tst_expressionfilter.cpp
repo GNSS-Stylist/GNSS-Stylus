@@ -134,6 +134,9 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
     QCOMPARE(filter.setExpression_Filter("invalid"), false);
     QCOMPARE(filter.setExpression_Quality("invalid"), false);
 
+    QCOMPARE(filter.setExpression_Filter("sin(3.14"), false);
+    QCOMPARE(filter.setExpression_Quality("cos(45665))"), false);
+
     QCOMPARE(filter.setExpression_Filter("lidar.rplidar.quality()"), false);    // Should only be available in ExpressionFilter_RPLidar
     QCOMPARE(filter.setExpression_Quality("lidar.rplidar.quality()"), false);   // Should only be available in ExpressionFilter_RPLidar
 
@@ -4102,7 +4105,89 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
 //    int foo = 0; // Debug-trap
 }
 
+void TestExpressionFilter::copyConstructors()
+{
+    // Constructor and copy operator are just throwing exceptions for now.
+    // Not implementing these for now, so exceptions are just added to prevent accidents/misbehavior.
+    // There are a lot of pointers etc. also "inside" te_parser that would need extra handling.
+    // So for now, just construct a new ExpressionFilter from an expression.
 
+    PointFilter::ExpressionFilter_Mid360 filter_Mid360_Source;
+    PointFilter::ExpressionFilter_RPLidar filter_RPLidar_Source;
+
+    try
+    {
+        PointFilter::ExpressionFilter_Mid360 filter_Mid360_Dest(filter_Mid360_Source);
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy constructor not supported");
+    }
+
+    try
+    {
+        PointFilter::ExpressionFilter_RPLidar filter_RPLidar_Dest(filter_RPLidar_Source);
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy constructor not supported");
+    }
+
+    try
+    {
+        PointFilter::ExpressionFilter_Mid360 filter_Mid360_Dest = filter_Mid360_Source;
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy constructor not supported");
+    }
+
+    try
+    {
+        PointFilter::ExpressionFilter_RPLidar filter_RPLidar_Dest = filter_RPLidar_Source;
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy constructor not supported");
+    }
+}
+
+void TestExpressionFilter::copyOperators()
+{
+    // Constructor and copy operator are just throwing exceptions for now.
+    // Not implementing these for now, so exceptions are just added to prevent accidents/misbehavior.
+    // There are a lot of pointers etc. also "inside" te_parser that would need extra handling.
+    // So for now, just construct a new ExpressionFilter from an expression.
+
+    PointFilter::ExpressionFilter_Mid360 filter_Mid360_Source;
+    PointFilter::ExpressionFilter_RPLidar filter_RPLidar_Source;
+
+    PointFilter::ExpressionFilter_Mid360 filter_Mid360_Dest;
+    try
+    {
+        filter_Mid360_Dest = filter_Mid360_Source;
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy operator not supported");
+    }
+
+    PointFilter::ExpressionFilter_RPLidar filter_RPLidar_Dest;
+    try
+    {
+        filter_RPLidar_Dest = filter_RPLidar_Source;
+        QFAIL("Should throw exception");
+    }
+    catch (QString& exp)
+    {
+        QCOMPARE(exp, "Copy operator not supported");
+    }
+}
 
 
 

@@ -36,6 +36,18 @@ public:
     ExpressionFilter_Base();
     ~ExpressionFilter_Base();
 
+    // Constructor and copy operator just throwing exceptions.
+    // Not implementing these for now, so these are just added to prevent accidents/misbehavior.
+    // There are a lot of pointers etc. also "inside" te_parser that would need extra handling.
+    // So for now, just construct a new ExpressionFilter from an expression.
+    ExpressionFilter_Base& operator=(const ExpressionFilter_Base&) {
+        throw QString("Copy operator not supported");
+    };
+
+    ExpressionFilter_Base(const ExpressionFilter_Base&) {
+        throw QString("Copy constructor not supported");
+    };
+
     struct ConvexHullFilter
     {
         QString Name;

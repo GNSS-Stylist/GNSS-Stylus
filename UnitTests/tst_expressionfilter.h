@@ -99,6 +99,9 @@ private slots:
 
     void in_sphere_MultipleRandomSpheres_RandomTransforms();
     void in_sphere_MultipleRandomSpheres_RandomTransforms_Indexed();
+
+    void copyConstructors();
+    void copyOperators();
 };
 
 #endif // TST_EXPRESSIONFILTER_H
