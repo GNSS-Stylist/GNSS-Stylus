@@ -29,13 +29,16 @@ class ExpressionFilter_RPLidar : public ExpressionFilter_Base
 {
 public:
     ExpressionFilter_RPLidar();
+    ExpressionFilter_RPLidar(const ExpressionFilter_RPLidar& source);
     ~ExpressionFilter_RPLidar();
+
+    ExpressionFilter_RPLidar operator =(const ExpressionFilter_RPLidar& source);
 
     void addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms);
     void initBuffer(void);
 
 private:
-    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters = QVector<ConvexHullFilter>());
+    void setCustomVariablesAndFunctions(void);
 };
 
 }; // namespace PointFilter

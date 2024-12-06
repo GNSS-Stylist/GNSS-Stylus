@@ -100,8 +100,8 @@ private slots:
     void in_sphere_MultipleRandomSpheres_RandomTransforms();
     void in_sphere_MultipleRandomSpheres_RandomTransforms_Indexed();
 
-    void copyConstructors();
-    void copyOperators();
+    void copyingFilters();
+    void copyingFilters_RPLidar();
 };
 
 #endif // TST_EXPRESSIONFILTER_H

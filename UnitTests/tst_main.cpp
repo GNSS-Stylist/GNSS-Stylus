@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     int status = 0;
 
     // Some tests take a LONG time when using valgrind memory analyzer, so increase the timeout
-    qputenv("QTEST_FUNCTION_TIMEOUT", QByteArray("600000"));
+    qputenv("QTEST_FUNCTION_TIMEOUT", QByteArray("2400000"));
 
     //-- run all tests
     {

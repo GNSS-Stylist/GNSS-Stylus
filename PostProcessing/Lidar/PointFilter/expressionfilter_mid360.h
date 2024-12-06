@@ -28,13 +28,16 @@ class ExpressionFilter_Mid360 : public ExpressionFilter_Base
 {
 public:
     ExpressionFilter_Mid360();
+    ExpressionFilter_Mid360(const ExpressionFilter_Mid360& source);
     ~ExpressionFilter_Mid360();
+
+    ExpressionFilter_Mid360 operator=(const ExpressionFilter_Mid360& source);
 
     void addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms);
     void initBuffer(void);
 
 private:
-    void setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters = QVector<ConvexHullFilter>());
+    void setCustomVariablesAndFunctions(void);
 };
 
 }; // namespace PointFilter

@@ -28,6 +28,22 @@ ExpressionFilter_Mid360::ExpressionFilter_Mid360()
     ExpressionFilter_Mid360::setCustomVariablesAndFunctions();
 }
 
+ExpressionFilter_Mid360::ExpressionFilter_Mid360(const ExpressionFilter_Mid360& source) : ExpressionFilter_Base(source)
+{
+    ExpressionFilter_Mid360::setCustomVariablesAndFunctions();
+    setExpression_Filter(expression_Filter);
+    setExpression_Quality(expression_Quality);
+}
+
+ExpressionFilter_Mid360 ExpressionFilter_Mid360::operator=(const ExpressionFilter_Mid360& source)
+{
+    copyFields(source, *this);
+    setCustomVariablesAndFunctions();
+    setExpression_Filter(expression_Filter);
+    setExpression_Quality(expression_Quality);
+    return *this;
+}
+
 ExpressionFilter_Mid360::~ExpressionFilter_Mid360()
 {
 }
@@ -49,24 +65,24 @@ void ExpressionFilter_Mid360::initBuffer(void)
     }
 }
 
-void ExpressionFilter_Mid360::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters)
+void ExpressionFilter_Mid360::setCustomVariablesAndFunctions(void)
 {
     std::set<te_variable> customFunctions =
     {
-         { "lidar.mid360.properties", lidar_properties, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties.other", lidar_properties_other, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties.dust", lidar_properties_dust, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties.glue", lidar_properties_glue, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.reflectivity", lidar_reflectivity, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties", lidar_properties, TE_DEFAULT, this },
+         { "lidar.mid360.properties.other", lidar_properties_other, TE_DEFAULT, this },
+         { "lidar.mid360.properties.dust", lidar_properties_dust, TE_DEFAULT, this },
+         { "lidar.mid360.properties.glue", lidar_properties_glue, TE_DEFAULT, this },
+         { "lidar.mid360.reflectivity", lidar_reflectivity, TE_DEFAULT, this },
 
-         { "lidar.mid360.properties_indexed", lidar_properties_indexed, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties_indexed.other", lidar_properties_indexed_other, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties_indexed.dust", lidar_properties_indexed_dust, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.properties_indexed.glue", lidar_properties_indexed_glue, TE_DEFAULT, customFuncHandler },
-         { "lidar.mid360.reflectivity_indexed", lidar_reflectivity_indexed, TE_DEFAULT, customFuncHandler },
+         { "lidar.mid360.properties_indexed", lidar_properties_indexed, TE_DEFAULT, this },
+         { "lidar.mid360.properties_indexed.other", lidar_properties_indexed_other, TE_DEFAULT, this },
+         { "lidar.mid360.properties_indexed.dust", lidar_properties_indexed_dust, TE_DEFAULT, this },
+         { "lidar.mid360.properties_indexed.glue", lidar_properties_indexed_glue, TE_DEFAULT, this },
+         { "lidar.mid360.reflectivity_indexed", lidar_reflectivity_indexed, TE_DEFAULT, this },
     };
 
-    customFunctions.merge(getCommonCustomFunctions(newConvexHullFilters));
+    customFunctions.merge(getCommonCustomFunctions());
 
     parser_Filter.set_variables_and_functions(customFunctions);
     parser_Quality.set_variables_and_functions(customFunctions);

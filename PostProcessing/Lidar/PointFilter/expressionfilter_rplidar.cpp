@@ -28,6 +28,22 @@ ExpressionFilter_RPLidar::ExpressionFilter_RPLidar()
     ExpressionFilter_RPLidar::setCustomVariablesAndFunctions();
 }
 
+ExpressionFilter_RPLidar::ExpressionFilter_RPLidar(const ExpressionFilter_RPLidar& source) : ExpressionFilter_Base(source)
+{
+    ExpressionFilter_RPLidar::setCustomVariablesAndFunctions();
+    setExpression_Filter(expression_Filter);
+    setExpression_Quality(expression_Quality);
+}
+
+ExpressionFilter_RPLidar ExpressionFilter_RPLidar::operator=(const ExpressionFilter_RPLidar& source)
+{
+    copyFields(source, *this);
+    setCustomVariablesAndFunctions();
+    setExpression_Filter(expression_Filter);
+    setExpression_Quality(expression_Quality);
+    return *this;
+}
+
 ExpressionFilter_RPLidar::~ExpressionFilter_RPLidar()
 {
 }
@@ -51,15 +67,15 @@ void ExpressionFilter_RPLidar::initBuffer(void)
     }
 }
 
-void ExpressionFilter_RPLidar::setCustomVariablesAndFunctions(const QVector<ConvexHullFilter>& newConvexHullFilters)
+void ExpressionFilter_RPLidar::setCustomVariablesAndFunctions(void)
 {
     std::set<te_variable> customFunctions =
     {
-        { "lidar.rplidar.quality", lidar_rplidar_quality, TE_DEFAULT, customFuncHandler },
-        { "lidar.rplidar.quality_indexed", lidar_rplidar_quality_indexed, TE_DEFAULT, customFuncHandler },
+        { "lidar.rplidar.quality", lidar_rplidar_quality, TE_DEFAULT, this },
+        { "lidar.rplidar.quality_indexed", lidar_rplidar_quality_indexed, TE_DEFAULT, this },
     };
 
-    customFunctions.merge(getCommonCustomFunctions(newConvexHullFilters));
+    customFunctions.merge(getCommonCustomFunctions());
 
     parser_Filter.set_variables_and_functions(customFunctions);
     parser_Quality.set_variables_and_functions(customFunctions);
