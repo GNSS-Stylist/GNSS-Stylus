@@ -39,7 +39,7 @@ public:
         Eigen::AlignedBox3d aabb;
 
     public:
-        bool isInside(const Eigen::Vector3d& pointCoords, const double& margin = 0)
+        bool isInside(const Eigen::Vector3d& pointCoords, const double& margin = 0) const
         {
             double adjustedMargin = std::max(margin, 0.0) * 2;
 
