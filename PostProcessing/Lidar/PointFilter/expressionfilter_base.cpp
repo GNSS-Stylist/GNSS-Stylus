@@ -55,9 +55,9 @@ ExpressionFilter_Base::~ExpressionFilter_Base()
 void ExpressionFilter_Base::copyFields(const ExpressionFilter_Base& source, ExpressionFilter_Base& dest)
 {
     dest.expression_Filter = source.expression_Filter;
-    dest.parser_Filter = source.parser_Filter;
+//    dest.parser_Filter = source.parser_Filter;
     dest.expression_Quality = source.expression_Quality;
-    dest.parser_Quality = source.parser_Quality;
+//    dest.parser_Quality = source.parser_Quality;
 
     for (unsigned int i = 0; i < bufferLength; i++)
     {
