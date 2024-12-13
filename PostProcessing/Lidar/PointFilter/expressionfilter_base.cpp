@@ -89,7 +89,14 @@ ExpressionFilter_Base::ExpressionFilter_Base(const ExpressionFilter_Base& source
 bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QString* const errorMessage, int* const errorPosition)
 {
     expression_Filter = newExpression;
+
+    char* prevLocale = std::setlocale(LC_NUMERIC, "C");
     parser_Filter.compile(expression_Filter.toUtf8().constData());
+    if (prevLocale)
+    {
+        setlocale(LC_NUMERIC, prevLocale);
+    }
+
     if (parser_Filter.success())
     {
         return true;
@@ -112,7 +119,14 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
 bool ExpressionFilter_Base::setExpression_Quality(const QString newExpression, QString* const errorMessage, int* const errorPosition)
 {
     expression_Quality = newExpression;
+
+    char* prevLocale = std::setlocale(LC_NUMERIC, "C");
     parser_Quality.compile(expression_Quality.toUtf8().constData());
+    if (prevLocale)
+    {
+        setlocale(LC_NUMERIC, prevLocale);
+    }
+
     if (parser_Quality.success())
     {
         return true;
