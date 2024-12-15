@@ -45,6 +45,7 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
 
         int deviceStringStartIndex = charIndex;
         QString deviceTypeString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{").toLower();
+        int deviceDefinitionEndIndex = charIndex;
         QString deviceStringForErrors = deviceTypeString;
 
         Device device;
@@ -66,13 +67,14 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             {
                 Issue error;
                 error.beginChar = deviceStringStartIndex;
-                error.endChar = charIndex;
+                error.endChar = deviceDefinitionEndIndex;
                 error.text = "IP address needed for device type mid360.";
                 throw error;
             }
 
             int ipStringStartIndex = charIndex;
             QString ipString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{").toLower();
+            deviceDefinitionEndIndex = charIndex;
 
             QHostAddress ipAddressNotValidated;
 
@@ -130,7 +132,7 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             {
                 Issue error;
                 error.beginChar = deviceStringStartIndex;
-                error.endChar = charIndex;
+                error.endChar = deviceDefinitionEndIndex;
                 error.text = "Expression definitions missing for device \"" + deviceStringForErrors + "\".";
                 throw error;
             }
@@ -139,21 +141,22 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             {
                 Issue error;
                 error.beginChar = charIndex;
-                error.endChar = charIndex;
+                error.endChar = charIndex + 1;
                 error.text = "Only comments and whitespaces allowed between device definition and opening curly brace for filter expression.";
                 throw error;
             }
 
             int expressionsStartIndex = charIndex;
             QString filterExpression = TextBlockParser::getTextBlockAsString(plainText, charIndex);
+            int filterExpressionEndIndex= charIndex;
             QString errorMessage;
             int errorPosition;
 
             if (!newFilterPair->setExpression_Filter(filterExpression, &errorMessage, &errorPosition))
             {
                 Issue error;
-                error.beginChar = errorPosition + expressionsStartIndex;
-                error.endChar = errorPosition + expressionsStartIndex;
+                error.beginChar = errorPosition + expressionsStartIndex + 1;    // + 1 from starting '{'
+                error.endChar = errorPosition + expressionsStartIndex + 1;
                 error.text = "Error compiling filter expression: " + errorMessage;
 
                 throw error;
@@ -165,7 +168,7 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             {
                 Issue error;
                 error.beginChar = deviceStringStartIndex;
-                error.endChar = charIndex;
+                error.endChar = filterExpressionEndIndex;
                 error.text = "Quality expression definition missing for device \"" + deviceStringForErrors + "\".";
                 throw error;
             }
@@ -174,7 +177,7 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             {
                 Issue error;
                 error.beginChar = charIndex;
-                error.endChar = charIndex;
+                error.endChar = charIndex +1;
                 error.text = "Only comments and whitespaces allowed between closing and opening curly braces for filter and quality expression.";
                 throw error;
             }
@@ -185,8 +188,8 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             if (!newFilterPair->setExpression_Quality(filterExpression, &errorMessage, &errorPosition))
             {
                 Issue error;
-                error.beginChar = errorPosition + expressionsStartIndex;
-                error.endChar = errorPosition + expressionsStartIndex;
+                error.beginChar = errorPosition + expressionsStartIndex + 1;    // + 1 from starting '{'
+                error.endChar = errorPosition + expressionsStartIndex + 1;
                 error.text = "Error compiling quality expression: " + errorMessage;
 
                 throw error;
