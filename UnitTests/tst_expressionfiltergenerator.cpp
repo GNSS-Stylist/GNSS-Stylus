@@ -178,6 +178,8 @@ void TestExpressionFilterGenerator::error_DuplicateDevices()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Duplicate device: \"rplidar\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("rplidar\n"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n{ lidar.coord_indexed.x(0) }\n"));
     }
     catch (...)
     {
@@ -210,6 +212,8 @@ void TestExpressionFilterGenerator::error_DuplicateDevices()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Duplicate device: \"mid360 1.2.3.4\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("mid360 1.2.3.4"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" \n{ lidar.coord_indexed.x(0) }\n"));
     }
     catch (...)
     {
@@ -245,6 +249,8 @@ void TestExpressionFilterGenerator::error_UnknownDeviceType()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Unknown device type: \"superlidar\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("superlidar"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" 1.2.3.4 // <- Second device\n"));
     }
     catch (...)
     {
@@ -274,6 +280,8 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "IP address needed for device type mid360.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("mid360"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" \n{ lidar.coord_indexed.x(0) }\n"));
     }
     catch (...)
     {
@@ -299,6 +307,8 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Can't convert parameter \"invalidaddress\" to IPv4 address.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("invalidaddress"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n{ lidar.coord_indexed.x(0) }\n"));
     }
     catch (...)
     {
@@ -324,6 +334,8 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Parameter \"2001:0db8:85a3:0000:0000:8a2e:0370:7334\" is not a valid IPv4 address.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n{0.5 // BTW: TinyExpr++ seems to need this newline -> \n"));
     }
     catch (...)
     {
@@ -348,6 +360,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Only comments and whitespaces allowed between device definition and opening curly brace for filter expression.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("illegal text"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("llegal text"));
     }
     catch (...)
     {
@@ -369,6 +383,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Only comments and whitespaces allowed between closing and opening curly braces for filter and quality expression.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("Illegal text"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("llegal text"));
     }
     catch (...)
     {
@@ -390,6 +406,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Expression definitions missing for device \"mid360 2.3.4.5\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("mid360"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" /* nothing to see here */"));
     }
     catch (...)
     {
@@ -411,6 +429,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Quality expression definition missing for device \"mid360 2.3.4.5\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("mid360"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" /* nothing to see here */"));
     }
     catch (...)
     {
@@ -432,6 +452,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Unterminated block (matching \"}\"-character missing).");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("{1 /* Unterminated block */"));
+        QCOMPARE(issue.endChar, plainText.length());
     }
     catch (...)
     {
@@ -453,6 +475,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Error compiling filter expression: Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
     }
     catch (...)
     {
@@ -474,6 +498,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Error compiling quality expression: Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
     }
     catch (...)
     {
@@ -495,6 +521,11 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Error compiling filter expression: TinyExpr error: (empty)"); // Does TinyExpr++ ever return any error message?
+
+        // TinyExpr++ returns error pointing to the end of unknown thing
+        // (or actually one before it(?), but not bothering about in now, at least cursor is now left pointing unknown idetifier etc.)
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("r error}{1}")));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("r error}{1}")));
     }
     catch (...)
     {
@@ -503,7 +534,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     plainText =
         "mid360 1.2.3.4 {0.5}{0.3}\n"
-        "mid360 2.3.4.5 {1}{errrrrrr}";
+        "mid360 2.3.4.5 {1}{errrrrrroor}";
 
     try
     {
@@ -516,6 +547,8 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     catch (EFG::Issue issue)
     {
         QCOMPARE(issue.text, "Error compiling quality expression: TinyExpr error: (empty)"); // Does TinyExpr++ ever return any error message?
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("r}")));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("r}")));
     }
     catch (...)
     {
