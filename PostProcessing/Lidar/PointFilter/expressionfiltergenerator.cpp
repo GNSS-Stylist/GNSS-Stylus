@@ -19,221 +19,69 @@
 #include "expressionfiltergenerator.h"
 #include "expressionfilter_mid360.h"
 #include "expressionfilter_rplidar.h"
+#include "Util/textblockparser.h"
 
 namespace PointFilter
 {
 
-
-ExpressionFilterGenerator::ExpressionFilterGenerator()
+QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> ExpressionFilterGenerator::generateMap(const QString& plainText, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters)
 {
-}
+    QMap<Device, std::shared_ptr<ExpressionFilter_Base> > filters;
 
-QMap<ExpressionFilterGenerator::Device, ExpressionFilterGenerator::FilterPair> ExpressionFilterGenerator::generateMap(const QStringList& lines, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters)
-{
-    QMap<Device, std::pair<std::shared_ptr<ExpressionFilter_Base>, std::shared_ptr<ExpressionFilter_Base> > > filters;
-
-    State state;
-
-    state.currentDevice.type = Device::DT_UNDEFINED;
-
-    int lineNumber = 0;
+    int charIndex = 0;
 
     QByteArray subString;
-    int firstCol = -1;
 
-    while (lineNumber < lines.count())
+    int plainTextLength = plainText.length();
+
+    while (charIndex < plainTextLength)
     {
-        QString line = lines[lineNumber];
+        TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
 
-        int i = 0;
-
-        //        int endCol = -1;
-
-        while (i < line.length())
+        if (charIndex >= plainTextLength)
         {
-            char character = line.at(i).toLatin1();
+            break;
+        }
 
-            if (!character)
+        int deviceStringStartIndex = charIndex;
+        QString deviceTypeString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{").toLower();
+        QString deviceStringForErrors = deviceTypeString;
+
+        Device device;
+        std::shared_ptr<ExpressionFilter_Base> newFilterPair;
+
+        if (deviceTypeString == "rplidar")
+        {
+            device.type = Device::DT_RPLIDAR;
+            newFilterPair = std::make_shared<ExpressionFilter_RPLidar>();
+        }
+        else if (deviceTypeString == "mid360")
+        {
+            device.type = Device::DT_LIVOX_MID360;
+            newFilterPair = std::make_shared<ExpressionFilter_Mid360>();
+
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
+
+            if ((plainText.at(charIndex) == '{') || charIndex >= plainText.length())
             {
                 Issue error;
-                error.text = "Only Latin-1 (\"8-bit ascii\") characters allowed in non-comment sections.";
-                error.item.lineNumber = lineNumber;
-                error.item.firstCol = i;
-                error.item.lastCol = i;
-                throw error;
-            }
-            else if ((line.length() >= (i + 2)) && (character == '/') && (line.at(i+1).toLatin1() == '/'))
-            {
-                // Rest of the line is comment -> Skip it
-                break;
-            }
-            else if ((character == ' ') || (character == '\t'))
-            {
-                // Command/argument separator
-                if (!subString.isEmpty())
-                {
-                    Item newItem;
-                    newItem.text = subString;
-                    newItem.lineNumber = lineNumber;
-                    newItem.firstCol = firstCol;
-                    newItem.lastCol = i - 1;
-                    state.command.push_back(newItem);
-                    subString.clear();
-                }
-            }
-            else if (character == ':')
-            {
-                if (!subString.isEmpty())
-                {
-                    Item newItem;
-                    newItem.text = subString;
-                    newItem.lineNumber = lineNumber;
-                    newItem.firstCol = firstCol;
-                    newItem.lastCol = i - 1;
-                    state.command.push_back(newItem);
-                    subString.clear();
-                }
-
-                if (state.command.size() == 0)
-                {
-                    Issue error;
-                    error.text = "Block type identifier \"" + QString(character) + "\" without definition.";
-                    error.item.text = ":";
-                    error.item.lineNumber = lineNumber;
-                    error.item.firstCol = firstCol;
-                    error.item.lastCol = i - 1;
-                    throw error;
-                }
-
-                processBlockHeader(state);
-                state.command.clear();
-            }
-            else
-            {
-                // Non-control character -> add it to the buffer
-
-                if (subString.length() == 0)
-                {
-                    firstCol = i;
-                }
-                subString += character;
-            }
-
-            i++;
-        }
-
-        if (!subString.isEmpty())
-        {
-            Item newItem;
-            newItem.text = subString;
-            newItem.lineNumber = lineNumber;
-            newItem.firstCol = firstCol;
-            newItem.lastCol = i - 1;
-            state.command.push_back(newItem);
-            subString.clear();
-        }
-
-        lineNumber++;
-    }
-
-    if (!state.command.isEmpty())
-    {
-        Issue error;
-        error.text = "Unterminated command in the end.";
-        error.item = state.command.at(0);
-        throw error;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    std::shared_ptr<ExpressionFilter_Mid360> filtsu;
-    std::shared_ptr<ExpressionFilter_Mid360> laatu;
-
-    Device dev;
-
-//    filters.insert(dev, dynamic_cast<std::unique_ptr<ExpressionFilter_Base> > (std::move(filtsu)));
-//    filters.insert(dev, std::unique_ptr<ExpressionFilter_Base>(std::move(filtsu)));
-    filters.insert(dev, std::pair<std::shared_ptr<ExpressionFilter_Base>, std::shared_ptr<ExpressionFilter_Base> > (filtsu, laatu));
-    filters.insert(dev, FilterPair(filtsu, laatu));
-
-    return filters;
-}
-
-void ExpressionFilterGenerator::processBlockHeader(State& state)
-{
-    QByteArray cmd = state.command.at(0).text.toLower();
-    if (cmd == "device")
-    {
-        if (state.command.size() < 2)
-        {
-            Issue error;
-            error.text = "Device type not defined.";
-            error.item = state.command.at(0);
-            throw error;
-        }
-
-        QByteArray deviceType = state.command.at(1).text.toLower();
-
-//        QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >::iterator iter;
-
-//        Device prevDevice = state.currentDevice;
-
-        if (deviceType == "rplidar")
-        {
-            if (state.command.size() > 2)
-            {
-                Issue error;
-                error.text = "No extra parameters allowed for device type \"" + state.command.at(1).text + "\" (only one active RPLidar device supported currently).";
-                error.item = state.command.at(1);
+                error.beginChar = deviceStringStartIndex;
+                error.endChar = charIndex;
+                error.text = "IP address needed for device type mid360.";
                 throw error;
             }
 
-            state.currentDevice.type = Device::DT_RPLIDAR;
-            state.currentDevice.data = 0;
-            //device.data.clear();    // QVariant-version
-
-//            iter = state.deviceMatrices.find(state.currentDevice);
-        }
-        else if (deviceType == "mid360")
-        {
-            if (state.command.size() < 3)
-            {
-                Issue error;
-                error.text = "No IP address defined for device type \"" + state.command.at(1).text + "\".";
-                error.item = state.command.at(1);
-                throw error;
-            }
-            if (state.command.size() > 3)
-            {
-                Issue error;
-                error.text = "too many parameters for device type \"" + state.command.at(1).text + "\". Only numeric IPv4 address allowed.";
-                error.item = state.command.at(3);
-                throw error;
-            }
+            int ipStringStartIndex = charIndex;
+            QString ipString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{").toLower();
 
             QHostAddress ipAddressNotValidated;
 
-            if (!ipAddressNotValidated.setAddress(QString(state.command.at(2).text)))
+            if (!ipAddressNotValidated.setAddress(QString(ipString)))
             {
                 Issue error;
-                error.text = "Can't convert parameter \"" + QString(state.command.at(2).text) + "\" to IPv4 address. ";
-                error.item = state.command.at(2);
+                error.beginChar = ipStringStartIndex;
+                error.endChar = charIndex;
+                error.text = "Can't convert parameter \"" + ipString + "\" to IPv4 address.";
                 throw error;
             }
 
@@ -243,282 +91,121 @@ void ExpressionFilterGenerator::processBlockHeader(State& state)
             if (!convOk)
             {
                 Issue error;
-                error.text = "Parameter \"" + QString(state.command.at(2).text) + "\" is not a valid IPv4 address. ";
-                error.item = state.command.at(2);
+                error.beginChar = ipStringStartIndex;
+                error.endChar = charIndex;
+                error.text = "Parameter \"" + ipString + "\" is not a valid IPv4 address.";
                 throw error;
             }
 
-            state.currentDevice.type = Device::DT_LIVOX_MID360;
-            state.currentDevice.data = hostAddress;
+            deviceStringForErrors += " " + ipString;
 
-//            iter = state.deviceMatrices.find(state.currentDevice);
+            device.data = hostAddress;
         }
         else
         {
             Issue error;
-            error.text = "Unknown device type \"" + state.command.at(1).text + "\".";
-            error.item = state.command.at(1);
+            error.beginChar = deviceStringStartIndex;
+            error.endChar = charIndex;
+            error.text = "Unknown device type: \"" + deviceStringForErrors + "\".";
             throw error;
         }
-/*
-        if ((state.deviceDefined) || (!state.requireDeviceDefinition))
+
+        if (filters.contains(device))
         {
-            Eigen::Transform<double, 3, Eigen::Affine> matrix;
+            Issue error;
+            error.beginChar = deviceStringStartIndex;
+            error.endChar = charIndex;
+            error.text = "Duplicate device: \"" + deviceStringForErrors + "\".";
 
-            if (iter != state.deviceMatrices.end())
-            {
-                matrix = iter.value();
-            }
-            else
-            {
-                matrix = matrix.Identity();
-            }
-
-            for (int i = state.subMatrices.size() - 1; i >= 0; i--)
-            {
-                matrix = matrix * state.subMatrices.at(i);
-            }
-
-            state.deviceMatrices.insert(prevDevice, matrix);
+            throw error;
         }
 
-        state.subMatrices.clear();
-*/
+        newFilterPair->setConvexHullFilters(convexHullFilters);
 
-        state.deviceDefined = true;
-    }
-    else
-    {
-        Issue error;
-        error.text = "Unknown block type \"" + state.command.at(0).text + "\"";
-        error.item = state.command.at(0);
-        throw error;
-    }
-}
-
-// Skips a comment starting from the defined position (lineNum, column), if any
-// Doesn't skip consecutive comments in one call
-// lineNum / column will point to the next character after the comment if there was a comment, otherwise they are unchanged
-// @return true if comment was skipped.
-bool ExpressionFilterGenerator::skipComments(const QStringList& lines, int& lineNum, int& column)
-{
-    if (column >= lines.at(lineNum).length())
-    {
-        return false;
-//        lineNum++;
-//        column = 0;
-    }
-
-    if (lineNum >= lines.count())
-    {
-        return false;
-    }
-
-    if (lines[lineNum].length() == 0)
-    {
-        // Empty line
-        return false;
-    }
-
-    QString line = lines.at(lineNum);
-
-    if ((line.length() >= (column + 2)) && (line.at(column).toLatin1() == '/') && (line.at(column+1).toLatin1() == '/'))
-    {
-        // Rest of the line is comment -> Skip it
-        column = 0;
-        lineNum++;
-        return true;
-    }
-    else if ((line.length() >= (column + 2)) && (line.at(column).toLatin1() == '/') && (line.at(column+1).toLatin1() == '*'))
-    {
-        // Block comment start.
-        int startLine = lineNum;
-        int startColumn = column;
-
-        column += 2;
-
-        while (lineNum < lines.count())
+        try
         {
-            while (column < line.length())
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
+
+            if (charIndex >= plainText.length())
             {
-                if ((line.length() >= (column + 2)) && (line.at(column).toLatin1() == '*') && (line.at(column+1).toLatin1() == '/'))
-                {
-                    // Comment end
-                    column += 2;
-                    if (column >= line.length())
-                    {
-                        column = 0;
-                        lineNum++;
-                    }
-                    return true;
-                }
-                column++;
-            }
-            lineNum++;
-        }
-
-        Issue error;
-        error.text = "Unterminated block comment.";
-        error.item.lineNumber = startLine;
-        error.item.firstCol = startColumn;
-        error.item.lastCol = startColumn + 2;
-        error.item.text = "/*";
-
-        throw error;
-    }
-
-    return false;
-}
-
-// Skips whitespaces (including newlines) starting from the defined position (lineNum, column), if any
-// lineNum / column will point to the next character after the comment if there were whitespace(s), otherwise they are unchanged
-// @return true if something was skipped.
-bool ExpressionFilterGenerator::skipWhitespaces(const QStringList& lines, int& lineNum, int& column)
-{
-    if (column >= lines.at(lineNum).length())
-    {
-        lineNum++;
-        column = 0;
-    }
-
-    bool retval = false;
-
-    while (lineNum < lines.count())
-    {
-        // Skip empty lines
-
-        if (lines[lineNum].length() == 0)
-        {
-            column = 0;
-            lineNum++;
-            retval = true;
-            continue;
-        }
-
-        char character = lines[lineNum].at(column).toLatin1();
-
-        if ((character != ' ') && (character != '\t'))
-        {
-            retval = true;
-            break;
-        }
-
-        column++;
-
-        if (column >= lines[lineNum].length())
-        {
-            column = 0;
-            lineNum++;
-        }
-    }
-
-    return retval;
-}
-
-bool ExpressionFilterGenerator::skipWhitespacesAndComments(const QStringList& lines, int& lineNum, int& column)
-{
-    bool skipped;
-
-    do
-    {
-        skipped = skipWhitespaces(lines, lineNum, column);
-        skipped |= skipComments(lines, lineNum, column);
-    } while(skipped);
-
-    return skipped;
-}
-
-QString ExpressionFilterGenerator::getExpressionString(const QStringList& lines, int& lineNum, int& column, QMap<int, std::pair<int, int> >& charMap)
-{
-    charMap.clear();
-
-    if (column >= lines.at(lineNum).length())
-    {
-        lineNum++;
-        column = 0;
-    }
-
-    if (lineNum >= lines.count())
-    {
-        return "";
-    }
-
-    int startLine = lineNum;
-    int startColumn = column;
-
-    skipWhitespacesAndComments(lines, lineNum, column);
-
-    if (lineNum >= lines.count())
-    {
-        Issue error;
-        error.text = "No opening curly brace found for expression (filter or quality).";
-        error.item.lineNumber = startLine;
-        error.item.firstCol = startColumn;
-        error.item.lastCol = startColumn;
-
-        throw error;
-    }
-
-    if (lines[lineNum].at(column) != '{')
-    {
-        Issue error;
-        error.text = "Only whitespaces or comments allowed before opening curly brace for the expression (filtering or quality).";
-        error.item.lineNumber = startLine;
-        error.item.firstCol = startColumn;
-        error.item.lastCol = startColumn;
-
-        throw error;
-    }
-
-    startLine = lineNum;
-    startColumn = column;
-
-    QByteArray retval;
-
-    column++;
-
-    while (lineNum < lines.count())
-    {
-        while (column < lines[lineNum].length())
-        {
-            if (skipComments(lines, lineNum, column))
-            {
-                continue;
+                Issue error;
+                error.beginChar = deviceStringStartIndex;
+                error.endChar = charIndex;
+                error.text = "Expression definitions missing for device \"" + deviceStringForErrors + "\".";
+                throw error;
             }
 
-            char character = lines[lineNum].at(column).toLatin1();
-
-            if (!character)
+            if (plainText.at(charIndex) != '{')
             {
-                // Comment sections may contain non-latin chars, so replace them with spaces
-                character = ' ';
+                Issue error;
+                error.beginChar = charIndex;
+                error.endChar = charIndex;
+                error.text = "Only comments and whitespaces allowed between device definition and opening curly brace for filter expression.";
+                throw error;
             }
 
-            if (character == '}')
+            int expressionsStartIndex = charIndex;
+            QString filterExpression = TextBlockParser::getTextBlockAsString(plainText, charIndex);
+            QString errorMessage;
+            int errorPosition;
+
+            if (!newFilterPair->setExpression_Filter(filterExpression, &errorMessage, &errorPosition))
             {
-                return retval;
+                Issue error;
+                error.beginChar = errorPosition + expressionsStartIndex;
+                error.endChar = errorPosition + expressionsStartIndex;
+                error.text = "Error compiling filter expression: " + errorMessage;
+
+                throw error;
             }
 
-            retval += character;
-            charMap[retval.length() - 1] = std::pair<int, int>(lineNum, column);
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
 
-            column++;
+            if (charIndex >= plainText.length())
+            {
+                Issue error;
+                error.beginChar = deviceStringStartIndex;
+                error.endChar = charIndex;
+                error.text = "Quality expression definition missing for device \"" + deviceStringForErrors + "\".";
+                throw error;
+            }
+
+            if (plainText.at(charIndex) != '{')
+            {
+                Issue error;
+                error.beginChar = charIndex;
+                error.endChar = charIndex;
+                error.text = "Only comments and whitespaces allowed between closing and opening curly braces for filter and quality expression.";
+                throw error;
+            }
+
+            expressionsStartIndex = charIndex;
+            filterExpression = TextBlockParser::getTextBlockAsString(plainText, charIndex);
+
+            if (!newFilterPair->setExpression_Quality(filterExpression, &errorMessage, &errorPosition))
+            {
+                Issue error;
+                error.beginChar = errorPosition + expressionsStartIndex;
+                error.endChar = errorPosition + expressionsStartIndex;
+                error.text = "Error compiling quality expression: " + errorMessage;
+
+                throw error;
+            }
+        }
+        catch (TextBlockParser::Issue& issue)
+        {
+            Issue error;
+            error.beginChar = issue.beginChar;
+            error.endChar = issue.endChar;
+            error.text = issue.text;
+
+            throw error;
         }
 
-        retval += 10;   // Not sure how tinyexpr handles/counts newlines, so add a single linefeed
-        charMap[retval.length() - 1] = std::pair<int, int>(lineNum, column);
-
-        column = 0;
-        lineNum++;
+        filters.insert(device, newFilterPair);
     }
 
-    Issue error;
-    error.text = "Unmatched opening curly brace.";
-    error.item.lineNumber = startLine;
-    error.item.firstCol = startColumn;
-    error.item.lastCol = startColumn;
-
-    throw error;
+    return filters;
 }
 
 }; // namespace PointFilter

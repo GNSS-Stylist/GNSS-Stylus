@@ -21,7 +21,6 @@
 
 #include <QStringList>
 #include <QMap>
-#include "Eigen/Geometry"
 #include "expressionfilter_base.h"
 
 namespace PointFilter
@@ -29,25 +28,12 @@ namespace PointFilter
 
 class ExpressionFilterGenerator
 {
-    using FilterPair = std::pair<std::shared_ptr<ExpressionFilter_Base>, std::shared_ptr<ExpressionFilter_Base> >;
-
 public:
-    class Item
-    {
-    public:
-        int lineNumber = -1;
-        int firstCol = -1;
-        int lastCol = -1;
-        QByteArray text;
-
-        Item(const QByteArray& text, const int lineNumber = -1, const int firstCol = -1, const int lastCol = -1);
-        Item() {};
-    };
-
     class Issue
     {
     public:
-        Item item;
+        int beginChar = -1;
+        int endChar = -1;
         QString text;
     };
 
@@ -71,25 +57,7 @@ public:
         quint32 data;
     };
 
-    ExpressionFilterGenerator();
-
-//    QMap<Device, std::pair<std::shared_ptr<ExpressionFilter_Base>, std::shared_ptr<ExpressionFilter_Base> > > generateMap(const QStringList& lines, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters);
-    QMap<Device, FilterPair> generateMap(const QStringList& lines, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters);
-
-private:
-    class State
-    {
-    public:
-        Device currentDevice;
-        bool deviceDefined = false;
-        QVector<Item> command;
-    };
-
-    void processBlockHeader(State& state);
-    bool skipComments(const QStringList& lines, int& lineNum, int& column);
-    bool skipWhitespaces(const QStringList& lines, int& lineNum, int& column);
-    bool skipWhitespacesAndComments(const QStringList& lines, int& lineNum, int& column);
-    QString getExpressionString(const QStringList& lines, int& lineNum, int& column, QMap<int, std::pair<int, int> >& charMap);
+    static QMap<Device, std::shared_ptr<ExpressionFilter_Base>> generateMap(const QString& plainText, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters = QVector<ExpressionFilter_Base::ConvexHullFilter>());
 };
 
 }; // namespace PointFilter
