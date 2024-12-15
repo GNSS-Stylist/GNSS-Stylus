@@ -117,6 +117,10 @@ void TestExpressionFilter::expressionValidity_ValidExpressions()
 
     QCOMPARE(filter.setExpression_Filter("1"), true);
     QCOMPARE(filter.setExpression_Quality("1"), true);
+
+    // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
+    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
+    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
 }
 
 void TestExpressionFilter::expressionValidity_ValidExpressions_RPLidar()
@@ -125,6 +129,10 @@ void TestExpressionFilter::expressionValidity_ValidExpressions_RPLidar()
 
     QCOMPARE(filter.setExpression_Filter("1"), true);
     QCOMPARE(filter.setExpression_Quality("1"), true);
+
+    // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
+    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
+    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
 }
 
 void TestExpressionFilter::expressionValidity_InvalidExpressions()
@@ -141,6 +149,17 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
     QCOMPARE(filter.setExpression_Filter("lidar.rplidar.quality()"), false);    // Should only be available in ExpressionFilter_RPLidar
     QCOMPARE(filter.setExpression_Quality("lidar.rplidar.quality()"), false);   // Should only be available in ExpressionFilter_RPLidar
 
+    QString errorString;
+    int errorPosition;
+
+    // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
+    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
+    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+    QCOMPARE(errorPosition, 1);
+
+    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
+    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+    QCOMPARE(errorPosition, 1);
 
     unsigned int index = 0;
     // Prefill buffer
@@ -182,9 +201,6 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
         QCOMPARE(out.filterResult, 1);
         QVERIFY(std::isnan(out.quality));
     }
-
-    QString errorString;
-    int errorPosition;
 
     QCOMPARE(filter.setExpression_Filter("#", &errorString, &errorPosition), false);
     QCOMPARE(errorPosition, 0);
@@ -214,6 +230,18 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
     QCOMPARE(filter.setExpression_Filter("lidar.mid360.properties()"), false);      // Should only be available in ExpressionFilter_Mid360
     QCOMPARE(filter.setExpression_Quality("lidar.mid360.reflectivity()"), false);   // Should only be available in ExpressionFilter_Mid360
 
+    QString errorString;
+    int errorPosition;
+
+    // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
+    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
+    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+    QCOMPARE(errorPosition, 1);
+
+    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
+    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+    QCOMPARE(errorPosition, 1);
+
     unsigned int index = 0;
     // Prefill buffer
     for (index = 0; index < filterBufferLength - 1; index++)
@@ -254,9 +282,6 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
         QCOMPARE(out.filterResult, 1);
         QVERIFY(std::isnan(out.quality));
     }
-
-    QString errorString;
-    int errorPosition;
 
     QCOMPARE(filter.setExpression_Filter("#", &errorString, &errorPosition), false);
     QCOMPARE(errorPosition, 0);
