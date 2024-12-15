@@ -18,6 +18,7 @@
 
 #include "expressionfilter_base.h"
 #include "tinyexprcustomfunctions.h"
+#include "Util/textblockparser.h"
 
 namespace PointFilter
 {
@@ -91,7 +92,46 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
     expression_Filter = newExpression;
 
     char* prevLocale = std::setlocale(LC_NUMERIC, "C");
-    parser_Filter.compile(expression_Filter.toUtf8().constData());
+
+    QByteArray expression_8bit;
+    TextBlockParser::CommentState cState;
+
+    for (int i = 0; i < expression_Filter.length(); i++)
+    {
+        bool inComment = TextBlockParser::isInComment(expression_Filter, i, cState);
+
+        char character = expression_Filter.at(i).toLatin1();
+
+        if (character == 0)
+        {
+            if (inComment)
+            {
+                character = '?';
+            }
+            else
+            {
+                if (errorMessage)
+                {
+                    *errorMessage = "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.";
+                }
+
+                if (errorPosition)
+                {
+                    *errorPosition = i;
+                }
+
+                if (prevLocale)
+                {
+                    setlocale(LC_NUMERIC, prevLocale);
+                }
+                return false;
+            }
+        }
+
+        expression_8bit += character;
+    }
+
+    parser_Filter.compile(expression_8bit.constData());
     if (prevLocale)
     {
         setlocale(LC_NUMERIC, prevLocale);
@@ -105,8 +145,19 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
     {
         if (errorMessage)
         {
-            *errorMessage = QString::fromStdString(parser_Filter.get_last_error_message());
+            QString qstrErrorMessage = QString::fromStdString(parser_Filter.get_last_error_message());
+
+            if (qstrErrorMessage.isEmpty())
+            {
+                *errorMessage = "TinyExpr error: (empty)";
+            }
+            else
+            {
+                // Does TinyExpr++ ever return any error string?
+                *errorMessage = qstrErrorMessage;
+            }
         }
+
         if (errorPosition)
         {
             *errorPosition = parser_Filter.get_last_error_position();
@@ -121,7 +172,45 @@ bool ExpressionFilter_Base::setExpression_Quality(const QString newExpression, Q
     expression_Quality = newExpression;
 
     char* prevLocale = std::setlocale(LC_NUMERIC, "C");
-    parser_Quality.compile(expression_Quality.toUtf8().constData());
+
+    QByteArray expression_8bit;
+    TextBlockParser::CommentState cState;
+
+    for (int i = 0; i < expression_Quality.length(); i++)
+    {
+        bool inComment = TextBlockParser::isInComment(expression_Filter, i, cState);
+        char character = expression_Quality.at(i).toLatin1();
+
+        if (character == 0)
+        {
+            if (inComment)
+            {
+                character = '?';
+            }
+            else
+            {
+                if (errorMessage)
+                {
+                    *errorMessage = "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.";
+                }
+
+                if (errorPosition)
+                {
+                    *errorPosition = i;
+                }
+
+                if (prevLocale)
+                {
+                    setlocale(LC_NUMERIC, prevLocale);
+                }
+                return false;
+            }
+        }
+
+        expression_8bit += character;
+    }
+
+    parser_Quality.compile(expression_8bit.constData());
     if (prevLocale)
     {
         setlocale(LC_NUMERIC, prevLocale);
@@ -133,10 +222,21 @@ bool ExpressionFilter_Base::setExpression_Quality(const QString newExpression, Q
     }
     else
     {
+        QString qstrErrorMessage = QString::fromStdString(parser_Quality.get_last_error_message());
+
         if (errorMessage)
         {
-            *errorMessage = QString::fromStdString(parser_Quality.get_last_error_message());
+            if (qstrErrorMessage.isEmpty())
+            {
+                *errorMessage = "TinyExpr error: (empty)";
+            }
+            else
+            {
+                // Does TinyExpr++ ever return any error string?
+                *errorMessage = qstrErrorMessage;
+            }
         }
+
         if (errorPosition)
         {
             *errorPosition = parser_Quality.get_last_error_position();
