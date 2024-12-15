@@ -334,7 +334,7 @@ void TestTextBlockParser::Errors()
     catch (TextBlockParser::Issue& issue)
     {
         QCOMPARE(issue.beginChar, 5);
-        QCOMPARE(issue.endChar, 5 + 1);
+        QCOMPARE(issue.endChar, unterminatedBlock.length());
         QCOMPARE(issue.text, "Unterminated block (matching \"}\"-character missing).");
     }
 
@@ -348,7 +348,7 @@ void TestTextBlockParser::Errors()
     catch (TextBlockParser::Issue& issue)
     {
         QCOMPARE(issue.beginChar, 5);
-        QCOMPARE(issue.endChar, 5 + 1);
+        QCOMPARE(issue.endChar, unterminatedBlock.length());
         QCOMPARE(issue.text, "Unterminated block (matching \"}\"-character missing).");
     }
 

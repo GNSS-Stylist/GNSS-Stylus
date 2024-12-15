@@ -283,7 +283,7 @@ QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, in
 
     Issue error;
     error.beginChar = blockStartIndex;
-    error.endChar = blockStartIndex + 1;
+    error.endChar = charIndex;
     error.text = "Unterminated block (matching \"}\"-character missing).";
     throw error;
 }
@@ -339,7 +339,7 @@ QString TextBlockParser::getTextBlockAsString(const QString& plainText, int& cha
 
     Issue error;
     error.beginChar = blockStartIndex;
-    error.endChar = blockStartIndex + 1;
+    error.endChar = charIndex;
     error.text = "Unterminated block (matching \"}\"-character missing).";
     throw error;
 }
