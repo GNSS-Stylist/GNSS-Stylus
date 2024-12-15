@@ -69,6 +69,7 @@ SOURCES += \
     PostProcessing/Lidar/PointFilter/expressionfilter_base.cpp \
     PostProcessing/Lidar/PointFilter/expressionfilter_mid360.cpp \
     PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.cpp \
+    PostProcessing/Lidar/PointFilter/expressionfiltergenerator.cpp \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
@@ -78,6 +79,7 @@ SOURCES += \
     PostProcessing/loscriptgenerator.cpp \
     PostProcessing/postprocessingform.cpp \
     PostProcessing/rastercameragenerator.cpp \
+    Util/textblockparser.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
     RPLidar/lidarchartform.cpp \
@@ -116,6 +118,7 @@ HEADERS += \
     PostProcessing/Lidar/PointFilter/expressionfilter_base.h \
     PostProcessing/Lidar/PointFilter/expressionfilter_mid360.h \
     PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.h \
+    PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h \
     PostProcessing/Lidar/PointFilter/lazyevaluator.h \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
@@ -126,6 +129,7 @@ HEADERS += \
     PostProcessing/loscriptgenerator.h \
     PostProcessing/postprocessingform.h \
     PostProcessing/rastercameragenerator.h \
+    Util/textblockparser.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \
     RPLidar/lidarchartform.h \
