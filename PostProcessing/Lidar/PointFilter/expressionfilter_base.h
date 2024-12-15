@@ -60,7 +60,9 @@ public:
     };
 
     bool setExpression_Filter(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    QString getExpression_Filter(void) { return expression_Filter; };
     bool setExpression_Quality(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    QString getExpression_Quality(void) { return expression_Quality; };
     void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     bool setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters);
