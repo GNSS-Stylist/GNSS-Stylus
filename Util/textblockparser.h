@@ -50,8 +50,8 @@ public:
     static bool skipSingleComment(const QString& plainText, int& charIndex);
     static bool skipComments(const QString& plainText, int& charIndex);
     static bool skipWhitespacesAndComments(const QString& plainText, int& charIndex);
-    static QByteArray getTextBlockAsByteArray(const QString& plainText, int& charIndex);
-    static QString getTextBlockAsString(const QString& plainText, int& charIndex);
+    static QByteArray getTextBlockAsByteArray(const QString& plainText, int& charIndex, const bool allowRecursiveCurlyBraces = false);
+    static QString getTextBlockAsString(const QString& plainText, int& charIndex, const bool allowRecursiveCurlyBraces = false);
 };
 
 #endif // TEXTBLOCKPARSER_H

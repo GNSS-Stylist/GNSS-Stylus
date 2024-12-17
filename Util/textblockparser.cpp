@@ -217,9 +217,10 @@ bool TextBlockParser::skipWhitespacesAndComments(const QString& plainText, int& 
     return skippedEver;
 }
 
-QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, int& charIndex)
+QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, int& charIndex, const bool allowRecursiveCurlyBraces)
 {
     QByteArray retval;
+    int curlyBraceDepth = 0;
 
     if (charIndex >= plainText.length())
     {
@@ -253,6 +254,11 @@ QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, in
 
         if (!isCommentChar)
         {
+            if (allowRecursiveCurlyBraces && (character == '{'))
+            {
+                curlyBraceDepth++;
+            }
+
             if (character == 0)
             {
                 Issue error;
@@ -264,8 +270,15 @@ QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, in
 
             if (character == '}')
             {
-                charIndex++;
-                return retval;
+                if (curlyBraceDepth == 0)
+                {
+                    charIndex++;
+                    return retval;
+                }
+                else if (allowRecursiveCurlyBraces)
+                {
+                    curlyBraceDepth--;
+                }
             }
         }
 
@@ -283,14 +296,15 @@ QByteArray TextBlockParser::getTextBlockAsByteArray(const QString& plainText, in
 
     Issue error;
     error.beginChar = blockStartIndex;
-    error.endChar = charIndex;
+    error.endChar = blockStartIndex + 1;
     error.text = "Unterminated block (matching \"}\"-character missing).";
     throw error;
 }
 
-QString TextBlockParser::getTextBlockAsString(const QString& plainText, int& charIndex)
+QString TextBlockParser::getTextBlockAsString(const QString& plainText, int& charIndex, const bool allowRecursiveCurlyBraces)
 {
     QString retval;
+    int curlyBraceDepth = 0;
 
     if (charIndex >= plainText.length())
     {
@@ -324,10 +338,22 @@ QString TextBlockParser::getTextBlockAsString(const QString& plainText, int& cha
 
         if (!isCommentChar)
         {
+            if (allowRecursiveCurlyBraces && (character == '{'))
+            {
+                curlyBraceDepth++;
+            }
+
             if (character == '}')
             {
-                charIndex++;
-                return retval;
+                if (curlyBraceDepth == 0)
+                {
+                    charIndex++;
+                    return retval;
+                }
+                else if (allowRecursiveCurlyBraces)
+                {
+                    curlyBraceDepth--;
+                }
             }
         }
 
@@ -339,7 +365,7 @@ QString TextBlockParser::getTextBlockAsString(const QString& plainText, int& cha
 
     Issue error;
     error.beginChar = blockStartIndex;
-    error.endChar = charIndex;
+    error.endChar = blockStartIndex + 1;
     error.text = "Unterminated block (matching \"}\"-character missing).";
     throw error;
 }
