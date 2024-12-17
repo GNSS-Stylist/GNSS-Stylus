@@ -22,6 +22,7 @@
 #include "tst_convexhull.h"
 #include "tst_textblockparser.h"
 #include "tst_expressionfiltergenerator.h"
+#include "tst_convexhullgenerator.h"
 
 int main(int argc, char **argv)
 {
@@ -58,6 +59,11 @@ int main(int argc, char **argv)
 
     {
         TestExpressionFilterGenerator tc;
+        status |= QTest::qExec(&tc, argc, argv);
+    }
+
+    {
+        TestConvexHullGenerator tc;
         status |= QTest::qExec(&tc, argc, argv);
     }
 

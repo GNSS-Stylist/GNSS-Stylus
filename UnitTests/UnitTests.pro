@@ -13,6 +13,7 @@ QMAKE_LFLAGS += --coverage
 
 SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.cpp \
+    ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhullgenerator.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_base.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_mid360.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.cpp \
@@ -22,6 +23,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     ../Util/textblockparser.cpp \
     tst_convexhull.cpp \
+    tst_convexhullgenerator.cpp \
     tst_expressionfilter.cpp \
     tst_expressionfiltergenerator.cpp \
     tst_lazyevaluator.cpp \
@@ -29,6 +31,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     tst_textblockparser.cpp
 
 HEADERS += \
+    ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhullgenerator.h \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convhull_3d/convhull_3d.h \
     ../PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.h \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_base.h \
@@ -40,6 +43,7 @@ HEADERS += \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     ../Util/textblockparser.h \
     tst_convexhull.h \
+    tst_convexhullgenerator.h \
     tst_expressionfilter.h \
     tst_expressionfiltergenerator.h \
     tst_lazyevaluator.h \
