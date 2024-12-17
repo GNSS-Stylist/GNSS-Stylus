@@ -453,7 +453,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     {
         QCOMPARE(issue.text, "Unterminated block (matching \"}\"-character missing).");
         QCOMPARE(issue.beginChar, plainText.lastIndexOf("{1 /* Unterminated block */"));
-        QCOMPARE(issue.endChar, plainText.length());
+        QCOMPARE(issue.endChar, issue.beginChar + 1);
     }
     catch (...)
     {
