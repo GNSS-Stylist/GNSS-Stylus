@@ -87,8 +87,7 @@ ExpressionFilter_Base::ExpressionFilter_Base(const ExpressionFilter_Base& source
     copyFields(source, *this);
 }
 
-
-bool ExpressionFilter_Base::setExpression(te_parser& parser, const QString newExpression, QString* const errorMessage, int* const errorPosition)
+void ExpressionFilter_Base::setExpression(te_parser& parser, const QString newExpression)
 {
     QByteArray expression_8bit;
     TextBlockParser::CommentState cState;
@@ -107,17 +106,11 @@ bool ExpressionFilter_Base::setExpression(te_parser& parser, const QString newEx
             }
             else
             {
-                if (errorMessage)
-                {
-                    *errorMessage = "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.";
-                }
-
-                if (errorPosition)
-                {
-                    *errorPosition = i;
-                }
-
-                return false;
+                Issue error;
+                error.text = "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.";
+                error.beginChar = i;
+                error.endChar = i + 1;
+                throw error;
             }
         }
 
@@ -131,46 +124,36 @@ bool ExpressionFilter_Base::setExpression(te_parser& parser, const QString newEx
         setlocale(LC_NUMERIC, prevLocale);
     }
 
-    if (parser.success())
+    if (!parser.success())
     {
-        return true;
-    }
-    else
-    {
-        if (errorMessage)
-        {
-            QString qstrErrorMessage = QString::fromStdString(parser.get_last_error_message());
+        Issue error;
+        QString qstrErrorMessage = QString::fromStdString(parser.get_last_error_message());
 
-            if (qstrErrorMessage.isEmpty())
-            {
-                *errorMessage = "TinyExpr error: (empty)";
-            }
-            else
-            {
-                // Does TinyExpr++ ever return any error string?
-                *errorMessage = qstrErrorMessage;
-            }
+        if (qstrErrorMessage.isEmpty())
+        {
+            error.text = "TinyExpr error: (empty)";
+        }
+        else
+        {
+            error.text = qstrErrorMessage;
         }
 
-        if (errorPosition)
-        {
-            *errorPosition = parser.get_last_error_position();
-        }
-
-        return false;
+        error.beginChar = parser.get_last_error_position();
+        error.endChar = parser.get_last_error_position();
+        throw error;
     }
 }
 
-bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QString* const errorMessage, int* const errorPosition)
+void ExpressionFilter_Base::setExpression_Filter(const QString newExpression)
 {
     expression_Filter = newExpression;
-    return setExpression(parser_Filter, newExpression, errorMessage, errorPosition);
+    return setExpression(parser_Filter, newExpression);
 }
 
-bool ExpressionFilter_Base::setExpression_Quality(const QString newExpression, QString* const errorMessage, int* const errorPosition)
+void ExpressionFilter_Base::setExpression_Quality(const QString newExpression)
 {
     expression_Quality = newExpression;
-    return setExpression(parser_Quality, newExpression, errorMessage, errorPosition);
+    return setExpression(parser_Quality, newExpression);
 }
 
 void ExpressionFilter_Base::setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform)

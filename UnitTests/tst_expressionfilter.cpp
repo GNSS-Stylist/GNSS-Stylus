@@ -115,24 +115,52 @@ void TestExpressionFilter::expressionValidity_ValidExpressions()
 {
     PointFilter::ExpressionFilter_Mid360 filter;
 
-    QCOMPARE(filter.setExpression_Filter("1"), true);
-    QCOMPARE(filter.setExpression_Quality("1"), true);
+    try
+    {
+        filter.setExpression_Filter("1");
+        filter.setExpression_Quality("1");
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw expeption");
+    }
 
     // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
-    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
-    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
+    try
+    {
+        filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw expeption");
+    }
 }
 
 void TestExpressionFilter::expressionValidity_ValidExpressions_RPLidar()
 {
     PointFilter::ExpressionFilter_RPLidar filter;
 
-    QCOMPARE(filter.setExpression_Filter("1"), true);
-    QCOMPARE(filter.setExpression_Quality("1"), true);
+    try
+    {
+        filter.setExpression_Filter("1");
+        filter.setExpression_Quality("1");
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw expeption");
+    }
 
     // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
-    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
-    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")), true);
+    try
+    {
+        filter.setExpression_Filter(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        filter.setExpression_Quality(QString::fromUtf8("1//Chinese hello world: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n//Hello again: \xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw expeption");
+    }
 }
 
 void TestExpressionFilter::expressionValidity_InvalidExpressions()
@@ -140,26 +168,94 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
     PointFilter::ExpressionFilter_Mid360 filter;
     PointFilter::ExpressionFilter_Mid360::OutItem out;
 
-    QCOMPARE(filter.setExpression_Filter("invalid"), false);
-    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+    try
+    {
+        filter.setExpression_Filter("invalid//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 1);
+    }
 
-    QCOMPARE(filter.setExpression_Filter("sin(3.14"), false);
-    QCOMPARE(filter.setExpression_Quality("cos(45665))"), false);
+    try
+    {
+        filter.setExpression_Quality("invalid//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+    }
 
-    QCOMPARE(filter.setExpression_Filter("lidar.rplidar.quality()"), false);    // Should only be available in ExpressionFilter_RPLidar
-    QCOMPARE(filter.setExpression_Quality("lidar.rplidar.quality()"), false);   // Should only be available in ExpressionFilter_RPLidar
+    try
+    {
+        filter.setExpression_Filter("sin(3.14//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment"));
+    }
 
-    QString errorString;
-    int errorPosition;
+    try
+    {
+        filter.setExpression_Quality("cos(45665))//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf(")//Comment"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf(")//Comment"));
+    }
+
+    try
+    {
+        filter.setExpression_Filter("lidar.rplidar.quality()//Comment\n");    // Should only be available in ExpressionFilter_RPLidar
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 3);
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 3);
+    }
+
+    try
+    {
+        filter.setExpression_Quality("lidar.rplidar.quality()//Comment\n");   // Should only be available in ExpressionFilter_RPLidar
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 3);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 3);
+    }
 
     // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
-    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
-    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
-    QCOMPARE(errorPosition, 1);
+    try
+    {
+        filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd") + 1);
+    }
 
-    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
-    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
-    QCOMPARE(errorPosition, 1);
+    try
+    {
+        filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd") + 1);
+    }
 
     unsigned int index = 0;
     // Prefill buffer
@@ -189,8 +285,25 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
         QCOMPARE(out.quality, 0);   // Although the expression is invalid, quality is set to 0 if filter expression is invalid
     }
 
-    QCOMPARE(filter.setExpression_Filter("1"), true);
-    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+    try
+    {
+        filter.setExpression_Filter("1");
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw any exception");
+    }
+
+    try
+    {
+        filter.setExpression_Quality("invalid//Comment");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+    }
 
     for (index = 0; index < defaultTestRounds; index++)
     {
@@ -202,11 +315,27 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions()
         QVERIFY(std::isnan(out.quality));
     }
 
-    QCOMPARE(filter.setExpression_Filter("#", &errorString, &errorPosition), false);
-    QCOMPARE(errorPosition, 0);
+    try
+    {
+        filter.setExpression_Filter("#");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("#"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("#"));
+    }
 
-    QCOMPARE(filter.setExpression_Quality("#", &errorString, &errorPosition), false);
-    QCOMPARE(errorPosition, 0);
+    try
+    {
+        filter.setExpression_Quality("#");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("#"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("#"));
+    }
 
     for (index = 0; index < defaultTestRounds; index++)
     {
@@ -224,23 +353,94 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
     PointFilter::ExpressionFilter_RPLidar filter;
     PointFilter::ExpressionFilter_RPLidar::OutItem out;
 
-    QCOMPARE(filter.setExpression_Filter("invalid"), false);
-    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+    try
+    {
+        filter.setExpression_Filter("invalid//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 1);
+    }
 
-    QCOMPARE(filter.setExpression_Filter("lidar.mid360.properties()"), false);      // Should only be available in ExpressionFilter_Mid360
-    QCOMPARE(filter.setExpression_Quality("lidar.mid360.reflectivity()"), false);   // Should only be available in ExpressionFilter_Mid360
+    try
+    {
+        filter.setExpression_Quality("invalid//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+    }
 
-    QString errorString;
-    int errorPosition;
+    try
+    {
+        filter.setExpression_Filter("sin(3.14//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment"));
+    }
+
+    try
+    {
+        filter.setExpression_Quality("cos(45665))//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf(")//Comment"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf(")//Comment"));
+    }
+
+    try
+    {
+        filter.setExpression_Filter("lidar.mid360.properties()//Comment\n");    // Should only be available in ExpressionFilter_Mid360
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 3);
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("//Comment") - 3);
+    }
+
+    try
+    {
+        filter.setExpression_Quality("lidar.mid360.reflectivity()//Comment\n");   // Should only be available in ExpressionFilter_Mid360
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 3);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 3);
+    }
 
     // Test hello world in chinese (世界您好) (<- Does this survive gitHub etc. btw?) is 4 characters long.
-    QCOMPARE(filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
-    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
-    QCOMPARE(errorPosition, 1);
+    try
+    {
+        filter.setExpression_Filter(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd") + 1);
+    }
 
-    QCOMPARE(filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"), &errorString, &errorPosition), false);
-    QCOMPARE(errorString, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
-    QCOMPARE(errorPosition, 1);
+    try
+    {
+        filter.setExpression_Quality(QString::fromUtf8("1\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd") + 1);
+    }
 
     unsigned int index = 0;
     // Prefill buffer
@@ -270,8 +470,25 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
         QCOMPARE(out.quality, 0);   // Although the expression is invalid, quality is set to 0 if filter expression is invalid
     }
 
-    QCOMPARE(filter.setExpression_Filter("1"), true);
-    QCOMPARE(filter.setExpression_Quality("invalid"), false);
+    try
+    {
+        filter.setExpression_Filter("1");
+    }
+    catch (...)
+    {
+        QFAIL("Should not throw any exception");
+    }
+
+    try
+    {
+        filter.setExpression_Quality("invalid//Comment");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("//Comment") - 1);
+    }
 
     for (index = 0; index < defaultTestRounds; index++)
     {
@@ -283,11 +500,27 @@ void TestExpressionFilter::expressionValidity_InvalidExpressions_RPLidar()
         QVERIFY(std::isnan(out.quality));
     }
 
-    QCOMPARE(filter.setExpression_Filter("#", &errorString, &errorPosition), false);
-    QCOMPARE(errorPosition, 0);
+    try
+    {
+        filter.setExpression_Filter("#");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Filter().lastIndexOf("#"));
+        QCOMPARE(issue.endChar, filter.getExpression_Filter().lastIndexOf("#"));
+    }
 
-    QCOMPARE(filter.setExpression_Quality("#", &errorString, &errorPosition), false);
-    QCOMPARE(errorPosition, 0);
+    try
+    {
+        filter.setExpression_Quality("#");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue& issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter.getExpression_Quality().lastIndexOf("#"));
+        QCOMPARE(issue.endChar, filter.getExpression_Quality().lastIndexOf("#"));
+    }
 
     for (index = 0; index < defaultTestRounds; index++)
     {
@@ -448,8 +681,8 @@ void TestExpressionFilter::pureFunctions()
         }
 #endif
 
-        QCOMPARE(filter.setExpression_Filter(expression.str), true);
-        QCOMPARE(filter.setExpression_Quality("1"), true);
+        filter.setExpression_Filter(expression.str);
+        filter.setExpression_Quality("1");
 
         for (int i = 0; i < 100; i++)
         {
@@ -463,8 +696,8 @@ void TestExpressionFilter::pureFunctions()
 
         // Test also quality expression
 
-        QCOMPARE(filter.setExpression_Filter("1"), true); // Quality will only be calculated if filter returns true (1)
-        QCOMPARE(filter.setExpression_Quality(expression.str), true);
+        filter.setExpression_Filter("1"); // Quality will only be calculated if filter returns true (1)
+        filter.setExpression_Quality(expression.str);
 
         for (int i = 0; i < 100; i++)
         {
@@ -532,8 +765,8 @@ void TestExpressionFilter::pureFunctions_RPLidar()
         }
 #endif
 
-        QCOMPARE(filter.setExpression_Filter(expression.str), true);
-        QCOMPARE(filter.setExpression_Quality("1"), true);
+        filter.setExpression_Filter(expression.str);
+        filter.setExpression_Quality("1");
 
         for (int i = 0; i < 100; i++)
         {
@@ -547,8 +780,8 @@ void TestExpressionFilter::pureFunctions_RPLidar()
 
         // Test also quality expression
 
-        QCOMPARE(filter.setExpression_Filter("1"), true); // Quality will only be calculated if filter returns true (1)
-        QCOMPARE(filter.setExpression_Quality(expression.str), true);
+        filter.setExpression_Filter("1"); // Quality will only be calculated if filter returns true (1)
+        filter.setExpression_Quality(expression.str);
 
         for (int i = 0; i < 100; i++)
         {
@@ -879,8 +1112,8 @@ void TestExpressionFilter::lidarAngles()
     PointFilter::ExpressionFilter_Mid360::OutItem out_Horizontal;
     PointFilter::ExpressionFilter_Mid360::OutItem out_Vertical;
 
-    QVERIFY(filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal"));
-    QVERIFY(filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical"));
+    filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal");
+    filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical");
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -918,8 +1151,8 @@ void TestExpressionFilter::lidarAngles_RPLidar()
     PointFilter::ExpressionFilter_RPLidar::OutItem out_Horizontal;
     PointFilter::ExpressionFilter_RPLidar::OutItem out_Vertical;
 
-    QVERIFY(filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal"));
-    QVERIFY(filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical"));
+    filter_Angle_Horizontal.setExpression_Filter("lidar.angle.horizontal");
+    filter_Angle_Vertical.setExpression_Filter("lidar.angle.vertical");
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -957,9 +1190,9 @@ void TestExpressionFilter::lidarAngles_Indexed()
     unsigned int index = 0;
     PointFilter::ExpressionFilter_Mid360::OutItem out;
 
-    QVERIFY(filter_Angle_Horizontal_Index0.setExpression_Filter("lidar.angle_indexed.horizontal(0)"));
-    QVERIFY(filter_Angle_Horizontal_IndexMinus7.setExpression_Filter("lidar.angle_indexed.horizonTal(-7)"));
-    QVERIFY(filter_Angle_Vertical_IndexPlus7.setExpression_Filter("lidar.angle_InDexed.vertiCal(7)"));
+    filter_Angle_Horizontal_Index0.setExpression_Filter("lidar.angle_indexed.horizontal(0)");
+    filter_Angle_Horizontal_IndexMinus7.setExpression_Filter("lidar.angle_indexed.horizonTal(-7)");
+    filter_Angle_Vertical_IndexPlus7.setExpression_Filter("lidar.angle_InDexed.vertiCal(7)");
 
     for (unsigned int i = 0; i < defaultTestRounds; i++)
     {
@@ -2236,10 +2469,20 @@ void TestExpressionFilter::convexHullIndexes()
     PointFilter::ExpressionFilter_Mid360::OutItem out_Second;
     PointFilter::ExpressionFilter_Mid360::OutItem out_Third;
 
-    QCOMPARE(filter_First.setExpression_Filter("chull_first"), true);
-    QCOMPARE(filter_Second.setExpression_Filter("chull_sEcOnD"), true);
-    QCOMPARE(filter_Third.setExpression_Filter("chull_third"), true);
-    QCOMPARE(filter_InvalidHullIndexIdent.setExpression_Filter("chull_InValid"), false);
+    filter_First.setExpression_Filter("chull_first");
+    filter_Second.setExpression_Filter("chull_sEcOnD");
+    filter_Third.setExpression_Filter("chull_third");
+
+    try
+    {
+        filter_InvalidHullIndexIdent.setExpression_Filter("chull_InValid//Comment\n");
+    }
+    catch (PointFilter::ExpressionFilter_Base::Issue &issue)
+    {
+        QCOMPARE(issue.text, "TinyExpr error: (empty)");
+        QCOMPARE(issue.beginChar, filter_InvalidHullIndexIdent.getExpression_Filter().lastIndexOf("//Comment") - 1);
+        QCOMPARE(issue.endChar, filter_InvalidHullIndexIdent.getExpression_Filter().lastIndexOf("//Comment") - 1);
+    }
 
     unsigned int index = 0;
     // Prefill buffer
@@ -2327,9 +2570,9 @@ void TestExpressionFilter::invalidConvexHullIndexes()
 
     // Use invalid hull indexes so "in_convex_hull"-functions should always return false (0)
     // "hugeoriginbox" would be index 0 so that's skipped here
-    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(-1, 0)"));
-    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(1, 0)"));
-    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(2, 0)"));
+    exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(-1, 0)");
+    exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(1, 0)");
+    exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(2, 0)");
 
     unsigned int index;
 
@@ -2386,9 +2629,9 @@ void TestExpressionFilter::convexHulls_SingleCubeOnOrigin_DefaultTransforms()
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_NED.setConvexHullFilters(convexHullFilters));
 
-    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox, 0)"));
-    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox, 0)"));
-    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox, 0)"));
+    exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox, 0)");
+    exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox, 0)");
+    exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox, 0)");
 
     unsigned int index;
 
@@ -2511,9 +2754,9 @@ void TestExpressionFilter::convexHulls_OverwriteHulls()
     QVERIFY(exprFilter_Rig.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_NED.setConvexHullFilters(convexHullFilters));
 
-    QVERIFY(exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox, 0)"));
-    QVERIFY(exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox, 0)"));
-    QVERIFY(exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox, 0)"));
+    exprFilter_Lidar.setExpression_Filter("lidar.in_convex_hull(chull_originbox, 0)");
+    exprFilter_Rig.setExpression_Filter("rig.in_convex_hull(chull_originbox, 0)");
+    exprFilter_NED.setExpression_Filter("NED.In_Convex_Hull(CHULL_OriginBox, 0)");
 
     unsigned int index;
 
@@ -2621,13 +2864,13 @@ void TestExpressionFilter::convexHulls_TwoStaticCubes_DefaultTransforms()
     QVERIFY(exprFilter_Rig2.setConvexHullFilters(convexHullFilters));
     QVERIFY(exprFilter_NED2.setConvexHullFilters(convexHullFilters));
 
-    QVERIFY(exprFilter_Lidar1.setExpression_Filter("lidar.in_convex_hull(chull_box1, 0)"));
-    QVERIFY(exprFilter_Rig1.setExpression_Filter("rig.in_convex_hull(chull_box1, 0)"));
-    QVERIFY(exprFilter_NED1.setExpression_Filter("NED.In_Convex_Hull(CHULL_Box1, 0)"));
+    exprFilter_Lidar1.setExpression_Filter("lidar.in_convex_hull(chull_box1, 0)");
+    exprFilter_Rig1.setExpression_Filter("rig.in_convex_hull(chull_box1, 0)");
+    exprFilter_NED1.setExpression_Filter("NED.In_Convex_Hull(CHULL_Box1, 0)");
 
-    QVERIFY(exprFilter_Lidar2.setExpression_Filter("lidar.in_convex_hull(chull_box2, 0)"));
-    QVERIFY(exprFilter_Rig2.setExpression_Filter("rig.in_convex_hull(chull_box2, 0)"));
-    QVERIFY(exprFilter_NED2.setExpression_Filter("NED.In_Convex_Hull(CHULL_Box2, 0)"));
+    exprFilter_Lidar2.setExpression_Filter("lidar.in_convex_hull(chull_box2, 0)");
+    exprFilter_Rig2.setExpression_Filter("rig.in_convex_hull(chull_box2, 0)");
+    exprFilter_NED2.setExpression_Filter("NED.In_Convex_Hull(CHULL_Box2, 0)");
 
     unsigned int index;
 
@@ -2871,14 +3114,14 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms()
         QVERIFY(filter_Rig.setConvexHullFilters(convexHullFilters));
         QVERIFY(filter_NED.setConvexHullFilters(convexHullFilters));
 
-        QVERIFY(filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ")"));
+        filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(QString("rig.in_convex_hull(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) +
-            ") || rig.in_convex_hull(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ")"));
+        filter_Rig.setExpression_Filter(QString("rig.in_convex_hull(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) +
+            ") || rig.in_convex_hull(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(QString("ned.in_convex_hull(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) +
+        filter_NED.setExpression_Filter(QString("ned.in_convex_hull(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) +
             ") || ned.in_convex_hull(chull_second_ned, " + QString::number(hullMargins[1], 'g', 14) +
-            ") || ned.in_convex_hull(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ")"));
+            ") || ned.in_convex_hull(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ")");
 
         unsigned int index = 0;
 
@@ -3128,16 +3371,16 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
         QVERIFY(filter_NED.setConvexHullFilters(convexHullFilters));
         QVERIFY(filter_InvalidHullIndexes.setConvexHullFilters(convexHullFilters));
 
-        QVERIFY(filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull_indexed(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) + ")"));
+        filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull_indexed(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) + ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(QString("rig.in_convex_hull_indexed(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
-                                                ") || rig.in_convex_hull_indexed(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) + ")"));
+        filter_Rig.setExpression_Filter(QString("rig.in_convex_hull_indexed(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+                                                ") || rig.in_convex_hull_indexed(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) + ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(QString("ned.in_convex_hull_indexed(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+        filter_NED.setExpression_Filter(QString("ned.in_convex_hull_indexed(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
                                                 ") || ned.in_convex_hull_indexed(chull_second_ned, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) +
-                                                ") || ned.in_convex_hull_indexed(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ", " + QString::number(indexes[2]) + ")"));
+                                                ") || ned.in_convex_hull_indexed(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ", " + QString::number(indexes[2]) + ")");
 
-        QVERIFY(filter_InvalidHullIndexes.setExpression_Filter(
+        filter_InvalidHullIndexes.setExpression_Filter(
             "lidar.in_convex_hull_indexed(chull_first - 1, 0, 0) || "
             "lidar.in_convex_hull_indexed(-1, 0, -65) || "
             "rig.in_convex_hull_indexed(7, 0, 9) || "
@@ -3145,7 +3388,7 @@ void TestExpressionFilter::convexHulls_MultipleRandomCubes_RandomTransforms_Inde
             "ned.in_convex_hull_indexed(42, 0, 1337) || "
             "ned.in_convex_hull_indexed(1337, 0, 0xabba) || "
             "ned.in_convex_hull_indexed(chull_third_ned + 1, 0, 12345678)"
-            ));
+            );
 
         unsigned int index = 0;
 
@@ -3292,7 +3535,7 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
             }
         }
 
-        QVERIFY(filter_Lidar.setExpression_Filter(
+        filter_Lidar.setExpression_Filter(
             QString("lidar.in_aabb(") +
                 QString::number(aabbBoxes[0][0].min().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[0][0].min().y(), 'g', 14) + ", " +
@@ -3314,9 +3557,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
                 QString::number(aabbBoxes[0][2].max().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[0][2].max().y(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[0][2].max().z(), 'g', 14) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(
+        filter_Rig.setExpression_Filter(
             QString("rig.in_aabb(") +
                 QString::number(aabbBoxes[1][0].min().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[1][0].min().y(), 'g', 14) + ", " +
@@ -3338,9 +3581,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
                 QString::number(aabbBoxes[1][2].max().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[1][2].max().y(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[1][2].max().z(), 'g', 14) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(
+        filter_NED.setExpression_Filter(
             QString("ned.in_aabb(") +
                 QString::number(aabbBoxes[2][0].min().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[2][0].min().y(), 'g', 14) + ", " +
@@ -3362,7 +3605,7 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms()
                 QString::number(aabbBoxes[2][2].max().x(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[2][2].max().y(), 'g', 14) + ", " +
                 QString::number(aabbBoxes[2][2].max().z(), 'g', 14) +
-            ")"));
+            ")");
 
         unsigned int index = 0;
 
@@ -3529,7 +3772,7 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
             }
         }
 
-        QVERIFY(filter_Lidar.setExpression_Filter(
+        filter_Lidar.setExpression_Filter(
             QString("lidar.in_aabb_indexed(") +
             QString::number(aabbBoxes[0][0].min().x(), 'g', 14) + ", " +
             QString::number(aabbBoxes[0][0].min().y(), 'g', 14) + ", " +
@@ -3554,9 +3797,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
             QString::number(aabbBoxes[0][2].max().y(), 'g', 14) + ", " +
             QString::number(aabbBoxes[0][2].max().z(), 'g', 14) + ", " +
             QString::number(indexes[0][2]) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(
+        filter_Rig.setExpression_Filter(
             QString("rig.in_aabb_indexed(") +
             QString::number(aabbBoxes[1][0].min().x(), 'g', 14) + ", " +
             QString::number(aabbBoxes[1][0].min().y(), 'g', 14) + ", " +
@@ -3581,9 +3824,9 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
             QString::number(aabbBoxes[1][2].max().y(), 'g', 14) + ", " +
             QString::number(aabbBoxes[1][2].max().z(), 'g', 14) + ", " +
             QString::number(indexes[1][2]) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(
+        filter_NED.setExpression_Filter(
             QString("ned.in_aabb_indexed(") +
             QString::number(aabbBoxes[2][0].min().x(), 'g', 14) + ", " +
             QString::number(aabbBoxes[2][0].min().y(), 'g', 14) + ", " +
@@ -3608,7 +3851,7 @@ void TestExpressionFilter::in_aabb_MultipleRandomCubes_RandomTransforms_Indexed(
             QString::number(aabbBoxes[2][2].max().y(), 'g', 14) + ", " +
             QString::number(aabbBoxes[2][2].max().z(), 'g', 14) + ", " +
             QString::number(indexes[2][2]) +
-            ")"));
+            ")");
 
         unsigned int index = 0;
 
@@ -3772,7 +4015,7 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
             }
         }
 
-        QVERIFY(filter_Lidar.setExpression_Filter(
+        filter_Lidar.setExpression_Filter(
             QString("lidar.in_sphere(") +
             QString::number(spheres[0][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[0][0].centerPoint.y(), 'g', 14) + ", " +
@@ -3788,9 +4031,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
             QString::number(spheres[0][2].centerPoint.y(), 'g', 14) + ", " +
             QString::number(spheres[0][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[0][2].radius, 'g', 14) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(
+        filter_Rig.setExpression_Filter(
             QString("rig.in_sphere(") +
             QString::number(spheres[1][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[1][0].centerPoint.y(), 'g', 14) + ", " +
@@ -3806,9 +4049,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
             QString::number(spheres[1][2].centerPoint.y(), 'g', 14) + ", " +
             QString::number(spheres[1][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[1][2].radius, 'g', 14) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(
+        filter_NED.setExpression_Filter(
             QString("ned.in_sphere(") +
             QString::number(spheres[2][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[2][0].centerPoint.y(), 'g', 14) + ", " +
@@ -3824,7 +4067,7 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms()
             QString::number(spheres[2][2].centerPoint.y(), 'g', 14) + ", " +
             QString::number(spheres[2][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[2][2].radius, 'g', 14) +
-            ")"));
+            ")");
 
         unsigned int index = 0;
 
@@ -3980,7 +4223,7 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
             }
         }
 
-        QVERIFY(filter_Lidar.setExpression_Filter(
+        filter_Lidar.setExpression_Filter(
             QString("lidar.in_sphere_indexed(") +
             QString::number(spheres[0][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[0][0].centerPoint.y(), 'g', 14) + ", " +
@@ -3999,9 +4242,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
             QString::number(spheres[0][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[0][2].radius, 'g', 14) + ", " +
             QString::number(indexes[0][2]) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(
+        filter_Rig.setExpression_Filter(
             QString("rig.in_sphere_indexed(") +
             QString::number(spheres[1][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[1][0].centerPoint.y(), 'g', 14) + ", " +
@@ -4020,9 +4263,9 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
             QString::number(spheres[1][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[1][2].radius, 'g', 14) + ", " +
             QString::number(indexes[1][2]) +
-            ")"));
+            ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(
+        filter_NED.setExpression_Filter(
             QString("ned.in_sphere_indexed(") +
             QString::number(spheres[2][0].centerPoint.x(), 'g', 14) + ", " +
             QString::number(spheres[2][0].centerPoint.y(), 'g', 14) + ", " +
@@ -4041,7 +4284,7 @@ void TestExpressionFilter::in_sphere_MultipleRandomSpheres_RandomTransforms_Inde
             QString::number(spheres[2][2].centerPoint.z(), 'g', 14) + ", " +
             QString::number(spheres[2][2].radius, 'g', 14) + ", " +
             QString::number(indexes[2][2]) +
-            ")"));
+            ")");
 
         unsigned int index = 0;
 
@@ -4244,16 +4487,16 @@ void TestExpressionFilter::copyingFilters()
         QVERIFY(filter_NED.setConvexHullFilters(convexHullFilters));
         QVERIFY(filter_InvalidHullIndexes.setConvexHullFilters(convexHullFilters));
 
-        QVERIFY(filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull_indexed(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) + ")"));
+        filter_Lidar.setExpression_Filter(QString("lidar.in_convex_hull_indexed(chull_first, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) + ")");
 
-        QVERIFY(filter_Rig.setExpression_Filter(QString("rig.in_convex_hull_indexed(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
-                                                ") || rig.in_convex_hull_indexed(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) + ")"));
+        filter_Rig.setExpression_Filter(QString("rig.in_convex_hull_indexed(chull_first_rig, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+                                                ") || rig.in_convex_hull_indexed(chull_second_rig, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) + ")");
 
-        QVERIFY(filter_NED.setExpression_Filter(QString("ned.in_convex_hull_indexed(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
+        filter_NED.setExpression_Filter(QString("ned.in_convex_hull_indexed(chull_first_ned, ") + QString::number(hullMargins[0], 'g', 14) + ", " + QString::number(indexes[0]) +
                                                 ") || ned.in_convex_hull_indexed(chull_second_ned, " + QString::number(hullMargins[1], 'g', 14) + ", " + QString::number(indexes[1]) +
-                                                ") || ned.in_convex_hull_indexed(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ", " + QString::number(indexes[2]) + ")"));
+                                                ") || ned.in_convex_hull_indexed(chull_third_ned, " + QString::number(hullMargins[2], 'g', 14) + ", " + QString::number(indexes[2]) + ")");
 
-        QVERIFY(filter_InvalidHullIndexes.setExpression_Filter(
+        filter_InvalidHullIndexes.setExpression_Filter(
             "lidar.in_convex_hull_indexed(chull_first - 1, 0, 0) || "
             "lidar.in_convex_hull_indexed(-1, 0, -65) || "
             "rig.in_convex_hull_indexed(7, 0, 9) || "
@@ -4261,7 +4504,7 @@ void TestExpressionFilter::copyingFilters()
             "ned.in_convex_hull_indexed(42, 0, 1337) || "
             "ned.in_convex_hull_indexed(1337, 0, 0xabba) || "
             "ned.in_convex_hull_indexed(chull_third_ned + 1, 0, 12345678)"
-            ));
+            );
 
         unsigned int index = 0;
 

@@ -476,7 +476,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     {
         QCOMPARE(issue.text, "Error compiling filter expression: Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
         QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
-        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
+        QCOMPARE(issue.endChar, issue.beginChar + 1);
     }
     catch (...)
     {
@@ -499,7 +499,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
     {
         QCOMPARE(issue.text, "Error compiling quality expression: Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.");
         QCOMPARE(issue.beginChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
-        QCOMPARE(issue.endChar, plainText.lastIndexOf(QString::fromUtf8("\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd")));
+        QCOMPARE(issue.endChar, issue.beginChar + 1);
     }
     catch (...)
     {

@@ -149,15 +149,17 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             int expressionsStartIndex = charIndex;
             QString filterExpression = TextBlockParser::getTextBlockAsString(plainText, charIndex);
             int filterExpressionEndIndex= charIndex;
-            QString errorMessage;
-            int errorPosition;
 
-            if (!newFilterPair->setExpression_Filter(filterExpression, &errorMessage, &errorPosition))
+            try
+            {
+                newFilterPair->setExpression_Filter(filterExpression);
+            }
+            catch (ExpressionFilter_Base::Issue& issue)
             {
                 Issue error;
-                error.beginChar = errorPosition + expressionsStartIndex + 1;    // + 1 from starting '{'
-                error.endChar = errorPosition + expressionsStartIndex + 1;
-                error.text = "Error compiling filter expression: " + errorMessage;
+                error.beginChar = issue.beginChar + expressionsStartIndex + 1;    // + 1 from starting '{'
+                error.endChar = issue.endChar + expressionsStartIndex + 1;
+                error.text = "Error compiling filter expression: " + issue.text;
 
                 throw error;
             }
@@ -185,12 +187,16 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
             expressionsStartIndex = charIndex;
             filterExpression = TextBlockParser::getTextBlockAsString(plainText, charIndex);
 
-            if (!newFilterPair->setExpression_Quality(filterExpression, &errorMessage, &errorPosition))
+            try
+            {
+                newFilterPair->setExpression_Quality(filterExpression);
+            }
+            catch (ExpressionFilter_Base::Issue& issue)
             {
                 Issue error;
-                error.beginChar = errorPosition + expressionsStartIndex + 1;    // + 1 from starting '{'
-                error.endChar = errorPosition + expressionsStartIndex + 1;
-                error.text = "Error compiling quality expression: " + errorMessage;
+                error.beginChar = issue.beginChar + expressionsStartIndex + 1;    // + 1 from starting '{'
+                error.endChar = issue.endChar + expressionsStartIndex + 1;
+                error.text = "Error compiling quality expression: " + issue.text;
 
                 throw error;
             }

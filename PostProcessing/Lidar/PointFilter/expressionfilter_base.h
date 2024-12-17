@@ -33,6 +33,14 @@ namespace PointFilter
 class ExpressionFilter_Base : public te_expr
 {
 public:
+    class Issue
+    {
+    public:
+        int beginChar = -1;
+        int endChar = -1;
+        QString text;
+    };
+
     ExpressionFilter_Base();
     ~ExpressionFilter_Base();
 
@@ -58,9 +66,9 @@ public:
         double quality;
     };
 
-    bool setExpression_Filter(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    void setExpression_Filter(const QString newExpression);
     QString getExpression_Filter(void) { return expression_Filter; };
-    bool setExpression_Quality(const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    void setExpression_Quality(const QString newExpression);
     QString getExpression_Quality(void) { return expression_Quality; };
     void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
@@ -119,7 +127,7 @@ private:
     inline static te_type convexHullFilterIndexes[MAX_NUM_OF_CONVEX_HULL_FILTERS]; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
     inline static bool convexHullFilterIndexesInitialized;
 
-    bool setExpression(te_parser& parser, const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
+    void setExpression(te_parser& parser, const QString newExpression);
 
     ExpressionFilter_Base::BufferItem getCurrentBufferItem(void) const
     { return buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength]; };
