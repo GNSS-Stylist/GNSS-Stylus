@@ -87,20 +87,17 @@ ExpressionFilter_Base::ExpressionFilter_Base(const ExpressionFilter_Base& source
     copyFields(source, *this);
 }
 
-bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QString* const errorMessage, int* const errorPosition)
+
+bool ExpressionFilter_Base::setExpression(te_parser& parser, const QString newExpression, QString* const errorMessage, int* const errorPosition)
 {
-    expression_Filter = newExpression;
-
-    char* prevLocale = std::setlocale(LC_NUMERIC, "C");
-
     QByteArray expression_8bit;
     TextBlockParser::CommentState cState;
 
-    for (int i = 0; i < expression_Filter.length(); i++)
+    for (int i = 0; i < newExpression.length(); i++)
     {
-        bool inComment = TextBlockParser::isInComment(expression_Filter, i, cState);
+        bool inComment = TextBlockParser::isInComment(newExpression, i, cState);
 
-        char character = expression_Filter.at(i).toLatin1();
+        char character = newExpression.at(i).toLatin1();
 
         if (character == 0)
         {
@@ -120,10 +117,6 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
                     *errorPosition = i;
                 }
 
-                if (prevLocale)
-                {
-                    setlocale(LC_NUMERIC, prevLocale);
-                }
                 return false;
             }
         }
@@ -131,13 +124,14 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
         expression_8bit += character;
     }
 
-    parser_Filter.compile(expression_8bit.constData());
+    char* prevLocale = std::setlocale(LC_NUMERIC, "C");
+    parser.compile(expression_8bit.constData());
     if (prevLocale)
     {
         setlocale(LC_NUMERIC, prevLocale);
     }
 
-    if (parser_Filter.success())
+    if (parser.success())
     {
         return true;
     }
@@ -145,7 +139,7 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
     {
         if (errorMessage)
         {
-            QString qstrErrorMessage = QString::fromStdString(parser_Filter.get_last_error_message());
+            QString qstrErrorMessage = QString::fromStdString(parser.get_last_error_message());
 
             if (qstrErrorMessage.isEmpty())
             {
@@ -160,90 +154,23 @@ bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QS
 
         if (errorPosition)
         {
-            *errorPosition = parser_Filter.get_last_error_position();
+            *errorPosition = parser.get_last_error_position();
         }
 
         return false;
     }
 }
 
+bool ExpressionFilter_Base::setExpression_Filter(const QString newExpression, QString* const errorMessage, int* const errorPosition)
+{
+    expression_Filter = newExpression;
+    return setExpression(parser_Filter, newExpression, errorMessage, errorPosition);
+}
+
 bool ExpressionFilter_Base::setExpression_Quality(const QString newExpression, QString* const errorMessage, int* const errorPosition)
 {
     expression_Quality = newExpression;
-
-    char* prevLocale = std::setlocale(LC_NUMERIC, "C");
-
-    QByteArray expression_8bit;
-    TextBlockParser::CommentState cState;
-
-    for (int i = 0; i < expression_Quality.length(); i++)
-    {
-        bool inComment = TextBlockParser::isInComment(expression_Filter, i, cState);
-        char character = expression_Quality.at(i).toLatin1();
-
-        if (character == 0)
-        {
-            if (inComment)
-            {
-                character = '?';
-            }
-            else
-            {
-                if (errorMessage)
-                {
-                    *errorMessage = "Only Latin 1 (ISO/IEC 8859-1 / \"8-bit ASCII\") characters allowed in non-comment sections of an expression.";
-                }
-
-                if (errorPosition)
-                {
-                    *errorPosition = i;
-                }
-
-                if (prevLocale)
-                {
-                    setlocale(LC_NUMERIC, prevLocale);
-                }
-                return false;
-            }
-        }
-
-        expression_8bit += character;
-    }
-
-    parser_Quality.compile(expression_8bit.constData());
-    if (prevLocale)
-    {
-        setlocale(LC_NUMERIC, prevLocale);
-    }
-
-    if (parser_Quality.success())
-    {
-        return true;
-    }
-    else
-    {
-        QString qstrErrorMessage = QString::fromStdString(parser_Quality.get_last_error_message());
-
-        if (errorMessage)
-        {
-            if (qstrErrorMessage.isEmpty())
-            {
-                *errorMessage = "TinyExpr error: (empty)";
-            }
-            else
-            {
-                // Does TinyExpr++ ever return any error string?
-                *errorMessage = qstrErrorMessage;
-            }
-        }
-
-        if (errorPosition)
-        {
-            *errorPosition = parser_Quality.get_last_error_position();
-        }
-
-        return false;
-    }
+    return setExpression(parser_Quality, newExpression, errorMessage, errorPosition);
 }
 
 void ExpressionFilter_Base::setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform)

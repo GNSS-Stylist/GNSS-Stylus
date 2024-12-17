@@ -38,7 +38,6 @@ public:
 
     static constexpr unsigned int MAX_NUM_OF_CONVEX_HULL_FILTERS = 256;
 
-    static void copyFields(const ExpressionFilter_Base& source, ExpressionFilter_Base& dest);
     ExpressionFilter_Base(const ExpressionFilter_Base&);
 
     struct ConvexHullFilter
@@ -69,6 +68,8 @@ public:
     bool getFilteredPoint(OutItem& outPoint);
 
 protected:
+
+    static void copyFields(const ExpressionFilter_Base& source, ExpressionFilter_Base& dest);
 
     class BufferItem
     {
@@ -118,8 +119,7 @@ private:
     inline static te_type convexHullFilterIndexes[MAX_NUM_OF_CONVEX_HULL_FILTERS]; // These are needed for tinyexpr++ ("chull_???"-functions need pointers to te_types)
     inline static bool convexHullFilterIndexesInitialized;
 
-    // After assignment tinyexpr's pointers need to be updated. This field is used to trig this.
-//    bool forceUpdateCustomVariablesAndFunctions;
+    bool setExpression(te_parser& parser, const QString newExpression, QString* const errorMessage = nullptr, int* const errorPosition = nullptr);
 
     ExpressionFilter_Base::BufferItem getCurrentBufferItem(void) const
     { return buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength]; };
