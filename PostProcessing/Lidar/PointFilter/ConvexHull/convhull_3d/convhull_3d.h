@@ -197,6 +197,12 @@ void extract_vertices_from_obj_file_alloc(/* input arguments */
   #define CV_STRNCPY(a,b,c) strncpy(a,b,c);
   #define CV_STRCAT(a,b) strcat(a,b);
 #endif
+#if defined (__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
 #ifdef CONVHULL_3D_USE_SINGLE_PRECISION
   #define CH_FLT_MIN FLT_MIN
   #define CH_FLT_MAX FLT_MAX
@@ -660,10 +666,11 @@ void convhull_3d_build_alloc
     int face_tmp[2];
     
     /* Check to make sure that faces are correctly oriented */
+/* bVec is not used, so commented out (compiler nags about this)
     int bVec[CONVHULL_3D_MAX_DIMENSIONS+1];
     for(i=0; i<d+1; i++)
         bVec[i] = i;
-    
+*/
     /* A contains the coordinates of the points forming a simplex */
     memset(A, 0, sizeof(A));
     for(k=0; k<(d+1); k++){
@@ -1343,10 +1350,11 @@ void convhull_nd_build_alloc
     int face_tmp[2];
 
     /* Check to make sure that faces are correctly oriented */
+/* bVec not used so commented out (compiler nags about this)
     int bVec[CONVHULL_ND_MAX_DIMENSIONS+1];
     for(i=0; i<d+1; i++)
         bVec[i] = i;
-
+*/
     /* A contains the coordinates of the points forming a simplex */
     memset(A, 0, sizeof(A));
     for(k=0; k<(d+1); k++){
@@ -1875,5 +1883,8 @@ void delaunay_nd_mesh_alloc
     ch_stateful_free(allocator, visible);
 }
 
+#if defined (__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #endif /* CONVHULL_3D_ENABLE */
