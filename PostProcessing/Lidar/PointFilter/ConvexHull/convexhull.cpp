@@ -276,13 +276,13 @@ unsigned int ConvexHull::getNumOfUniquePoints(void)
     return points.size();
 }
 
-void ConvexHull::exportHullToObjFile(const QString& filename)
+bool ConvexHull::exportHullToObjFile(const QString& filename)
 {
     if (!meshGenerated)
     {
         if (!generateMesh())
         {
-            return;
+            return false;
         }
     }
 
@@ -311,8 +311,22 @@ void ConvexHull::exportHullToObjFile(const QString& filename)
 
     free(vertices);
     free(faceIndices);
+
+    return true;
 }
 
+bool ConvexHull::isHullvalid(void)
+{
+    if (!meshGenerated)
+    {
+        if (!generateMesh())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 
 
