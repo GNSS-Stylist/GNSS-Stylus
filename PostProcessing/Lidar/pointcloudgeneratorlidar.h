@@ -21,6 +21,7 @@
 
 #include "../postprocessingform.h"
 #include "../transformmatrixgenerator.h"
+#include "../Lidar/PointFilter/expressionfiltergenerator.h"
 
 
 namespace Lidar
@@ -50,6 +51,7 @@ public:
         const QVector<QString>* lidarFileNames = nullptr;
 
         QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
+        QMap<PointFilter::ExpressionFilterGenerator::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base>>* expressionMap = nullptr;
 
         struct
         {

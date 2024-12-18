@@ -66,6 +66,7 @@ SOURCES += \
     LivoxMid360/livoxmid360thread.cpp \
     PostProcessing/EasyEXIF/exif.cpp \
     PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.cpp \
+    PostProcessing/Lidar/PointFilter/ConvexHull/convexhullgenerator.cpp \
     PostProcessing/Lidar/PointFilter/expressionfilter_base.cpp \
     PostProcessing/Lidar/PointFilter/expressionfilter_mid360.cpp \
     PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.cpp \
@@ -113,6 +114,7 @@ HEADERS += \
     LivoxMid360/livoxmid360pointcloudandimudata.h \
     LivoxMid360/livoxmid360thread.h \
     PostProcessing/EasyEXIF/exif.h \
+    PostProcessing/Lidar/PointFilter/ConvexHull/convexhullgenerator.h \
     PostProcessing/Lidar/PointFilter/ConvexHull/convhull_3d/convhull_3d.h \
     PostProcessing/Lidar/PointFilter/ConvexHull/convexhull.h \
     PostProcessing/Lidar/PointFilter/expressionfilter_base.h \

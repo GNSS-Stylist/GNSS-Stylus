@@ -31,6 +31,7 @@
 #include "loscriptgenerator.h"
 #include "Lidar/lidarscriptgenerator.h"
 #include "rastercameragenerator.h"
+#include "Lidar/PointFilter/ConvexHull/convexhullgenerator.h"
 
 struct
 {
@@ -3152,6 +3153,40 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
     Eigen::Transform<double, 3, Eigen::Affine> transform_RPLidar_Generated_BeforeRotation;
     QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_AfterRotation;
     LOInterpolator loInterpolator_Lidar(this);
+    QMap<QString, ConvexHull> hullMap;
+    QMap<PointFilter::ExpressionFilterGenerator::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
+
+    try
+    {
+        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_PointCloud_ConvexHulls->toPlainText());
+    }
+    catch (ConvexHullGenerator::Issue& issue)
+    {
+        addLogLine("Generating convex hull map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        return;
+    }
+
+    QVector<PointFilter::ExpressionFilter_Base::ConvexHullFilter> convexHullFilters;
+
+    auto hullIter = hullMap.begin();
+    while (hullIter != hullMap.end())
+    {
+        PointFilter::ExpressionFilter_Base::ConvexHullFilter newFilter;
+        newFilter.Name = hullIter.key();
+        hullIter.value().getFilter(newFilter.filter);
+        convexHullFilters.push_back(newFilter);
+        hullIter++;
+    }
+
+    try
+    {
+        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
+    }
+    catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
+    {
+        addLogLine("Generating expression map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        return;
+    }
 
     if (!generateTransformationMatrix(transform_NEDToXYZ))
     {
@@ -3204,6 +3239,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.loInterpolator = &loInterpolator_Lidar;
         params.lidarFileNames = &lidarFileNames;
         params.mid360.datagrams = &mid360Datagrams;
+
+        params.expressionMap = &expressionMap;
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 

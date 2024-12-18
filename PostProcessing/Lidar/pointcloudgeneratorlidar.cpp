@@ -1,6 +1,6 @@
 /*
     pointcloudgeneratorlidar.cpp (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,11 @@
 
 #include "pointcloudgeneratorlidar.h"
 #include "livoxmid360pointcloudandimudata.h"
+
+#include "PointFilter/tinyexpr-plusplus/tinyexpr.h"
+#include "PointFilter/expressionfilter_mid360.h"
+#include "PointFilter/expressionfilter_rplidar.h"
+#include <iostream>
 
 namespace Lidar
 {
@@ -317,7 +322,6 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     emit infoMessage("Point cloud files generated.");
 }
 
-
 bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                                                      const PostProcessingForm::Tag& beginningTag,
                                                      const PostProcessingForm::Tag& endingTag,
@@ -463,6 +467,30 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
     // (althought having it there probably doesn't make much difference either, only 1/20 s max at the timing)
 
     UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
+/*
+    PointFilter::ExpressionFilter_Mid360 exprFilter;
+
+    exprFilter.setExpression_Filter(
+        "not"
+        "("
+        "((lidar.mid360.properties & 0x3f) != 0)"
+        "||"
+        "("
+        "(lidar.coord.x < -0.45) && (lidar.coord.x > -3.5) && "
+        "(abs(lidar.coord.y / lidar.coord.x) < 1.0) && "
+        "(abs(lidar.coord.z / lidar.coord.x) < (3.0 / 1.2)) "
+        ")"
+        "||"
+        "("
+        "(lidar.coord.x < 0.0) && (lidar.coord.x > -3.5) &&"
+        "(lidar.coord.z < 0.0) && (abs(lidar.coord.y) < 0.1)"
+        ")"
+        "||"
+        "(lidar.distance < 0.15)"
+        ")"
+        );
+*/
+//    std::cout << errorMessage;
 
     while ((mid360Iter != params.mid360.datagrams->end()) && (mid360Iter.key() < endingUptime))
     {
@@ -491,9 +519,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         quint16 pointNum = pcData.dot_num;
 
         quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
-        TransformMatrixGenerator::Device device(TransformMatrixGenerator::Device::DT_LIVOX_MID360, ipAddress);
+        TransformMatrixGenerator::Device device_Matrix(TransformMatrixGenerator::Device::DT_LIVOX_MID360, ipAddress);
 
-        if (!params.transforms_AfterRotation.contains(device))
+        if (!params.transforms_AfterRotation.contains(device_Matrix))
         {
             emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
                                 QString::number(mid360Iter.value().chunkIndex)+
@@ -507,12 +535,33 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
             return(false);
         }
 
-//        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
-        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
+        auto transform_AfterRotation = params.transforms_AfterRotation.value(device_Matrix);
+
+        PointFilter::ExpressionFilterGenerator::Device device_expressionFilter(PointFilter::ExpressionFilterGenerator::Device::DT_LIVOX_MID360, ipAddress);
+        if (!params.expressionMap->contains(device_expressionFilter))
+        {
+            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
+                                QString::number(mid360Iter.value().chunkIndex)+
+                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
+                                ", uptime " + QString::number(mid360Iter.key()) +
+                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                ": Filter expression not defined. Skipped the rest of this set of points " +
+                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                QString::number(endingTag.sourceFileLine) +
+                                " in file \"" + beginningTag.sourceFile + "\".");
+            return(false);
+        }
+
+        PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device_expressionFilter).get());
+        exprFilter->setTransform_LidarToRig(transform_AfterRotation);
+
+        //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
 
         for (int i = 0; i < pointNum; i++)
         {
             LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
+
+#if 0
 
             if (currentPoint->properties & 0x3f)
             {
@@ -546,10 +595,102 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 // Discard points too close to lidar's origin
                 continue;
             }
+#else
 
+#if 0
+            int hardCodedDiscardReason = false;
+
+            if (currentPoint->properties & 0x3f)
+            {
+                // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
+                hardCodedDiscardReason = 1;
+            }
+
+            // Filter for now just using hard-coded operator/rig-discarding limits.
+            // TODO: Add configurable params/zones.
+
+            if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
+                (fabs(currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
+                (fabs(currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
+            {
+                hardCodedDiscardReason = 2;
+            }
+
+            // Filter out the tube (a bit lossy filtering here...)
+            if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
+                (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
+            {
+                hardCodedDiscardReason = 3;
+            }
+
+
+
+            double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+            if (distance < 0.15)
+            {
+                // Discard points too close to lidar's origin
+                hardCodedDiscardReason = 4;
+            }
+
+            if (hardCodedDiscardReason)
+            {
+                continue;
+            }
+
+#endif
+#if 0
+            int evalDiscardReason = 0;
+
+            exprPoint.properties = currentPoint->properties;
+            exprPoint.x = currentPoint->x;
+            exprPoint.y = currentPoint->y;
+            exprPoint.z = currentPoint->z;
+            exprPoint.dist = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+            double res = tep.evaluate();
+
+            if (res == 1.0)
+            {
+                evalDiscardReason = 0;
+            }
+            else if (res == 0.0)
+            {
+                evalDiscardReason = 1;
+            }
+            else if (std::isnan(res))
+            {
+                evalDiscardReason = 2;
+            }
+            else if (!std::isfinite(res))
+            {
+                evalDiscardReason = 3;
+            }
+/*
+            bool hardCodedDiscard = hardCodedDiscardReason != 0;
+            bool evalDiscard = evalDiscardReason != 0;
+
+            if (hardCodedDiscard != evalDiscard)
+            {
+                discardDiffs++;
+
+                std::cout << "Mismatch! hardCodedDiscard: " << hardCodedDiscard << ", reason: " << hardCodedDiscardReason <<
+                    ", evalDiscard: " << evalDiscard << ", reason: " << evalDiscardReason <<
+                        ", coords: (" << currentPoint->x << "," << currentPoint->y << "," << currentPoint->z <<
+                    "), prop: " << int(currentPoint->properties) << ", Dist: " << exprPoint.dist << ", Count: " << discardDiffs << "\n";
+            }
+*/
+            if (evalDiscardReason)
+            {
+                continue;
+            }
+#endif
+
+#endif
             UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum - 1))) / 1000000;
 
             if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+            //            if ((int)exprOutItem.uptime_ms != lastInterpolatedITOWUptime_ms)
             {
                 try
                 {
@@ -572,8 +713,31 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                     return(false);
                 }
 
+                exprFilter->setTransform_RigToNED(transform_LoSolver);
+
                 lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
             }
+
+#if 1
+            exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+
+            PointFilter::ExpressionFilter_Mid360::OutItem exprOutItem;
+
+            if(!(exprFilter->getFilteredPoint(exprOutItem)))
+            {
+                continue;
+            }
+            if (!exprOutItem.valid)
+            {
+                continue;
+            }
+            if (exprOutItem.filterResult != 1.0)
+            {
+                continue;
+            }
+
+
+#endif
 
             Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
 
@@ -589,9 +753,12 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
                 */
 
             // Lot of parentheses here to keep all calculations as matrix * vector
-            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
-//          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+//            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
+//            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
+
+            Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
+
+            //          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
 
             /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
                 Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
