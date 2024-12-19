@@ -35,7 +35,7 @@ public:
     ExpressionFilter_RPLidar operator =(const ExpressionFilter_RPLidar& source);
 
     void addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms);
-    void initBuffer(void);
+    virtual void initBuffer(void);
 
 private:
     void setCustomVariablesAndFunctions(void);

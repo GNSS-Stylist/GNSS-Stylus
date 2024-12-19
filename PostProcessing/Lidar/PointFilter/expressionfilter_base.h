@@ -74,6 +74,7 @@ public:
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     bool setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters);
     bool getFilteredPoint(OutItem& outPoint);
+    virtual void initBuffer(void) = 0;
 
 protected:
 

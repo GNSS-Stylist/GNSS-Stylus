@@ -34,7 +34,7 @@ public:
     ExpressionFilter_Mid360 operator=(const ExpressionFilter_Mid360& source);
 
     void addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms);
-    void initBuffer(void);
+    virtual void initBuffer(void);
 
 private:
     void setCustomVariablesAndFunctions(void);
