@@ -41,6 +41,7 @@ HEADERS += \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.h \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
+    ../PostProcessing/Lidar/lidardevice.h \
     ../Util/textblockparser.h \
     tst_convexhull.h \
     tst_convexhullgenerator.h \

@@ -24,9 +24,9 @@
 namespace PointFilter
 {
 
-QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> ExpressionFilterGenerator::generateMap(const QString& plainText, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters)
+QMap<LidarDevice, std::shared_ptr<ExpressionFilter_Base>> ExpressionFilterGenerator::generateMap(const QString& plainText, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters)
 {
-    QMap<Device, std::shared_ptr<ExpressionFilter_Base> > filters;
+    QMap<LidarDevice, std::shared_ptr<ExpressionFilter_Base> > filters;
 
     int charIndex = 0;
 
@@ -48,17 +48,17 @@ QMap<ExpressionFilterGenerator::Device, std::shared_ptr<ExpressionFilter_Base>> 
         int deviceDefinitionEndIndex = charIndex;
         QString deviceStringForErrors = deviceTypeString;
 
-        Device device;
+        LidarDevice device;
         std::shared_ptr<ExpressionFilter_Base> newFilterPair;
 
         if (deviceTypeString == "rplidar")
         {
-            device.type = Device::DT_RPLIDAR;
+            device.type = LidarDevice::DT_RPLIDAR;
             newFilterPair = std::make_shared<ExpressionFilter_RPLidar>();
         }
         else if (deviceTypeString == "mid360")
         {
-            device.type = Device::DT_LIVOX_MID360;
+            device.type = LidarDevice::DT_LIVOX_MID360;
             newFilterPair = std::make_shared<ExpressionFilter_Mid360>();
 
             TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);

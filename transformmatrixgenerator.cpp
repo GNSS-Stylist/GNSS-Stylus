@@ -60,8 +60,8 @@ TransformMatrixGenerator::Item::Item(const QByteArray& text, const int lineNumbe
 
 Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generateSingle(const QStringList& lines)
 {
-    Device dummyDevice;
-    dummyDevice.type = Device::DT_UNDEFINED;
+    LidarDevice dummyDevice;
+    dummyDevice.type = LidarDevice::DT_UNDEFINED;
 
     auto map = generateMap(lines, dummyDevice, false, true);
 
@@ -72,7 +72,7 @@ Eigen::Transform<double, 3, Eigen::Affine> TransformMatrixGenerator::generateSin
 }
 
 
-QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > TransformMatrixGenerator::generateMap(const QStringList &lines, const Device& defaultDevice, const bool requireDeviceDefinition, const bool singleDevice)
+QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > TransformMatrixGenerator::generateMap(const QStringList &lines, const LidarDevice& defaultDevice, const bool requireDeviceDefinition, const bool singleDevice)
 {
     State state;
 
@@ -436,9 +436,9 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
 
         QByteArray deviceType = state.command.at(1).text.toLower();
 
-        QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> >::iterator iter;
+        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> >::iterator iter;
 
-        Device prevDevice = state.currentDevice;
+        LidarDevice prevDevice = state.currentDevice;
 
         if (deviceType == "rplidar")
         {
@@ -450,7 +450,7 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
                 throw error;
             }
 
-            state.currentDevice.type = Device::DT_RPLIDAR;
+            state.currentDevice.type = LidarDevice::DT_RPLIDAR;
             state.currentDevice.data = 0;
             //device.data.clear();    // QVariant-version
 
@@ -494,7 +494,7 @@ void TransformMatrixGenerator::processBlockHeader(State& state)
                 throw error;
             }
 
-            state.currentDevice.type = Device::DT_LIVOX_MID360;
+            state.currentDevice.type = LidarDevice::DT_LIVOX_MID360;
             state.currentDevice.data = hostAddress;
 
             iter = state.deviceMatrices.find(state.currentDevice);

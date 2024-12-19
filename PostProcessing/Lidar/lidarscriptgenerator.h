@@ -46,7 +46,7 @@ public:
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
         QVector<QString>* lidarFileNames = nullptr;
 
-        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
+        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
 
         struct
         {

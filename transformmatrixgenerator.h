@@ -24,6 +24,7 @@
 #include <QVariant>
 
 #include "Eigen/Geometry"
+#include "PostProcessing/Lidar/lidardevice.h"
 
 class TransformMatrixGenerator
 {
@@ -47,29 +48,9 @@ public:
         QString text;
     };
 
-    class Device
-    {
-    public:
-        typedef enum
-        {
-            DT_UNDEFINED = 0,
-            DT_RPLIDAR,
-            DT_LIVOX_MID360,
-        } Type;
-
-        Device() { this->type = DT_UNDEFINED; this->data = 0; };
-        Device(const Type type, const quint32 data = 0) { this->type = type; this->data = data; };
-
-        friend bool operator<(const Device& l, const Device& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
-
-        Type type;
-//        QVariant data = int(0);
-        quint32 data;
-    };
-
     TransformMatrixGenerator();
 
-    QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> > generateMap(const QStringList& lines, const Device& defaultDevice, const bool requireDeviceDefinition = false, const bool singleDevice = false);
+    QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > generateMap(const QStringList& lines, const LidarDevice& defaultDevice, const bool requireDeviceDefinition = false, const bool singleDevice = false);
     Eigen::Transform<double, 3, Eigen::Affine> generateSingle(const QStringList& lines);
 
 private:
@@ -79,10 +60,10 @@ private:
     public:
         bool requireDeviceDefinition = false;
         bool singleDevice = false;
-        Device currentDevice;
+        LidarDevice currentDevice;
         bool deviceDefined = false;
         QVector<Item> command;
-        QMap<Device, Eigen::Transform<double, 3, Eigen::Affine> > deviceMatrices;
+        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > deviceMatrices;
         QVector<Eigen::Transform<double, 3, Eigen::Affine> > subMatrices;
     };
 

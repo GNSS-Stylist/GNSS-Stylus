@@ -50,8 +50,8 @@ public:
         PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
         const QVector<QString>* lidarFileNames = nullptr;
 
-        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
-        QMap<PointFilter::ExpressionFilterGenerator::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base>>* expressionMap = nullptr;
+        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
+        QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>>* expressionMap = nullptr;
 
         struct
         {

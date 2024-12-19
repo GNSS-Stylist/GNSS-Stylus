@@ -19,6 +19,7 @@
 #include "tst_expressionfiltergenerator.h"
 #include "../PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h"
 #include "../PostProcessing/Lidar/PointFilter/expressionfilter_base.h"
+#include "../PostProcessing/Lidar/lidardevice.h"
 
 TestExpressionFilterGenerator::TestExpressionFilterGenerator()
 {
@@ -57,7 +58,7 @@ void TestExpressionFilterGenerator::validDefinitions_NoConvexHulls()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -65,17 +66,17 @@ void TestExpressionFilterGenerator::validDefinitions_NoConvexHulls()
 
         auto filter = filters.begin();
 
-        QCOMPARE(filter.key().type, EFG::Device::DT_RPLIDAR);
+        QCOMPARE(filter.key().type, LidarDevice::DT_RPLIDAR);
         QCOMPARE(filter.value()->getExpression_Filter(), "\nlidar.rplidar.quality\n");
         QCOMPARE(filter.value()->getExpression_Quality(), "\nlidar.rplidar.quality_indexed(5)\n");
 
         filter++;
-        QCOMPARE(filter.key().type, EFG::Device::DT_LIVOX_MID360);
+        QCOMPARE(filter.key().type, LidarDevice::DT_LIVOX_MID360);
         QCOMPARE(filter.value()->getExpression_Filter(), "0.5 // BTW: TinyExpr++ seems to need this newline -> \n");
         QCOMPARE(filter.value()->getExpression_Quality(), "/*Zero point three:*/ 0.3");
 
         filter++;
-        QCOMPARE(filter.key().type, EFG::Device::DT_LIVOX_MID360);
+        QCOMPARE(filter.key().type, LidarDevice::DT_LIVOX_MID360);
         QCOMPARE(filter.value()->getExpression_Filter(), " lidar.coord_indexed.x(0) ");
         QCOMPARE(filter.value()->getExpression_Quality(), "lidar.mid360.properties");
     }
@@ -118,7 +119,7 @@ void TestExpressionFilterGenerator::validDefinitions_ConvexHulls()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText,convexHullFilters);
 
@@ -126,17 +127,17 @@ void TestExpressionFilterGenerator::validDefinitions_ConvexHulls()
 
         auto filter = filters.begin();
 
-        QCOMPARE(filter.key().type, EFG::Device::DT_RPLIDAR);
+        QCOMPARE(filter.key().type, LidarDevice::DT_RPLIDAR);
         QCOMPARE(filter.value()->getExpression_Filter(), "\nchull_first\n");
         QCOMPARE(filter.value()->getExpression_Quality(), "\nlidar.in_convex_hull(chull_second, 1) /* foobar */ \n");
 
         filter++;
-        QCOMPARE(filter.key().type, EFG::Device::DT_LIVOX_MID360);
+        QCOMPARE(filter.key().type, LidarDevice::DT_LIVOX_MID360);
         QCOMPARE(filter.value()->getExpression_Filter(), "0.5");
         QCOMPARE(filter.value()->getExpression_Quality(), "0.3");
 
         filter++;
-        QCOMPARE(filter.key().type, EFG::Device::DT_LIVOX_MID360);
+        QCOMPARE(filter.key().type, LidarDevice::DT_LIVOX_MID360);
         QCOMPARE(filter.value()->getExpression_Filter(), " ned.in_convex_hull_indexed(chull_third, 1, -2) ");
         QCOMPARE(filter.value()->getExpression_Quality(), "rig.in_convex_hull(chull_first,0)");
     }
@@ -169,7 +170,7 @@ void TestExpressionFilterGenerator::error_DuplicateDevices()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -203,7 +204,7 @@ void TestExpressionFilterGenerator::error_DuplicateDevices()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -240,7 +241,7 @@ void TestExpressionFilterGenerator::error_UnknownDeviceType()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -271,7 +272,7 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -298,7 +299,7 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -325,7 +326,7 @@ void TestExpressionFilterGenerator::error_InvalidMid360IP()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -351,7 +352,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -374,7 +375,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -397,7 +398,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -420,7 +421,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -443,7 +444,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -466,7 +467,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -489,7 +490,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -512,7 +513,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 
@@ -538,7 +539,7 @@ void TestExpressionFilterGenerator::error_ExpressionBlocks()
 
     try
     {
-        static QMap<EFG::Device, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
+        static QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > filters;
 
         filters = EFG::generateMap(plainText);
 

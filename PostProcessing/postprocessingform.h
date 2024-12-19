@@ -408,7 +408,7 @@ private:
     void getLidarFilteringSettings(RPLidarPlausibilityFilter::Settings& lidarFilteringSettings);
 
     bool generateLidarTransformMatrices(Eigen::Transform<double, 3, Eigen::Affine>& transform_RPLidar_Generated_BeforeRotation,
-                                        QMap<TransformMatrixGenerator::Device, Eigen::Transform<double, 3, Eigen::Affine> >& transforms_Lidar_Generated_AfterRotation);
+                                        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> >& transforms_Lidar_Generated_AfterRotation);
 
     bool loadOperations(QPlainTextEdit* plainTextEdit);
     bool saveOperations(QPlainTextEdit* plainTextEdit);

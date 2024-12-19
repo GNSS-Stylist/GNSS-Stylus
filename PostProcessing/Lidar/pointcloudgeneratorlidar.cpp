@@ -346,7 +346,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
     RPLidarPlausibilityFilter rpLidarPlausibilityFilter;
 
-    TransformMatrixGenerator::Device rpLidarDevice(TransformMatrixGenerator::Device::DT_RPLIDAR);
+    LidarDevice rpLidarDevice(LidarDevice::DT_RPLIDAR);
     Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
 
     Eigen::Transform<double, 3, Eigen::Affine> rpLidarTransform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
@@ -519,9 +519,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         quint16 pointNum = pcData.dot_num;
 
         quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
-        TransformMatrixGenerator::Device device_Matrix(TransformMatrixGenerator::Device::DT_LIVOX_MID360, ipAddress);
+        LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
 
-        if (!params.transforms_AfterRotation.contains(device_Matrix))
+        if (!params.transforms_AfterRotation.contains(device))
         {
             emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
                                 QString::number(mid360Iter.value().chunkIndex)+
@@ -535,10 +535,9 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
             return(false);
         }
 
-        auto transform_AfterRotation = params.transforms_AfterRotation.value(device_Matrix);
+        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
 
-        PointFilter::ExpressionFilterGenerator::Device device_expressionFilter(PointFilter::ExpressionFilterGenerator::Device::DT_LIVOX_MID360, ipAddress);
-        if (!params.expressionMap->contains(device_expressionFilter))
+        if (!params.expressionMap->contains(device))
         {
             emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
                                 QString::number(mid360Iter.value().chunkIndex)+
@@ -552,7 +551,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
             return(false);
         }
 
-        PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device_expressionFilter).get());
+        PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
         exprFilter->setTransform_LidarToRig(transform_AfterRotation);
 
         //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;

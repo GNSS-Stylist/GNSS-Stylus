@@ -124,6 +124,7 @@ HEADERS += \
     PostProcessing/Lidar/PointFilter/lazyevaluator.h \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
+    PostProcessing/Lidar/lidardevice.h \
     PostProcessing/Lidar/lidarscriptgenerator.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \

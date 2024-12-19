@@ -1,5 +1,5 @@
 /*
-    expressionfiltergenerator.h (part of GNSS-Stylus)
+    lidardevice.h (part of GNSS-Stylus)
     Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
@@ -16,32 +16,29 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef EXPRESSIONFILTERGENERATOR_H
-#define EXPRESSIONFILTERGENERATOR_H
+#ifndef LIDARDEVICE_H
+#define LIDARDEVICE_H
 
-#include <QStringList>
-#include <QMap>
-#include "expressionfilter_base.h"
-#include "../PostProcessing/Lidar/lidardevice.h"
+#include "qglobal.h"
 
-namespace PointFilter
-{
-
-class ExpressionFilterGenerator
+class LidarDevice
 {
 public:
-    class Issue
+    typedef enum
     {
-    public:
-        int beginChar = -1;
-        int endChar = -1;
-        QString text;
-    };
+        DT_UNDEFINED = 0,
+        DT_RPLIDAR,
+        DT_LIVOX_MID360,
+    } Type;
 
-    static QMap<LidarDevice, std::shared_ptr<ExpressionFilter_Base>> generateMap(const QString& plainText, const QVector<ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters = QVector<ExpressionFilter_Base::ConvexHullFilter>());
+    LidarDevice() { this->type = DT_UNDEFINED; this->data = 0; };
+    LidarDevice(const Type type, const quint32 data = 0) { this->type = type; this->data = data; };
+
+    friend bool operator<(const LidarDevice& l, const LidarDevice& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
+
+    Type type;
+    //        QVariant data = int(0);
+    quint32 data;
 };
 
-}; // namespace PointFilter
-
-
-#endif // EXPRESSIONFILTERGENERATOR_H
+#endif // LIDARDEVICE_H
