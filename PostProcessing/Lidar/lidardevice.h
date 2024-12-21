@@ -19,6 +19,7 @@
 #ifndef LIDARDEVICE_H
 #define LIDARDEVICE_H
 
+#include <QHostAddress>
 #include "qglobal.h"
 
 class LidarDevice
@@ -33,6 +34,20 @@ public:
 
     LidarDevice() { this->type = DT_UNDEFINED; this->data = 0; };
     LidarDevice(const Type type, const quint32 data = 0) { this->type = type; this->data = data; };
+
+    QString toString(void) const
+    {
+        switch(type)
+        {
+        case DT_UNDEFINED:
+        default:
+            return "undefined";
+        case DT_RPLIDAR:
+            return "RPLidar";
+        case DT_LIVOX_MID360:
+            return "Mid-360 (" + QHostAddress(data).toString() + ")";
+        }
+    };
 
     friend bool operator<(const LidarDevice& l, const LidarDevice& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
 
