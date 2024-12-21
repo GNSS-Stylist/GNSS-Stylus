@@ -552,7 +552,6 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         }
 
         PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
-        exprFilter->setTransform_LidarToRig(transform_AfterRotation);
 
         //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
 

@@ -3205,6 +3205,20 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         return;
     }
 
+    for (auto exprIter = expressionMap.begin(); exprIter != expressionMap.end(); exprIter++)
+    {
+        // Check that all devices defined in expressions have corresponding rig to ned-transform.
+        // We can also set them here already, because they don't change on the fly.
+
+        if (!transforms_Lidar_Generated_AfterRotation.contains(exprIter.key()))
+        {
+            addLogLine(QString("Error: Device \"") + exprIter.key().toString() + "\" defined in expressions doesn't have corresponding transform defined in \"Operations after rotation\"");
+            return;
+        }
+
+        exprIter.value()->setTransform_LidarToRig(transforms_Lidar_Generated_AfterRotation.value(exprIter.key()));
+    }
+
     getLidarFilteringSettings(lidarFilteringSettings);
 
     if (fileDialog_PointCloud.exec())
