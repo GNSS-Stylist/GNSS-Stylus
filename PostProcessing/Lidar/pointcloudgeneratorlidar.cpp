@@ -356,6 +356,11 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 
     Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
 
+    for (auto exprIter = params.expressionMap->begin(); exprIter != params.expressionMap->end(); exprIter++)
+    {
+        exprIter.value()->initBuffer();
+    }
+
     while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < endingUptime))
     {
         rpLidarPlausibilityFilter.filter(rpLidarIter.value().distanceItems, rpLidarFilteredItems);
