@@ -54,7 +54,8 @@ public:
         ConvexHull::Filter filter;
     };
 
-    static const unsigned int bufferLength = 16;
+    static constexpr unsigned int bufferLength = 16;
+    static constexpr unsigned int delay = bufferLength / 2;
 
     class OutItem
     {
@@ -67,13 +68,14 @@ public:
     };
 
     void setExpression_Filter(const QString newExpression);
-    QString getExpression_Filter(void) { return expression_Filter; };
+    QString getExpression_Filter(void) { return expression_Filter; }
     void setExpression_Quality(const QString newExpression);
-    QString getExpression_Quality(void) { return expression_Quality; };
+    QString getExpression_Quality(void) { return expression_Quality; }
     void setTransform_LidarToRig(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     void setTransform_RigToNED(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform);
     bool setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters);
     bool getFilteredPoint(OutItem& outPoint);
+    unsigned int getNumOfAddedPoints(void) { return bufferIndex; }
     virtual void initBuffer(void) = 0;
 
 protected:
