@@ -466,10 +466,13 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         rpLidarIter++;
     }
 
-    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360Iter = params.mid360.datagrams->upperBound(beginningUptime);
+    // Just rely on the timestamps of the datagrams to make splitting the data into chunks (for threads to digest) easier.
+    // The uptime range will be from beginningUptime (inclusive) to endingUptime (exclusive).
+    // Filtering needs some adjustments due to buffering/delay,
+    // this is done now by feeding bufferLength (now 16) samples from the datagram preceding the one found using the timestamp.
+    // This adds a tiny time inaccuracy (8/200000s ("delay" of 8 samples)), so doesn't matter.
 
-    // As Mid-360 sends over 2k datagrams/s, there's no need for same kind of "time adjustment" as with RPLidar.
-    // (althought having it there probably doesn't make much difference either, only 1/20 s max at the timing)
+    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360Iter = params.mid360.datagrams->lowerBound(beginningUptime);
 
     UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
 /*
@@ -521,26 +524,8 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         quint64 pointStartTime_ns = pcData.timestamp;
         quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
 
-        quint16 pointNum = pcData.dot_num;
-
         quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
         LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
-
-        if (!params.transforms_AfterRotation.contains(device))
-        {
-            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
-                                QString::number(mid360Iter.value().chunkIndex)+
-                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
-                                ", uptime " + QString::number(mid360Iter.key()) +
-                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                ": Operation after rotation not defined. Skipped the rest of this set of points " +
-                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                QString::number(endingTag.sourceFileLine) +
-                                " in file \"" + beginningTag.sourceFile + "\".");
-            return(false);
-        }
-
-        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
 
         if (!params.expressionMap->contains(device))
         {
@@ -557,6 +542,109 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
         }
 
         PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
+
+#if 1
+        if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360Iter != params.mid360.datagrams->begin()))
+        {
+            // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
+            // Therefore "prefilling" the filter with the data (last samples) from the previous datagram for this device.
+            // This code is quite similar to the "real" filtering code later. Will not combine these since the "real" filtering should be as fast as possible.
+            // (This part is only ran once per "point set", so doesn't need to be very optimized.
+
+            auto backIter = params.mid360.datagrams->lowerBound(beginningUptime);
+
+            while (backIter != params.mid360.datagrams->begin())
+            {
+                // As "The items that share the same key are available from most recently to least recently inserted.",
+                // the backIter should point to the "most recently inserted" (last) item without any adjustment.
+
+                backIter--;
+
+                quint32 ipAddress_Back = backIter.value().datagram.senderAddress().toIPv4Address();
+
+                if (ipAddress_Back != ipAddress)
+                {
+                    continue;
+                }
+
+                LivoxMid360::PointCloudAndIMUDataHeader header_Back(backIter.value().datagram);
+
+                if ((header_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
+                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
+                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
+                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
+                {
+                    continue;
+                }
+
+                LivoxMid360::PointCloudData pcData_Back(header_Back, backIter.value().datagram);
+
+                if ((pcData_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
+                    (pcData_Back.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
+                {
+                    continue;
+                }
+
+                quint16 pointNum_Back = pcData_Back.dot_num;
+                quint64 pointStartTime_ns_Back = pcData_Back.timestamp;
+                quint64 pointChunkTime_ns_Back = quint64(pcData_Back.time_interval) * 100;
+
+                for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
+                {
+                    LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
+                    UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
+
+                    if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+                    {
+                        try
+                        {
+                            params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
+                        }
+                        catch (QString& stringThrown)
+                        {
+                            Q_ASSERT(params.lidarFileNames);
+                            Q_ASSERT(params.lidarFileNames->size() > backIter.value().fileNameIndex);
+
+                            emit warningMessage("File \"" + params.lidarFileNames->at(backIter.value().fileNameIndex) + "\", chunk index " +
+                                                QString::number(backIter.value().chunkIndex)+
+                                                " (Mid-360), IP: " + backIter.value().datagram.senderAddress().toString() +
+                                                ", uptime " + QString::number(backIter.key()) +
+                                                ", ITOW " + QString::number(pointITOWUptime_ms) +
+                                                ": " + stringThrown + " Skipped the rest of this set of points " +
+                                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                                QString::number(endingTag.sourceFileLine) +
+                                                " in file \"" + beginningTag.sourceFile + "\".");
+                            return(false);
+                        }
+
+                        exprFilter->setTransform_RigToNED(transform_LoSolver);
+
+                        lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
+                    }
+
+                    exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+                }
+                break;
+            }
+        }
+#endif
+        quint16 pointNum = pcData.dot_num;
+
+        if (!params.transforms_AfterRotation.contains(device))
+        {
+            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
+                                QString::number(mid360Iter.value().chunkIndex)+
+                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
+                                ", uptime " + QString::number(mid360Iter.key()) +
+                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                ": Operation after rotation not defined. Skipped the rest of this set of points " +
+                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                QString::number(endingTag.sourceFileLine) +
+                                " in file \"" + beginningTag.sourceFile + "\".");
+            return(false);
+        }
+
+        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
 
         //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
 
