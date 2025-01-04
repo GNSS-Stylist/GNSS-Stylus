@@ -472,7 +472,7 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
     // this is done now by feeding bufferLength (now 16) samples from the datagram preceding the one found using the timestamp.
     // This adds a tiny time inaccuracy (8/200000s ("delay" of 8 samples)), so doesn't matter.
 
-    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360Iter = params.mid360.datagrams->lowerBound(beginningUptime);
+    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360MultiMapIter = params.mid360.datagrams->lowerBound(beginningUptime);
 
     UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
 /*
@@ -500,398 +500,408 @@ bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
 */
 //    std::cout << errorMessage;
 
-    while ((mid360Iter != params.mid360.datagrams->end()) && (mid360Iter.key() < endingUptime))
+    while ((mid360MultiMapIter != params.mid360.datagrams->end()) && (mid360MultiMapIter.key() < endingUptime))
     {
-        LivoxMid360::PointCloudAndIMUDataHeader header(mid360Iter.value().datagram);
+        qint64 uptime = mid360MultiMapIter.key();
+        QList<PostProcessingForm::Mid360Datagram> datagrams = params.mid360.datagrams->values(uptime);
 
-        if ((header.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
-                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
-                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
-                (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
+        for (int datagramIndex = datagrams.size() - 1; datagramIndex >= 0; datagramIndex--)
         {
-            mid360Iter++;
-            continue;
-        }
-        LivoxMid360::PointCloudData pcData(header, mid360Iter.value().datagram);
+            const PostProcessingForm::Mid360Datagram mid360Datagram = datagrams[datagramIndex];
+            LivoxMid360::PointCloudAndIMUDataHeader header(mid360Datagram.datagram);
 
-        if ((pcData.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
-            (pcData.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
-        {
-            mid360Iter++;
-            continue;
-        }
-
-        quint64 pointStartTime_ns = pcData.timestamp;
-        quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
-
-        quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
-        LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
-
-        if (!params.expressionMap->contains(device))
-        {
-            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
-                                QString::number(mid360Iter.value().chunkIndex)+
-                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
-                                ", uptime " + QString::number(mid360Iter.key()) +
-                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                ": Filter expression not defined. Skipped the rest of this set of points " +
-                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                QString::number(endingTag.sourceFileLine) +
-                                " in file \"" + beginningTag.sourceFile + "\".");
-            return(false);
-        }
-
-        PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
-
-#if 1
-        if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360Iter != params.mid360.datagrams->begin()))
-        {
-            // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
-            // Therefore "prefilling" the filter with the data (last samples) from the previous datagram for this device.
-            // This code is quite similar to the "real" filtering code later. Will not combine these since the "real" filtering should be as fast as possible.
-            // (This part is only ran once per "point set", so doesn't need to be very optimized.
-
-            auto backIter = params.mid360.datagrams->lowerBound(beginningUptime);
-
-            while (backIter != params.mid360.datagrams->begin())
+            if ((header.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
+                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
+                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
+                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
             {
-                // As "The items that share the same key are available from most recently to least recently inserted.",
-                // the backIter should point to the "most recently inserted" (last) item without any adjustment.
+                continue;
+            }
+            LivoxMid360::PointCloudData pcData(header, mid360Datagram.datagram);
 
-                backIter--;
+            if ((pcData.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
+                (pcData.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
+            {
+                continue;
+            }
 
-                quint32 ipAddress_Back = backIter.value().datagram.senderAddress().toIPv4Address();
+            quint64 pointStartTime_ns = pcData.timestamp;
+            quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
 
-                if (ipAddress_Back != ipAddress)
+            quint32 ipAddress = mid360Datagram.datagram.senderAddress().toIPv4Address();
+            LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
+
+            if (!params.expressionMap->contains(device))
+            {
+                emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
+                                    QString::number(mid360Datagram.chunkIndex)+
+                                    " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
+                                    ", uptime " + QString::number(uptime) +
+                                    ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                    ": Filter expression not defined. Skipped the rest of this set of points " +
+                                    "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                    QString::number(endingTag.sourceFileLine) +
+                                    " in file \"" + beginningTag.sourceFile + "\".");
+                return(false);
+            }
+
+            PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
+
+    #if 1
+            if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360MultiMapIter != params.mid360.datagrams->begin()))
+            {
+                // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
+                // Therefore "prefilling" the filter with the data (last samples) from the previous datagram for this device.
+                // This code is quite similar to the "real" filtering code later. Will not combine these since the "real" filtering should be as fast as possible.
+                // (This part is only ran once per "point set", so doesn't need to be very optimized.
+
+                auto backIter = params.mid360.datagrams->lowerBound(beginningUptime);
+
+                while ((backIter != params.mid360.datagrams->begin()) && (exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength))
                 {
-                    continue;
-                }
+                    backIter--;
 
-                LivoxMid360::PointCloudAndIMUDataHeader header_Back(backIter.value().datagram);
+                    qint64 uptime_Back = backIter.key();
+                    QList<PostProcessingForm::Mid360Datagram> datagrams_Back = params.mid360.datagrams->values(uptime_Back);
 
-                if ((header_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
-                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
-                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
-                        (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
-                {
-                    continue;
-                }
-
-                LivoxMid360::PointCloudData pcData_Back(header_Back, backIter.value().datagram);
-
-                if ((pcData_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
-                    (pcData_Back.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
-                {
-                    continue;
-                }
-
-                quint16 pointNum_Back = pcData_Back.dot_num;
-                quint64 pointStartTime_ns_Back = pcData_Back.timestamp;
-                quint64 pointChunkTime_ns_Back = quint64(pcData_Back.time_interval) * 100;
-
-                for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
-                {
-                    LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                    UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
-
-                    if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+                    for (int datagramIndex_Back = 0; datagramIndex_Back < datagrams_Back.size(); datagramIndex_Back++)
                     {
-                        try
-                        {
-                            params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
-                        }
-                        catch (QString& stringThrown)
-                        {
-                            Q_ASSERT(params.lidarFileNames);
-                            Q_ASSERT(params.lidarFileNames->size() > backIter.value().fileNameIndex);
+                        const PostProcessingForm::Mid360Datagram& mid360Datagram_Back = datagrams_Back[datagramIndex_Back];
 
-                            emit warningMessage("File \"" + params.lidarFileNames->at(backIter.value().fileNameIndex) + "\", chunk index " +
-                                                QString::number(backIter.value().chunkIndex)+
-                                                " (Mid-360), IP: " + backIter.value().datagram.senderAddress().toString() +
-                                                ", uptime " + QString::number(backIter.key()) +
-                                                ", ITOW " + QString::number(pointITOWUptime_ms) +
-                                                ": " + stringThrown + " Skipped the rest of this set of points " +
-                                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                                QString::number(endingTag.sourceFileLine) +
-                                                " in file \"" + beginningTag.sourceFile + "\".");
-                            return(false);
+                        quint32 ipAddress_Back = mid360Datagram_Back.datagram.senderAddress().toIPv4Address();
+
+                        if (ipAddress_Back != ipAddress)
+                        {
+                            continue;
                         }
 
-                        exprFilter->setTransform_RigToNED(transform_LoSolver);
+                        LivoxMid360::PointCloudAndIMUDataHeader header_Back(mid360Datagram_Back.datagram);
 
-                        lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
+                        if ((header_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
+                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
+                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
+                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
+                        {
+                            continue;
+                        }
+
+                        LivoxMid360::PointCloudData pcData_Back(header_Back, mid360Datagram_Back.datagram);
+
+                        if ((pcData_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
+                            (pcData_Back.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
+                        {
+                            continue;
+                        }
+
+                        quint16 pointNum_Back = pcData_Back.dot_num;
+                        quint64 pointStartTime_ns_Back = pcData_Back.timestamp;
+                        quint64 pointChunkTime_ns_Back = quint64(pcData_Back.time_interval) * 100;
+
+                        for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
+                        {
+                            LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
+                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
+
+                            if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+                            {
+                                try
+                                {
+                                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
+                                }
+                                catch (QString& stringThrown)
+                                {
+                                    Q_ASSERT(params.lidarFileNames);
+                                    Q_ASSERT(params.lidarFileNames->size() >  mid360Datagram_Back.fileNameIndex);
+
+                                    emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram_Back.fileNameIndex) + "\", chunk index " +
+                                                        QString::number(mid360Datagram_Back.chunkIndex)+
+                                                        " (Mid-360), IP: " + mid360Datagram_Back.datagram.senderAddress().toString() +
+                                                        ", uptime " + QString::number(uptime_Back) +
+                                                        ", ITOW " + QString::number(pointITOWUptime_ms) +
+                                                        ": " + stringThrown + " Skipped the rest of this set of points " +
+                                                        "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                                        QString::number(endingTag.sourceFileLine) +
+                                                        " in file \"" + beginningTag.sourceFile + "\".");
+                                    return(false);
+                                }
+
+                                exprFilter->setTransform_RigToNED(transform_LoSolver);
+
+                                lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
+                            }
+
+                            exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+                        }
+                        break;
+                    }
+                }
+            }
+    #endif
+            quint16 pointNum = pcData.dot_num;
+
+            if (!params.transforms_AfterRotation.contains(device))
+            {
+                emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
+                                    QString::number(mid360Datagram.chunkIndex)+
+                                    " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
+                                    ", uptime " + QString::number(uptime) +
+                                    ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
+                                    ": Operation after rotation not defined. Skipped the rest of this set of points " +
+                                    "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                    QString::number(endingTag.sourceFileLine) +
+                                    " in file \"" + beginningTag.sourceFile + "\".");
+                return(false);
+            }
+
+            auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
+
+            //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
+
+            for (int i = 0; i < pointNum; i++)
+            {
+                LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
+
+    #if 0
+
+                if (currentPoint->properties & 0x3f)
+                {
+                    // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
+                    continue;
+                }
+
+                // Filter for now just using hard-coded operator/rig-discarding limits.
+                // TODO: Add configurable params/zones.
+
+                if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
+                    fabs((currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
+                    fabs((currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
+                {
+                    continue;
+                }
+
+                // Filter out the tube (a bit lossy filtering here...)
+                if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
+                    (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
+                {
+                    continue;
+                }
+
+
+
+                double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+                if (distance < 0.15)
+                {
+                    // Discard points too close to lidar's origin
+                    continue;
+                }
+    #else
+
+    #if 0
+                int hardCodedDiscardReason = false;
+
+                if (currentPoint->properties & 0x3f)
+                {
+                    // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
+                    hardCodedDiscardReason = 1;
+                }
+
+                // Filter for now just using hard-coded operator/rig-discarding limits.
+                // TODO: Add configurable params/zones.
+
+                if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
+                    (fabs(currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
+                    (fabs(currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
+                {
+                    hardCodedDiscardReason = 2;
+                }
+
+                // Filter out the tube (a bit lossy filtering here...)
+                if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
+                    (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
+                {
+                    hardCodedDiscardReason = 3;
+                }
+
+
+
+                double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+                if (distance < 0.15)
+                {
+                    // Discard points too close to lidar's origin
+                    hardCodedDiscardReason = 4;
+                }
+
+                if (hardCodedDiscardReason)
+                {
+                    continue;
+                }
+
+    #endif
+    #if 0
+                int evalDiscardReason = 0;
+
+                exprPoint.properties = currentPoint->properties;
+                exprPoint.x = currentPoint->x;
+                exprPoint.y = currentPoint->y;
+                exprPoint.z = currentPoint->z;
+                exprPoint.dist = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
+
+                double res = tep.evaluate();
+
+                if (res == 1.0)
+                {
+                    evalDiscardReason = 0;
+                }
+                else if (res == 0.0)
+                {
+                    evalDiscardReason = 1;
+                }
+                else if (std::isnan(res))
+                {
+                    evalDiscardReason = 2;
+                }
+                else if (!std::isfinite(res))
+                {
+                    evalDiscardReason = 3;
+                }
+    /*
+                bool hardCodedDiscard = hardCodedDiscardReason != 0;
+                bool evalDiscard = evalDiscardReason != 0;
+
+                if (hardCodedDiscard != evalDiscard)
+                {
+                    discardDiffs++;
+
+                    std::cout << "Mismatch! hardCodedDiscard: " << hardCodedDiscard << ", reason: " << hardCodedDiscardReason <<
+                        ", evalDiscard: " << evalDiscard << ", reason: " << evalDiscardReason <<
+                            ", coords: (" << currentPoint->x << "," << currentPoint->y << "," << currentPoint->z <<
+                        "), prop: " << int(currentPoint->properties) << ", Dist: " << exprPoint.dist << ", Count: " << discardDiffs << "\n";
+                }
+    */
+                if (evalDiscardReason)
+                {
+                    continue;
+                }
+    #endif
+
+    #endif
+                UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum - 1))) / 1000000;
+
+                if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+                //            if ((int)exprOutItem.uptime_ms != lastInterpolatedITOWUptime_ms)
+                {
+                    try
+                    {
+                        params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
+                    }
+                    catch (QString& stringThrown)
+                    {
+                        Q_ASSERT(params.lidarFileNames);
+                        Q_ASSERT(params.lidarFileNames->size() > mid360Datagram.fileNameIndex);
+
+                        emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
+                                            QString::number(mid360Datagram.chunkIndex)+
+                                            " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
+                                            ", uptime " + QString::number(uptime) +
+                                            ", ITOW " + QString::number(pointITOWUptime_ms) +
+                                            ": " + stringThrown + " Skipped the rest of this set of points " +
+                                            "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
+                                            QString::number(endingTag.sourceFileLine) +
+                                            " in file \"" + beginningTag.sourceFile + "\".");
+                        return(false);
                     }
 
-                    exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+                    exprFilter->setTransform_RigToNED(transform_LoSolver);
+
+                    lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
                 }
-                break;
+
+    #if 1
+                exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+
+                PointFilter::ExpressionFilter_Mid360::OutItem exprOutItem;
+
+                if(!(exprFilter->getFilteredPoint(exprOutItem)))
+                {
+                    continue;
+                }
+                if (!exprOutItem.valid)
+                {
+                    continue;
+                }
+                if (exprOutItem.filterResult != 1.0)
+                {
+                    continue;
+                }
+
+
+    #endif
+
+                Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
+
+                // Lot of parentheses here to keep all calculations as matrix * vector
+                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation * Eigen::Vector3d::Zero()));
+
+                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
+                    Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
+                    Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
+                    Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
+                    Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
+                    Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
+                    */
+
+                // Lot of parentheses here to keep all calculations as matrix * vector
+    //            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
+    //            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
+
+                Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
+
+                //          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
+
+                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
+                    Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
+                    Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
+                    Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
+                    Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
+                    */
+
+                if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
+                {
+                    Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+
+                    Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
+
+                    // TODO: Own quality calculation for Mid-360
+                    if (params.rpLidar.normalLengthsAsQuality)
+                    {
+                        normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
+                    }
+
+                    QString lineOut;
+                    if (params.includeNormals)
+                    {
+                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
+                                  "\t" + QString::number(normal(0), 'f', 4) +
+                                  "\t" + QString::number(normal(1), 'f', 4) +
+                                  "\t" + QString::number(normal(2), 'f', 4);
+                    }
+                    else
+                    {
+                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
+                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
+                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
+                    }
+
+                    outStream->operator<<(lineOut + "\n");
+                    pointsWritten++;
+                }
             }
         }
-#endif
-        quint16 pointNum = pcData.dot_num;
-
-        if (!params.transforms_AfterRotation.contains(device))
-        {
-            emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
-                                QString::number(mid360Iter.value().chunkIndex)+
-                                " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
-                                ", uptime " + QString::number(mid360Iter.key()) +
-                                ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                ": Operation after rotation not defined. Skipped the rest of this set of points " +
-                                "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                QString::number(endingTag.sourceFileLine) +
-                                " in file \"" + beginningTag.sourceFile + "\".");
-            return(false);
-        }
-
-        auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
-
-        //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
-
-        for (int i = 0; i < pointNum; i++)
-        {
-            LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
-
-#if 0
-
-            if (currentPoint->properties & 0x3f)
-            {
-                // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
-                continue;
-            }
-
-            // Filter for now just using hard-coded operator/rig-discarding limits.
-            // TODO: Add configurable params/zones.
-
-            if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
-                fabs((currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
-                fabs((currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
-            {
-                continue;
-            }
-
-            // Filter out the tube (a bit lossy filtering here...)
-            if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
-                (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
-            {
-                continue;
-            }
-
-
-
-            double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-            if (distance < 0.15)
-            {
-                // Discard points too close to lidar's origin
-                continue;
-            }
-#else
-
-#if 0
-            int hardCodedDiscardReason = false;
-
-            if (currentPoint->properties & 0x3f)
-            {
-                // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
-                hardCodedDiscardReason = 1;
-            }
-
-            // Filter for now just using hard-coded operator/rig-discarding limits.
-            // TODO: Add configurable params/zones.
-
-            if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
-                (fabs(currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
-                (fabs(currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
-            {
-                hardCodedDiscardReason = 2;
-            }
-
-            // Filter out the tube (a bit lossy filtering here...)
-            if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
-                (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
-            {
-                hardCodedDiscardReason = 3;
-            }
-
-
-
-            double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-            if (distance < 0.15)
-            {
-                // Discard points too close to lidar's origin
-                hardCodedDiscardReason = 4;
-            }
-
-            if (hardCodedDiscardReason)
-            {
-                continue;
-            }
-
-#endif
-#if 0
-            int evalDiscardReason = 0;
-
-            exprPoint.properties = currentPoint->properties;
-            exprPoint.x = currentPoint->x;
-            exprPoint.y = currentPoint->y;
-            exprPoint.z = currentPoint->z;
-            exprPoint.dist = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-            double res = tep.evaluate();
-
-            if (res == 1.0)
-            {
-                evalDiscardReason = 0;
-            }
-            else if (res == 0.0)
-            {
-                evalDiscardReason = 1;
-            }
-            else if (std::isnan(res))
-            {
-                evalDiscardReason = 2;
-            }
-            else if (!std::isfinite(res))
-            {
-                evalDiscardReason = 3;
-            }
-/*
-            bool hardCodedDiscard = hardCodedDiscardReason != 0;
-            bool evalDiscard = evalDiscardReason != 0;
-
-            if (hardCodedDiscard != evalDiscard)
-            {
-                discardDiffs++;
-
-                std::cout << "Mismatch! hardCodedDiscard: " << hardCodedDiscard << ", reason: " << hardCodedDiscardReason <<
-                    ", evalDiscard: " << evalDiscard << ", reason: " << evalDiscardReason <<
-                        ", coords: (" << currentPoint->x << "," << currentPoint->y << "," << currentPoint->z <<
-                    "), prop: " << int(currentPoint->properties) << ", Dist: " << exprPoint.dist << ", Count: " << discardDiffs << "\n";
-            }
-*/
-            if (evalDiscardReason)
-            {
-                continue;
-            }
-#endif
-
-#endif
-            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum - 1))) / 1000000;
-
-            if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
-            //            if ((int)exprOutItem.uptime_ms != lastInterpolatedITOWUptime_ms)
-            {
-                try
-                {
-                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
-                }
-                catch (QString& stringThrown)
-                {
-                    Q_ASSERT(params.lidarFileNames);
-                    Q_ASSERT(params.lidarFileNames->size() > mid360Iter.value().fileNameIndex);
-
-                    emit warningMessage("File \"" + params.lidarFileNames->at(mid360Iter.value().fileNameIndex) + "\", chunk index " +
-                                        QString::number(mid360Iter.value().chunkIndex)+
-                                        " (Mid-360), IP: " + mid360Iter.value().datagram.senderAddress().toString() +
-                                        ", uptime " + QString::number(mid360Iter.key()) +
-                                        ", ITOW " + QString::number(pointITOWUptime_ms) +
-                                        ": " + stringThrown + " Skipped the rest of this set of points " +
-                                        "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                        QString::number(endingTag.sourceFileLine) +
-                                        " in file \"" + beginningTag.sourceFile + "\".");
-                    return(false);
-                }
-
-                exprFilter->setTransform_RigToNED(transform_LoSolver);
-
-                lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
-            }
-
-#if 1
-            exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
-
-            PointFilter::ExpressionFilter_Mid360::OutItem exprOutItem;
-
-            if(!(exprFilter->getFilteredPoint(exprOutItem)))
-            {
-                continue;
-            }
-            if (!exprOutItem.valid)
-            {
-                continue;
-            }
-            if (exprOutItem.filterResult != 1.0)
-            {
-                continue;
-            }
-
-
-#endif
-
-            Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
-
-            // Lot of parentheses here to keep all calculations as matrix * vector
-            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation * Eigen::Vector3d::Zero()));
-
-            /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
-                Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
-                Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
-                Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
-                */
-
-            // Lot of parentheses here to keep all calculations as matrix * vector
-//            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
-//            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
-
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
-
-            //          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
-
-            /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
-                Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
-                Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
-                */
-
-            if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
-            {
-                Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
-
-                Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
-
-                // TODO: Own quality calculation for Mid-360
-                if (params.rpLidar.normalLengthsAsQuality)
-                {
-                    normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
-                }
-
-                QString lineOut;
-                if (params.includeNormals)
-                {
-                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
-                              "\t" + QString::number(normal(0), 'f', 4) +
-                              "\t" + QString::number(normal(1), 'f', 4) +
-                              "\t" + QString::number(normal(2), 'f', 4);
-                }
-                else
-                {
-                    lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                              "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
-                }
-
-                outStream->operator<<(lineOut + "\n");
-                pointsWritten++;
-            }
-        }
-        mid360Iter++;
+        mid360MultiMapIter++;
     }
 
     return true;
