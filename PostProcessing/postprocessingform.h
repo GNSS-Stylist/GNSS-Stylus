@@ -136,42 +136,6 @@ public:
         QNetworkDatagram datagram;
     };
 
-    class LOInterpolator
-    {
-    public:
-        LOInterpolator(PostProcessingForm* owner);
-
-        void getInterpolatedLocationOrientationTransformMatrix_Uptime(
-                const qint64 uptime, const QMap<qint64, UBXMessage_RELPOSNED::ITOW>& averagedRoverUptimeSync,
-                Eigen::Transform<double, 3, Eigen::Affine>& transform,
-                const unsigned int maxInterpolationTimeRange = 500);
-
-        void getInterpolatedLocationOrientationTransformMatrix_ITOW(
-                const UBXMessage_RELPOSNED::ITOW iTOW,
-                Eigen::Transform<double, 3, Eigen::Affine>& transform,
-                const unsigned int maxInterpolationTimeRange = 500);
-
-        LOSolver loSolver;  // This must be initialized by user of this class before using the interpolation function!
-
-    private:
-        PostProcessingForm* owner = nullptr;
-
-        qint64 roverUptimeLimit_Low = -1;
-        qint64 roverUptimeLimit_High = -1;
-        Eigen::Vector3d roverUptimeBasedLocation_Low;
-        Eigen::Vector3d roverUptimeBasedLocation_High;
-        Eigen::Quaterniond roverUptimeBasedOrientation_Low;
-        Eigen::Quaterniond roverUptimeBasedOrientation_High;
-
-        UBXMessage_RELPOSNED::ITOW roverITOWLimit_Low = -1;
-        UBXMessage_RELPOSNED::ITOW roverITOWLimit_High = -1;
-        Eigen::Vector3d roverITOWBasedLocation_Low;
-        Eigen::Vector3d roverITOWBasedLocation_High;
-        Eigen::Quaterniond roverITOWBasedOrientation_Low;
-        Eigen::Quaterniond roverITOWBasedOrientation_High;
-    };
-
-
     explicit PostProcessingForm(QWidget *parent = nullptr); //!< Constructor
     ~PostProcessingForm();
 

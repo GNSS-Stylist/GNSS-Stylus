@@ -23,6 +23,7 @@
 #include <QDir>
 
 #include "postprocessingform.h"
+#include "lointerpolator.h"
 
 class RasterCameraGenerator : public QObject
 {
@@ -36,7 +37,7 @@ public:
         Eigen::Transform<double, 3, Eigen::Affine>* transform_Generated = nullptr;
 
         const PostProcessingForm::Rover* rovers = nullptr;
-        PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
+        LOInterpolator* loInterpolator = nullptr;
     };
 
     class Item

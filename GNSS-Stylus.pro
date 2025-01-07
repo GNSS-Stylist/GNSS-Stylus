@@ -129,6 +129,7 @@ HEADERS += \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
+    PostProcessing/lointerpolator.h \
     PostProcessing/loscriptgenerator.h \
     PostProcessing/postprocessingform.h \
     PostProcessing/rastercameragenerator.h \

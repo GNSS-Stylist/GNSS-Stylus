@@ -22,6 +22,7 @@
 #include "../postprocessingform.h"
 #include "../transformmatrixgenerator.h"
 #include "../Lidar/PointFilter/expressionfiltergenerator.h"
+#include "../lointerpolator.h"
 
 
 namespace Lidar
@@ -47,7 +48,7 @@ public:
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
-        PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
+        LOInterpolator* loInterpolator = nullptr;
         const QVector<QString>* lidarFileNames = nullptr;
 
         QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;

@@ -1,6 +1,6 @@
 /*
     lidarscriptgenerator.h (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #define LIDARSCRIPTGENERATOR_H
 
 #include "../postprocessingform.h"
+#include "../lointerpolator.h"
 
 namespace Lidar
 {
@@ -43,7 +44,7 @@ public:
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
         const PostProcessingForm::Rover* rovers = nullptr;
-        PostProcessingForm::LOInterpolator* loInterpolator = nullptr;
+        LOInterpolator* loInterpolator = nullptr;
         QVector<QString>* lidarFileNames = nullptr;
 
         QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
