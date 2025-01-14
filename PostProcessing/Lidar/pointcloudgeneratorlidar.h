@@ -1,6 +1,6 @@
 /*
     pointcloudgeneratorlidar.h (part of GNSS-Stylus)
-    Copyright (C) 2019-2021 Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2019-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 #ifndef POINTCLOUDGENERATORLIDAR_H
 #define POINTCLOUDGENERATORLIDAR_H
 
-#include "../postprocessingform.h"
-#include "../transformmatrixgenerator.h"
-#include "../Lidar/PointFilter/expressionfiltergenerator.h"
-#include "../lointerpolator.h"
+#include <QQueue>
 
+#include "../postprocessingform.h"
+#include "pointcloudgeneratorlidarthread.h"
+#include "../asyncpointcloudfilewriter.h"
 
 namespace Lidar
 {
@@ -36,51 +36,26 @@ public:
     class Params
     {
     public:
-        const Eigen::Transform<double, 3, Eigen::Affine>* transform_NEDToXYZ = nullptr;
         QDir directory;
         QString tagIdent_BeginNewObject = "New object";
         QString tagIdent_BeginPoints = "RMB";
         QString tagIdent_EndPoints = "LMB";
         bool includeNormals = false;
-        const Eigen::Vector3d* boundingSphere_Center;
-        double boundingSphere_Radius = 1e9;
         bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
-        const PostProcessingForm::Rover* rovers = nullptr;
-        LOInterpolator* loInterpolator = nullptr;
-        const QVector<QString>* lidarFileNames = nullptr;
 
-        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
-        QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>>* expressionMap = nullptr;
+        int maxWorkUnitDuration = 60000;
+        int numOfWorkerThreads = 1;
 
-        struct
-        {
-            bool normalLengthsAsQuality = false;
-            int timeShift = 0;
-            const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
-            const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
-            const Eigen::Transform<double, 3, Eigen::Affine>* transform_BeforeRotation = nullptr;
-        } rpLidar;
-
-        struct
-        {
-            const QMultiMap<qint64, PostProcessingForm::Mid360Datagram>* datagrams = nullptr;
-        } mid360;
+        PointCloudGeneratorLidarThread::ConstData threadConstData;
     };
 
     void generatePointClouds(const Params& params);
 
 private:
-    bool generatePointCloudPointSet(const Params& params,
-                                    const PostProcessingForm::Tag& beginningTag,
-                                    const PostProcessingForm::Tag& endingTag,
-                                    const qint64 beginningUptime, const qint64 endingUptime,
-                                    const QMap<qint64, UBXMessage_RELPOSNED::ITOW> &averagedSync,
-                                    QTextStream* outStream,
-                                    int& pointsWritten);
 
-    QFile* createNewOutFile(const QString fileName, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
+    std::shared_ptr<AsyncPointCloudFileWriter> createNewOutFile(const QString fileName, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
 
 signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)

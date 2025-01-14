@@ -16,19 +16,19 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "pointcloudgeneratorlidar.h"
-#include "livoxmid360pointcloudandimudata.h"
+#include <QProgressDialog>
+#include <QElapsedTimer>
 
-#include "PointFilter/tinyexpr-plusplus/tinyexpr.h"
-#include "PointFilter/expressionfilter_mid360.h"
-#include "PointFilter/expressionfilter_rplidar.h"
-#include <iostream>
+#include "pointcloudgeneratorlidar.h"
+#include "../asyncpointcloudfilewriter.h"
 
 namespace Lidar
 {
 
 void PointCloudGenerator::generatePointClouds(const Params& params)
 {
+    // The comment above was written before changing this to support multi-threading,
+    // but leaving this here if Stylus' implementation will be changed also:
     // This function is identical to the one used in Stylus' PointCloudGenerator.
     // I actually first wrote a base class so that this function was implemented there
     // and only "specialized" generatePointCloudPointSet-function was implemented in
@@ -47,12 +47,8 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     bool objectActive = false;
 
     qint64 beginningUptime = -1;
-    int pointsWritten = 0;
 
     bool ignoreBeginningAndEndingTags = false;
-
-    QFile* outFile = nullptr;
-    QTextStream* outStream = nullptr;
 
     QString objectName;
     QString baseFileName;
@@ -61,14 +57,14 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     qint64 uptime = -1;
     PostProcessingForm::Tag beginningTag;
 
-    // Map where uptimes for all equal ITOWs are the same.
-    // This makes processing later easier
-    // Uptimes here are calculated as averages from rover values (for each ITOW)
-    QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
+    QQueue<PointCloudGeneratorLidarThread::WorkUnit> workUnitQueue;
 
-    emit infoMessage("Generating equalized rover uptime timestamps...");
-    PostProcessingForm::generateAveragedRoverUptimeSync(params.rovers, averagedSync);
-    emit infoMessage("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+    int outFileChunkIndex = 0;
+
+    std::shared_ptr<AsyncPointCloudFileWriter> currentFileWriter = nullptr;
+    QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> > fileWriters;
+
+    emit infoMessage("Creating work units (for worker threads)...");
 
     while (params.tags->upperBound(uptime) != params.tags->end())
     {
@@ -89,23 +85,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                 if (objectActive)
                 {
-                    // Object already active -> Close existing stream and file
-
-                    if (outStream)
-                    {
-                        delete outStream;
-                        outStream = nullptr;
-                    }
-                    if (outFile)
-                    {
-                        emit infoMessage("Closing file \"" + outFile->fileName() + "\".");
-                        outFile->close();
-                        delete outFile;
-                        outFile = nullptr;
-                    }
-
-                    emit infoMessage("Object \"" + objectName + "\": Total points written: " + QString::number(pointsWritten));
-
+                    currentFileWriter = nullptr;
                     objectActive = false;
                 }
 
@@ -132,16 +112,17 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                 if (!params.separateFilesForSubScans)
                 {
-                    outFile = createNewOutFile(fileName, currentTag, uptime);
+                    outFileChunkIndex = 0;
+                    currentFileWriter = createNewOutFile(fileName, currentTag, uptime);
 
-                    if (!outFile)
+                    if (!currentFileWriter)
                     {
                         ignoreBeginningAndEndingTags = true;
                         continue;
                     }
                     else
                     {
-                        outStream = new QTextStream(outFile);
+                        fileWriters.insert(fileName, currentFileWriter);
                         ignoreBeginningAndEndingTags = false;
                     }
                 }
@@ -153,7 +134,6 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                 objectActive = true;
                 beginningUptime = -1;
-                pointsWritten = 0;
 
                 fileIndex = 0;
             }
@@ -234,59 +214,57 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                     QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + ".xyz");
 
-                    outFile = createNewOutFile(fileName, currentTag, uptime);
+                    outFileChunkIndex = 0;
+                    currentFileWriter = createNewOutFile(fileName, currentTag, uptime);
 
-                    if (!outFile)
+                    if (!currentFileWriter)
                     {
                         ignoreBeginningAndEndingTags = true;
                         continue;
                     }
                     else
                     {
-                        outStream = new QTextStream(outFile);
+                        fileWriters.insert(fileName, currentFileWriter);
                         objectActive = true;
                         ignoreBeginningAndEndingTags = false;
                     }
                 }
 
-                bool generatingOk = false;
-                int prevPointsWritten = pointsWritten;
+                PointCloudGeneratorLidarThread::WorkUnit newWorkUnit;
 
-                generatingOk = generatePointCloudPointSet(params, beginningTag, endingTag, beginningUptime, uptime, averagedSync, outStream, pointsWritten);
+                newWorkUnit.valid = true;
+                newWorkUnit.outFileName = currentFileWriter->getFileName();
+                newWorkUnit.sourceFileName = beginningTag.sourceFile;
+                newWorkUnit.beginningTagLine = beginningTag.sourceFileLine;
+                newWorkUnit.endingTagLine = endingTag.sourceFileLine;
 
-                if (generatingOk)
+                qint64 currentUptime = beginningUptime;
+
+                while (currentUptime < uptime)
                 {
-                    int pointsBetweenTags = pointsWritten - prevPointsWritten;
-
-                    if (pointsBetweenTags == 0)
+                    newWorkUnit.beginningUptime = currentUptime;
+                    if (uptime - currentUptime <= params.maxWorkUnitDuration)
                     {
-                        emit warningMessage("File \"" + beginningTag.sourceFile + "\", beginning tag line " +
-                                   QString::number(beginningTag.sourceFileLine) +
-                                   ", uptime " + QString::number(beginningUptime) +
-                                   ", iTOW " + QString::number(beginningTag.iTOW) + ", ending tag line " +
-                                   QString::number(endingTag.sourceFileLine) +
-                                   ", uptime " + QString::number(endingTag.iTOW) +
-                                   ", iTOW " + QString::number(endingTag.iTOW) +
-                                   ", File \"" + endingTag.sourceFile + "\""
-                                   " No points between tags.");
+                        newWorkUnit.endingUptime = uptime;
                     }
-                }
+                    else if (uptime - currentUptime < params.maxWorkUnitDuration * 2)
+                    {
+                        // Split two last shorter work units even
+                        newWorkUnit.endingUptime = currentUptime + ((uptime - currentUptime) / 2);
+                    }
+                    else
+                    {
+                        newWorkUnit.endingUptime = currentUptime + params.maxWorkUnitDuration;
+                    }
 
+                    newWorkUnit.chunkIndex = outFileChunkIndex;
+                    workUnitQueue.enqueue(newWorkUnit);
+                    currentUptime = newWorkUnit.endingUptime;
+                    outFileChunkIndex++;
+                }
                 if (params.separateFilesForSubScans)
                 {
-                    if (outStream)
-                    {
-                        delete outStream;
-                        outStream = nullptr;
-                    }
-                    if (outFile)
-                    {
-                        int pointsBetweenTags = pointsWritten - prevPointsWritten;
-                        emit infoMessage("Closing file \"" + outFile->fileName() + "\". Points written: " + QString::number(pointsBetweenTags));
-                        outFile->close();
-                        delete outFile;
-                        outFile = nullptr;
-                    }
+                    currentFileWriter = nullptr;
                 }
 
                 beginningUptime = -1;
@@ -303,615 +281,89 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                    " (beginning tag): File ended before end tag. Points after beginning tag ignored.");
     }
 
-    if (outStream)
+    emit infoMessage("work units created. Number of items: " + QString::number(workUnitQueue.size()));
+
+    emit infoMessage("Creating worker threads (" + QString::number(params.numOfWorkerThreads) + ")...");
+
+    QMutex workUnitQueueMutex;
+
+    auto lambdaGetter = [&workUnitQueue, &workUnitQueueMutex]
     {
-        delete outStream;
-    }
-    if (outFile)
+        workUnitQueueMutex.lock();
+        if (workUnitQueue.isEmpty())
+        {
+            PointCloudGeneratorLidarThread::WorkUnit dummyWorkUnit;
+            workUnitQueueMutex.unlock();
+            return dummyWorkUnit;
+        }
+        else
+        {
+            PointCloudGeneratorLidarThread::WorkUnit newWorkUnit = workUnitQueue.dequeue();
+            workUnitQueueMutex.unlock();
+            return newWorkUnit;
+        }
+    };
+
+    auto lambdaProcessor = [&fileWriters](const PointCloudGeneratorLidarThread::Output& out)
     {
-        emit infoMessage("Closing file \"" + outFile->fileName() + "\".");
-        outFile->close();
-        delete outFile;
+        Q_ASSERT(fileWriters.contains(out.workUnit.outFileName));
+        fileWriters.value(out.workUnit.outFileName)->addPoints(out);
+    };
+
+    QVector<std::shared_ptr<PointCloudGeneratorLidarThread> > workerThreads;
+
+    for (int i = 0; i < std::max(params.numOfWorkerThreads, 1); i++)
+    {
+        workerThreads.push_back(std::make_shared<PointCloudGeneratorLidarThread>(params.threadConstData, lambdaGetter, lambdaProcessor));
     }
 
-    if (objectActive)
+    emit infoMessage(QString::number(params.numOfWorkerThreads) + " worker threads Created.");
+
+    int maxProgress = workUnitQueue.size();
+    QProgressDialog progress("Creating point cloud files...", "Abort", 0, maxProgress);
+    progress.setWindowModality(Qt::WindowModal);
+
+    emit infoMessage("Starting worker threads...");
+
+    for (int i = 0; i < workerThreads.size(); i++)
     {
-        emit infoMessage("Object \"" + objectName + "\": Total points written: " + QString::number(pointsWritten));
+        workerThreads.at(i)->start();
     }
+
+    emit infoMessage("Worker threads started.");
+
+    while (workUnitQueue.size() != 0)
+    {
+        int currentProgress = maxProgress - workUnitQueue.size();
+        progress.setValue(currentProgress);
+        QThread::msleep(100);
+
+        if (progress.wasCanceled())
+            break;
+    }
+
+    progress.setValue(maxProgress);
+
+    emit infoMessage("Waiting for worker threads to end...");
+
+    for (int i = 0; i < workerThreads.size(); i++)
+    {
+        workerThreads.at(i)->wait();
+    }
+
+    emit infoMessage("Worker threads finished.");
+
+    // TODO: Handle pending buffered writes.
 
     emit infoMessage("Point cloud files generated.");
 }
 
-bool PointCloudGenerator::generatePointCloudPointSet(const Params& params,
-                                                     const PostProcessingForm::Tag& beginningTag,
-                                                     const PostProcessingForm::Tag& endingTag,
-                                                     const qint64 beginningUptime, const qint64 endingUptime,
-                                                     const QMap<qint64, UBXMessage_RELPOSNED::ITOW> &averagedSync,
-                                                     QTextStream* outStream,
-                                                     int& pointsWritten)
+
+std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile(const QString fileName, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
 {
-    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator rpLidarIter = params.rpLidar.rounds->upperBound(beginningUptime);
+    QFile outFile(fileName);
 
-    // As lidar rounds are "mapped" according to their arriving (=end) timestamps,
-    // roll here to the first one with a bigger starting timestamp
-    // to prevent taking "past" measurements into account
-
-    while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < beginningUptime))
-    {
-        rpLidarIter++;
-    }
-
-    QVector<RPLidarPlausibilityFilter::FilteredItem> rpLidarFilteredItems;
-    rpLidarFilteredItems.reserve(10000);
-
-    RPLidarPlausibilityFilter rpLidarPlausibilityFilter;
-
-    LidarDevice rpLidarDevice(LidarDevice::DT_RPLIDAR);
-    Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
-
-    Eigen::Transform<double, 3, Eigen::Affine> rpLidarTransform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
-    auto rpLidarTransform_AfterRotation = params.transforms_AfterRotation.value(rpLidarDevice);
-
-    rpLidarPlausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
-
-    Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
-
-    for (auto exprIter = params.expressionMap->begin(); exprIter != params.expressionMap->end(); exprIter++)
-    {
-        exprIter.value()->initBuffer();
-    }
-
-    while ((rpLidarIter != params.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < endingUptime))
-    {
-        rpLidarPlausibilityFilter.filter(rpLidarIter.value().distanceItems, rpLidarFilteredItems);
-
-        // Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
-
-        const PostProcessingForm::LidarRound& round = rpLidarIter.value();
-
-        for (int i = 0; i < rpLidarFilteredItems.count(); i++)
-        {
-            const RPLidarPlausibilityFilter::FilteredItem& currentItem = rpLidarFilteredItems[i];
-
-            if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
-            {
-                // Rover coordinates interpolated according to distance timestamps.
-
-                qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / rpLidarIter.value().distanceItems.count();
-                UBXMessage_RELPOSNED interpolated_Rovers[3];
-
-                qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
-
-                // TODO: Implement "uptime cache" (only calculate transform when uptime changes)
-
-                try
-                {
-                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, averagedSync, transform_LoSolver);
-                }
-                catch (QString& stringThrown)
-                {
-                    Q_ASSERT(params.lidarFileNames);
-                    Q_ASSERT(params.lidarFileNames->size() > rpLidarIter.value().fileNameIndex);
-
-                    emit warningMessage("File \"" + params.lidarFileNames->at(rpLidarIter.value().fileNameIndex) + "\", chunk index " +
-                               QString::number(rpLidarIter.value().chunkIndex)+
-                               " (RPLidar), uptime " + QString::number(rpLidarIter.key()) +
-                               ": " + stringThrown + " Skipped the rest of this set of points " +
-                               "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                               QString::number(endingTag.sourceFileLine) +
-                               " in file \"" + beginningTag.sourceFile + "\".");
-                    return(false);
-                }
-
-                Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
-                transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
-
-                // Lot of parentheses here to keep all calculations as matrix * vector
-                // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * Eigen::Vector3d::Zero()))));
-
-                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
-                Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
-                Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
-                Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
-                */
-
-                // Lot of parentheses here to keep all calculations as matrix * vector
-                // This is _much_ faster, in quick tests time was dropped from 44 s to 24 s when using parentheses in the whole pointcloud-creation)
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
-
-                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
-                Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
-                Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
-                */
-
-                if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
-                {
-                    Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
-
-                    Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
-
-                    if (params.rpLidar.normalLengthsAsQuality)
-                    {
-                        normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
-                    }
-
-                    QString lineOut;
-                    if (params.includeNormals)
-                    {
-                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
-                                "\t" + QString::number(normal(0), 'f', 4) +
-                                "\t" + QString::number(normal(1), 'f', 4) +
-                                "\t" + QString::number(normal(2), 'f', 4);
-                    }
-                    else
-                    {
-                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                                "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
-                    }
-
-                    outStream->operator<<(lineOut + "\n");
-                    pointsWritten++;
-                }
-            }
-        }
-
-        rpLidarIter++;
-    }
-
-    // Just rely on the timestamps of the datagrams to make splitting the data into chunks (for threads to digest) easier.
-    // The uptime range will be from beginningUptime (inclusive) to endingUptime (exclusive).
-    // Filtering needs some adjustments due to buffering/delay,
-    // this is done now by feeding bufferLength (now 16) samples from the datagram preceding the one found using the timestamp.
-    // This adds a tiny time inaccuracy (8/200000s ("delay" of 8 samples)), so doesn't matter.
-
-    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360MultiMapIter = params.mid360.datagrams->lowerBound(beginningUptime);
-
-    UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
-/*
-    PointFilter::ExpressionFilter_Mid360 exprFilter;
-
-    exprFilter.setExpression_Filter(
-        "not"
-        "("
-        "((lidar.mid360.properties & 0x3f) != 0)"
-        "||"
-        "("
-        "(lidar.coord.x < -0.45) && (lidar.coord.x > -3.5) && "
-        "(abs(lidar.coord.y / lidar.coord.x) < 1.0) && "
-        "(abs(lidar.coord.z / lidar.coord.x) < (3.0 / 1.2)) "
-        ")"
-        "||"
-        "("
-        "(lidar.coord.x < 0.0) && (lidar.coord.x > -3.5) &&"
-        "(lidar.coord.z < 0.0) && (abs(lidar.coord.y) < 0.1)"
-        ")"
-        "||"
-        "(lidar.distance < 0.15)"
-        ")"
-        );
-*/
-//    std::cout << errorMessage;
-
-    while ((mid360MultiMapIter != params.mid360.datagrams->end()) && (mid360MultiMapIter.key() < endingUptime))
-    {
-        qint64 uptime = mid360MultiMapIter.key();
-        QList<PostProcessingForm::Mid360Datagram> datagrams = params.mid360.datagrams->values(uptime);
-
-        for (int datagramIndex = datagrams.size() - 1; datagramIndex >= 0; datagramIndex--)
-        {
-            const PostProcessingForm::Mid360Datagram mid360Datagram = datagrams[datagramIndex];
-            LivoxMid360::PointCloudAndIMUDataHeader header(mid360Datagram.datagram);
-
-            if ((header.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
-                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
-                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
-                    (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
-            {
-                continue;
-            }
-            LivoxMid360::PointCloudData pcData(header, mid360Datagram.datagram);
-
-            if ((pcData.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
-                (pcData.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
-            {
-                continue;
-            }
-
-            quint64 pointStartTime_ns = pcData.timestamp;
-            quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
-
-            quint32 ipAddress = mid360Datagram.datagram.senderAddress().toIPv4Address();
-            LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
-
-            if (!params.expressionMap->contains(device))
-            {
-                emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                    QString::number(mid360Datagram.chunkIndex)+
-                                    " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                    ", uptime " + QString::number(uptime) +
-                                    ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                    ": Filter expression not defined. Skipped the rest of this set of points " +
-                                    "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                    QString::number(endingTag.sourceFileLine) +
-                                    " in file \"" + beginningTag.sourceFile + "\".");
-                return(false);
-            }
-
-            PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (params.expressionMap->value(device).get());
-
-    #if 1
-            if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360MultiMapIter != params.mid360.datagrams->begin()))
-            {
-                // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
-                // Therefore "prefilling" the filter with the data (last samples) from the previous datagram for this device.
-                // This code is quite similar to the "real" filtering code later. Will not combine these since the "real" filtering should be as fast as possible.
-                // (This part is only ran once per "point set", so doesn't need to be very optimized.
-
-                auto backIter = params.mid360.datagrams->lowerBound(beginningUptime);
-
-                while ((backIter != params.mid360.datagrams->begin()) && (exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength))
-                {
-                    backIter--;
-
-                    qint64 uptime_Back = backIter.key();
-                    QList<PostProcessingForm::Mid360Datagram> datagrams_Back = params.mid360.datagrams->values(uptime_Back);
-
-                    for (int datagramIndex_Back = 0; datagramIndex_Back < datagrams_Back.size(); datagramIndex_Back++)
-                    {
-                        const PostProcessingForm::Mid360Datagram& mid360Datagram_Back = datagrams_Back[datagramIndex_Back];
-
-                        quint32 ipAddress_Back = mid360Datagram_Back.datagram.senderAddress().toIPv4Address();
-
-                        if (ipAddress_Back != ipAddress)
-                        {
-                            continue;
-                        }
-
-                        LivoxMid360::PointCloudAndIMUDataHeader header_Back(mid360Datagram_Back.datagram);
-
-                        if ((header_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
-                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
-                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) &&
-                                (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
-                        {
-                            continue;
-                        }
-
-                        LivoxMid360::PointCloudData pcData_Back(header_Back, mid360Datagram_Back.datagram);
-
-                        if ((pcData_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
-                            (pcData_Back.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
-                        {
-                            continue;
-                        }
-
-                        quint16 pointNum_Back = pcData_Back.dot_num;
-                        quint64 pointStartTime_ns_Back = pcData_Back.timestamp;
-                        quint64 pointChunkTime_ns_Back = quint64(pcData_Back.time_interval) * 100;
-
-                        for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
-                        {
-                            LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
-
-                            if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
-                            {
-                                try
-                                {
-                                    params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
-                                }
-                                catch (QString& stringThrown)
-                                {
-                                    Q_ASSERT(params.lidarFileNames);
-                                    Q_ASSERT(params.lidarFileNames->size() >  mid360Datagram_Back.fileNameIndex);
-
-                                    emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram_Back.fileNameIndex) + "\", chunk index " +
-                                                        QString::number(mid360Datagram_Back.chunkIndex)+
-                                                        " (Mid-360), IP: " + mid360Datagram_Back.datagram.senderAddress().toString() +
-                                                        ", uptime " + QString::number(uptime_Back) +
-                                                        ", ITOW " + QString::number(pointITOWUptime_ms) +
-                                                        ": " + stringThrown + " Skipped the rest of this set of points " +
-                                                        "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                                        QString::number(endingTag.sourceFileLine) +
-                                                        " in file \"" + beginningTag.sourceFile + "\".");
-                                    return(false);
-                                }
-
-                                exprFilter->setTransform_RigToNED(transform_LoSolver);
-
-                                lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
-                            }
-
-                            exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
-                        }
-                        break;
-                    }
-                }
-            }
-    #endif
-            quint16 pointNum = pcData.dot_num;
-
-            if (!params.transforms_AfterRotation.contains(device))
-            {
-                emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                    QString::number(mid360Datagram.chunkIndex)+
-                                    " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                    ", uptime " + QString::number(uptime) +
-                                    ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
-                                    ": Operation after rotation not defined. Skipped the rest of this set of points " +
-                                    "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                    QString::number(endingTag.sourceFileLine) +
-                                    " in file \"" + beginningTag.sourceFile + "\".");
-                return(false);
-            }
-
-            auto transform_AfterRotation = params.transforms_AfterRotation.value(device);
-
-            //        Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation = *params.rpLidar.transform_BeforeRotation;
-
-            for (int i = 0; i < pointNum; i++)
-            {
-                LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
-
-    #if 0
-
-                if (currentPoint->properties & 0x3f)
-                {
-                    // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
-                    continue;
-                }
-
-                // Filter for now just using hard-coded operator/rig-discarding limits.
-                // TODO: Add configurable params/zones.
-
-                if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
-                    fabs((currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
-                    fabs((currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
-                {
-                    continue;
-                }
-
-                // Filter out the tube (a bit lossy filtering here...)
-                if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
-                    (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
-                {
-                    continue;
-                }
-
-
-
-                double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-                if (distance < 0.15)
-                {
-                    // Discard points too close to lidar's origin
-                    continue;
-                }
-    #else
-
-    #if 0
-                int hardCodedDiscardReason = false;
-
-                if (currentPoint->properties & 0x3f)
-                {
-                    // Discard all points whose confidence level is not "normal" (read Mid-360 docs)
-                    hardCodedDiscardReason = 1;
-                }
-
-                // Filter for now just using hard-coded operator/rig-discarding limits.
-                // TODO: Add configurable params/zones.
-
-                if ((currentPoint->x < -0.45) && (currentPoint->x > -3.5) &&    // Only take "farther" part of the rig into account (to be able to scan a bit "behind" the lidar unit)
-                    (fabs(currentPoint->y / currentPoint->x) < (1.0)) &&        // 45-deg "fan" up/down (in rig coords)
-                    (fabs(currentPoint->z / currentPoint->x) < (3.0 / 1.2)))    // "fan" left/right (in rig coords)
-                {
-                    hardCodedDiscardReason = 2;
-                }
-
-                // Filter out the tube (a bit lossy filtering here...)
-                if ((currentPoint->x < 0.0) && (currentPoint->x > -3.5) &&
-                    (currentPoint->z < 0.0) && fabs(currentPoint->y) < 0.1)
-                {
-                    hardCodedDiscardReason = 3;
-                }
-
-
-
-                double distance = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-                if (distance < 0.15)
-                {
-                    // Discard points too close to lidar's origin
-                    hardCodedDiscardReason = 4;
-                }
-
-                if (hardCodedDiscardReason)
-                {
-                    continue;
-                }
-
-    #endif
-    #if 0
-                int evalDiscardReason = 0;
-
-                exprPoint.properties = currentPoint->properties;
-                exprPoint.x = currentPoint->x;
-                exprPoint.y = currentPoint->y;
-                exprPoint.z = currentPoint->z;
-                exprPoint.dist = sqrt(currentPoint->x * currentPoint->x + currentPoint->y * currentPoint->y + currentPoint->z * currentPoint->z);
-
-                double res = tep.evaluate();
-
-                if (res == 1.0)
-                {
-                    evalDiscardReason = 0;
-                }
-                else if (res == 0.0)
-                {
-                    evalDiscardReason = 1;
-                }
-                else if (std::isnan(res))
-                {
-                    evalDiscardReason = 2;
-                }
-                else if (!std::isfinite(res))
-                {
-                    evalDiscardReason = 3;
-                }
-    /*
-                bool hardCodedDiscard = hardCodedDiscardReason != 0;
-                bool evalDiscard = evalDiscardReason != 0;
-
-                if (hardCodedDiscard != evalDiscard)
-                {
-                    discardDiffs++;
-
-                    std::cout << "Mismatch! hardCodedDiscard: " << hardCodedDiscard << ", reason: " << hardCodedDiscardReason <<
-                        ", evalDiscard: " << evalDiscard << ", reason: " << evalDiscardReason <<
-                            ", coords: (" << currentPoint->x << "," << currentPoint->y << "," << currentPoint->z <<
-                        "), prop: " << int(currentPoint->properties) << ", Dist: " << exprPoint.dist << ", Count: " << discardDiffs << "\n";
-                }
-    */
-                if (evalDiscardReason)
-                {
-                    continue;
-                }
-    #endif
-
-    #endif
-                UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum - 1))) / 1000000;
-
-                if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
-                //            if ((int)exprOutItem.uptime_ms != lastInterpolatedITOWUptime_ms)
-                {
-                    try
-                    {
-                        params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
-                    }
-                    catch (QString& stringThrown)
-                    {
-                        Q_ASSERT(params.lidarFileNames);
-                        Q_ASSERT(params.lidarFileNames->size() > mid360Datagram.fileNameIndex);
-
-                        emit warningMessage("File \"" + params.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                            QString::number(mid360Datagram.chunkIndex)+
-                                            " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                            ", uptime " + QString::number(uptime) +
-                                            ", ITOW " + QString::number(pointITOWUptime_ms) +
-                                            ": " + stringThrown + " Skipped the rest of this set of points " +
-                                            "between tags in lines " + QString::number(beginningTag.sourceFileLine) + " and " +
-                                            QString::number(endingTag.sourceFileLine) +
-                                            " in file \"" + beginningTag.sourceFile + "\".");
-                        return(false);
-                    }
-
-                    exprFilter->setTransform_RigToNED(transform_LoSolver);
-
-                    lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
-                }
-
-    #if 1
-                exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
-
-                PointFilter::ExpressionFilter_Mid360::OutItem exprOutItem;
-
-                if(!(exprFilter->getFilteredPoint(exprOutItem)))
-                {
-                    continue;
-                }
-                if (!exprOutItem.valid)
-                {
-                    continue;
-                }
-                if (exprOutItem.filterResult != 1.0)
-                {
-                    continue;
-                }
-
-
-    #endif
-
-                Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
-
-                // Lot of parentheses here to keep all calculations as matrix * vector
-                Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation * Eigen::Vector3d::Zero()));
-
-                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                    Eigen::Vector3d laserOriginBeforeRotation = transform_BeforeRotation * Eigen::Vector3d::Zero();
-                    Eigen::Vector3d laserOriginAfterRotation = transform_LaserRotation * laserOriginBeforeRotation;
-                    Eigen::Vector3d laserOriginAfterPostRotationTransform = transform_AfterRotation * laserOriginAfterRotation;
-                    Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
-                    Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
-                    */
-
-                // Lot of parentheses here to keep all calculations as matrix * vector
-    //            Eigen::Vector3d laserHitPosInRigCoords = transform_AfterRotation * lidarPoint;
-    //            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserHitPosInRigCoords;
-
-                Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
-
-                //          Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (rpLidarTransform_AfterRotation * (transform_LaserRotation * (rpLidarTransform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
-
-                /* "Step by step"-versions of the calculations above for possible debugging/tuning in the future:
-                    Eigen::Vector3d laserVectorBeforeRotation = transform_BeforeRotation * (currentItem.item.distance * Eigen::Vector3d::UnitX());
-                    Eigen::Vector3d laserVectorAfterRotation = transform_LaserRotation * laserVectorBeforeRotation;
-                    Eigen::Vector3d laserVectorAfterPostRotationTransform = transform_AfterRotation * laserVectorAfterRotation;
-                    Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * laserVectorAfterPostRotationTransform;
-                    */
-
-                if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
-                {
-                    Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
-
-                    Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
-
-                    // TODO: Own quality calculation for Mid-360
-                    if (params.rpLidar.normalLengthsAsQuality)
-                    {
-                        normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
-                    }
-
-                    QString lineOut;
-                    if (params.includeNormals)
-                    {
-                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) +
-                                  "\t" + QString::number(normal(0), 'f', 4) +
-                                  "\t" + QString::number(normal(1), 'f', 4) +
-                                  "\t" + QString::number(normal(2), 'f', 4);
-                    }
-                    else
-                    {
-                        lineOut = QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                                  "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4);
-                    }
-
-                    outStream->operator<<(lineOut + "\n");
-                    pointsWritten++;
-                }
-            }
-        }
-        mid360MultiMapIter++;
-    }
-
-    return true;
-}
-
-QFile *PointCloudGenerator::createNewOutFile(const QString fileName, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
-{
-    QFile* outFile = new QFile(fileName);
-
-    if (outFile->exists())
+    if (outFile.exists())
     {
         // File already exists -> Not allowed
 
@@ -921,14 +373,16 @@ QFile *PointCloudGenerator::createNewOutFile(const QString fileName, const PostP
                    ", iTOW " + QString::number(currentTag.iTOW) +
                    ": File \"" + fileName + "\" already exists. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
 
-        delete outFile;
-        outFile = nullptr;
-        return outFile;
+        return nullptr;
     }
 
     emit infoMessage("Creating file \"" + fileName + "\"...");
 
-    if (!outFile->open(QIODevice::WriteOnly | QIODevice::Text))
+    std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_unique<AsyncPointCloudFileWriter>(fileName);
+
+    outFileWriter->start();
+
+    if (!outFileWriter->isOpenedSuccessfully())
     {
         // Creating the file failed
 
@@ -938,12 +392,10 @@ QFile *PointCloudGenerator::createNewOutFile(const QString fileName, const PostP
                    ", iTOW " + QString::number(currentTag.iTOW) +
                    ": File \"" + fileName + "\" can't be created. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
 
-        delete outFile;
-        outFile = nullptr;
-        return outFile;
+        return nullptr;
     }
 
-    return outFile;
+    return outFileWriter;
 }
 
 

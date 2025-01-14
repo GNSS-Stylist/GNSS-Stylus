@@ -33,6 +33,7 @@
 #include "Lidar/lidarscriptgenerator.h"
 #include "rastercameragenerator.h"
 #include "Lidar/PointFilter/ConvexHull/convexhullgenerator.h"
+#include "PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h"
 
 struct
 {
@@ -3154,13 +3155,6 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
     Eigen::Transform<double, 3, Eigen::Affine> transform_RPLidar_Generated_BeforeRotation;
     QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_AfterRotation;
 
-    const QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> *relposnedMessages[3];
-    for (int i = 0; i < 3; i++)
-    {
-        relposnedMessages[i] = &rovers[i].relposnedMessages;
-    }
-    LOInterpolator loInterpolator_Lidar(relposnedMessages);
-
     QMap<QString, ConvexHull> hullMap;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
 
@@ -3208,7 +3202,9 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         return;
     }
 
-    if (!updateLOSolverReferencePointLocations(loInterpolator_Lidar.loSolver))
+    LOSolver loSolver_Base;
+
+    if (!updateLOSolverReferencePointLocations(loSolver_Base))
     {
         return;
     }
@@ -3235,34 +3231,49 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         Lidar::PointCloudGenerator::Params params;
 
-        params.transform_NEDToXYZ = &transform_NEDToXYZ;
-        params.transforms_AfterRotation = transforms_Lidar_Generated_AfterRotation;
-        params.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
+        params.threadConstData.transform_NEDToXYZ = &transform_NEDToXYZ;
+        params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
+        params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
         params.directory = fileDialog_PointCloud.directory();
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
         params.includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked();
-        params.rpLidar.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
+        params.threadConstData.rpLidar.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
-        params.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
+        params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
         Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
                         ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
                         ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
 
-        params.boundingSphere_Center = &boundingSphere_Center;
-        params.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
+        params.threadConstData.boundingSphere_Center = &boundingSphere_Center;
+        params.threadConstData.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
 
         params.tags = &tags;
-        params.rovers = rovers;
-        params.rpLidar.rounds = &lidarRounds;
-        params.rpLidar.filteringSettings = &lidarFilteringSettings;
-        params.loInterpolator = &loInterpolator_Lidar;
-        params.lidarFileNames = &lidarFileNames;
-        params.mid360.datagrams = &mid360Datagrams;
+        params.threadConstData.rpLidar.rounds = &lidarRounds;
+        params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
+        params.threadConstData.loSolver_Base = &loSolver_Base;
+        params.threadConstData.lidarFileNames = &lidarFileNames;
 
-        params.expressionMap = &expressionMap;
+        // Map where uptimes for all equal ITOWs are the same.
+        // This makes processing later easier
+        // Uptimes here are calculated as averages from rover values (for each ITOW)
+        QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
+
+        addLogLine("Generating equalized rover uptime timestamps...");
+        PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
+        addLogLine("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+
+        params.threadConstData.averagedSync = &averagedSync;
+
+        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+
+        params.threadConstData.expressionMap_Source = &expressionMap;
+        params.threadConstData.rovers = rovers;
+
+        params.maxWorkUnitDuration = 1000;
+        params.numOfWorkerThreads = 12;
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 
