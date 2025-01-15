@@ -102,9 +102,9 @@ private:
 
     quint32 hostIPAddress;
 
-    bool terminateRequest = false;
-    bool suspended = false;
-    bool replayMode = false;
+    volatile bool terminateRequest = false;
+    volatile bool suspended = false;
+    volatile bool replayMode = false;
 
     bool suspendIfNeeded(void);
 
