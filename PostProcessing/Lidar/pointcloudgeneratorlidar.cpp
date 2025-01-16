@@ -114,7 +114,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 if (!params.separateFilesForSubScans)
                 {
                     outFileChunkIndex = 0;
-                    currentFileWriter = createNewOutFile(fileName, currentTag, uptime);
+                    currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);
 
                     if (!currentFileWriter)
                     {
@@ -216,7 +216,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + ".xyz");
 
                     outFileChunkIndex = 0;
-                    currentFileWriter = createNewOutFile(fileName, currentTag, uptime);
+                    currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);
 
                     if (!currentFileWriter)
                     {
@@ -394,7 +394,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 }
 
 
-std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile(const QString fileName, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
+std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
 {
     QFile outFile(fileName);
 
@@ -413,7 +413,7 @@ std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile
 
     emit infoMessage("Creating file \"" + fileName + "\"...");
 
-    std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_unique<AsyncPointCloudFileWriter>(fileName);
+    std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_unique<AsyncPointCloudFileWriter>(fileName, params);
 
     outFileWriter->start();
 

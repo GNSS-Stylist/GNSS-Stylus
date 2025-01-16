@@ -15,11 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+#include <memory>
 #include "asyncpointcloudfilewriter.h"
 
-AsyncPointCloudFileWriter::AsyncPointCloudFileWriter(const QString& fileName)
+AsyncPointCloudFileWriter::AsyncPointCloudFileWriter(const QString& fileName, const Params& params)
 {
     this->fileName = fileName;
+    this->params = params;
     fileHandleMutex.lock();     // This mutex is used to synchronize isOpenedSuccessfully, therefore lock it already
 }
 
@@ -39,7 +41,57 @@ bool AsyncPointCloudFileWriter::isOpenedSuccessfully(void)
 
 void AsyncPointCloudFileWriter::run()
 {
-    file = new QFile(fileName);
+    switch (params.fileFormat)
+    {
+    case Params::FF_NONE:
+    case Params::FF_PLY:    // TODO: Implement ply
+        run_None();
+        break;
+
+    case Params::FF_XYZ:
+        run_XYZ();
+        break;
+
+    default:
+        qFatal("Unimplemented file format.");
+        break;
+    }
+}
+
+
+void AsyncPointCloudFileWriter::run_None(void)
+{
+    // This only simulates opening/writing files.
+    // Implemented for testing purposes so that there's no need to delete files before each test run
+    // (also to not wear out SSDs as the point cloud files can easily be several GBs).
+
+    fileOpenedSuccesfully = true;
+
+    fileHandleMutex.unlock(); // Allow reading of the opened state
+
+    while (!terminateRequest)
+    {
+        waitConditionMutex.lock();
+        waitCondition.wait(&waitConditionMutex, 100);
+
+        outBufferMutex.lock();
+        while (outBuffer.contains(nextChunkToWrite))
+        {
+            // Just throw away all chunks, but do it anyway "in the right order" to simulate keeping progress-calculation about right
+            outBuffer.remove(nextChunkToWrite);
+            outBufferMutex.unlock();
+            nextChunkToWrite++;
+            outBufferMutex.lock();
+        }
+        outBufferMutex.unlock();
+
+        waitConditionMutex.unlock();
+    }
+}
+
+void AsyncPointCloudFileWriter::run_XYZ(void)
+{
+    std::unique_ptr<QFile> file = std::make_unique<QFile>(fileName);
     if (!file->open(QIODevice::WriteOnly | QIODevice::Text))
     {
         fileOpenedSuccesfully = false;
@@ -47,7 +99,7 @@ void AsyncPointCloudFileWriter::run()
         return;
     }
 
-    textStream = new QTextStream(file);
+    std::unique_ptr<QTextStream>textStream = std::make_unique<QTextStream>(file.get());
 
     fileOpenedSuccesfully = true;
 
@@ -67,11 +119,11 @@ void AsyncPointCloudFileWriter::run()
             for (auto item : *outputData.points.get())
             {
                 QString lineOut = QString::number(item.hitPoint.x(), 'f', 4) +
-                          "\t" + QString::number(item.hitPoint.y(), 'f', 4) +
-                          "\t" + QString::number(item.hitPoint.z(), 'f', 4) +
-                          "\t" + QString::number(item.normal.x(), 'f', 4) +
-                          "\t" + QString::number(item.normal.y(), 'f', 4) +
-                          "\t" + QString::number(item.normal.z(), 'f', 4);
+                                  "\t" + QString::number(item.hitPoint.y(), 'f', 4) +
+                                  "\t" + QString::number(item.hitPoint.z(), 'f', 4) +
+                                  "\t" + QString::number(item.normal.x(), 'f', 4) +
+                                  "\t" + QString::number(item.normal.y(), 'f', 4) +
+                                  "\t" + QString::number(item.normal.z(), 'f', 4);
 
                 textStream->operator<<(lineOut + "\n");
             }
@@ -90,10 +142,7 @@ void AsyncPointCloudFileWriter::run()
     }
 
     textStream->flush();
-    delete textStream;
-
     file->close();
-    delete file;
 }
 
 void AsyncPointCloudFileWriter::addPoints(const PointCloudGeneratorLidarThread::Output& out)

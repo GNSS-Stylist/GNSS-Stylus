@@ -49,13 +49,14 @@ public:
         int numOfWorkerThreads = 1;
 
         PointCloudGeneratorLidarThread::ConstData threadConstData;
+        AsyncPointCloudFileWriter::Params fileParams;
     };
 
     void generatePointClouds(const Params& params);
 
 private:
 
-    std::shared_ptr<AsyncPointCloudFileWriter> createNewOutFile(const QString fileName, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
+    std::shared_ptr<AsyncPointCloudFileWriter> createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
 
 signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)

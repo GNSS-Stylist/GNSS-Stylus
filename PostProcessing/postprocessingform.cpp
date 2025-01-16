@@ -3275,6 +3275,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.maxWorkUnitDuration = 1000;
         params.numOfWorkerThreads = 12;
 
+        params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FF_XYZ;
+
         Lidar::PointCloudGenerator pointCloudGenerator;
 
         connect(&pointCloudGenerator, &Lidar::PointCloudGenerator::infoMessage,

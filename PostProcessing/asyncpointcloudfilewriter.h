@@ -28,21 +28,39 @@
 class AsyncPointCloudFileWriter : public QThread
 {
 public:
-    AsyncPointCloudFileWriter(const QString &fileName);
+    class Params
+    {
+    public:
+        enum FileFormat
+        {
+            FF_NONE,    // Don't create/write files (can be used to check data validity without wearing the disk out)
+            FF_XYZ,
+            FF_PLY,
+        };
+
+        FileFormat fileFormat = FF_NONE;
+
+        // TODO: Add number of decimals, whether to include normals into xyz, doubles/floats/binary for ply, normal lengths as quality etc.
+    };
+
+    AsyncPointCloudFileWriter(const QString &fileName, const Params &params);
     ~AsyncPointCloudFileWriter();
     QString getFileName(void) { return fileName; };
     bool isOpenedSuccessfully(void);
 //    void close(void);
     void run() override;
+    void run_None(void);
+    void run_XYZ(void);
     void addPoints(const PointCloudGeneratorLidarThread::Output& out);
     void requestTerminate(void) { terminateRequest = true; };
     int getQueueLength(void);
 
 private:
+    Params params;
     int nextChunkToWrite = 0;
     QString fileName;
-    QFile* file = nullptr;
-    QTextStream* textStream = nullptr;
+//    QFile* file = nullptr;
+//    QTextStream* textStream = nullptr;
     bool fileOpenedSuccesfully = false;
     QMutex fileHandleMutex;
 
