@@ -99,17 +99,47 @@ void PointCloudGeneratorLidarThread::run()
     loInterpolator.loSolver = *constData.loSolver_Base;
 
     workUnitInProgress = getWorkUnit();
+    stateMutex.lock();
+    state = S_PROCESSING;
+    stateMutex.unlock();
 
     while ((workUnitInProgress.valid) && (!terminateRequest))
     {
         generatePointCloudPointSet(loInterpolator);
         workUnitInProgress = getWorkUnit();
     }
+
+    stateMutex.lock();
+    state = S_DONE;
+    stateMutex.unlock();
+    progressFractionMutex.lock();
+    progressFraction = 0;
+    progressFractionMutex.unlock();
 }
 
+PointCloudGeneratorLidarThread::State PointCloudGeneratorLidarThread::getState(float* progressFraction)
+{
+    State retval;
+    stateMutex.lock();
+    retval = state;
+    stateMutex.unlock();
+
+    if (progressFraction)
+    {
+        progressFractionMutex.lock();
+        *progressFraction = this->progressFraction;
+        progressFractionMutex.unlock();
+    }
+
+    return retval;
+}
 
 bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& loInterpolator)
 {
+    progressFractionMutex.lock();
+    progressFraction = 0.0;
+    progressFractionMutex.unlock();
+
     Output output;
 
     output.workUnit = workUnitInProgress;
@@ -149,6 +179,13 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 
     while ((rpLidarIter != constData.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < workUnitInProgress.endingUptime))
     {
+        if (progressFractionMutex.try_lock())
+        {
+            // As estimated number of points from RPLidar is in the order of 1/10 of Mid-360's, lets limit progress here to it.
+            progressFraction = (float(rpLidarIter.key() - workUnitInProgress.beginningUptime) / (workUnitInProgress.endingUptime - workUnitInProgress.beginningUptime)) / 10.0;
+            progressFractionMutex.unlock();
+        }
+
         rpLidarPlausibilityFilter.filter(rpLidarIter.value().distanceItems, rpLidarFilteredItems);
 
         // Q_ASSERT(lidarIter.value().distanceItems.count() == filteredItems.count());
@@ -270,6 +307,13 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 
     while ((mid360MultiMapIter != constData.mid360.datagrams->end()) && (mid360MultiMapIter.key() < workUnitInProgress.endingUptime))
     {
+        if (progressFractionMutex.try_lock())
+        {
+            // As estimated number of points from Mid-360 is in the order of *10 of RPLidar's, lets scale progress here to about 0.1-1
+            progressFraction = 0.1 + ((float(mid360MultiMapIter.key() - workUnitInProgress.beginningUptime) / (workUnitInProgress.endingUptime - workUnitInProgress.beginningUptime)) * 0.9);
+            progressFractionMutex.unlock();
+        }
+
         qint64 uptime = mid360MultiMapIter.key();
         QList<PostProcessingForm::Mid360Datagram> datagrams = constData.mid360.datagrams->values(uptime);
 
@@ -568,6 +612,10 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
         }
         mid360MultiMapIter++;
     }
+
+    progressFractionMutex.lock();
+    progressFraction = 1.0;
+    progressFractionMutex.unlock();
 
     output.result = Output::R_OK;
 

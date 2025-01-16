@@ -36,6 +36,7 @@ public:
     void run() override;
     void addPoints(const PointCloudGeneratorLidarThread::Output& out);
     void requestTerminate(void) { terminateRequest = true; };
+    int getQueueLength(void);
 
 private:
     int nextChunkToWrite = 0;

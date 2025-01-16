@@ -76,6 +76,10 @@ void AsyncPointCloudFileWriter::run()
                 textStream->operator<<(lineOut + "\n");
             }
 
+            // As these writes are already done in dedicated thread, it's better to write data to file straight away.
+            // (buffer PointCloudGeneratorLidarThread::Outputs rather than written bytes).
+            textStream->flush();
+            file->flush();
 
             outBufferMutex.lock();
             nextChunkToWrite++;
@@ -99,4 +103,14 @@ void AsyncPointCloudFileWriter::addPoints(const PointCloudGeneratorLidarThread::
     outBufferMutex.unlock();
 
     waitCondition.wakeOne();
+}
+
+int AsyncPointCloudFileWriter::getQueueLength(void)
+{
+    int retval;
+
+    outBufferMutex.lock();
+    retval = outBuffer.size();
+    outBufferMutex.unlock();
+    return retval;
 }

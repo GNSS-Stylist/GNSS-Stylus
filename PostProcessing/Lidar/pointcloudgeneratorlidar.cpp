@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 #include <QProgressDialog>
 #include <QElapsedTimer>
 
@@ -27,7 +28,7 @@ namespace Lidar
 
 void PointCloudGenerator::generatePointClouds(const Params& params)
 {
-    // The comment above was written before changing this to support multi-threading,
+    // The comment below was written before changing this to support multi-threading,
     // but leaving this here if Stylus' implementation will be changed also:
     // This function is identical to the one used in Stylus' PointCloudGenerator.
     // I actually first wrote a base class so that this function was implemented there
@@ -319,10 +320,6 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     emit infoMessage(QString::number(params.numOfWorkerThreads) + " worker threads Created.");
 
-    int maxProgress = workUnitQueue.size();
-    QProgressDialog progress("Creating point cloud files...", "Abort", 0, maxProgress);
-    progress.setWindowModality(Qt::WindowModal);
-
     emit infoMessage("Starting worker threads...");
 
     for (int i = 0; i < workerThreads.size(); i++)
@@ -332,15 +329,53 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     emit infoMessage("Worker threads started.");
 
-    while (workUnitQueue.size() != 0)
-    {
-        int currentProgress = maxProgress - workUnitQueue.size();
-        progress.setValue(currentProgress);
+    int maxProgress = workUnitQueue.size() * 1000;
+    QProgressDialog progress("Creating point cloud files...", "Abort", 0, maxProgress);
+    progress.setMinimumDuration(0);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setValue(0);
+
+    int queuedWrites;
+    int numOfWorkerThreadsRunning;
+    int monotonicProgress = 0;  // As reading progress values from different sources are not perfectly synchronized, show "monotonically rising" value.
+    int workUnitQueueSize;
+
+    do {
+        queuedWrites = 0;
+        QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator iter = fileWriters.constBegin();
+        while (iter != fileWriters.constEnd())
+        {
+            queuedWrites += iter.value()->getQueueLength();
+            iter++;
+        }
+
+        workUnitQueueMutex.lock();
+        workUnitQueueSize = workUnitQueue.size();
+        workUnitQueueMutex.unlock();
+
+        numOfWorkerThreadsRunning = 0;
+        float sumOfThreadProgress = 0;
+
+        for (int i = 0; i < workerThreads.size(); i++)
+        {
+            float progress;
+            PointCloudGeneratorLidarThread::State threadState = workerThreads.at(i)->getState(&progress);
+
+            if (threadState == PointCloudGeneratorLidarThread::S_PROCESSING)
+            {
+                numOfWorkerThreadsRunning++;
+                sumOfThreadProgress += progress;
+            }
+        }
+
+        int newProgress = maxProgress - ((workUnitQueueSize + queuedWrites) * 1000) + ((sumOfThreadProgress * 1000) / numOfWorkerThreadsRunning);
+        monotonicProgress = std::max(newProgress, monotonicProgress);
+        progress.setValue(monotonicProgress);
         QThread::msleep(100);
 
         if (progress.wasCanceled())
             break;
-    }
+    } while ((workUnitQueueSize != 0) || (queuedWrites != 0) || (numOfWorkerThreadsRunning != 0));
 
     progress.setValue(maxProgress);
 

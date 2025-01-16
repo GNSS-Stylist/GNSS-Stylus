@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <QMutex>
 #include "PostProcessing/lointerpolator.h"
 #include "PostProcessing/postprocessingform.h"
 #include "../Lidar/PointFilter/expressionfilter_base.h"
@@ -101,13 +102,20 @@ public:
         std::shared_ptr<QVector<Point> > points;
     };
 
-    explicit PointCloudGeneratorLidarThread(const ConstData &cData, std::function< WorkUnit(void) > workUnitGetter, std::function<void (const Output &)> workUnitProcessor);
+    enum State
+    {
+        S_INITIALIZING, // Not yet processing work units
+        S_PROCESSING,   // Processing work unit
+        S_DONE,         // Thread exited (no more work unit to process)
+    };
 
+    explicit PointCloudGeneratorLidarThread(const ConstData &cData, std::function< WorkUnit(void) > workUnitGetter, std::function<void (const Output &)> workUnitProcessor);
     void run() override;
 
-    bool terminateRequest = false;
+    State getState(float* progressFraction = nullptr);
 
 private:
+    bool terminateRequest = false;
     ConstData constData;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > expressionMap_Local;
 
@@ -116,6 +124,10 @@ private:
     WorkUnit workUnitInProgress;
     std::function<WorkUnit ()> getWorkUnit;
     std::function<void(const Output&)> workUnitProcessed;
+    State state = S_INITIALIZING;
+    QMutex stateMutex;
+    float progressFraction = 0;
+    QMutex progressFractionMutex;
 };
 
 #endif // POINTCLOUDGENERATORLIDARTHREAD_H
