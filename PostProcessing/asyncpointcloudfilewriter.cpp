@@ -27,7 +27,10 @@ AsyncPointCloudFileWriter::AsyncPointCloudFileWriter(const QString& fileName, co
 
 AsyncPointCloudFileWriter::~AsyncPointCloudFileWriter()
 {
-    terminateRequest = true;
+    if (terminateRequest == TR_NONE)
+    {
+        terminateRequest = TR_WRITEPENDINGDATA;
+    }
     wait();
 }
 
@@ -113,27 +116,42 @@ void AsyncPointCloudFileWriter::run_None(void)
 void AsyncPointCloudFileWriter::run_XYZ(void)
 {
     std::unique_ptr<QFile> file = std::make_unique<QFile>(fileName);
-    if (!file->open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!file->open(QIODevice::WriteOnly))
     {
         fileOpenedSuccesfully = false;
         fileHandleMutex.unlock(); // Allow reading of the opened state
         return;
     }
 
-    std::unique_ptr<QTextStream>textStream = std::make_unique<QTextStream>(file.get());
-
     fileOpenedSuccesfully = true;
 
     fileHandleMutex.unlock(); // Allow reading of the opened state
 
-    while (!terminateRequest)
+    while (true)
     {
+        if (terminateRequest == TR_ABANDONPENDINGDATA)
+        {
+            break;
+        }
+
         waitConditionMutex.lock();
         waitCondition.wait(&waitConditionMutex, 100);
 
         outBufferMutex.lock();
-        while (outBuffer.contains(nextChunkToWrite))
+
+        if (outBuffer.isEmpty() && terminateRequest == TR_WRITEPENDINGDATA)
         {
+            outBufferMutex.unlock();
+            break;
+        }
+
+        while ((outBuffer.contains(nextChunkToWrite)) && (terminateRequest != TR_ABANDONPENDINGDATA))
+        {
+            if (terminateRequest == TR_ABANDONPENDINGDATA)
+            {
+                break;
+            }
+
             PointCloudGeneratorLidarThread::Output outputData = outBuffer.take(nextChunkToWrite);
             outBufferMutex.unlock();
 
@@ -150,19 +168,25 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
 
             for (auto item : *outputData.points.get())
             {
+                if (terminateRequest == TR_ABANDONPENDINGDATA)
+                {
+                    break;
+                }
+
                 QString lineOut = QString::number(item.hitPoint.x(), 'f', 4) +
                                   "\t" + QString::number(item.hitPoint.y(), 'f', 4) +
                                   "\t" + QString::number(item.hitPoint.z(), 'f', 4) +
                                   "\t" + QString::number(item.normal.x(), 'f', 4) +
                                   "\t" + QString::number(item.normal.y(), 'f', 4) +
-                                  "\t" + QString::number(item.normal.z(), 'f', 4);
+                                  "\t" + QString::number(item.normal.z(), 'f', 4) + "\n";
 
-                textStream->operator<<(lineOut + "\n");
+                QByteArray bytesToWrite = lineOut.toLatin1();
+
+                file->write(bytesToWrite);
             }
 
             // As these writes are already done in this dedicated thread, it's better to write data to file straight away.
             // (buffer PointCloudGeneratorLidarThread::Outputs rather than written bytes).
-            textStream->flush();
             file->flush();
 
             if (outputData.result == PointCloudGeneratorLidarThread::Output::R_ERROR)
@@ -181,7 +205,6 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
         waitConditionMutex.unlock();
     }
 
-    textStream->flush();
     file->close();
 }
 
@@ -212,4 +235,18 @@ QMap<int, QString> AsyncPointCloudFileWriter::getErrors(void)
     firstErrorsMutex.unlock();
     return retval;
 }
+
+void AsyncPointCloudFileWriter::requestTerminate(bool abandonPendingWrites)
+{
+    if (abandonPendingWrites)
+    {
+        terminateRequest = TR_ABANDONPENDINGDATA;
+    }
+    else
+    {
+        terminateRequest = TR_WRITEPENDINGDATA;
+    }
+
+    waitCondition.wakeOne();
+};
 

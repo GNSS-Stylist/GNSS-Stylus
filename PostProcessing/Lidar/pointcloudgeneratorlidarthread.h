@@ -114,9 +114,10 @@ public:
     void run() override;
 
     State getState(float* progressFraction = nullptr);
+    void requestTerminate(void) { terminateRequest = true; }
 
 private:
-    bool terminateRequest = false;
+    volatile bool terminateRequest = false;
     ConstData constData;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base> > expressionMap_Local;
 

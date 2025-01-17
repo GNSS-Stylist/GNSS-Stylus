@@ -177,7 +177,7 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
         exprIter.value()->initBuffer();
     }
 
-    while ((rpLidarIter != constData.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < workUnitInProgress.endingUptime))
+    while ((rpLidarIter != constData.rpLidar.rounds->end()) && (rpLidarIter.value().startTime < workUnitInProgress.endingUptime) && !terminateRequest)
     {
         if (progressFractionMutex.try_lock())
         {
@@ -305,7 +305,7 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 
     UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
 
-    while ((mid360MultiMapIter != constData.mid360.datagrams->end()) && (mid360MultiMapIter.key() < workUnitInProgress.endingUptime))
+    while ((mid360MultiMapIter != constData.mid360.datagrams->end()) && (mid360MultiMapIter.key() < workUnitInProgress.endingUptime) && !terminateRequest)
     {
         if (progressFractionMutex.try_lock())
         {

@@ -287,7 +287,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     emit infoMessage("work units created. Number of items: " + QString::number(workUnitQueue.size()));
 
-    emit infoMessage("Creating worker threads (" + QString::number(params.numOfWorkerThreads) + ")...");
+    emit infoMessage("Creating " +  QString::number(params.numOfWorkerThreads) + " worker threads...");
 
     QMutex workUnitQueueMutex;
 
@@ -321,7 +321,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
         workerThreads.push_back(std::make_shared<PointCloudGeneratorLidarThread>(params.threadConstData, lambdaGetter, lambdaProcessor));
     }
 
-    emit infoMessage(QString::number(params.numOfWorkerThreads) + " worker threads Created.");
+    emit infoMessage(QString::number(params.numOfWorkerThreads) + " worker threads created.");
 
     emit infoMessage("Starting worker threads...");
 
@@ -344,6 +344,8 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     int workUnitQueueSize;
 
     QVector<int> errorPrintedForPointSets;
+
+    bool aborted = false;
 
     do {
         queuedWrites = 0;
@@ -415,23 +417,60 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
         QThread::msleep(100);
 
         if (progress.wasCanceled())
+        {
+            for (int i = 0; i < workerThreads.size(); i++)
+            {
+                workerThreads.at(i)->requestTerminate();
+            }
+
+            QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+            while (fileIter != fileWriters.constEnd())
+            {
+                fileIter.value()->requestTerminate(true);
+                fileIter++;
+            }
+
+            emit infoMessage("Point cloud creation aborted. Output file contents may not be valid!");
+            aborted = true;
+
             break;
+        }
     } while ((workUnitQueueSize != 0) || (queuedWrites != 0) || (numOfWorkerThreadsRunning != 0));
 
     progress.setValue(maxProgress);
 
-    emit infoMessage("Waiting for worker threads to end...");
-
+    emit infoMessage("Waiting for worker threads to finish...");
     for (int i = 0; i < workerThreads.size(); i++)
     {
         workerThreads.at(i)->wait();
     }
-
     emit infoMessage("Worker threads finished.");
 
-    // TODO: Handle pending buffered writes.
+    emit infoMessage("Waiting for file writer threads to finish...");
 
-    emit infoMessage("Point cloud files generated.");
+    QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+    if (!aborted)
+    {
+        // No need to request termination here if canceled, since this was done with "more immediate"-flag earlier.
+        while (fileIter != fileWriters.constEnd())
+        {
+            fileIter.value()->requestTerminate();
+            fileIter++;
+        }
+    }
+
+    fileIter = fileWriters.constBegin();
+    while (fileIter != fileWriters.constEnd())
+    {
+        fileIter.value()->wait();
+        fileIter++;
+    }
+    emit infoMessage("File writer threads finished.");
+
+    if (!aborted)
+    {
+        emit infoMessage("Point cloud files generated.");
+    }
 }
 
 

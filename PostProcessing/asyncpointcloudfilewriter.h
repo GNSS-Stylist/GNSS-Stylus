@@ -51,7 +51,7 @@ public:
     void run_None(void);
     void run_XYZ(void);
     void addPoints(const PointCloudGeneratorLidarThread::Output& out);
-    void requestTerminate(void) { terminateRequest = true; };
+    void requestTerminate(bool abandonPendingWrites = false);
     int getQueueLength(void);
     QMap<int, QString> getErrors(void);
 private:
@@ -70,7 +70,14 @@ private:
     QWaitCondition waitCondition;
     QMutex waitConditionMutex;
 
-    volatile bool terminateRequest = false;
+    enum TerminateRequest
+    {
+        TR_NONE = 0,
+        TR_WRITEPENDINGDATA,
+        TR_ABANDONPENDINGDATA,
+    };
+
+    volatile TerminateRequest terminateRequest = TR_NONE;
 };
 
 #endif // ASYNCPOINTCLOUDFILEWRITER_H
