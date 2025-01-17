@@ -69,6 +69,7 @@ public:
         bool valid = false;
         QString sourceFileName = "";
         QString outFileName = "";
+        int pointSetIndex = -1;
         int chunkIndex = -1;
         int beginningTagLine = -1;
         int endingTagLine = -1;
@@ -91,8 +92,8 @@ public:
         {
             R_OK,
             R_ERROR,
-            R_PROCESSING_ABORTED,
-            R_THREAD_TERMINATED,
+//            R_PROCESSING_ABORTED,
+//            R_THREAD_TERMINATED,
         };
 
         Result result = R_OK;

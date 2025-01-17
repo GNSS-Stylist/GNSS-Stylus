@@ -67,6 +67,8 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     emit infoMessage("Creating work units (for worker threads)...");
 
+    int pointSetIndex = 0;
+
     while (params.tags->upperBound(uptime) != params.tags->end())
     {
         uptime = params.tags->upperBound(uptime).key();
@@ -238,6 +240,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 newWorkUnit.sourceFileName = beginningTag.sourceFile;
                 newWorkUnit.beginningTagLine = beginningTag.sourceFileLine;
                 newWorkUnit.endingTagLine = endingTag.sourceFileLine;
+                newWorkUnit.pointSetIndex = pointSetIndex++;
 
                 qint64 currentUptime = beginningUptime;
 
@@ -340,13 +343,51 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     int monotonicProgress = 0;  // As reading progress values from different sources are not perfectly synchronized, show "monotonically rising" value.
     int workUnitQueueSize;
 
+    QVector<int> errorPrintedForPointSets;
+
     do {
         queuedWrites = 0;
-        QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator iter = fileWriters.constBegin();
-        while (iter != fileWriters.constEnd())
+        QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+        while (fileIter != fileWriters.constEnd())
         {
-            queuedWrites += iter.value()->getQueueLength();
-            iter++;
+            queuedWrites += fileIter.value()->getQueueLength();
+
+            QMap<int, QString> errors = fileIter.value()->getErrors();
+
+            QMap<int, QString>::const_iterator errorIter = errors.constBegin();
+
+            while (errorIter != errors.constEnd())
+            {
+                if (!errorPrintedForPointSets.contains(errorIter.key()))
+                {
+                    // Print error as it wasn't printed before.
+                    // Error handling goes through file writer because it handles ordering of the output data packages.
+
+                    emit warningMessage(errorIter.value());
+                    errorPrintedForPointSets.push_back(errorIter.key());
+
+                    workUnitQueueMutex.lock();
+
+                    // As the first error aborts outputting any data, we can remove all work units corresponding to the same output file from the queue.
+                    // (threads will still process the work units in their queues, but they will be discarded by the file writer).
+
+                    for (int i = 0; i < workUnitQueue.size();)
+                    {
+                        if (workUnitQueue.at(i).pointSetIndex == errorIter.key())
+                        {
+                            workUnitQueue.removeAt(i);
+                        }
+                        else
+                        {
+                            i++;
+                        }
+                    }
+
+                    workUnitQueueMutex.unlock();
+                }
+                errorIter++;
+            }
+            fileIter++;
         }
 
         workUnitQueueMutex.lock();

@@ -78,10 +78,31 @@ void AsyncPointCloudFileWriter::run_None(void)
         while (outBuffer.contains(nextChunkToWrite))
         {
             // Just throw away all chunks, but do it anyway "in the right order" to simulate keeping progress-calculation about right
-            outBuffer.remove(nextChunkToWrite);
+            PointCloudGeneratorLidarThread::Output outputData = outBuffer.take(nextChunkToWrite);
+
             outBufferMutex.unlock();
-            nextChunkToWrite++;
+
+            firstErrorsMutex.lock();
+            if (firstErrors.contains(outputData.workUnit.pointSetIndex))
+            {
+                // Error detected before this chunk.
+                firstErrorsMutex.unlock();
+                nextChunkToWrite++;
+                outBufferMutex.lock();
+                continue;
+            }
+            firstErrorsMutex.unlock();
+
+            if (outputData.result == PointCloudGeneratorLidarThread::Output::R_ERROR)
+            {
+                // Flag the error so that subsequent chunks wont be processed
+                firstErrorsMutex.lock();
+                firstErrors.insert(outputData.workUnit.pointSetIndex, outputData.errorString);
+                firstErrorsMutex.unlock();
+            }
+
             outBufferMutex.lock();
+            nextChunkToWrite++;
         }
         outBufferMutex.unlock();
 
@@ -116,6 +137,17 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
             PointCloudGeneratorLidarThread::Output outputData = outBuffer.take(nextChunkToWrite);
             outBufferMutex.unlock();
 
+            firstErrorsMutex.lock();
+            if (firstErrors.contains(outputData.workUnit.pointSetIndex))
+            {
+                // Error detected before this chunk. Just remove from the buffer.
+                firstErrorsMutex.unlock();
+                outBufferMutex.lock();
+                nextChunkToWrite++;
+                continue;
+            }
+            firstErrorsMutex.unlock();
+
             for (auto item : *outputData.points.get())
             {
                 QString lineOut = QString::number(item.hitPoint.x(), 'f', 4) +
@@ -128,10 +160,18 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
                 textStream->operator<<(lineOut + "\n");
             }
 
-            // As these writes are already done in dedicated thread, it's better to write data to file straight away.
+            // As these writes are already done in this dedicated thread, it's better to write data to file straight away.
             // (buffer PointCloudGeneratorLidarThread::Outputs rather than written bytes).
             textStream->flush();
             file->flush();
+
+            if (outputData.result == PointCloudGeneratorLidarThread::Output::R_ERROR)
+            {
+                // Flag the error so that subsequent chunks wont be processed
+                firstErrorsMutex.lock();
+                firstErrors.insert(outputData.workUnit.pointSetIndex, outputData.errorString);
+                firstErrorsMutex.unlock();
+            }
 
             outBufferMutex.lock();
             nextChunkToWrite++;
@@ -163,3 +203,13 @@ int AsyncPointCloudFileWriter::getQueueLength(void)
     outBufferMutex.unlock();
     return retval;
 }
+
+QMap<int, QString> AsyncPointCloudFileWriter::getErrors(void)
+{
+    QMap<int, QString> retval;
+    firstErrorsMutex.lock();
+    retval = firstErrors;
+    firstErrorsMutex.unlock();
+    return retval;
+}
+

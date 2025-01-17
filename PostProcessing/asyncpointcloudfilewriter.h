@@ -47,20 +47,21 @@ public:
     ~AsyncPointCloudFileWriter();
     QString getFileName(void) { return fileName; };
     bool isOpenedSuccessfully(void);
-//    void close(void);
     void run() override;
     void run_None(void);
     void run_XYZ(void);
     void addPoints(const PointCloudGeneratorLidarThread::Output& out);
     void requestTerminate(void) { terminateRequest = true; };
     int getQueueLength(void);
-
+    QMap<int, QString> getErrors(void);
 private:
     Params params;
     int nextChunkToWrite = 0;
+
+    QMap<int, QString> firstErrors;
+    QMutex firstErrorsMutex;
+
     QString fileName;
-//    QFile* file = nullptr;
-//    QTextStream* textStream = nullptr;
     bool fileOpenedSuccesfully = false;
     QMutex fileHandleMutex;
 
