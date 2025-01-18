@@ -42,17 +42,37 @@ bool AsyncPointCloudFileWriter::isOpenedSuccessfully(void)
     return retval;
 }
 
-void AsyncPointCloudFileWriter::run()
+bool AsyncPointCloudFileWriter::openFile(void)
 {
     switch (params.fileFormat)
     {
     case Params::FF_NONE:
-    case Params::FF_PLY:    // TODO: Implement ply
-        run_None();
-        break;
-
+        return true;
     case Params::FF_XYZ:
-        run_XYZ();
+    case Params::FF_PLY:
+        return file.open(QIODevice::WriteOnly);
+    default:
+        qFatal("Unimplemented file format.");
+        return false;
+    }
+}
+
+void AsyncPointCloudFileWriter::writePLYHeader(void)
+{
+    // TODO: Write ply-header
+    QByteArray dataToWrite = "TODO: Write ply-header!\n";
+    file.write(dataToWrite);
+}
+
+void AsyncPointCloudFileWriter::writeHeader(void)
+{
+    switch (params.fileFormat)
+    {
+    case Params::FF_NONE:
+    case Params::FF_XYZ:
+        break;
+    case Params::FF_PLY:
+        writePLYHeader();
         break;
 
     default:
@@ -61,71 +81,69 @@ void AsyncPointCloudFileWriter::run()
     }
 }
 
-
-void AsyncPointCloudFileWriter::run_None(void)
+void AsyncPointCloudFileWriter::writePoint(const PointCloudGeneratorLidarThread::Output::Point& point)
 {
-    // This only simulates opening/writing files.
-    // Implemented for testing purposes so that there's no need to delete files before each test run
-    // (also to not wear out SSDs as the point cloud files can easily be several GBs).
-
-    fileOpenedSuccesfully = true;
-
-    fileHandleMutex.unlock(); // Allow reading of the opened state
-
-    while (!terminateRequest)
+    switch (params.fileFormat)
     {
-        waitConditionMutex.lock();
-        waitCondition.wait(&waitConditionMutex, 100);
+    case Params::FF_NONE:
+        break;
+    case Params::FF_XYZ:
+    {
+        QString lineOut = QString::number(point.hitPoint.x(), 'f', params.numberOfDecimals_Coords) +
+                          "\t" + QString::number(point.hitPoint.y(), 'f', params.numberOfDecimals_Coords) +
+                          "\t" + QString::number(point.hitPoint.z(), 'f', params.numberOfDecimals_Coords) +
+                          "\t" + QString::number(point.normal.x(), 'f', params.numberOfDecimals_Normal) +
+                          "\t" + QString::number(point.normal.y(), 'f', params.numberOfDecimals_Normal) +
+                          "\t" + QString::number(point.normal.z(), 'f', params.numberOfDecimals_Normal) + params.endOfLine;
 
-        outBufferMutex.lock();
-        while (outBuffer.contains(nextChunkToWrite))
-        {
-            // Just throw away all chunks, but do it anyway "in the right order" to simulate keeping progress-calculation about right
-            PointCloudGeneratorLidarThread::Output outputData = outBuffer.take(nextChunkToWrite);
+        QByteArray bytesToWrite = lineOut.toLatin1();
 
-            outBufferMutex.unlock();
-
-            firstErrorsMutex.lock();
-            if (firstErrors.contains(outputData.workUnit.pointSetIndex))
-            {
-                // Error detected before this chunk.
-                firstErrorsMutex.unlock();
-                nextChunkToWrite++;
-                outBufferMutex.lock();
-                continue;
-            }
-            firstErrorsMutex.unlock();
-
-            if (outputData.result == PointCloudGeneratorLidarThread::Output::R_ERROR)
-            {
-                // Flag the error so that subsequent chunks wont be processed
-                firstErrorsMutex.lock();
-                firstErrors.insert(outputData.workUnit.pointSetIndex, outputData.errorString);
-                firstErrorsMutex.unlock();
-            }
-
-            outBufferMutex.lock();
-            nextChunkToWrite++;
-        }
-        outBufferMutex.unlock();
-
-        waitConditionMutex.unlock();
+        file.write(bytesToWrite);
+        break;
+    }
+    case Params::FF_PLY:
+        break;
+    default:
+        qFatal("Unimplemented file format.");
+        break;
     }
 }
 
-void AsyncPointCloudFileWriter::run_XYZ(void)
+
+void AsyncPointCloudFileWriter::finalizeFile(void)
 {
-    std::unique_ptr<QFile> file = std::make_unique<QFile>(fileName);
-    if (!file->open(QIODevice::WriteOnly))
+    switch (params.fileFormat)
     {
-        fileOpenedSuccesfully = false;
+    case Params::FF_NONE:
+    case Params::FF_XYZ:
+        break;
+    case Params::FF_PLY:
+    {
+        // TODO: Add writing of number of points into the header etc.
+        break;
+    }
+    default:
+        qFatal("Unimplemented file format.");
+        break;
+    }
+}
+
+
+void AsyncPointCloudFileWriter::run()
+{
+    file.setFileName(fileName);
+
+    fileOpenedSuccesfully = openFile();
+
+    if (!fileOpenedSuccesfully)
+    {
         fileHandleMutex.unlock(); // Allow reading of the opened state
         return;
     }
 
-    fileOpenedSuccesfully = true;
-
     fileHandleMutex.unlock(); // Allow reading of the opened state
+
+    writeHeader();
 
     while (true)
     {
@@ -166,28 +184,28 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
             }
             firstErrorsMutex.unlock();
 
-            for (auto item : *outputData.points.get())
+            numberOfPointsWrittenMutex.lock();
+
+            for (const PointCloudGeneratorLidarThread::Output::Point& item : *outputData.points.get())
             {
                 if (terminateRequest == TR_ABANDONPENDINGDATA)
                 {
                     break;
                 }
 
-                QString lineOut = QString::number(item.hitPoint.x(), 'f', 4) +
-                                  "\t" + QString::number(item.hitPoint.y(), 'f', 4) +
-                                  "\t" + QString::number(item.hitPoint.z(), 'f', 4) +
-                                  "\t" + QString::number(item.normal.x(), 'f', 4) +
-                                  "\t" + QString::number(item.normal.y(), 'f', 4) +
-                                  "\t" + QString::number(item.normal.z(), 'f', 4) + "\n";
+                writePoint(item);
 
-                QByteArray bytesToWrite = lineOut.toLatin1();
-
-                file->write(bytesToWrite);
+                numberOfPointsWritten++;
             }
+
+            numberOfPointsWrittenMutex.unlock();
 
             // As these writes are already done in this dedicated thread, it's better to write data to file straight away.
             // (buffer PointCloudGeneratorLidarThread::Outputs rather than written bytes).
-            file->flush();
+            if (file.isOpen())
+            {
+                file.flush();
+            }
 
             if (outputData.result == PointCloudGeneratorLidarThread::Output::R_ERROR)
             {
@@ -205,7 +223,12 @@ void AsyncPointCloudFileWriter::run_XYZ(void)
         waitConditionMutex.unlock();
     }
 
-    file->close();
+    finalizeFile();
+
+    if (file.isOpen())
+    {
+        file.close();
+    }
 }
 
 void AsyncPointCloudFileWriter::addPoints(const PointCloudGeneratorLidarThread::Output& out)
@@ -233,6 +256,15 @@ QMap<int, QString> AsyncPointCloudFileWriter::getErrors(void)
     firstErrorsMutex.lock();
     retval = firstErrors;
     firstErrorsMutex.unlock();
+    return retval;
+}
+
+unsigned int AsyncPointCloudFileWriter::getNumberOfPointsWritten(void)
+{
+    unsigned int retval;
+    numberOfPointsWrittenMutex.lock();
+    retval = numberOfPointsWritten;
+    numberOfPointsWrittenMutex.unlock();
     return retval;
 }
 

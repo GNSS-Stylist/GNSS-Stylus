@@ -39,6 +39,10 @@ public:
         };
 
         FileFormat fileFormat = FF_NONE;
+        QByteArray endOfLine = "\n";
+        int numberOfDecimals_Coords = 4;
+        int numberOfDecimals_Normal = 4;
+        int numberOfDecimals_Quality = 3;
 
         // TODO: Add number of decimals, whether to include normals into xyz, doubles/floats/binary for ply, normal lengths as quality etc.
     };
@@ -48,13 +52,20 @@ public:
     QString getFileName(void) { return fileName; };
     bool isOpenedSuccessfully(void);
     void run() override;
-    void run_None(void);
-    void run_XYZ(void);
     void addPoints(const PointCloudGeneratorLidarThread::Output& out);
     void requestTerminate(bool abandonPendingWrites = false);
     int getQueueLength(void);
     QMap<int, QString> getErrors(void);
+    unsigned int getNumberOfPointsWritten(void);
+
 private:
+    QFile file;
+    bool openFile(void);
+    void writeHeader(void);
+    void writePLYHeader(void);
+    void writePoint(const PointCloudGeneratorLidarThread::Output::Point& point);
+    void finalizeFile(void);
+
     Params params;
     int nextChunkToWrite = 0;
 
@@ -70,13 +81,15 @@ private:
     QWaitCondition waitCondition;
     QMutex waitConditionMutex;
 
+    unsigned int numberOfPointsWritten = 0;
+    QMutex numberOfPointsWrittenMutex;
+
     enum TerminateRequest
     {
         TR_NONE = 0,
         TR_WRITEPENDINGDATA,
         TR_ABANDONPENDINGDATA,
     };
-
     volatile TerminateRequest terminateRequest = TR_NONE;
 };
 
