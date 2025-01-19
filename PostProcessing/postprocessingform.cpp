@@ -163,14 +163,30 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->comboBox_LOSolver_Movie_TimeStamps->setCurrentIndex(settings.value("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex()).toInt());
     ui->plainTextEdit_LOSolver_TransformMatrixScript->setPlainText(settings.value("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText()).toString());
 
-
     ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText()).toString());
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
 
-    ui->checkBox_Lidar_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked()).toBool());
-    ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked()).toBool());
+    ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->setPlainText(settings.value("PostProcessing_Lidar_PointCloud_ConvexHulls", ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText()).toString());
+    ui->plainTextEdit_Lidar_PointCloud_FilterExpression->setPlainText(settings.value("PostProcessing_Lidar_PointCloud_FilterExpression", ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText()).toString());
+
+    ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_FileFormat", ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex()).toInt());
     ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->setChecked(settings.value("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked()).toBool());
 
+    ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality->isChecked()).toBool());
+    ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->setCurrentIndex(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter", ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex()).toInt());
+    ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Coords->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_Decimals_Coords", ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Coords->value()).toInt());
+    ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Normals->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Normals->value()).toInt());
+
+    ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_IncludeNormals", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Binary", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision->setChecked(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_DoublePrecision", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision->isChecked()).toBool());
+    ui->comboBox_Lidar_PointCloud_FileFormat_PLY_EOLCharacter->setCurrentIndex(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_EOLCharacter", ui->comboBox_Lidar_PointCloud_FileFormat_PLY_EOLCharacter->currentIndex()).toInt());
+    ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->value()).toInt());
+    ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value()).toInt());
+    ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value()).toInt());
 
     ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
     ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text()).toString());
@@ -288,11 +304,28 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
 
+    settings.setValue("PostProcessing_Lidar_PointCloud_ConvexHulls", ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FilterExpression", ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText());
 
-    settings.setValue("PostProcessing_Lidar_PointCloud_IncludeNormals", ui->checkBox_Lidar_PointCloud_IncludeNormals->checkState() == Qt::Checked);
-    settings.setValue("PostProcessing_Lidar_PointCloud_NormalLengthAsQuality", ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->checkState() == Qt::Checked);
-    settings.setValue("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->checkState() == Qt::Checked);
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_FileFormat", ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked());
 
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter", ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_Decimals_Coords", ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Coords->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_XYZ_Decimals_Normals->value());
+
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_IncludeNormals", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Binary", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_DoublePrecision", ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision->isChecked());
+
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_EOLCharacter", ui->comboBox_Lidar_PointCloud_FileFormat_PLY_EOLCharacter->currentIndex());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value());
+    settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value());
 
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
@@ -3160,7 +3193,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
     try
     {
-        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_PointCloud_ConvexHulls->toPlainText());
+        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText());
     }
     catch (ConvexHullGenerator::Issue& issue)
     {
@@ -3182,7 +3215,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
     try
     {
-        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
+        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
     }
     catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
     {
@@ -3238,8 +3271,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-        params.includeNormals = ui->checkBox_Lidar_PointCloud_IncludeNormals->isChecked();
-        params.threadConstData.rpLidar.normalLengthsAsQuality = ui->checkBox_Lidar_PointCloud_NormalLengthsAsQuality->isChecked();
+
+
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
         params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
@@ -3275,7 +3308,56 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.maxWorkUnitDuration = 1000;
         params.numOfWorkerThreads = 12;
 
-        params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FF_XYZ;
+        params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
+        params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FileFormat(ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
+
+        params.fileParams.xyz.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals;
+        params.fileParams.xyz.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality;
+
+        switch (ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex())
+        {
+        case 0:
+            params.fileParams.xyz.endOfLine = "\r";
+            break;
+        case 1:
+            params.fileParams.xyz.endOfLine = "\n";
+            break;
+        case 2:
+            params.fileParams.xyz.endOfLine = "\r\n";
+            break;
+        default:
+            qFatal("Unhandled end of line.");
+            break;
+        }
+
+        params.fileParams.ply.numberOfDecimals_Coords = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->value();
+        params.fileParams.ply.numberOfDecimals_Normal = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value();
+
+        params.fileParams.ply.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals;
+        params.fileParams.ply.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality;
+        params.fileParams.ply.binary = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary;
+        params.fileParams.ply.includeQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField;
+        params.fileParams.ply.doublePrecisionCoords = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision;
+
+        switch (ui->comboBox_Lidar_PointCloud_FileFormat_PLY_EOLCharacter->currentIndex())
+        {
+        case 0:
+            params.fileParams.ply.endOfLine = "\r";
+            break;
+        case 1:
+            params.fileParams.ply.endOfLine = "\n";
+            break;
+        case 2:
+            params.fileParams.ply.endOfLine = "\r\n";
+            break;
+        default:
+            qFatal("Unhandled end of line.");
+            break;
+        }
+
+        params.fileParams.ply.numberOfDecimals_Coords = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->value();
+        params.fileParams.ply.numberOfDecimals_Normal = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value();
+        params.fileParams.ply.numberOfDecimals_Quality = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value();
 
         Lidar::PointCloudGenerator pointCloudGenerator;
 

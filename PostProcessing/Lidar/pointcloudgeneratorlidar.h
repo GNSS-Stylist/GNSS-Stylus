@@ -40,7 +40,7 @@ public:
         QString tagIdent_BeginNewObject = "New object";
         QString tagIdent_BeginPoints = "RMB";
         QString tagIdent_EndPoints = "LMB";
-        bool includeNormals = false;
+//        bool includeNormals = false;
         bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;

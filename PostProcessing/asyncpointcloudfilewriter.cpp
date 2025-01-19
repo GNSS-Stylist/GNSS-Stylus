@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <memory>
+
 #include "asyncpointcloudfilewriter.h"
 
 AsyncPointCloudFileWriter::AsyncPointCloudFileWriter(const QString& fileName, const Params& params)
@@ -89,16 +89,32 @@ void AsyncPointCloudFileWriter::writePoint(const PointCloudGeneratorLidarThread:
         break;
     case Params::FF_XYZ:
     {
-        QString lineOut = QString::number(point.hitPoint.x(), 'f', params.numberOfDecimals_Coords) +
-                          "\t" + QString::number(point.hitPoint.y(), 'f', params.numberOfDecimals_Coords) +
-                          "\t" + QString::number(point.hitPoint.z(), 'f', params.numberOfDecimals_Coords) +
-                          "\t" + QString::number(point.normal.x(), 'f', params.numberOfDecimals_Normal) +
-                          "\t" + QString::number(point.normal.y(), 'f', params.numberOfDecimals_Normal) +
-                          "\t" + QString::number(point.normal.z(), 'f', params.numberOfDecimals_Normal) + params.endOfLine;
+        QString lineOut = QString::number(point.hitPoint.x(), 'f', params.xyz.numberOfDecimals_Coords) +
+            "\t" + QString::number(point.hitPoint.y(), 'f', params.xyz.numberOfDecimals_Coords) +
+            "\t" + QString::number(point.hitPoint.z(), 'f', params.xyz.numberOfDecimals_Coords);
 
+        if (params.xyz.includeNormals)
+        {
+            if (params.xyz.normalLengthAsQuality)
+            {
+                lineOut +=
+                    "\t" + QString::number(point.normal.x() * point.quality, 'f', params.xyz.numberOfDecimals_Normal) +
+                    "\t" + QString::number(point.normal.y() * point.quality, 'f', params.xyz.numberOfDecimals_Normal) +
+                    "\t" + QString::number(point.normal.z() * point.quality, 'f', params.xyz.numberOfDecimals_Normal);
+            }
+            else
+            {
+                lineOut +=
+                    "\t" + QString::number(point.normal.x(), 'f', params.xyz.numberOfDecimals_Normal) +
+                    "\t" + QString::number(point.normal.y(), 'f', params.xyz.numberOfDecimals_Normal) +
+                    "\t" + QString::number(point.normal.z(), 'f', params.xyz.numberOfDecimals_Normal);
+            }
+        }
+
+        lineOut += params.xyz.endOfLine;
         QByteArray bytesToWrite = lineOut.toLatin1();
-
         file.write(bytesToWrite);
+
         break;
     }
     case Params::FF_PLY:

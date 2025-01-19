@@ -262,11 +262,11 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 
                     Eigen::Vector3d normal = (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).normalized();
 
-                    if (constData.rpLidar.normalLengthsAsQuality)
+/*                    if (constData.rpLidar.normalLengthsAsQuality)
                     {
                         normal = (1. / (laserOriginAfterLOSolverTransformXYZ - laserHitPosAfterLOSolverTransformXYZ).norm()) * normal;
                     }
-
+*/
                     // TODO: Add data to output
 /*
                     QString lineOut;
@@ -597,14 +597,7 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 
                     newPoint.hitPoint = *constData.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
                     newPoint.normal = (laserOriginAfterLOSolverTransformXYZ - newPoint.hitPoint).normalized();
-
-                    // TODO: Own quality calculation for Mid-360
-                    if (constData.rpLidar.normalLengthsAsQuality)
-                    {
-                        newPoint.normal = (1. / (laserOriginAfterLOSolverTransformXYZ - newPoint.hitPoint).norm()) * newPoint.normal;
-                    }
-
-                    newPoint.quality = 1;
+                    newPoint.quality = exprOutItem.quality;
 
                     points->push_back(newPoint);
                 }

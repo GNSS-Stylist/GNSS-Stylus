@@ -33,18 +33,34 @@ public:
     public:
         enum FileFormat
         {
-            FF_NONE,    // Don't create/write files (can be used to check data validity without wearing the disk out)
+            FF_NONE = 0,    // Don't create/write files (can be used to check data validity without wearing the disk out)
             FF_XYZ,
             FF_PLY,
         };
 
         FileFormat fileFormat = FF_NONE;
-        QByteArray endOfLine = "\n";
-        int numberOfDecimals_Coords = 4;
-        int numberOfDecimals_Normal = 4;
-        int numberOfDecimals_Quality = 3;
 
-        // TODO: Add number of decimals, whether to include normals into xyz, doubles/floats/binary for ply, normal lengths as quality etc.
+        struct
+        {
+            bool includeNormals = true;
+            bool normalLengthAsQuality = false;
+            QByteArray endOfLine = "\n";
+            int numberOfDecimals_Coords = 4;
+            int numberOfDecimals_Normal = 4;
+        } xyz;
+
+        struct
+        {
+            bool includeNormals = true;
+            bool normalLengthAsQuality = false;
+            bool binary = false;
+            bool includeQuality = false;
+            bool doublePrecisionCoords = false;
+            QByteArray endOfLine = "\r";
+            int numberOfDecimals_Coords = 4;
+            int numberOfDecimals_Normal = 3;
+            int numberOfDecimals_Quality = 3;
+        } ply;
     };
 
     AsyncPointCloudFileWriter(const QString &fileName, const Params &params);

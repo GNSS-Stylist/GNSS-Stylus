@@ -50,7 +50,7 @@ public:
 
         struct
         {
-            bool normalLengthsAsQuality = false;
+//            bool normalLengthsAsQuality = false;
             int timeShift = 0;
             const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
             const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
