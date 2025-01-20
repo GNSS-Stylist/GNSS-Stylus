@@ -3311,8 +3311,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans->isChecked();
         params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FileFormat(ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
 
-        params.fileParams.xyz.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals;
-        params.fileParams.xyz.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality;
+        params.fileParams.xyz.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->isChecked();
+        params.fileParams.xyz.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality->isChecked();
 
         switch (ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex())
         {
@@ -3333,11 +3333,11 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.fileParams.ply.numberOfDecimals_Coords = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Coords->value();
         params.fileParams.ply.numberOfDecimals_Normal = ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value();
 
-        params.fileParams.ply.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals;
-        params.fileParams.ply.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality;
-        params.fileParams.ply.binary = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary;
-        params.fileParams.ply.includeQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField;
-        params.fileParams.ply.doublePrecisionCoords = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision;
+        params.fileParams.ply.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_IncludeNormals->isChecked();
+        params.fileParams.ply.normalLengthAsQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_NormalLengthsAsQuality->isChecked();
+        params.fileParams.ply.binary = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_Binary->isChecked();
+        params.fileParams.ply.includeQuality = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_QualityAsSeparateField->isChecked();
+        params.fileParams.ply.doublePrecisionCoords = ui->checkBox_Lidar_PointCloud_FileFormat_PLY_DoublePrecision->isChecked();
 
         switch (ui->comboBox_Lidar_PointCloud_FileFormat_PLY_EOLCharacter->currentIndex())
         {

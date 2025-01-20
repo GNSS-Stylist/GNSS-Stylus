@@ -69,6 +69,17 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     int pointSetIndex = 0;
 
+    QString fileExtension;
+
+    if (params.fileParams.fileFormat == AsyncPointCloudFileWriter::Params::FF_PLY)
+    {
+        fileExtension = ".ply";
+    }
+    else if (params.fileParams.fileFormat == AsyncPointCloudFileWriter::Params::FF_XYZ)
+    {
+        fileExtension = ".xyz";
+    }
+
     while (params.tags->upperBound(uptime) != params.tags->end())
     {
         uptime = params.tags->upperBound(uptime).key();
@@ -111,7 +122,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                 baseFileName = QDir::cleanPath(params.directory.path() + "/" + currentTag.text);
 
-                QString fileName = baseFileName + ".xyz";
+                QString fileName = baseFileName + fileExtension;
 
                 if (!params.separateFilesForSubScans)
                 {
@@ -215,7 +226,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                         fileIndexString.prepend("0");
                     }
 
-                    QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + ".xyz");
+                    QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + fileExtension);
 
                     outFileChunkIndex = 0;
                     currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);

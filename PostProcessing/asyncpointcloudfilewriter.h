@@ -80,7 +80,10 @@ private:
     void writeHeader(void);
     void writePLYHeader(void);
     void writePoint(const PointCloudGeneratorLidarThread::Output::Point& point);
+    void writePoint_XYZ(const PointCloudGeneratorLidarThread::Output::Point& point);
+    void writePoint_PLY(const PointCloudGeneratorLidarThread::Output::Point& point);
     void finalizeFile(void);
+    void finalizeFile_PLY(void);
 
     Params params;
     int nextChunkToWrite = 0;
@@ -99,6 +102,9 @@ private:
 
     unsigned int numberOfPointsWritten = 0;
     QMutex numberOfPointsWrittenMutex;
+
+    unsigned int plyVertexCountFirstByte = 0;
+    unsigned int plyVertexCountLastByte = 0;
 
     enum TerminateRequest
     {
