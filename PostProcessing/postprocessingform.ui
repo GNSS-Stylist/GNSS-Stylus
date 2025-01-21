@@ -3734,7 +3734,7 @@ These operations are calculated only once when starting operations so calculatin
                <item>
                 <widget class="QPushButton" name="pushButton_Lidar_GeneratePointClouds">
                  <property name="text">
-                  <string>Generate point cloud (xyz) files...</string>
+                  <string>Generate or simulate generating point cloud (xyz) files...</string>
                  </property>
                 </widget>
                </item>
