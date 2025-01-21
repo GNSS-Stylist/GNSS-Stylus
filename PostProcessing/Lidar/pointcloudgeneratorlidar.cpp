@@ -37,7 +37,26 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     // the structure instead of making it clearer.
     // Maybe duplicating 200+ lines of code can be seen as a bad practise, but whatever...
 
-    if (!params.directory.exists())
+    bool dontWriteFiles = false;
+    QString fileExtension;
+
+    switch (params.fileParams.fileFormat)
+    {
+    case AsyncPointCloudFileWriter::Params::FF_NONE:
+        dontWriteFiles = true;
+        break;
+    case AsyncPointCloudFileWriter::Params::FF_PLY:
+        fileExtension = ".ply";
+        break;
+    case AsyncPointCloudFileWriter::Params::FF_XYZ:
+        fileExtension = ".xyz";
+        break;
+    default:
+        qFatal("File format handling not implemented!");
+        break;
+    }
+
+    if ((!dontWriteFiles) && (!params.directory.exists()))
     {
         emit errorMessage("Directory \"" + params.directory.path() + "\" doesn't exist. Point cloud files not created.");
         return;
@@ -68,17 +87,6 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     emit infoMessage("Creating work units (for worker threads)...");
 
     int pointSetIndex = 0;
-
-    QString fileExtension;
-
-    if (params.fileParams.fileFormat == AsyncPointCloudFileWriter::Params::FF_PLY)
-    {
-        fileExtension = ".ply";
-    }
-    else if (params.fileParams.fileFormat == AsyncPointCloudFileWriter::Params::FF_XYZ)
-    {
-        fileExtension = ".xyz";
-    }
 
     while (params.tags->upperBound(uptime) != params.tags->end())
     {
@@ -122,10 +130,11 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
                 baseFileName = QDir::cleanPath(params.directory.path() + "/" + currentTag.text);
 
-                QString fileName = baseFileName + fileExtension;
-
-                if (!params.separateFilesForSubScans)
+                if ((!params.separateFilesForSubScans) && (!dontWriteFiles))
                 {
+                    // As all "sub scans" should go into the same file, create it now.
+                    QString fileName = baseFileName + fileExtension;
+
                     outFileChunkIndex = 0;
                     currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);
 
@@ -142,9 +151,10 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 }
                 else
                 {
-                    emit infoMessage("Starting new object \"" +  currentTag.text + "\".");
                     ignoreBeginningAndEndingTags = false;
                 }
+
+                emit infoMessage("Starting new object \"" +  currentTag.text + "\".");
 
                 objectActive = true;
                 beginningUptime = -1;
@@ -215,7 +225,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                     continue;
                 }
 
-                if (params.separateFilesForSubScans)
+                if ((params.separateFilesForSubScans) && (!dontWriteFiles))
                 {
                     fileIndex++;
 
@@ -247,7 +257,14 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 PointCloudGeneratorLidarThread::WorkUnit newWorkUnit;
 
                 newWorkUnit.valid = true;
-                newWorkUnit.outFileName = currentFileWriter->getFileName();
+                if (!dontWriteFiles)
+                {
+                    newWorkUnit.outFileName = currentFileWriter->getFileName();
+                }
+                else
+                {
+                    newWorkUnit.outFileName.clear();
+                }
                 newWorkUnit.sourceFileName = beginningTag.sourceFile;
                 newWorkUnit.beginningTagLine = beginningTag.sourceFileLine;
                 newWorkUnit.endingTagLine = endingTag.sourceFileLine;
@@ -296,7 +313,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                    " (beginning tag): File ended before end tag. Points after beginning tag ignored.");
     }
 
-    emit infoMessage("work units created. Number of items: " + QString::number(workUnitQueue.size()));
+    emit infoMessage("Work units created. Number of items: " + QString::number(workUnitQueue.size()));
 
     emit infoMessage("Creating " +  QString::number(params.numOfWorkerThreads) + " worker threads...");
 
@@ -319,10 +336,13 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
         }
     };
 
-    auto lambdaProcessor = [&fileWriters](const PointCloudGeneratorLidarThread::Output& out)
+    auto lambdaProcessor = [&fileWriters, &dontWriteFiles](const PointCloudGeneratorLidarThread::Output& out)
     {
-        Q_ASSERT(fileWriters.contains(out.workUnit.outFileName));
-        fileWriters.value(out.workUnit.outFileName)->addPoints(out);
+        if (!dontWriteFiles)
+        {
+            Q_ASSERT(fileWriters.contains(out.workUnit.outFileName));
+            fileWriters.value(out.workUnit.outFileName)->addPoints(out);
+        }
     };
 
     QVector<std::shared_ptr<PointCloudGeneratorLidarThread> > workerThreads;
@@ -345,6 +365,11 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     int maxProgress = workUnitQueue.size() * 1000;
     QProgressDialog progress("Creating point cloud files...", "Abort", 0, maxProgress);
+    if (dontWriteFiles)
+    {
+        progress.setLabelText("Simulating point cloud creation...");
+    }
+
     progress.setMinimumDuration(0);
     progress.setWindowModality(Qt::WindowModal);
     progress.setValue(0);
@@ -457,30 +482,40 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
     }
     emit infoMessage("Worker threads finished.");
 
-    emit infoMessage("Waiting for file writer threads to finish...");
-
-    QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
-    if (!aborted)
+    if (!dontWriteFiles)
     {
-        // No need to request termination here if canceled, since this was done with "more immediate"-flag earlier.
+        emit infoMessage("Waiting for file writer threads to finish...");
+
+        QMap<QString, std::shared_ptr<AsyncPointCloudFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+        if (!aborted)
+        {
+            // No need to request termination here if canceled, since this was done with "more immediate"-flag earlier.
+            while (fileIter != fileWriters.constEnd())
+            {
+                fileIter.value()->requestTerminate();
+                fileIter++;
+            }
+        }
+
+        fileIter = fileWriters.constBegin();
         while (fileIter != fileWriters.constEnd())
         {
-            fileIter.value()->requestTerminate();
+            fileIter.value()->wait();
             fileIter++;
         }
+        emit infoMessage("File writer threads finished.");
     }
-
-    fileIter = fileWriters.constBegin();
-    while (fileIter != fileWriters.constEnd())
-    {
-        fileIter.value()->wait();
-        fileIter++;
-    }
-    emit infoMessage("File writer threads finished.");
 
     if (!aborted)
     {
-        emit infoMessage("Point cloud files generated.");
+        if (dontWriteFiles)
+        {
+            emit infoMessage("Point cloud generation simulation finished.");
+        }
+        else
+        {
+            emit infoMessage("Point cloud files generated.");
+        }
     }
 }
 

@@ -3265,16 +3265,28 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
     getLidarFilteringSettings(lidarFilteringSettings);
 
-    if (fileDialog_PointCloud.exec())
+    bool dontCreateFiles = (AsyncPointCloudFileWriter::Params::FileFormat(ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex()) == AsyncPointCloudFileWriter::Params::FileFormat::FF_NONE);
+
+    if (dontCreateFiles || fileDialog_PointCloud.exec())
     {
-        fileDialog_PointCloud.setDirectory(fileDialog_PointCloud.directory());
+        QDir directory;
+
+        if (dontCreateFiles)
+        {
+            directory.setPath("This/directory/should/definitely/not/exist/fjiwefwfemw nfiwe ciwedji wed");
+        }
+        else
+        {
+            directory = fileDialog_PointCloud.directory();
+//            fileDialog_PointCloud.setDirectory(fileDialog_PointCloud.directory());
+        }
 
         Lidar::PointCloudGenerator::Params params;
 
         params.threadConstData.transform_NEDToXYZ = &transform_NEDToXYZ;
         params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
         params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
-        params.directory = fileDialog_PointCloud.directory();
+        params.directory = directory;
         params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
         params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
         params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
