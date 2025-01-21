@@ -264,6 +264,10 @@ private slots:
 
     void on_pushButton_RasterCameras_Script_Save_clicked();
 
+    void on_pushButton_Lidar_PointCloud_GenericSettings_NumberOfThreads_SetIdeal_clicked();
+
+    void on_pushButton_Lidar_PointCloud_GenericSettings_NumberOfThreads_ResetToDefault_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data

@@ -40,12 +40,11 @@ public:
         QString tagIdent_BeginNewObject = "New object";
         QString tagIdent_BeginPoints = "RMB";
         QString tagIdent_EndPoints = "LMB";
-//        bool includeNormals = false;
         bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
 
-        int maxWorkUnitDuration = 60000;
+        int maxWorkUnitDuration = 1000;
         int numOfWorkerThreads = 1;
 
         PointCloudGeneratorLidarThread::ConstData threadConstData;

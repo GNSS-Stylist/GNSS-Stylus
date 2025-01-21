@@ -2989,8 +2989,114 @@ multiply	1	0	0	0
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
+                 <widget class="QWidget" name="tab_Lidar_PointCloud_GenericSettings">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="title">
+                   <string>Generic settings</string>
+                  </attribute>
+                  <layout class="QVBoxLayout" name="verticalLayout_32">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="text">
+                      <string>Create separate output files for &quot;subscans&quot; (between beginning and ending tags)</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                     <property name="tristate">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <layout class="QGridLayout" name="gridLayout_5">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_Lidar_PointCloud_GenericSettings_NumberOfThreads">
+                       <property name="text">
+                        <string>Number of threads:</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QSpinBox" name="spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads">
+                       <property name="minimum">
+                        <number>1</number>
+                       </property>
+                       <property name="maximum">
+                        <number>256</number>
+                       </property>
+                       <property name="value">
+                        <number>10</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QPushButton" name="pushButton_Lidar_PointCloud_GenericSettings_NumberOfThreads_SetIdeal">
+                       <property name="text">
+                        <string>Set ideal</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration">
+                       <property name="text">
+                        <string>Maximum thread work unit duration (logging time, ms):</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QSpinBox" name="spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration">
+                       <property name="minimum">
+                        <number>100</number>
+                       </property>
+                       <property name="maximum">
+                        <number>60000</number>
+                       </property>
+                       <property name="singleStep">
+                        <number>1000</number>
+                       </property>
+                       <property name="value">
+                        <number>1000</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <widget class="QPushButton" name="pushButton_Lidar_PointCloud_GenericSettings_NumberOfThreads_ResetToDefault">
+                       <property name="text">
+                        <string>Reset to default</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer_3">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>193</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </widget>
                  <widget class="QWidget" name="tab_PointCloud_Lidar_ConvexHulls">
                   <property name="autoFillBackground">
                    <bool>true</bool>
@@ -3263,22 +3369,6 @@ These operations are calculated only once when starting operations so calculatin
                     </layout>
                    </item>
                    <item>
-                    <widget class="QCheckBox" name="checkBox_Lidar_PointCloud_SeparateOutputFilesForSubScans">
-                     <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Create separate output files for &quot;subscans&quot; (between beginning and ending tags)</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                     <property name="tristate">
-                      <bool>false</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
                     <widget class="QTabWidget" name="tabWidget_PointCloud_FileFormatSettings">
                      <property name="currentIndex">
                       <number>1</number>
@@ -3528,7 +3618,7 @@ These operations are calculated only once when starting operations so calculatin
                                  </property>
                                  <item>
                                   <property name="text">
-                                   <string>CR (pedantic PLY-standard interpretation)</string>
+                                   <string>CR (PLY-standard(?), meshlab doesn't support)</string>
                                   </property>
                                  </item>
                                  <item>
