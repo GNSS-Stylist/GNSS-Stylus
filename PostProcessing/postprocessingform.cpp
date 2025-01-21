@@ -3198,13 +3198,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
     QMap<QString, ConvexHull> hullMap;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
 
-    try
+    if (!generateLidarPointCloudConvexHullMap(hullMap))
     {
-        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText());
-    }
-    catch (ConvexHullGenerator::Issue& issue)
-    {
-        addLogLine("Generating convex hull map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
         return;
     }
 
@@ -4113,3 +4108,30 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_GenericSettings_NumberOf
     ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->setValue(1000);
 }
 
+bool PostProcessingForm::generateLidarPointCloudConvexHullMap(QMap<QString, ConvexHull>& hullMap)
+{
+    try
+    {
+        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText());
+    }
+    catch (ConvexHullGenerator::Issue& issue)
+    {
+        addLogLine("Generating convex hull map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        QTextCursor cursor = ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->textCursor();
+        cursor.setPosition(issue.beginChar);
+        if (issue.endChar != -1)
+        {
+            cursor.setPosition(issue.endChar, QTextCursor::KeepAnchor);
+        }
+        else
+        {
+            cursor.setPosition(issue.beginChar + 1, QTextCursor::KeepAnchor);
+        }
+        ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->setTextCursor(cursor);
+        ui->tabWidget_Lidar_PointCloud->setCurrentIndex(1);
+        ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->setFocus();
+        return false;
+    }
+
+    return true;
+}

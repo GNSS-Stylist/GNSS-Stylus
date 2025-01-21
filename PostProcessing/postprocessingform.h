@@ -43,6 +43,7 @@
 #include "RPLidar/rplidarthread.h"
 #include "RPLidar/rplidarplausibilityfilter.h"
 #include "transformmatrixgenerator.h"
+#include "Lidar/PointFilter/ConvexHull/convexhull.h"
 
 namespace Ui {
 class PostProcessingForm;
@@ -383,6 +384,7 @@ private:
 
     void saveParametersToQSettings(QSettings& settings);
     void loadParametersFromQSettings(QSettings& settings);
+    bool generateLidarPointCloudConvexHullMap(QMap<QString, ConvexHull>& hullMap);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover
