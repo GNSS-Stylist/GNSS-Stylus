@@ -2989,7 +2989,7 @@ multiply	1	0	0	0
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>0</number>
+                  <number>1</number>
                  </property>
                  <widget class="QWidget" name="tab_Lidar_PointCloud_GenericSettings">
                   <property name="autoFillBackground">
@@ -3201,6 +3201,13 @@ OriginCube
 
 
 </string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_Lidar_PointCloud_ConvexHulls_Export">
+                     <property name="text">
+                      <string>Export convex hulls to files...</string>
                      </property>
                     </widget>
                    </item>

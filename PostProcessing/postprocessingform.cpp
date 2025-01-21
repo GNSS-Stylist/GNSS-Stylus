@@ -372,6 +372,8 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_RasterCameraScript_Load", fileDialog_RasterCameraScript_Load.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_RasterCameraScript_Save", fileDialog_RasterCameraScript_Save.directory().path());
 
+    settings.setValue("PostProcessing_Directory_Dialog_ExportConvexHulls", fileDialog_ExportConvexHulls.directory().path());
+
     delete ui;
 }
 
@@ -555,6 +557,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         fileDialog_RasterCameraScript_Save.setNameFilters(rasterCameraScriptFilters);
 
+        fileDialog_ExportConvexHulls.setFileMode(QFileDialog::Directory);
 
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
@@ -588,6 +591,8 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
     fileDialog_RasterCameraScript_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RasterCameraScript_Load").toString()));
     fileDialog_RasterCameraScript_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RasterCameraScript_Save").toString()));
+
+    fileDialog_ExportConvexHulls.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_ExportConvexHulls").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -4134,4 +4139,33 @@ bool PostProcessingForm::generateLidarPointCloudConvexHullMap(QMap<QString, Conv
     }
 
     return true;
+}
+
+void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_clicked()
+{
+    QMap<QString, ConvexHull> hullMap;
+
+    if (!generateLidarPointCloudConvexHullMap(hullMap))
+    {
+        return;
+    }
+
+    if (!fileDialog_ExportConvexHulls.exec())
+    {
+        return;
+    }
+
+    QMap<QString, ConvexHull>::iterator iter = hullMap.begin();
+
+    while (iter != hullMap.end())
+    {
+        QString fullFileName = QDir::cleanPath(fileDialog_ExportConvexHulls.directory().path() + "/" + iter.key());
+
+        if (!iter.value().exportHullToObjFile(fullFileName))
+        {
+            addLogLine("Creating file \"" + fullFileName + ".obj\" failed.");
+        }
+
+        iter++;
+    }
 }
