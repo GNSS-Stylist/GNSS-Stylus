@@ -143,6 +143,14 @@ public:
     static QString getRoverIdentString(const unsigned int roverId);
     static void generateAveragedRoverUptimeSync(const Rover* rovers, QMap<qint64, UBXMessage_RELPOSNED::ITOW> &averagedRoverUptimeSync, unsigned int numOfAveragedRovers = 3);
 
+    struct ScanningState
+    {
+        Tag currentTag;
+        bool objectActive = false;
+        bool scanningActive = false;
+        QString objectName;
+    };
+
 protected:
     void showEvent(QShowEvent* event);  //!< Initializes some things that can't be initialized in constructor
 
@@ -389,6 +397,8 @@ private:
     void saveParametersToQSettings(QSettings& settings);
     void loadParametersFromQSettings(QSettings& settings);
     bool generateLidarPointCloudConvexHullMap(QMap<QString, ConvexHull>& hullMap);
+
+    void generateScanningStateMap(QMap<qint64, ScanningState>& map, const QString &tagIdent_BeginNewObject, const QString &tagIdent_BeginPoints, const QString &tagIdent_EndPoints);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover

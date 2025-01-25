@@ -37,9 +37,7 @@ public:
     {
     public:
         QDir directory;
-        QString tagIdent_BeginNewObject = "New object";
-        QString tagIdent_BeginPoints = "RMB";
-        QString tagIdent_EndPoints = "LMB";
+        const QMap<qint64, PostProcessingForm::ScanningState>* scanningStateMap = nullptr;
         bool separateFilesForSubScans = false;
 
         const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;

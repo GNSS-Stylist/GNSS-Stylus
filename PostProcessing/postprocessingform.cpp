@@ -3278,8 +3278,13 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         else
         {
             directory = fileDialog_PointCloud.directory();
-//            fileDialog_PointCloud.setDirectory(fileDialog_PointCloud.directory());
         }
+
+        QMap<qint64, PostProcessingForm::ScanningState> scanningStateMap;
+        generateScanningStateMap(scanningStateMap,
+                                 ui->lineEdit_TagIndicatingBeginningOfNewObject->text(),
+                                 ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text(),
+                                 ui->lineEdit_TagIndicatingEndOfObjectPoints->text());
 
         Lidar::PointCloudGenerator::Params params;
 
@@ -3287,11 +3292,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
         params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
         params.directory = directory;
-        params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
-        params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
-        params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-
-
+        params.scanningStateMap = &scanningStateMap;
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked();
         params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
@@ -3328,6 +3329,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.numOfWorkerThreads = ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value();
 
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked();
+
         params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FileFormat(ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
 
         params.fileParams.xyz.includeNormals = ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->isChecked();
@@ -4167,5 +4169,156 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_click
         }
 
         iter++;
+    }
+}
+
+void PostProcessingForm::generateScanningStateMap(QMap<qint64, ScanningState>& map, const QString& tagIdent_BeginNewObject, const QString& tagIdent_BeginPoints, const QString& tagIdent_EndPoints)
+{
+    qint64 uptime = -1;
+    PostProcessingForm::Tag beginningTag;
+    bool objectActive = false;
+    bool scanningActive = false;
+    bool ignoreBeginningAndEndingTags = false;
+    QString objectName;
+
+    map.clear();
+
+    ScanningState prevState;
+
+    while (tags.upperBound(uptime) != tags.end())
+    {
+        uptime = tags.upperBound(uptime).key();
+
+        QList<PostProcessingForm::Tag> tagItems = tags.values(uptime);
+
+        // Since "The items that share the same key are available from most recently to least recently inserted."
+        // (taken from QMultiMap's doc), iterate in "reverse order" here
+
+        for (int i = tagItems.size() - 1; i >= 0; i--)
+        {
+            const PostProcessingForm::Tag& currentTag = tagItems[i];
+
+            if (!(currentTag.ident.compare(tagIdent_BeginNewObject)))
+            {
+                // Tag type: new object
+
+                if (scanningActive)
+                {
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                               QString::number(currentTag.sourceFileLine)+
+                               ", uptime " + QString::number(uptime) +
+                               ", iTOW " + QString::number(currentTag.iTOW) +
+                               ": New object without end scanning tag for the previous object. Ending scanning of the previous object and starting the new object.");
+
+                    scanningActive = false;
+                }
+
+                objectActive = false;
+
+                objectName = currentTag.text;
+
+                if (currentTag.text.length() == 0)
+                {
+                    // Empty name for the new object not allowed
+
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine)+
+                                        ", uptime " + QString::number(uptime) +
+                                        ", iTOW " + QString::number(currentTag.iTOW) +
+                                        ": New object without a name. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
+
+                    ignoreBeginningAndEndingTags = true;
+                    objectActive = false;
+                    scanningActive = false;
+                }
+                else
+                {
+                    ignoreBeginningAndEndingTags = false;
+
+                    addLogLine("Starting new object \"" +  currentTag.text + "\".");
+
+                    objectActive = true;
+                    scanningActive = false;
+                }
+            }
+            else if ((!(currentTag.ident.compare(tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
+            {
+                // Tag type: Begin points
+
+                if (!objectActive)
+                {
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine)+
+                                        ", uptime " + QString::number(uptime) +
+                                        ", iTOW " + QString::number(currentTag.iTOW) +
+                                        ": Beginning tag outside object. Skipped.");
+                    continue;
+                }
+
+                if (scanningActive)
+                {
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine)+
+                                        ", uptime " + QString::number(uptime) +
+                                        ", iTOW " + QString::number(currentTag.iTOW) +
+                                        ": Duplicate beginning tag. Skipped.");
+                    continue;
+                }
+
+                // Just store the beginning uptime-value and tag. Writing of the points is done in ending tag-branch
+                scanningActive = true;
+                beginningTag = currentTag;
+            }
+            else if ((!(currentTag.ident.compare(tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
+            {
+                // Tag type: end points
+
+                if (!objectActive)
+                {
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine)+
+                                        ", uptime " + QString::number(uptime) +
+                                        ", iTOW " + QString::number(currentTag.iTOW) +
+                                        ": End tag outside object. Skipped.");
+                    continue;
+                }
+
+                if (!scanningActive)
+                {
+                    addLogLine("Warning: File \"" + currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine)+
+                                        ", uptime " + QString::number(uptime) +
+                                        ", iTOW " + QString::number(currentTag.iTOW) +
+                                        ": End tag without beginning tag. Skipped.");
+                    continue;
+                }
+
+                if (currentTag.sourceFile != beginningTag.sourceFile)
+                {
+                    addLogLine("Warning: Starting and ending tags belong to different files. Starting tag file \"" +
+                                        beginningTag.sourceFile + "\", line " +
+                                        QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
+                                        currentTag.sourceFile + "\", line " +
+                                        QString::number(currentTag.sourceFileLine) + ". Ending tag ignored.");
+                    continue;
+                }
+
+                scanningActive = false;
+            }
+
+            if ((objectActive != prevState.objectActive) ||
+                (scanningActive != prevState.scanningActive) ||
+                (objectName != prevState.objectName))
+            {
+                ScanningState newState;
+                newState.currentTag = currentTag;
+                newState.objectActive = objectActive;
+                newState.scanningActive = scanningActive;
+                newState.objectName = objectName;
+                prevState = newState;
+
+                map.insert(uptime, newState);
+            }
+        }
     }
 }

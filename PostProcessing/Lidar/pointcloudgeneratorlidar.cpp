@@ -88,220 +88,137 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 
     int pointSetIndex = 0;
 
-    while (params.tags->upperBound(uptime) != params.tags->end())
+    QMap<qint64, PostProcessingForm::ScanningState>::const_iterator scanningStateIter = params.scanningStateMap->constBegin();
+
+    while (scanningStateIter != params.scanningStateMap->constEnd())
     {
-        uptime = params.tags->upperBound(uptime).key();
+        uptime = scanningStateIter.key();
 
-        QList<PostProcessingForm::Tag> tagItems = params.tags->values(uptime);
-
-        // Since "The items that share the same key are available from most recently to least recently inserted."
-        // (taken from QMultiMap's doc), iterate in "reverse order" here
-
-        for (int i = tagItems.size() - 1; i >= 0; i--)
+        if (((scanningStateIter->objectActive) && !objectActive) || (scanningStateIter->objectName != objectName))
         {
-            const PostProcessingForm::Tag& currentTag = tagItems[i];
+            // Starting object
 
-            if (!(currentTag.ident.compare(params.tagIdent_BeginNewObject)))
+            baseFileName = QDir::cleanPath(params.directory.path() + "/" + scanningStateIter->objectName);
+
+            if ((!params.separateFilesForSubScans) && (!dontWriteFiles))
             {
-                // Tag type: new object
+                // As all "sub scans" should go into the same file, create it now.
+                QString fileName = baseFileName + fileExtension;
 
-                if (objectActive)
+                outFileChunkIndex = 0;
+                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime);
+
+                if (!currentFileWriter)
                 {
-                    currentFileWriter = nullptr;
-                    objectActive = false;
-                }
-
-                objectName = currentTag.text;
-
-                if (currentTag.text.length() == 0)
-                {
-                    // Empty name for the new object not allowed
-
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": New object without a name. Ending previous object, but not beginning new nor creating a new file. Ignoring subsequent beginning and ending tags.");
-
                     ignoreBeginningAndEndingTags = true;
-
                     continue;
-                }
-
-                baseFileName = QDir::cleanPath(params.directory.path() + "/" + currentTag.text);
-
-                if ((!params.separateFilesForSubScans) && (!dontWriteFiles))
-                {
-                    // As all "sub scans" should go into the same file, create it now.
-                    QString fileName = baseFileName + fileExtension;
-
-                    outFileChunkIndex = 0;
-                    currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);
-
-                    if (!currentFileWriter)
-                    {
-                        ignoreBeginningAndEndingTags = true;
-                        continue;
-                    }
-                    else
-                    {
-                        fileWriters.insert(fileName, currentFileWriter);
-                        ignoreBeginningAndEndingTags = false;
-                    }
                 }
                 else
                 {
+                    fileWriters.insert(fileName, currentFileWriter);
                     ignoreBeginningAndEndingTags = false;
                 }
-
-                emit infoMessage("Starting new object \"" +  currentTag.text + "\".");
-
-                objectActive = true;
-                beginningUptime = -1;
-
-                fileIndex = 0;
             }
-            else if ((!(currentTag.ident.compare(params.tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
+            else
             {
-                // Tag type: Begin points
-
-                if (!objectActive)
-                {
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": Beginning tag outside object. Skipped.");
-                    continue;
-                }
-
-                if (beginningUptime != -1)
-                {
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": Duplicate beginning tag. Skipped.");
-                    continue;
-                }
-
-                // Just store the beginning uptime-value and tag. Writing of the points is done in ending tag-branch
-                beginningUptime = uptime;
-                beginningTag = currentTag;
+                ignoreBeginningAndEndingTags = false;
             }
-            else if ((!(currentTag.ident.compare(params.tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
+
+            objectActive = true;
+            beginningUptime = -1;
+            objectName = scanningStateIter->objectName;
+
+            fileIndex = 0;
+        }
+        else if ((scanningStateIter->scanningActive) && (beginningUptime == -1) && (!ignoreBeginningAndEndingTags))
+        {
+            // Begin points
+
+            // Just store the beginning uptime-value and tag. Creation of the work unit is done in ending tag-branch
+            beginningUptime = uptime;
+            beginningTag = scanningStateIter->currentTag;
+        }
+        else if ((!scanningStateIter->scanningActive) && (beginningUptime != -1) && (!ignoreBeginningAndEndingTags))
+        {
+            // End points
+
+            if ((params.separateFilesForSubScans) && (!dontWriteFiles))
             {
-                // Tag type: end points
+                fileIndex++;
 
-                if (!objectActive)
+                QString fileIndexString = QString::number(fileIndex);
+
+                while (fileIndexString.length() < 4)
                 {
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": End tag outside object. Skipped.");
+                    fileIndexString.prepend("0");
+                }
+
+                QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + fileExtension);
+
+                outFileChunkIndex = 0;
+                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime);
+
+                if (!currentFileWriter)
+                {
+                    ignoreBeginningAndEndingTags = true;
                     continue;
-                }
-
-                if (beginningUptime == -1)
-                {
-                    emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                               QString::number(currentTag.sourceFileLine)+
-                               ", uptime " + QString::number(uptime) +
-                               ", iTOW " + QString::number(currentTag.iTOW) +
-                               ": End tag without beginning tag. Skipped.");
-                    continue;
-                }
-
-                const PostProcessingForm::Tag& endingTag = currentTag;
-
-                if (endingTag.sourceFile != beginningTag.sourceFile)
-                {
-                    emit warningMessage("Starting and ending tags belong to different files. Starting tag file \"" +
-                               beginningTag.sourceFile + "\", line " +
-                               QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
-                               endingTag.sourceFile + "\", line " +
-                               QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
-                    continue;
-                }
-
-                if ((params.separateFilesForSubScans) && (!dontWriteFiles))
-                {
-                    fileIndex++;
-
-                    QString fileIndexString = QString::number(fileIndex);
-
-                    while (fileIndexString.length() < 4)
-                    {
-                        fileIndexString.prepend("0");
-                    }
-
-                    QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + fileExtension);
-
-                    outFileChunkIndex = 0;
-                    currentFileWriter = createNewOutFile(fileName, params.fileParams, currentTag, uptime);
-
-                    if (!currentFileWriter)
-                    {
-                        ignoreBeginningAndEndingTags = true;
-                        continue;
-                    }
-                    else
-                    {
-                        fileWriters.insert(fileName, currentFileWriter);
-                        objectActive = true;
-                        ignoreBeginningAndEndingTags = false;
-                    }
-                }
-
-                PointCloudGeneratorLidarThread::WorkUnit newWorkUnit;
-
-                newWorkUnit.valid = true;
-                if (!dontWriteFiles)
-                {
-                    newWorkUnit.outFileName = currentFileWriter->getFileName();
                 }
                 else
                 {
-                    newWorkUnit.outFileName.clear();
+                    fileWriters.insert(fileName, currentFileWriter);
+                    objectActive = true;
+                    ignoreBeginningAndEndingTags = false;
                 }
-                newWorkUnit.sourceFileName = beginningTag.sourceFile;
-                newWorkUnit.beginningTagLine = beginningTag.sourceFileLine;
-                newWorkUnit.endingTagLine = endingTag.sourceFileLine;
-                newWorkUnit.pointSetIndex = pointSetIndex++;
-
-                qint64 currentUptime = beginningUptime;
-
-                while (currentUptime < uptime)
-                {
-                    newWorkUnit.beginningUptime = currentUptime;
-                    if (uptime - currentUptime <= params.maxWorkUnitDuration)
-                    {
-                        newWorkUnit.endingUptime = uptime;
-                    }
-                    else if (uptime - currentUptime < params.maxWorkUnitDuration * 2)
-                    {
-                        // Split two last shorter work units even
-                        newWorkUnit.endingUptime = currentUptime + ((uptime - currentUptime) / 2);
-                    }
-                    else
-                    {
-                        newWorkUnit.endingUptime = currentUptime + params.maxWorkUnitDuration;
-                    }
-
-                    newWorkUnit.chunkIndex = outFileChunkIndex;
-                    workUnitQueue.enqueue(newWorkUnit);
-                    currentUptime = newWorkUnit.endingUptime;
-                    outFileChunkIndex++;
-                }
-                if (params.separateFilesForSubScans)
-                {
-                    currentFileWriter = nullptr;
-                }
-
-                beginningUptime = -1;
             }
+
+            PointCloudGeneratorLidarThread::WorkUnit newWorkUnit;
+
+            newWorkUnit.valid = true;
+            if (!dontWriteFiles)
+            {
+                newWorkUnit.outFileName = currentFileWriter->getFileName();
+            }
+            else
+            {
+                newWorkUnit.outFileName.clear();
+            }
+            newWorkUnit.sourceFileName = beginningTag.sourceFile;
+            newWorkUnit.beginningTagLine = beginningTag.sourceFileLine;
+            newWorkUnit.endingTagLine = scanningStateIter->currentTag.sourceFileLine;
+            newWorkUnit.pointSetIndex = pointSetIndex++;
+
+            qint64 currentUptime = beginningUptime;
+
+            while (currentUptime < uptime)
+            {
+                newWorkUnit.beginningUptime = currentUptime;
+                if (uptime - currentUptime <= params.maxWorkUnitDuration)
+                {
+                    newWorkUnit.endingUptime = uptime;
+                }
+                else if (uptime - currentUptime < params.maxWorkUnitDuration * 2)
+                {
+                    // Split two last shorter work units even
+                    newWorkUnit.endingUptime = currentUptime + ((uptime - currentUptime) / 2);
+                }
+                else
+                {
+                    newWorkUnit.endingUptime = currentUptime + params.maxWorkUnitDuration;
+                }
+
+                newWorkUnit.chunkIndex = outFileChunkIndex;
+                workUnitQueue.enqueue(newWorkUnit);
+                currentUptime = newWorkUnit.endingUptime;
+                outFileChunkIndex++;
+            }
+            if (params.separateFilesForSubScans)
+            {
+                currentFileWriter = nullptr;
+            }
+
+            beginningUptime = -1;
         }
+        scanningStateIter++;
     }
 
     if (beginningUptime != -1)
@@ -310,7 +227,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                    QString::number(beginningTag.sourceFileLine) +
                    ", iTOW " + QString::number(beginningUptime) +
                    ", iTOW " + QString::number(beginningTag.iTOW) +
-                   " (beginning tag): File ended before end tag. Points after beginning tag ignored.");
+                   " (beginning tag): File ended before ending tag. Points after beginning tag ignored.");
     }
 
     emit infoMessage("Work units created. Number of items: " + QString::number(workUnitQueue.size()));
