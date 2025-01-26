@@ -133,7 +133,7 @@ void AsyncPointCloudFileWriter::writePLYHeader(void)
     file.write(dataToWrite);
 }
 
-void AsyncPointCloudFileWriter::writePoint(const PointCloudGeneratorLidarThread::Output::Point& point)
+void AsyncPointCloudFileWriter::writePoint(const PointCloudGeneratorLidarThread::Output::Point * const point)
 {
     switch (params.fileFormat)
     {
@@ -151,27 +151,27 @@ void AsyncPointCloudFileWriter::writePoint(const PointCloudGeneratorLidarThread:
     }
 }
 
-void AsyncPointCloudFileWriter::writePoint_XYZ(const PointCloudGeneratorLidarThread::Output::Point& point)
+void AsyncPointCloudFileWriter::writePoint_XYZ(const PointCloudGeneratorLidarThread::Output::Point * const point)
 {
-    QString lineOut = QString::number(point.hitPoint.x(), 'f', params.xyz.numberOfDecimals_Coords) +
-                      "\t" + QString::number(point.hitPoint.y(), 'f', params.xyz.numberOfDecimals_Coords) +
-                      "\t" + QString::number(point.hitPoint.z(), 'f', params.xyz.numberOfDecimals_Coords);
+    QString lineOut = QString::number(point->hitPoint.x(), 'f', params.xyz.numberOfDecimals_Coords) +
+                      "\t" + QString::number(point->hitPoint.y(), 'f', params.xyz.numberOfDecimals_Coords) +
+                      "\t" + QString::number(point->hitPoint.z(), 'f', params.xyz.numberOfDecimals_Coords);
 
     if (params.xyz.includeNormals)
     {
         if (params.xyz.normalLengthAsQuality)
         {
             lineOut +=
-                "\t" + QString::number(point.normal.x() * point.quality, 'f', params.xyz.numberOfDecimals_Normal) +
-                "\t" + QString::number(point.normal.y() * point.quality, 'f', params.xyz.numberOfDecimals_Normal) +
-                "\t" + QString::number(point.normal.z() * point.quality, 'f', params.xyz.numberOfDecimals_Normal);
+                "\t" + QString::number(point->normal.x() * point->quality, 'f', params.xyz.numberOfDecimals_Normal) +
+                "\t" + QString::number(point->normal.y() * point->quality, 'f', params.xyz.numberOfDecimals_Normal) +
+                "\t" + QString::number(point->normal.z() * point->quality, 'f', params.xyz.numberOfDecimals_Normal);
         }
         else
         {
             lineOut +=
-                "\t" + QString::number(point.normal.x(), 'f', params.xyz.numberOfDecimals_Normal) +
-                "\t" + QString::number(point.normal.y(), 'f', params.xyz.numberOfDecimals_Normal) +
-                "\t" + QString::number(point.normal.z(), 'f', params.xyz.numberOfDecimals_Normal);
+                "\t" + QString::number(point->normal.x(), 'f', params.xyz.numberOfDecimals_Normal) +
+                "\t" + QString::number(point->normal.y(), 'f', params.xyz.numberOfDecimals_Normal) +
+                "\t" + QString::number(point->normal.z(), 'f', params.xyz.numberOfDecimals_Normal);
         }
     }
 
@@ -194,71 +194,71 @@ static inline void writeFloat(QFile& file, const float src)
     file.write(buf, 4);
 }
 
-void AsyncPointCloudFileWriter::writePoint_PLY(const PointCloudGeneratorLidarThread::Output::Point& point)
+void AsyncPointCloudFileWriter::writePoint_PLY(const PointCloudGeneratorLidarThread::Output::Point * const point)
 {
     if (params.ply.binary)
     {
         if (params.ply.doublePrecisionCoords)
         {
-            writeDouble(file, point.hitPoint.x());
-            writeDouble(file, point.hitPoint.y());
-            writeDouble(file, point.hitPoint.z());
+            writeDouble(file, point->hitPoint.x());
+            writeDouble(file, point->hitPoint.y());
+            writeDouble(file, point->hitPoint.z());
         }
         else
         {
-            writeFloat(file, point.hitPoint.x());
-            writeFloat(file, point.hitPoint.y());
-            writeFloat(file, point.hitPoint.z());
+            writeFloat(file, point->hitPoint.x());
+            writeFloat(file, point->hitPoint.y());
+            writeFloat(file, point->hitPoint.z());
         }
 
         if (params.ply.includeNormals)
         {
             if (params.ply.normalLengthAsQuality)
             {
-                writeFloat(file, point.normal.x() * point.quality);
-                writeFloat(file, point.normal.y() * point.quality);
-                writeFloat(file, point.normal.z() * point.quality);
+                writeFloat(file, point->normal.x() * point->quality);
+                writeFloat(file, point->normal.y() * point->quality);
+                writeFloat(file, point->normal.z() * point->quality);
             }
             else
             {
-                writeFloat(file, point.normal.x());
-                writeFloat(file, point.normal.y());
-                writeFloat(file, point.normal.z());
+                writeFloat(file, point->normal.x());
+                writeFloat(file, point->normal.y());
+                writeFloat(file, point->normal.z());
             }
         }
 
         if (params.ply.includeQuality)
         {
-            writeFloat(file, point.quality);
+            writeFloat(file, point->quality);
         }
     }
     else
     {
-        QString lineOut = QString::number(point.hitPoint.x(), 'f', params.ply.numberOfDecimals_Coords) +
-                          " " + QString::number(point.hitPoint.y(), 'f', params.ply.numberOfDecimals_Coords) +
-                          " " + QString::number(point.hitPoint.z(), 'f', params.ply.numberOfDecimals_Coords);
+        QString lineOut = QString::number(point->hitPoint.x(), 'f', params.ply.numberOfDecimals_Coords) +
+                          " " + QString::number(point->hitPoint.y(), 'f', params.ply.numberOfDecimals_Coords) +
+                          " " + QString::number(point->hitPoint.z(), 'f', params.ply.numberOfDecimals_Coords);
 
         if (params.ply.includeNormals)
         {
             if (params.ply.normalLengthAsQuality)
             {
                 lineOut +=
-                    " " + QString::number(point.normal.x() * point.quality, 'f', params.ply.numberOfDecimals_Normal) +
-                    " " + QString::number(point.normal.y() * point.quality, 'f', params.ply.numberOfDecimals_Normal) +
-                    " " + QString::number(point.normal.z() * point.quality, 'f', params.ply.numberOfDecimals_Normal);
+                    " " + QString::number(point->normal.x() * point->quality, 'f', params.ply.numberOfDecimals_Normal) +
+                    " " + QString::number(point->normal.y() * point->quality, 'f', params.ply.numberOfDecimals_Normal) +
+                    " " + QString::number(point->normal.z() * point->quality, 'f', params.ply.numberOfDecimals_Normal);
             }
             else
             {
                 lineOut +=
-                    " " + QString::number(point.normal.x(), 'f', params.ply.numberOfDecimals_Normal) +
-                    " " + QString::number(point.normal.y(), 'f', params.ply.numberOfDecimals_Normal) +
-                    " " + QString::number(point.normal.z(), 'f', params.ply.numberOfDecimals_Normal);
+                    " " + QString::number(point->normal.x(), 'f', params.ply.numberOfDecimals_Normal) +
+                    " " + QString::number(point->normal.y(), 'f', params.ply.numberOfDecimals_Normal) +
+                    " " + QString::number(point->normal.z(), 'f', params.ply.numberOfDecimals_Normal);
             }
         }
 
         if (params.ply.includeQuality)
         {
-            lineOut += " " + QString::number(point.quality, 'f', params.ply.numberOfDecimals_Quality);
+            lineOut += " " + QString::number(point->quality, 'f', params.ply.numberOfDecimals_Quality);
         }
 
         lineOut += params.ply.endOfLine;
@@ -336,6 +336,7 @@ void AsyncPointCloudFileWriter::run()
         if (outBuffer.isEmpty() && terminateRequest == TR_WRITEPENDINGDATA)
         {
             outBufferMutex.unlock();
+            waitConditionMutex.unlock();
             break;
         }
 
@@ -362,16 +363,20 @@ void AsyncPointCloudFileWriter::run()
 
             numberOfPointsWrittenMutex.lock();
 
-            for (const PointCloudGeneratorLidarThread::Output::Point& item : *outputData.points.get())
+            auto pointIter = outputData.points->constBegin();
+
+            while (pointIter != outputData.points->constEnd())
             {
                 if (terminateRequest == TR_ABANDONPENDINGDATA)
                 {
                     break;
                 }
 
-                writePoint(item);
+                writePoint(pointIter);
 
                 numberOfPointsWritten++;
+
+                pointIter++;
             }
 
             numberOfPointsWrittenMutex.unlock();

@@ -79,9 +79,9 @@ private:
     bool openFile(void);
     void writeHeader(void);
     void writePLYHeader(void);
-    void writePoint(const PointCloudGeneratorLidarThread::Output::Point& point);
-    void writePoint_XYZ(const PointCloudGeneratorLidarThread::Output::Point& point);
-    void writePoint_PLY(const PointCloudGeneratorLidarThread::Output::Point& point);
+    void writePoint(const PointCloudGeneratorLidarThread::Output::Point* const point);
+    void writePoint_XYZ(const PointCloudGeneratorLidarThread::Output::Point* const point);
+    void writePoint_PLY(const PointCloudGeneratorLidarThread::Output::Point* const point);
     void finalizeFile(void);
     void finalizeFile_PLY(void);
 
