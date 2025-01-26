@@ -456,7 +456,7 @@ std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile
 
     emit infoMessage("Creating file \"" + fileName + "\"...");
 
-    std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_unique<AsyncPointCloudFileWriter>(fileName, params);
+    std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_shared<AsyncPointCloudFileWriter>(fileName, params);
 
     outFileWriter->start();
 
