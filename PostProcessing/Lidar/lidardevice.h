@@ -49,11 +49,24 @@ public:
         }
     };
 
-    friend bool operator<(const LidarDevice& l, const LidarDevice& r) { return std::tie(l.type, l.data) < std::tie(r.type, r.data); };
+    inline friend bool operator < (const LidarDevice& l, const LidarDevice& r);
+    inline friend bool operator == (const LidarDevice& l, const LidarDevice& r);
 
     Type type;
     //        QVariant data = int(0);
     quint32 data;
 };
+
+inline bool operator < (const LidarDevice& l, const LidarDevice& r)
+{
+    return (std::tie(l.type, l.data) < std::tie(r.type, r.data));
+}
+
+inline bool operator == (const LidarDevice& l, const LidarDevice& r)
+{
+    // Data only matters with Mid-360 (it's IP-address)
+    return ((l.type == r.type) && ((l.type != LidarDevice::DT_LIVOX_MID360) || (l.data == r.data)));
+};
+
 
 #endif // LIDARDEVICE_H
