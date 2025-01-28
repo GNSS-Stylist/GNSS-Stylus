@@ -3322,7 +3322,6 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.threadConstData.boundingSphere_Center = &boundingSphere_Center;
         params.threadConstData.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
 
-        params.tags = &tags;
         params.threadConstData.rpLidar.rounds = &lidarRounds;
         params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.threadConstData.loSolver_Base = &loSolver_Base;

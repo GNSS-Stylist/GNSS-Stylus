@@ -1,6 +1,6 @@
 /*
     pointcloudgeneratorlidarthread.cpp (part of GNSS-Stylus)
-    Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2025-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

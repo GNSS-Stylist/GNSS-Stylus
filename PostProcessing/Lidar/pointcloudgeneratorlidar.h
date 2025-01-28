@@ -39,9 +39,6 @@ public:
         QDir directory;
         const QMap<qint64, PostProcessingForm::ScanningState>* scanningStateMap = nullptr;
         bool separateFilesForSubScans = false;
-
-        const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
-
         int maxWorkUnitDuration = 1000;
         int numOfWorkerThreads = 1;
 
