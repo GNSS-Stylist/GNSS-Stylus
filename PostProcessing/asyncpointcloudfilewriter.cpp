@@ -1,6 +1,6 @@
 /*
     asyncpointcloudfilewriter.cpp (part of GNSS-Stylus)
-    Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
+    Copyright (C) 2025-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QtCore> // QtEndian (below) seems to need this...
+#include <limits> // QtEndian (below) seems to need this... See https://bugreports.qt.io/browse/QTBUG-90395
 #include <QtEndian>
 #include "asyncpointcloudfilewriter.h"
 
