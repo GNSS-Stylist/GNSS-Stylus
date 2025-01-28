@@ -383,6 +383,33 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
     if (!onShowInitializationsDone)
     {
+        // Had problems with Linux Mint's (22.1) native file dialogs
+        // (couldn't write a file name in save as-style dialog, dialogs didn't remenber their dirs etc.)
+        // so using non-natives
+
+        fileDialog_UBX.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Tags.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Distances.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Sync.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Lidar.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_All.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Transformation_Load.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Transformation_Save.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_AntennaLocations_Load.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_AntennaLocations_Save.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_PointCloud.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Stylus_MovieScript.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_LOSolver_Script.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Lidar_Script.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Operations_Load.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Operations_Save.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Parameters_Load.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_Parameters_Save.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_RasterCameraScript_Load.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_RasterCameraScript_Save.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_ExportConvexHulls.setOption(QFileDialog::DontUseNativeDialog, true);
+
+
         fileDialog_UBX.setFileMode(QFileDialog::ExistingFiles);
 
         QStringList roverFilters;
@@ -503,15 +530,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
 
         fileDialog_Lidar_Script.setFileMode(QFileDialog::AnyFile);
-        fileDialog_Lidar_Script.setDefaultSuffix("LidarScript");
-
-        QStringList lidarScriptFilters;
-
-        lidarScriptFilters << "lidar script files (*.lidarscript)"
-                << "Any files (*)";
-
-        fileDialog_Lidar_Script.setNameFilters(lidarScriptFilters);
-
+        fileDialog_Lidar_Script.setLabelText(QFileDialog::FileName, "File name prefix");
 
         fileDialog_Operations_Load.setFileMode(QFileDialog::ExistingFile);
 
@@ -3470,7 +3489,38 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
     {
         relposnedMessages[i] = &rovers[i].relposnedMessages;
     }
-    LOInterpolator loInterpolator_Lidar(relposnedMessages);
+
+    // TODO: Read hulls and expressions from right textedits!!!
+
+    QMap<QString, ConvexHull> hullMap;
+    QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
+
+    if (!generateLidarPointCloudConvexHullMap(hullMap))
+    {
+        return;
+    }
+
+    QVector<PointFilter::ExpressionFilter_Base::ConvexHullFilter> convexHullFilters;
+
+    auto hullIter = hullMap.begin();
+    while (hullIter != hullMap.end())
+    {
+        PointFilter::ExpressionFilter_Base::ConvexHullFilter newFilter;
+        newFilter.Name = hullIter.key();
+        hullIter.value().getFilter(newFilter.filter);
+        convexHullFilters.push_back(newFilter);
+        hullIter++;
+    }
+
+    try
+    {
+        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
+    }
+    catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
+    {
+        addLogLine("Generating expression map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        return;
+    }
 
     if (!generateTransformationMatrix(transform_NEDToXYZ))
     {
@@ -3484,7 +3534,9 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         return;
     }
 
-    if (!updateLOSolverReferencePointLocations(loInterpolator_Lidar.loSolver))
+    LOSolver loSolver_Base;
+
+    if (!updateLOSolverReferencePointLocations(loSolver_Base))
     {
         return;
     }
@@ -3506,23 +3558,55 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
             return;
         }
 
+        QMap<qint64, PostProcessingForm::ScanningState> scanningStateMap;
+        generateScanningStateMap(scanningStateMap,
+                                 ui->lineEdit_TagIndicatingBeginningOfNewObject->text(),
+                                 ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text(),
+                                 ui->lineEdit_TagIndicatingEndOfObjectPoints->text());
+
         Lidar::LidarScriptGenerator::Params params;
 
-        params.transform_NEDToXYZ = &transform_NEDToXYZ;
-        params.transforms_AfterRotation = transforms_Lidar_Generated_AfterRotation;
-        params.rpLidar.transform_BeforeRotation = transform_RPLidar_Generated_BeforeRotation;
-        params.fileName = fileNameList[0];
-        params.tagIdent_BeginNewObject = ui->lineEdit_TagIndicatingBeginningOfNewObject->text();
-        params.tagIdent_BeginPoints = ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text();
-        params.tagIdent_EndPoints = ui->lineEdit_TagIndicatingEndOfObjectPoints->text();
-        params.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
+        params.threadConstData.transform_NEDToXYZ = &transform_NEDToXYZ;
+        params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
+        params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
+        params.baseFileName = fileNameList[0];
+        params.threadConstData.scanningStateMap = &scanningStateMap;
+        params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
-        Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
+/*        Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
                         ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
                         ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
+*/
+//        params.threadConstData.rpLidar.boundingSphere_Center = &boundingSphere_Center;
+//        params.threadConstData.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
 
-        params.boundingSphere_Center = &boundingSphere_Center;
-        params.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
+
+        params.threadConstData.rpLidar.rounds = &lidarRounds;
+        params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
+        params.threadConstData.loSolver_Base = &loSolver_Base;
+        params.threadConstData.lidarFileNames = &lidarFileNames;
+
+        // Map where uptimes for all equal ITOWs are the same.
+        // This makes processing later easier
+        // Uptimes here are calculated as averages from rover values (for each ITOW)
+        QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
+
+        addLogLine("Generating equalized rover uptime timestamps...");
+        PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
+        addLogLine("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+
+        params.threadConstData.averagedSync = &averagedSync;
+
+        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+
+        params.threadConstData.expressionMap_Source = &expressionMap;
+        params.threadConstData.rovers = rovers;
+
+        // TODO: Read from the correct place
+        params.maxWorkUnitDuration = ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value();
+        params.numOfWorkerThreads = ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value();
+
+
 
         bool convOk;
         params.uptime_Min = ui->lineEdit_Lidar_Script_UptimeRange_Min->text().toLongLong(&convOk);
@@ -3541,12 +3625,14 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
             return;
         }
 
-        params.tags = &tags;
-        params.rovers = rovers;
-        params.rpLidar.rounds = &lidarRounds;
-        params.rpLidar.filteringSettings = &lidarFilteringSettings;
-        params.loInterpolator = &loInterpolator_Lidar;
-        params.lidarFileNames = &lidarFileNames;
+//        params.tags = &tags;
+        params.threadConstData.rovers = rovers;
+        params.threadConstData.rpLidar.rounds = &lidarRounds;
+        params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
+        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+        // TODO: Add base losolver
+//        params.loInterpolator = &loInterpolator_Lidar;
+//        params.lidarFileNames = &lidarFileNames;
 
         Lidar::LidarScriptGenerator lidarScriptGenerator;
 

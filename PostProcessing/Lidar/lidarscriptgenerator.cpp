@@ -18,7 +18,9 @@
 
 #include <QMessageBox>
 #include <QPushButton>
+#include <QProgressDialog>
 #include "lidarscriptgenerator.h"
+#include "../asynclidarscriptfilewriter.h"
 
 namespace Lidar
 {
@@ -29,7 +31,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     filteredItems.reserve(10000);
 
     RPLidarPlausibilityFilter plausibilityFilter;
-    plausibilityFilter.setSettings(*params.rpLidar.filteringSettings);
+    plausibilityFilter.setSettings(*params.threadConstData.rpLidar.filteringSettings);
 
     // Map where uptimes for all equal ITOWs are the same.
     // This makes processing later easier
@@ -37,343 +39,321 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
 
     emit infoMessage("Generating equalized rover uptime timestamps...");
-    PostProcessingForm::generateAveragedRoverUptimeSync(params.rovers, averagedSync);
+    PostProcessingForm::generateAveragedRoverUptimeSync(params.threadConstData.rovers, averagedSync);
     emit infoMessage("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
 
-    QFile lidarScriptFile;
+    QMap<LidarDevice, std::shared_ptr<AsyncLidarScriptFileWriter> > fileWriters;
 
-    lidarScriptFile.setFileName(params.fileName);
+    emit infoMessage("Searching for devices and creating output files...");
 
-    if (lidarScriptFile.exists())
+    auto rpLidarIter = params.threadConstData.rpLidar.rounds->lowerBound(params.uptime_Min);
+
+    qint64 minLogUptime = std::numeric_limits<qint64>::max();
+    qint64 maxLogUptime = 0;
+
+    if ((rpLidarIter != params.threadConstData.rpLidar.rounds->end()) && (rpLidarIter.key() <= params.uptime_Max))
     {
-        QMessageBox msgBox;
-        msgBox.setText("File already exists.");
-        msgBox.setInformativeText("How to proceed?");
+        QString fileName = QDir::cleanPath(params.baseFileName + "_RPLidar.lidarscript");
 
-        QPushButton *overwriteButton = msgBox.addButton(tr("Overwrite"), QMessageBox::ActionRole);
-        QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
-
-        msgBox.setDefaultButton(cancelButton);
-
-        msgBox.exec();
-
-        if (msgBox.clickedButton() != overwriteButton)
+        emit infoMessage("Data for RPLidar device found. Creating file \"" + fileName + "\"...");
+        QFile outFile(fileName);
+        if (outFile.exists())
         {
-            emit infoMessage("Generating lidar script cancelled.");
+            emit errorMessage("File \"" + fileName + "\" already exists. Aborting generating lidar scripts.");
             return;
         }
-    }
 
-    if (!lidarScriptFile.open(QIODevice::WriteOnly))
-    {
-        emit errorMessage("Can't open lidar script file.");
-        return;
-    }
-
-    QTextStream textStream(&lidarScriptFile);
-
-    emit infoMessage("Processing lidar script...");
-
-    // Add some metadata to make possible changes in the future easier
-    textStream << "META\tHEADER\tGNSS-Stylus lidar script\n";
-    textStream << "META\tVERSION\t1.0.0\n";
-    textStream << "META\tFORMAT\tASCII\n";
-    textStream << "META\tCONTENT\tDEFAULT\n";
-    textStream << "META\tEND\n";
-
-    textStream << "Uptime\tType\tDescr/subtype\t"
-                  "RotAngle\t"
-                  "Origin_X\tOrigin_Y\tOrigin_Z\t"
-                  "Hit_X\tHit_Y\tHit_Z\n";
-
-    QMap<qint64, PostProcessingForm::LidarRound>::const_iterator lidarIter = params.rpLidar.rounds->upperBound(params.uptime_Min);
-    QMultiMap<qint64, PostProcessingForm::Tag>::const_iterator tagIter = params.tags->begin();
-
-    QString objectName;
-    bool objectActive = false;
-    bool scanningActive = false;
-    bool ignoreBeginningAndEndingTags = false;
-    qint64 beginningUptime = -1;
-    PostProcessingForm::Tag beginningTag;
-
-    unsigned int pointsWritten = 0;
-
-    LidarDevice rpLidarDevice(LidarDevice::DT_RPLIDAR);
-    Q_ASSERT(params.transforms_AfterRotation.contains(rpLidarDevice));
-
-    Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation_RPLidar = params.rpLidar.transform_BeforeRotation;
-    auto transform_AfterRotation_RPLidar = params.transforms_AfterRotation.value(rpLidarDevice);
-
-    while ((lidarIter.key() <= params.uptime_Max) && (lidarIter != params.rpLidar.rounds->end()))
-    {
-        QString previousObjectName = objectName;
-        bool previousObjectActive = objectActive;
-        bool previousScanningActive = scanningActive;
-
-        while ((tagIter.key() < lidarIter.value().startTime) && tagIter != params.tags->end())
+        if (!params.dontWriteFiles)
         {
-            // Roll tags to the current uptime to keep track of scanning state and object name
+            std::shared_ptr<AsyncLidarScriptFileWriter> outFileWriter = std::make_shared<AsyncLidarScriptFileWriter>(fileName, params.fileParams);
 
-            QList<PostProcessingForm::Tag> tagItems = params.tags->values(tagIter.key());
+            outFileWriter->start();
 
-            PostProcessingForm::Tag currentTag = tagIter.value();
-
-            // Since "The items that share the same key are available from most recently to least recently inserted."
-            // (taken from QMultiMap's doc), iterate in "reverse order" here
-
-            for (int i = tagItems.size() - 1; i >= 0; i--)
+            if (!outFileWriter->isOpenedSuccessfully())
             {
-                const PostProcessingForm::Tag& currentTag = tagItems[i];
-
-                qint64 tagUptime = tagIter.key();
-
-                if (!(currentTag.ident.compare(params.tagIdent_BeginNewObject)))
-                {
-                    // Tag type: new object
-
-                    if (currentTag.text.length() == 0)
-                    {
-                        // Empty name for the new object not allowed
-
-                        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                                   QString::number(currentTag.sourceFileLine)+
-                                   ", uptime " + QString::number(tagUptime) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ": New object without a name. Ending previous object, but not beginning new. Ignoring subsequent beginning and ending tags.");
-
-                        ignoreBeginningAndEndingTags = true;
-
-                        continue;
-                    }
-
-                    objectName = currentTag.text;
-                    objectActive = true;
-                    ignoreBeginningAndEndingTags = false;
-                    beginningUptime = -1;
-                }
-                else if ((!(currentTag.ident.compare(params.tagIdent_BeginPoints))) && (!ignoreBeginningAndEndingTags))
-                {
-                    // Tag type: Begin points
-
-                    if (!objectActive)
-                    {
-                        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                                   QString::number(currentTag.sourceFileLine)+
-                                   ", uptime " + QString::number(tagUptime) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ": Beginning tag outside object. Skipped.");
-                        continue;
-                    }
-
-                    if (beginningUptime != -1)
-                    {
-                        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                                   QString::number(currentTag.sourceFileLine)+
-                                   ", uptime " + QString::number(tagUptime) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ": Duplicate beginning tag. Skipped.");
-                        continue;
-                    }
-
-                    scanningActive = true;
-                    beginningUptime = tagUptime;
-                    beginningTag = currentTag;
-                }
-                else if ((!(currentTag.ident.compare(params.tagIdent_EndPoints)))  && (!ignoreBeginningAndEndingTags))
-                {
-                    // Tag type: end points
-
-                    if (!objectActive)
-                    {
-                        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                                   QString::number(currentTag.sourceFileLine)+
-                                   ", uptime " + QString::number(tagUptime) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ": End tag outside object. Skipped.");
-                        continue;
-                    }
-
-                    if (beginningUptime == -1)
-                    {
-                        emit warningMessage("File \"" + currentTag.sourceFile + "\", line " +
-                                   QString::number(currentTag.sourceFileLine)+
-                                   ", uptime " + QString::number(tagUptime) +
-                                   ", iTOW " + QString::number(currentTag.iTOW) +
-                                   ": End tag without beginning tag. Skipped.");
-                        continue;
-                    }
-
-                    const PostProcessingForm::Tag& endingTag = currentTag;
-
-                    if (endingTag.sourceFile != beginningTag.sourceFile)
-                    {
-                        emit warningMessage("Starting and ending tags belong to different files. Starting tag file \"" +
-                                   beginningTag.sourceFile + "\", line " +
-                                   QString::number(beginningTag.sourceFileLine) + " ending tag file: " +
-                                   endingTag.sourceFile + "\", line " +
-                                   QString::number(endingTag.sourceFileLine) + ". Ending tag ignored.");
-                        continue;
-                    }
-
-                    beginningUptime = -1;
-                    scanningActive = false;
-                }
-            }
-
-            if (previousObjectName != objectName)
-            {
-                // Note: params.timeShift used here so that LOScript and this use the same timing
-
-                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) +  "\tOBJECTNAME\t" + objectName + "\n";
-            }
-
-            if (!previousObjectActive && objectActive)
-            {
-                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tSTARTOBJECT\n";
-            }
-
-            if (previousObjectActive && !objectActive)
-            {
-                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tENDOBJECT\n";
-            }
-
-            if (!previousScanningActive && scanningActive)
-            {
-                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tSTARTSCAN\n";
-            }
-
-            if (previousScanningActive && !scanningActive)
-            {
-                textStream << QString::number(tagIter.key() + params.rpLidar.timeShift) + "\tENDSCAN\n";
-            }
-
-            tagIter++;
-        }
-
-        const PostProcessingForm::LidarRound& round = lidarIter.value();
-
-        plausibilityFilter.filter(round.distanceItems, filteredItems);
-
-        for (int i = 0; i < filteredItems.count(); i++)
-        {
-            const RPLidarPlausibilityFilter::FilteredItem& currentItem = filteredItems[i];
-
-            // Rover coordinates interpolated according to distance timestamps.
-
-            qint64 itemUptime = round.startTime + (round.endTime - round.startTime) * i / lidarIter.value().distanceItems.count();
-            UBXMessage_RELPOSNED interpolated_Rovers[3];
-
-            qint64 roverUptime = itemUptime + params.rpLidar.timeShift;
-
-            Eigen::Transform<double, 3, Eigen::Affine> transform_LoSolver;
-
-            try
-            {
-                params.loInterpolator->getInterpolatedLocationOrientationTransformMatrix_Uptime(roverUptime, averagedSync, transform_LoSolver);
-            }
-            catch (QString& stringThrown)
-            {
-                Q_ASSERT(params.lidarFileNames);
-                Q_ASSERT(params.lidarFileNames->size() > lidarIter.value().fileNameIndex);
-
-                emit warningMessage("File \"" + params.lidarFileNames->at(lidarIter.value().fileNameIndex) + "\", chunk index " +
-                           QString::number(lidarIter.value().chunkIndex)+
-                           ", uptime " + QString::number(lidarIter.key()) +
-                           ": " + stringThrown + " Lidar script generating terminated.");
+                // Creating the file failed
+                emit errorMessage("File \"" + fileName + "\" can't be created. Aborting generating lidar scripts.");
                 return;
             }
 
-            Eigen::Transform<double, 3, Eigen::Affine> transform_LaserRotation;
-            transform_LaserRotation = Eigen::AngleAxisd(currentItem.item.angle, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+            LidarDevice device(LidarDevice::DT_RPLIDAR);
 
-            // Lot of parentheses here to keep all calculations as matrix * vector
-            // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * (transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * Eigen::Vector3d::Zero()))));
-
-            // Lot of parentheses here to keep all calculations as matrix * vector
-            // This is _much_ faster, in quick tests time was dropped from 510 s to 295 s when using parentheses in the whole lidarscript-creation)
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation_RPLidar * (transform_LaserRotation * (transform_BeforeRotation_RPLidar * (currentItem.item.distance * Eigen::Vector3d::UnitX()))));
-
-            Eigen::Vector3d laserHitPosAfterLOSolverTransformXYZ = *params.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
-
-            QString descr;
-
-            if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_PASSED)
-            {
-                if (objectActive)
-                {
-                    if (scanningActive)
-                    {
-                        if ((laserHitPosAfterLOSolverTransform - *params.boundingSphere_Center).norm() <= params.boundingSphere_Radius)
-                        {
-                            descr = "H";
-                        }
-                        else
-                        {
-                            descr = "M";
-                        }
-                    }
-                    else
-                    {
-                        descr = "NS";
-                    }
-                }
-                else
-                {
-                    descr = "NO";
-                }
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_ANGLE)
-            {
-                descr = "FA";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_QUALITY_PRE)
-            {
-                descr = "FQ1";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_QUALITY_POST)
-            {
-                descr = "FQ2";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_NEAR)
-            {
-                descr = "FDN";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_FAR)
-            {
-                descr = "FDF";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_DISTANCE_DELTA)
-            {
-                descr = "FDD";
-            }
-            else if (currentItem.type == RPLidarPlausibilityFilter::FilteredItem::FIT_REJECTED_SLOPE)
-            {
-                descr = "FS";
-            }
-            else
-            {
-                descr = "F?";
-            }
-
-            // Note: roverUptime used here so that LOScript and this use the same timing
-
-            textStream << QString::number(roverUptime) + "\tL\t" + descr +
-                          "\t" + QString::number(currentItem.item.angle, 'f', 2) +
-                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(0), 'f', 4) +
-                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(1), 'f', 4) +
-                          "\t" + QString::number(laserOriginAfterLOSolverTransformXYZ(2), 'f', 4) +
-                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(0), 'f', 4) +
-                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(1), 'f', 4) +
-                          "\t" + QString::number(laserHitPosAfterLOSolverTransformXYZ(2), 'f', 4) + "\n";
-
-            pointsWritten++;
+            fileWriters.insert(device, outFileWriter);
         }
 
-        lidarIter++;
+        minLogUptime = std::min(minLogUptime, rpLidarIter.key());
+        maxLogUptime = std::max(maxLogUptime, params.threadConstData.rpLidar.rounds->last().endTime);
     }
 
-    emit infoMessage("Lidar script generated. Number of points: " + QString::number(pointsWritten));
+    auto mid360Iter = params.threadConstData.mid360.datagrams->lowerBound(params.uptime_Min);
+
+    // Slight speedup(?) compare only ip-addresses (as quint32s) instead of LidarDevices
+    QVector<quint32> foundMid360Devices;
+
+    while ((mid360Iter != params.threadConstData.mid360.datagrams->end()) && (mid360Iter.key() <= params.uptime_Max))
+    {
+        quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
+
+        if (!foundMid360Devices.contains(ipAddress))
+        {
+            LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
+            foundMid360Devices.push_back(ipAddress);
+
+            QString ipAddressString = mid360Iter.value().datagram.senderAddress().toString();
+            QString ipAddressString_Snake = ipAddressString;
+            ipAddressString_Snake.replace('.', '_');
+
+            QString fileName = QDir::cleanPath(params.baseFileName + "_Mid360_" + ipAddressString_Snake + ".lidarscript");
+
+            emit infoMessage("Data for Mid-360 device, IP-address " + ipAddressString + " found. Creating file \"" + fileName + "\"...");
+            QFile outFile(fileName);
+            if (outFile.exists())
+            {
+                emit errorMessage("File \"" + fileName + "\" already exists. Aborting generating lidar scripts.");
+                return;
+            }
+
+            std::shared_ptr<AsyncLidarScriptFileWriter> outFileWriter = std::make_shared<AsyncLidarScriptFileWriter>(fileName, params.fileParams);
+
+            outFileWriter->start();
+
+            if (!outFileWriter->isOpenedSuccessfully())
+            {
+                // Creating the file failed
+                emit errorMessage("File \"" + fileName + "\" can't be created. Aborting generating lidar scripts.");
+                return;
+            }
+
+            fileWriters.insert(device, outFileWriter);
+        }
+
+        minLogUptime = std::min(minLogUptime, mid360Iter.key());
+        maxLogUptime = std::max(maxLogUptime, mid360Iter.key());
+
+        mid360Iter++;
+    }
+
+    if (fileWriters.isEmpty())
+    {
+        emit infoMessage("No data for any device during the selected time period. Quitting generating lidar scripts.");
+        return;
+    }
+
+    qint64 currentUptime = std::max(params.uptime_Min, minLogUptime);
+    qint64 maxUptime = std::min(params.uptime_Max, maxLogUptime);
+
+    LidarScriptGeneratorThread::WorkUnit newWorkUnit;
+    newWorkUnit.valid = true;
+    newWorkUnit.chunkIndex = 0;
+
+    emit infoMessage("Creating work units (for worker threads)...");
+
+    QQueue<LidarScriptGeneratorThread::WorkUnit> workUnitQueue;
+
+    while (currentUptime < maxUptime)
+    {
+        newWorkUnit.beginningUptime = currentUptime;
+
+        if (maxUptime - currentUptime <= params.maxWorkUnitDuration)
+        {
+            newWorkUnit.endingUptime = maxUptime;
+        }
+        else if (maxUptime - currentUptime < params.maxWorkUnitDuration * 2)
+        {
+            // Split two last shorter work units even
+            newWorkUnit.endingUptime = currentUptime + ((maxUptime - currentUptime) / 2);
+        }
+        else
+        {
+            newWorkUnit.endingUptime = currentUptime + params.maxWorkUnitDuration;
+        }
+
+        workUnitQueue.enqueue(newWorkUnit);
+        currentUptime = newWorkUnit.endingUptime;
+        newWorkUnit.chunkIndex++;
+    }
+
+    emit infoMessage("Work units created. Number of items: " + QString::number(workUnitQueue.size()));
+
+    emit infoMessage("Creating " +  QString::number(params.numOfWorkerThreads) + " worker threads...");
+
+    QMutex workUnitQueueMutex;
+
+    auto lambdaGetter = [&workUnitQueue, &workUnitQueueMutex]
+    {
+        workUnitQueueMutex.lock();
+        if (workUnitQueue.isEmpty())
+        {
+            LidarScriptGeneratorThread::WorkUnit dummyWorkUnit;
+            workUnitQueueMutex.unlock();
+            return dummyWorkUnit;
+        }
+        else
+        {
+            LidarScriptGeneratorThread::WorkUnit newWorkUnit = workUnitQueue.dequeue();
+            workUnitQueueMutex.unlock();
+            return newWorkUnit;
+        }
+    };
+
+    bool dontWriteFiles = params.dontWriteFiles;
+
+    auto lambdaProcessor = [&fileWriters, &dontWriteFiles](const LidarDevice& device, const LidarScriptGeneratorThread::Output& out)
+    {
+        if (!dontWriteFiles)
+        {
+            Q_ASSERT(fileWriters.contains(device));
+            fileWriters.value(device)->addPoints(out);
+        }
+    };
+
+    QVector<std::shared_ptr<LidarScriptGeneratorThread> > workerThreads;
+
+    for (int i = 0; i < std::max(params.numOfWorkerThreads, 1); i++)
+    {
+        workerThreads.push_back(std::make_shared<LidarScriptGeneratorThread>(params.threadConstData, lambdaGetter, lambdaProcessor));
+    }
+
+    emit infoMessage(QString::number(params.numOfWorkerThreads) + " worker threads created.");
+
+    emit infoMessage("Starting worker threads...");
+
+    for (int i = 0; i < workerThreads.size(); i++)
+    {
+        workerThreads.at(i)->start();
+    }
+
+    emit infoMessage("Worker threads started.");
+
+    int maxProgress = workUnitQueue.size() * 1000;
+    QProgressDialog progress("Creating lidar script files...", "Abort", 0, maxProgress);
+    if (dontWriteFiles)
+    {
+        progress.setLabelText("Simulating lidar script creation...");
+    }
+
+    progress.setMinimumDuration(0);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setValue(0);
+
+    int queuedWrites;
+    int numOfWorkerThreadsRunning;
+    int monotonicProgress = 0;  // As reading progress values from different sources are not perfectly synchronized, show "monotonically rising" value.
+    int workUnitQueueSize;
+
+    QVector<LidarDevice> errorPrintedForDevices;
+
+    bool aborted = false;
+
+    do {
+        queuedWrites = 0;
+        QMap<LidarDevice, std::shared_ptr<AsyncLidarScriptFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+        while (fileIter != fileWriters.constEnd())
+        {
+            queuedWrites += fileIter.value()->getQueueLength();
+
+            if (!errorPrintedForDevices.contains(fileIter.key()))
+            {
+                QString errorString;
+                if (fileIter.value()->getError(errorString))
+                {
+                    emit errorMessage(errorString);
+                    errorPrintedForDevices.push_back(fileIter.key());
+                }
+            }
+
+            fileIter++;
+        }
+
+        workUnitQueueMutex.lock();
+        workUnitQueueSize = workUnitQueue.size();
+        workUnitQueueMutex.unlock();
+
+        numOfWorkerThreadsRunning = 0;
+        float sumOfThreadProgress = 0;
+
+        for (int i = 0; i < workerThreads.size(); i++)
+        {
+            float progress;
+            LidarScriptGeneratorThread::State threadState = workerThreads.at(i)->getState(&progress);
+
+            if (threadState == LidarScriptGeneratorThread::S_PROCESSING)
+            {
+                numOfWorkerThreadsRunning++;
+                sumOfThreadProgress += progress;
+            }
+        }
+
+        int newProgress = maxProgress - ((workUnitQueueSize + queuedWrites) * 1000) + ((sumOfThreadProgress * 1000) / numOfWorkerThreadsRunning);
+        monotonicProgress = std::max(newProgress, monotonicProgress);
+        progress.setValue(monotonicProgress);
+        QThread::msleep(100);
+
+        if (progress.wasCanceled())
+        {
+            for (int i = 0; i < workerThreads.size(); i++)
+            {
+                workerThreads.at(i)->requestTerminate();
+            }
+
+            QMap<LidarDevice, std::shared_ptr<AsyncLidarScriptFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+            while (fileIter != fileWriters.constEnd())
+            {
+                fileIter.value()->requestTerminate(true);
+                fileIter++;
+            }
+
+            emit infoMessage("Lidar script creation aborted. Output file contents may not be valid!");
+            aborted = true;
+
+            break;
+        }
+    } while ((workUnitQueueSize != 0) || (queuedWrites != 0) || (numOfWorkerThreadsRunning != 0));
+
+    progress.setValue(maxProgress);
+
+    emit infoMessage("Waiting for worker threads to finish...");
+    for (int i = 0; i < workerThreads.size(); i++)
+    {
+        workerThreads.at(i)->wait();
+    }
+    emit infoMessage("Worker threads finished.");
+
+    if (!dontWriteFiles)
+    {
+        emit infoMessage("Waiting for file writer threads to finish...");
+
+        QMap<LidarDevice, std::shared_ptr<AsyncLidarScriptFileWriter> >::const_iterator fileIter = fileWriters.constBegin();
+        if (!aborted)
+        {
+            // No need to request termination here if canceled, since this was done with "more immediate"-flag earlier.
+            while (fileIter != fileWriters.constEnd())
+            {
+                fileIter.value()->requestTerminate();
+                fileIter++;
+            }
+        }
+
+        fileIter = fileWriters.constBegin();
+        while (fileIter != fileWriters.constEnd())
+        {
+            fileIter.value()->wait();
+            fileIter++;
+        }
+        emit infoMessage("File writer threads finished.");
+    }
+
+    if (!aborted)
+    {
+        if (dontWriteFiles)
+        {
+            emit infoMessage("Lidar script generation simulation finished.");
+        }
+        else
+        {
+            emit infoMessage("Lidar script files generated.");
+        }
+    }
 }
 
 }; // namespace Lidar

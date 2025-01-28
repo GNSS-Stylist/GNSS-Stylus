@@ -74,10 +74,12 @@ SOURCES += \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     PostProcessing/Lidar/lidarscriptgenerator.cpp \
+    PostProcessing/Lidar/lidarscriptgeneratorthread.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidarthread.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
+    PostProcessing/asynclidarscriptfilewriter.cpp \
     PostProcessing/asyncpointcloudfilewriter.cpp \
     PostProcessing/loscriptgenerator.cpp \
     PostProcessing/postprocessingform.cpp \
@@ -128,10 +130,12 @@ HEADERS += \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     PostProcessing/Lidar/lidardevice.h \
     PostProcessing/Lidar/lidarscriptgenerator.h \
+    PostProcessing/Lidar/lidarscriptgeneratorthread.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Lidar/pointcloudgeneratorlidarthread.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
+    PostProcessing/asynclidarscriptfilewriter.h \
     PostProcessing/asyncpointcloudfilewriter.h \
     PostProcessing/lointerpolator.h \
     PostProcessing/loscriptgenerator.h \
