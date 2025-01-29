@@ -2989,7 +2989,7 @@ multiply	1	0	0	0
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>1</number>
+                  <number>3</number>
                  </property>
                  <widget class="QWidget" name="tab_Lidar_PointCloud_GenericSettings">
                   <property name="autoFillBackground">
@@ -3541,7 +3541,7 @@ These operations are calculated only once when starting operations so calculatin
                             <x>0</x>
                             <y>0</y>
                             <width>662</width>
-                            <height>267</height>
+                            <height>273</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_31">
@@ -3725,6 +3725,19 @@ These operations are calculated only once when starting operations so calculatin
                               </spacer>
                              </item>
                             </layout>
+                           </item>
+                           <item>
+                            <spacer name="verticalSpacer_4">
+                             <property name="orientation">
+                              <enum>Qt::Vertical</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>20</width>
+                               <height>40</height>
+                              </size>
+                             </property>
+                            </spacer>
                            </item>
                           </layout>
                          </widget>
