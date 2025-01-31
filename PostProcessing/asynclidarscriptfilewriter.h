@@ -38,7 +38,8 @@ public:
             CF_NONE = 0,    // Do not write these coords
             CF_FLOAT,       // Metres
             CF_DOUBLE,      // Metres
-            CF_SHORT,       // 16-bit millimetres (note range -32768...32767, points outside will be discarded)
+            CF_SHORT,       // 16-bit millimetres (range -32768...32767, points outside will be discarded)
+            CF_SHORT_DELTA, // 16-bit delta millimeters (range -16384...16383, points outside will be discarded)
         };
 
         enum TimeFormat
@@ -48,10 +49,21 @@ public:
             TF_MICROSECONDS_DELTA,  // 16-bit microsecond delta time to the previous one
         };
 
-        CoordsFormat coordsFormat_HitPoint = CF_FLOAT;
-        CoordsFormat coordsFormat_Origin = CF_NONE;
-        TimeFormat timeFormat = TF_NONE;
+        enum Qualityformat
+        {
+            QF_NONE = 0,            // Do not write quality
+            QF_FLOAT,               // 32-bit float
+            QF_UCHAR,               // Unsigned char, float range 0...1 mapped to 0...255
+        };
+
         bool binary = true;
+        CoordsFormat coordsFormat_HitPoint = CF_FLOAT;
+        CoordsFormat coordsFormat_SourcePoint = CF_NONE;
+        int numberOfDecimals_Hitpoints = 3;
+        int numberOfDecimals_SourcePoint = 3;
+        int numberOfDecimals_Quality = 2;
+        TimeFormat timeFormat = TF_NONE;
+        Qualityformat qualityFormat = QF_FLOAT;
         QByteArray endOfLine = "\n";
     };
 
@@ -67,12 +79,23 @@ public:
     unsigned int getNumberOfPointsWritten(void);
 
 private:
+    enum PointType
+    {
+        PT_SCANNING_NOT_ACTIVE = LidarScriptGeneratorThread::Output::PT_SCANNING_NOT_ACTIVE,
+        PT_MISS = LidarScriptGeneratorThread::Output::PT_MISS,
+        PT_HIT = LidarScriptGeneratorThread::Output::PT_HIT,
+
+        PT_DELTA_EXCEEDED = 10,
+
+        PT_UNDEFINED = 255,
+    };
+
     QFile file;
     bool openFile(void);
     void writeHeader(void);
-    void writePoint(const LidarScriptGeneratorThread::Output::Point* const point);
-    void writePoint_XYZ(const LidarScriptGeneratorThread::Output::Point* const point);
-    void writePoint_PLY(const LidarScriptGeneratorThread::Output::Point* const point);
+    bool writePoint(const LidarScriptGeneratorThread::Output::Point* const point, const PointType pointTypeOverride = PT_UNDEFINED, const bool forceWrite = false);
+//    void writePoint_XYZ(const LidarScriptGeneratorThread::Output::Point* const point);
+//    void writePoint_PLY(const LidarScriptGeneratorThread::Output::Point* const point);
     void finalizeFile(void);
     QByteArray getCoordFormatString(const Params::CoordsFormat format);
 
@@ -100,6 +123,12 @@ private:
 
     unsigned int startTimeFirstByte = 0;
     unsigned int startTimeLastByte = 0;
+    bool startTimeDetected = false;
+    qint64 startTime = 0;
+
+    Eigen::Vector3i lastWrittenHitPoint = Eigen::Vector3i::Identity();
+    Eigen::Vector3i lastWrittenSourcePoint = Eigen::Vector3i::Identity();
+    qint64 lastWrittenTime_us = 0;
 
     enum TerminateRequest
     {

@@ -36,6 +36,7 @@
 #include <QSettings>
 #include <QNetworkDatagram>
 
+#include "PostProcessing/Lidar/PointFilter/expressionfilter_base.h"
 #include "gnssmessage.h"
 #include "ubloxdatastreamprocessor.h"
 #include "Eigen/Geometry"
@@ -279,6 +280,8 @@ private slots:
 
     void on_pushButton_Lidar_PointCloud_ConvexHulls_Export_clicked();
 
+    void on_pushButton_Lidar_PointCloud_ConvexHulls_Export_2_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -396,7 +399,9 @@ private:
 
     void saveParametersToQSettings(QSettings& settings);
     void loadParametersFromQSettings(QSettings& settings);
-    bool generateLidarPointCloudConvexHullMap(QMap<QString, ConvexHull>& hullMap);
+    bool generateLidarPointCloudConvexHullMap(QPlainTextEdit *textEdit, QMap<QString, ConvexHull>& hullMap);
+    bool generateExpressionMap(QPlainTextEdit *textEdit, const QVector<PointFilter::ExpressionFilter_Base::ConvexHullFilter>& convexHullFilters, QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>>& expressionMap);
+    bool saveConvexHullsToFile(QPlainTextEdit *textEdit);
 
     void generateScanningStateMap(QMap<qint64, ScanningState>& map, const QString &tagIdent_BeginNewObject, const QString &tagIdent_BeginPoints, const QString &tagIdent_EndPoints);
 

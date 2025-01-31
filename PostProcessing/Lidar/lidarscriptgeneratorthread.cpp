@@ -253,7 +253,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                         for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
                         {
                             LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
+                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / pointNum_Back)) / 1000000;
 
                             if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
                             {

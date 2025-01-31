@@ -2691,7 +2691,7 @@ multiply	1	0	0	0
               <bool>true</bool>
              </property>
              <property name="currentIndex">
-              <number>2</number>
+              <number>3</number>
              </property>
              <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
               <property name="autoFillBackground">
@@ -2989,7 +2989,7 @@ multiply	1	0	0	0
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>3</number>
+                  <number>1</number>
                  </property>
                  <widget class="QWidget" name="tab_Lidar_PointCloud_GenericSettings">
                   <property name="autoFillBackground">
@@ -3767,76 +3767,795 @@ These operations are calculated only once when starting operations so calculatin
               <attribute name="title">
                <string>Script</string>
               </attribute>
-              <layout class="QVBoxLayout" name="verticalLayout_12">
+              <layout class="QVBoxLayout" name="verticalLayout_39">
                <item>
-                <layout class="QGridLayout" name="gridLayout_Lidar_Script_TimeSettings">
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Min">
+                <widget class="QTabWidget" name="tabWidget_Lidar_Script">
+                 <property name="autoFillBackground">
+                  <bool>true</bool>
+                 </property>
+                 <property name="currentIndex">
+                  <number>3</number>
+                 </property>
+                 <widget class="QWidget" name="tab_Lidar_Script_GenericSettings">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="title">
+                   <string>Generic settings</string>
+                  </attribute>
+                  <layout class="QVBoxLayout" name="verticalLayout_33">
+                   <item>
+                    <layout class="QGridLayout" name="gridLayout_7">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Min">
+                       <property name="text">
+                        <string>Uptime range, min:</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Min">
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>0</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Max">
+                       <property name="text">
+                        <string>Uptime range, max:</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Max">
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>9223372036854775807</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <widget class="QPushButton" name="pushButton_Lidar_Script_UptimeRange_Max_Maximize">
+                       <property name="text">
+                        <string>Set max</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QLabel" name="label_Lidar_Script_GenericSettings_NumberOfThreads">
+                       <property name="text">
+                        <string>Number of threads:</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QSpinBox" name="spinBox_Lidar_Script_GenericSettings_NumberOfThreads">
+                       <property name="minimum">
+                        <number>1</number>
+                       </property>
+                       <property name="maximum">
+                        <number>256</number>
+                       </property>
+                       <property name="value">
+                        <number>10</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="2">
+                      <widget class="QPushButton" name="pushButton_Lidar_Script_GenericSettings_NumberOfThreads_SetIdeal">
+                       <property name="text">
+                        <string>Set ideal</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="0">
+                      <widget class="QLabel" name="label_Lidar_Script_GenericSettings_MaxWorkUnitDuration">
+                       <property name="text">
+                        <string>Maximum thread work unit duration (logging time, ms):</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="1">
+                      <widget class="QSpinBox" name="spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration">
+                       <property name="minimum">
+                        <number>100</number>
+                       </property>
+                       <property name="maximum">
+                        <number>60000</number>
+                       </property>
+                       <property name="singleStep">
+                        <number>1000</number>
+                       </property>
+                       <property name="value">
+                        <number>1000</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="2">
+                      <widget class="QPushButton" name="pushButton_Lidar_Script_GenericSettings_NumberOfThreads_ResetToDefault">
+                       <property name="text">
+                        <string>Reset to default</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer_6">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>193</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QWidget" name="tab_Lidar_Script_ConvexHulls">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="title">
+                   <string>Convex hulls</string>
+                  </attribute>
+                  <layout class="QVBoxLayout" name="verticalLayout_34">
+                   <item>
+                    <widget class="QLabel" name="label_Lidar_Script_ConvexHulls">
+                     <property name="text">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Convex hulls here are defined using a set of points. They can be used in filter and quality-expressions (on tabs to the right of this) in lidar.in_convex_hull, rig.in_convex_hull and ned.in_convex_hull-functions and their indexed versions. Hull indexes are in a form &amp;quot;chull_hullname&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPlainTextEdit" name="plainTextEdit_Lidar_Script_ConvexHulls">
+                     <property name="toolTip">
+                      <string>Press shift-F1 for help</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// Division between &quot;before and after rotation&quot; here is done &quot;in&quot; mounting point (center) of the lidar unit.&lt;br&gt;
+// Calibration for &quot;up/down&quot;-tilt (when lidar is lying on a NE-plane) of the laser beam:&lt;br&gt;
+rotate pitch 0 deg; // Should not be needed if lidar is a quality unit&lt;br&gt;
+// Up/down shift of the measurement &quot;core&quot;'s measurement thingies (rotating part with laser and receiver):&lt;br&gt;
+translate 0 0 -0.031; // Value 31 mm is from RPLidar A3M1's spec (drawing)
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting operations so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="lineWrapMode">
+                      <enum>QPlainTextEdit::NoWrap</enum>
+                     </property>
+                     <property name="plainText">
+                      <string>// This is an example of how hulls can be defined.
+// You can write comments in this &quot;End of line&quot;-style
+/* or write comment just about anywhere using this syntax /* But comments can't be nested */
+// Otherwise hulls are defined as nested definitions inside &quot;{&quot; and &quot;}&quot;-characters:
+
+// First a hull name (they are handled case-insensitive):
+OriginCube
+{
+    // Here you can define the points, also inside nested curly braces:
+    {{-1} {-1} {-1}}
+    // Individual coordinates are evaluated using TinyExpr++ (with standard constants  and functions):
+    { {-cos(0) /* = -1 */} {-sqrt(1) /* = -1*/} {sin(pi/2) /* = 1 */ } }
+    { {-1} { 1} {-1}}
+    { {-1} { 1} { 1}}
+
+    { { 1} {-1} {-1}}
+    { { 1} {-1} { 1}}
+    { { 1} { 1} {-1}}
+    { { 1} { 1} { 1}}
+}
+// You can add any number of hulls here using the syntax above.
+
+
+
+</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_Lidar_PointCloud_ConvexHulls_Export_2">
+                     <property name="text">
+                      <string>Export convex hulls to files...</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QWidget" name="tab_Lidar_Script_FilterExpression">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="title">
+                   <string>Filter expression</string>
+                  </attribute>
+                  <layout class="QVBoxLayout" name="verticalLayout_35">
+                   <item>
+                    <widget class="QLabel" name="label_Lidar_Script_FilterExpression_Instructions">
+                     <property name="text">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TODO: Write some instructions here...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPlainTextEdit" name="plainTextEdit_Lidar_Script_FilterExpression">
+                     <property name="toolTip">
+                      <string>Press shift-F1 for help</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These operations are matrix translations/transforms generated using several commands. All operations are &amp;quot;chained&amp;quot; using matrix multiplication.&lt;/p&gt;&lt;p&gt;Each operation must end in &amp;quot;;&amp;quot;-character. Comments can be added using &amp;quot;//&amp;quot;-characters (rest of the line is interpreted as comment). Commands and arguments are case-insensitive.&lt;/p&gt;&lt;p&gt;Available commands: &lt;/p&gt;
+&lt;ul&gt;
+	&lt;li&gt;rotate &amp;lt;axis&amp;gt; &amp;lt;amount&amp;gt;  &amp;lt;unit&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;axis = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;n&quot;, &quot;x&quot; or &quot;roll&quot;: Rotate around N (roll/forward)-axis, positive values roll to the right&lt;/li&gt;
+			&lt;li&gt;&quot;e&quot;, &quot;y&quot; or &quot;pitch&quot;: Rotate around Y (pitch/sideways(to the right))-axis, positive values turning the nose up&lt;/li&gt;
+			&lt;li&gt;&quot;d&quot;, &quot;z&quot;, &quot;yaw&quot; or &quot;heading&quot;: Rotate around Z (yaw/down)-axis, positive values turning to clockwise direction in world-space&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+		&lt;li&gt;amount = amount of rotation. Direction of rotation is defined by right-hand rule (directions explained above) &lt;/li&gt;
+		&lt;li&gt;unit = 
+		&lt;ul&gt;
+			&lt;li&gt;&quot;rad&quot;: amount of rotation expressed as radians (0...2*pi for full round)&lt;/li&gt;
+			&lt;li&gt;&quot;deg&quot;: amount of rotation expressed as degrees&lt;/li&gt;
+		&lt;/ul&gt;
+		&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;translate &amp;lt;x&amp;gt; &amp;lt;y&amp;gt;  &amp;lt;z&amp;gt;
+	&lt;br&gt;Where:
+	&lt;ul&gt;
+		&lt;li&gt;x, y and z = translation in different axes (initially XYZ corresponds to NED)&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+
+	&lt;li&gt;multiply &amp;lt;m(1,1)&amp;gt; &amp;lt;m(1,2)&amp;gt; &amp;lt;m(1,3)&amp;gt; &amp;lt;m(1,4)&amp;gt; &amp;lt;m(2,1)&amp;gt; &amp;lt;m(2,2)&amp;gt; &amp;lt;m(2,3)&amp;gt; &amp;lt;m(2,4)&amp;gt; &amp;lt;m(3,1)&amp;gt; &amp;lt;m(3,2)&amp;gt; &amp;lt;m(3,3)&amp;gt; &amp;lt;m(3,4)&amp;gt;
+	&lt;br&gt;Where: 
+	&lt;ul&gt;
+		&lt;li&gt;m(x,y): Value in matrix (x = row, y = column). Last row can not be defined as only affine transforms are supported.&lt;/li&gt;
+	&lt;/ul&gt;
+	&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+Example:&lt;br&gt;
+// Division between &quot;before and after rotation&quot; here is done &quot;in&quot; mounting point (center) of the lidar unit.&lt;br&gt;
+// Calibration for &quot;up/down&quot;-tilt (when lidar is lying on a NE-plane) of the laser beam:&lt;br&gt;
+rotate pitch 0 deg; // Should not be needed if lidar is a quality unit&lt;br&gt;
+// Up/down shift of the measurement &quot;core&quot;'s measurement thingies (rotating part with laser and receiver):&lt;br&gt;
+translate 0 0 -0.031; // Value 31 mm is from RPLidar A3M1's spec (drawing)
+&lt;/p&gt;
+&lt;p&gt;
+These operations are calculated only once when starting operations so calculating doesn't affect overall performance noticeably.
+&lt;/p&gt;
+
+&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="lineWrapMode">
+                      <enum>QPlainTextEdit::NoWrap</enum>
+                     </property>
+                     <property name="plainText">
+                      <string>mid360 192.168.40.100
+{
+        not
+        (
+        ((lidar.mid360.properties &amp; 0x3f) != 0)
+        ||
+        (
+        (lidar.coord.x &lt; -0.45) &amp;&amp; (lidar.coord.x &gt; -3.5) &amp;&amp; 
+        (abs(lidar.coord.y / lidar.coord.x) &lt; 1.0) &amp;&amp; 
+        (abs(lidar.coord.z / lidar.coord.x) &lt; (3.0 / 1.2)) 
+        )
+        ||
+        (
+        (lidar.coord.x &lt; 0.0) &amp;&amp; (lidar.coord.x &gt; -3.5) &amp;&amp;
+        (lidar.coord.z &lt; 0.0) &amp;&amp; (abs(lidar.coord.y) &lt; 0.1)
+        )
+        ||
+        (lidar.distance &lt; 0.15)
+        )
+}
+{ 1 / lidar.distance }</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QWidget" name="tab_Lidar_Script_FileFormat">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="title">
+                   <string>File format settings</string>
+                  </attribute>
+                  <widget class="QCheckBox" name="checkBox_Lidar_Script_FileFormat_Binary">
+                   <property name="geometry">
+                    <rect>
+                     <x>10</x>
+                     <y>20</y>
+                     <width>644</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="text">
-                    <string>Uptime range, min:</string>
+                    <string>Binary (more precise, faster to generate, not human-readable)</string>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_hitPointCoordsFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>30</x>
+                     <y>60</y>
+                     <width>311</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>Write hit point coordinates &amp; format:</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                   </widget>
-                 </item>
-                 <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Min">
-                   <property name="maximumSize">
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>60</y>
+                     <width>300</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimumSize">
                     <size>
-                     <width>200</width>
-                     <height>16777215</height>
+                     <width>300</width>
+                     <height>0</height>
                     </size>
                    </property>
-                   <property name="text">
-                    <string>0</string>
+                   <property name="currentIndex">
+                    <number>0</number>
                    </property>
+                   <item>
+                    <property name="text">
+                     <string>None (don't write coords)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>float (32 bit)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>double (64 bit)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>short (-32768...32767 mm)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>short delta</string>
+                    </property>
+                   </item>
                   </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="label_Lidar_Script_UptimeRange_Max">
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_SourceCoordsFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>30</x>
+                     <y>90</y>
+                     <width>311</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
                    <property name="text">
-                    <string>Uptime range, max:</string>
+                    <string>Write (lidar's) source coordinates &amp; format:</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                   </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QLineEdit" name="lineEdit_Lidar_Script_UptimeRange_Max">
-                   <property name="maximumSize">
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_SourceCoordsFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>90</y>
+                     <width>300</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimumSize">
                     <size>
-                     <width>200</width>
-                     <height>16777215</height>
+                     <width>300</width>
+                     <height>0</height>
                     </size>
                    </property>
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>None (don't write coords)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>float (32 bit)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>double (64 bit)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>short (-32767...32767 mm)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>short delta</string>
+                    </property>
+                   </item>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_TimeFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>30</x>
+                     <y>120</y>
+                     <width>311</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
                    <property name="text">
-                    <string>9223372036854775807</string>
+                    <string>Write time &amp; format:</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                   </widget>
-                 </item>
-                 <item row="1" column="2">
-                  <widget class="QPushButton" name="pushButton_Lidar_Script_UptimeRange_Max_Maximize">
-                   <property name="text">
-                    <string>Set max</string>
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_TimeFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>120</y>
+                     <width>300</width>
+                     <height>23</height>
+                    </rect>
                    </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="3">
-                  <spacer name="horizontalSpacer_Lidar_Script_TimeSettings_Right">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
+                   <property name="minimumSize">
                     <size>
-                     <width>40</width>
+                     <width>300</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>None (don't write time)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Nanoseconds (two 32-bit values)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Microsecond delta 16-bit</string>
+                    </property>
+                   </item>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_QualityFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>40</x>
+                     <y>150</y>
+                     <width>311</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>Write quality &amp; format:</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_QualityFormat">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>150</y>
+                     <width>300</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>None (don't write quality)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>float (32 bit)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>unsigned char (8 bit, 0...1 -&gt; 0...255)</string>
+                    </property>
+                   </item>
+                  </widget>
+                  <widget class="QCheckBox" name="checkBox_Lidar_Script_FileFormat_DontWriteFiles">
+                   <property name="geometry">
+                    <rect>
+                     <x>10</x>
+                     <y>0</y>
+                     <width>644</width>
+                     <height>21</height>
+                    </rect>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                   <property name="text">
+                    <string>Don't write files (simulate processing only)</string>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_Decimals_Source">
+                   <property name="geometry">
+                    <rect>
+                     <x>8</x>
+                     <y>241</y>
+                     <width>351</width>
                      <height>20</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>Decimals for source points (text files &amp; floats/doubles only):</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_PLY_EOLCharacters">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>183</y>
+                     <width>300</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>0</height>
                     </size>
                    </property>
-                  </spacer>
-                 </item>
-                </layout>
+                   <property name="currentIndex">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>CR (PLY-standard(?), meshlab doesn't support)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>LF (&quot;Linux&quot;)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>CR+LF (&quot;Windows&quot;)</string>
+                    </property>
+                   </item>
+                  </widget>
+                  <widget class="QSpinBox" name="spinBox_Lidar_Script_FileFormat_Decimals_Quality">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>270</y>
+                     <width>34</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>6</number>
+                   </property>
+                   <property name="value">
+                    <number>2</number>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_Decimals_Quality">
+                   <property name="geometry">
+                    <rect>
+                     <x>31</x>
+                     <y>270</y>
+                     <width>311</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>Decimals for quality (text files &amp; float/doubles only):</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_EOLCharacters">
+                   <property name="geometry">
+                    <rect>
+                     <x>31</x>
+                     <y>183</y>
+                     <width>137</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>End of line character(s):</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                  <widget class="QSpinBox" name="spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>241</y>
+                     <width>34</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>6</number>
+                   </property>
+                   <property name="value">
+                    <number>3</number>
+                   </property>
+                  </widget>
+                  <widget class="QSpinBox" name="spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords">
+                   <property name="geometry">
+                    <rect>
+                     <x>360</x>
+                     <y>212</y>
+                     <width>34</width>
+                     <height>23</height>
+                    </rect>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>6</number>
+                   </property>
+                   <property name="value">
+                    <number>3</number>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="label_Lidar_Script_FileFormat_Decimals_HitpointCoords">
+                   <property name="geometry">
+                    <rect>
+                     <x>31</x>
+                     <y>212</y>
+                     <width>323</width>
+                     <height>16</height>
+                    </rect>
+                   </property>
+                   <property name="text">
+                    <string>Decimals for hit points (text files &amp; floats/doubles only):</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </widget>
+                </widget>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_Lidar_GenerateScript">
@@ -3844,19 +4563,6 @@ These operations are calculated only once when starting operations so calculatin
                   <string>Generate script...</string>
                  </property>
                 </widget>
-               </item>
-               <item>
-                <spacer name="verticalSpacer_LidarScript_Bottom">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
                </item>
               </layout>
              </widget>

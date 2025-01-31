@@ -3222,8 +3222,9 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
     QMap<QString, ConvexHull> hullMap;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
 
-    if (!generateLidarPointCloudConvexHullMap(hullMap))
+    if (!generateLidarPointCloudConvexHullMap(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls, hullMap))
     {
+        ui->tabWidget_Lidar_PointCloud->setCurrentIndex(1);
         return;
     }
 
@@ -3239,13 +3240,9 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         hullIter++;
     }
 
-    try
+    if (!generateExpressionMap(ui->plainTextEdit_Lidar_PointCloud_FilterExpression, convexHullFilters, expressionMap))
     {
-        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
-    }
-    catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
-    {
-        addLogLine("Generating expression map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        ui->tabWidget_Lidar_PointCloud->setCurrentIndex(2);
         return;
     }
 
@@ -3365,7 +3362,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
             params.fileParams.xyz.endOfLine = "\r\n";
             break;
         default:
-            qFatal("Unhandled end of line.");
+            qFatal("Unhandled end of line format.");
             break;
         }
 
@@ -3483,19 +3480,12 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
     Eigen::Transform<double, 3, Eigen::Affine> transform_RPLidar_Generated_BeforeRotation;
     QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_Lidar_Generated_AfterRotation;
 
-    const QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED> *relposnedMessages[3];
-    for (int i = 0; i < 3; i++)
-    {
-        relposnedMessages[i] = &rovers[i].relposnedMessages;
-    }
-
-    // TODO: Read hulls and expressions from right textedits!!!
-
     QMap<QString, ConvexHull> hullMap;
     QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>> expressionMap;
 
-    if (!generateLidarPointCloudConvexHullMap(hullMap))
+    if (!generateLidarPointCloudConvexHullMap(ui->plainTextEdit_Lidar_Script_ConvexHulls, hullMap))
     {
+        ui->tabWidget_Lidar_Script->setCurrentIndex(1);
         return;
     }
 
@@ -3511,13 +3501,9 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         hullIter++;
     }
 
-    try
+    if (!generateExpressionMap(ui->plainTextEdit_Lidar_Script_FilterExpression, convexHullFilters, expressionMap))
     {
-        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_FilterExpression->toPlainText(), convexHullFilters);
-    }
-    catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
-    {
-        addLogLine("Generating expression map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
+        ui->tabWidget_Lidar_Script->setCurrentIndex(2);
         return;
     }
 
@@ -3538,6 +3524,20 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
     if (!updateLOSolverReferencePointLocations(loSolver_Base))
     {
         return;
+    }
+
+    for (auto exprIter = expressionMap.begin(); exprIter != expressionMap.end(); exprIter++)
+    {
+        // Check that all devices defined in expressions have corresponding rig to ned-transform.
+        // We can also set them here already, because they don't change on the fly.
+
+        if (!transforms_Lidar_Generated_AfterRotation.contains(exprIter.key()))
+        {
+            addLogLine(QString("Error: Device \"") + exprIter.key().toString() + "\" defined in expressions doesn't have corresponding transform defined in \"Operations after rotation\"");
+            return;
+        }
+
+        exprIter.value()->setTransform_LidarToRig(transforms_Lidar_Generated_AfterRotation.value(exprIter.key()));
     }
 
     getLidarFilteringSettings(lidarFilteringSettings);
@@ -3563,28 +3563,6 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
                                  ui->lineEdit_TagIndicatingBeginningOfObjectPoints->text(),
                                  ui->lineEdit_TagIndicatingEndOfObjectPoints->text());
 
-        Lidar::LidarScriptGenerator::Params params;
-
-        params.threadConstData.transform_NEDToXYZ = &transform_NEDToXYZ;
-        params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
-        params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
-        params.baseFileName = fileNameList[0];
-        params.threadConstData.scanningStateMap = &scanningStateMap;
-        params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
-
-/*        Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
-                        ui->doubleSpinBox_Lidar_BoundingSphere_Center_E->value(),
-                        ui->doubleSpinBox_Lidar_BoundingSphere_Center_D->value());
-*/
-//        params.threadConstData.rpLidar.boundingSphere_Center = &boundingSphere_Center;
-//        params.threadConstData.boundingSphere_Radius = ui->doubleSpinBox_Lidar_BoundingSphere_Radius->value();
-
-
-        params.threadConstData.rpLidar.rounds = &lidarRounds;
-        params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
-        params.threadConstData.loSolver_Base = &loSolver_Base;
-        params.threadConstData.lidarFileNames = &lidarFileNames;
-
         // Map where uptimes for all equal ITOWs are the same.
         // This makes processing later easier
         // Uptimes here are calculated as averages from rover values (for each ITOW)
@@ -3594,18 +3572,10 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
         addLogLine("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
 
-        params.threadConstData.averagedSync = &averagedSync;
+        Lidar::LidarScriptGenerator::Params params;
 
-        params.threadConstData.mid360.datagrams = &mid360Datagrams;
-
-        params.threadConstData.expressionMap_Source = &expressionMap;
-        params.threadConstData.rovers = rovers;
-
-        // TODO: Read from the correct place
-        params.maxWorkUnitDuration = ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value();
-        params.numOfWorkerThreads = ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value();
-
-
+        params.baseFileName = fileNameList[0];
+        params.dontWriteFiles = ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked();
 
         bool convOk;
         params.uptime_Min = ui->lineEdit_Lidar_Script_UptimeRange_Min->text().toLongLong(&convOk);
@@ -3624,14 +3594,49 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
             return;
         }
 
-//        params.tags = &tags;
+        params.maxWorkUnitDuration = ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value();
+        params.numOfWorkerThreads = ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->value();
+
+        params.threadConstData.transform_NEDToXYZ = &transform_NEDToXYZ;
+        params.threadConstData.transforms_AfterRotation = &transforms_Lidar_Generated_AfterRotation;
+        params.threadConstData.expressionMap_Source = &expressionMap;
+        params.threadConstData.scanningStateMap = &scanningStateMap;
         params.threadConstData.rovers = rovers;
+        params.threadConstData.lidarFileNames = &lidarFileNames;
+        params.threadConstData.averagedSync = &averagedSync;
+        params.threadConstData.loSolver_Base = &loSolver_Base;
+
+        params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
         params.threadConstData.rpLidar.rounds = &lidarRounds;
         params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
+        params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
+
         params.threadConstData.mid360.datagrams = &mid360Datagrams;
-        // TODO: Add base losolver
-//        params.loInterpolator = &loInterpolator_Lidar;
-//        params.lidarFileNames = &lidarFileNames;
+
+        params.fileParams.binary = ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked();
+        params.fileParams.coordsFormat_HitPoint = (AsyncLidarScriptFileWriter::Params::CoordsFormat)ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex();
+        params.fileParams.coordsFormat_SourcePoint = (AsyncLidarScriptFileWriter::Params::CoordsFormat)ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex();
+        params.fileParams.numberOfDecimals_Hitpoints = ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value();
+        params.fileParams.numberOfDecimals_SourcePoint = ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value();
+        params.fileParams.numberOfDecimals_Quality = ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value();
+        params.fileParams.timeFormat = (AsyncLidarScriptFileWriter::Params::TimeFormat)ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex();
+        params.fileParams.qualityFormat = (AsyncLidarScriptFileWriter::Params::Qualityformat)ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex();
+
+        switch (ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex())
+        {
+        case 0:
+            params.fileParams.endOfLine = "\r";
+            break;
+        case 1:
+            params.fileParams.endOfLine = "\n";
+            break;
+        case 2:
+            params.fileParams.endOfLine = "\r\n";
+            break;
+        default:
+            qFatal("Unhandled end of line.");
+            break;
+        }
 
         Lidar::LidarScriptGenerator lidarScriptGenerator;
 
@@ -4200,16 +4205,16 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_GenericSettings_NumberOf
     ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->setValue(1000);
 }
 
-bool PostProcessingForm::generateLidarPointCloudConvexHullMap(QMap<QString, ConvexHull>& hullMap)
+bool PostProcessingForm::generateLidarPointCloudConvexHullMap(QPlainTextEdit* textEdit, QMap<QString, ConvexHull>& hullMap)
 {
     try
     {
-        hullMap = ConvexHullGenerator::generateMap(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->toPlainText());
+        hullMap = ConvexHullGenerator::generateMap(textEdit->toPlainText());
     }
     catch (ConvexHullGenerator::Issue& issue)
     {
         addLogLine("Generating convex hull map failed. Error: " + issue.text + "CharIndex: " + QString::number(issue.beginChar));
-        QTextCursor cursor = ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->textCursor();
+        QTextCursor cursor = textEdit->textCursor();
         cursor.setPosition(issue.beginChar);
         if (issue.endChar != -1)
         {
@@ -4219,30 +4224,64 @@ bool PostProcessingForm::generateLidarPointCloudConvexHullMap(QMap<QString, Conv
         {
             cursor.setPosition(issue.beginChar + 1, QTextCursor::KeepAnchor);
         }
-        ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->setTextCursor(cursor);
-        ui->tabWidget_Lidar_PointCloud->setCurrentIndex(1);
-        ui->plainTextEdit_Lidar_PointCloud_ConvexHulls->setFocus();
+        textEdit->setTextCursor(cursor);
+        textEdit->setFocus();
         return false;
     }
 
     return true;
 }
 
+bool PostProcessingForm::generateExpressionMap(QPlainTextEdit *textEdit, const QVector<PointFilter::ExpressionFilter_Base::ConvexHullFilter> &convexHullFilters, QMap<LidarDevice, std::shared_ptr<PointFilter::ExpressionFilter_Base>>& expressionMap)
+{
+    try
+    {
+        expressionMap = PointFilter::ExpressionFilterGenerator::generateMap(textEdit->toPlainText(), convexHullFilters);
+    }
+    catch (PointFilter::ExpressionFilterGenerator::Issue& issue)
+    {
+        addLogLine("Generating expression map failed. Error: " + issue.text + ". CharIndex: " + QString::number(issue.beginChar));
+        QTextCursor cursor = textEdit->textCursor();
+        cursor.setPosition(issue.beginChar);
+        if (issue.endChar != -1)
+        {
+            cursor.setPosition(issue.endChar, QTextCursor::KeepAnchor);
+        }
+        else
+        {
+            cursor.setPosition(issue.beginChar + 1, QTextCursor::KeepAnchor);
+        }
+        textEdit->setTextCursor(cursor);
+        textEdit->setFocus();
+        return false;
+    }
+
+    return true;
+}
+
+
 void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_clicked()
+{
+    saveConvexHullsToFile(ui->plainTextEdit_Lidar_PointCloud_ConvexHulls);
+}
+
+bool PostProcessingForm::saveConvexHullsToFile(QPlainTextEdit *textEdit)
 {
     QMap<QString, ConvexHull> hullMap;
 
-    if (!generateLidarPointCloudConvexHullMap(hullMap))
+    if (!generateLidarPointCloudConvexHullMap(textEdit, hullMap))
     {
-        return;
+        return false;
     }
 
     if (!fileDialog_ExportConvexHulls.exec())
     {
-        return;
+        return false;
     }
 
     QMap<QString, ConvexHull>::iterator iter = hullMap.begin();
+
+    bool retval = true;
 
     while (iter != hullMap.end())
     {
@@ -4251,11 +4290,15 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_click
         if (!iter.value().exportHullToObjFile(fullFileName))
         {
             addLogLine("Creating file \"" + fullFileName + ".obj\" failed.");
+            retval = false;
         }
 
         iter++;
     }
+
+    return retval;
 }
+
 
 void PostProcessingForm::generateScanningStateMap(QMap<qint64, ScanningState>& map, const QString& tagIdent_BeginNewObject, const QString& tagIdent_BeginPoints, const QString& tagIdent_EndPoints)
 {
@@ -4407,3 +4450,9 @@ void PostProcessingForm::generateScanningStateMap(QMap<qint64, ScanningState>& m
         }
     }
 }
+
+void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_2_clicked()
+{
+    saveConvexHullsToFile(ui->plainTextEdit_Lidar_Script_ConvexHulls);
+}
+
