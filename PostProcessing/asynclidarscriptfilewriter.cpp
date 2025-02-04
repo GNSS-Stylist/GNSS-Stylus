@@ -506,8 +506,8 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
         case Params::TF_NONE:
             break;
         case Params::TF_NANOSECONDS:
-            lineOut += " " + QString::number((unsigned int)(point->iTOW_ns >> 32));
             lineOut += " " + QString::number((unsigned int)(point->iTOW_ns));
+            lineOut += " " + QString::number((unsigned int)(point->iTOW_ns >> 32));
             break;
         case Params::TF_MICROSECONDS_DELTA:
             qint64 deltaTime = (point->iTOW_ns / 1000) - lastWrittenTime_us;
@@ -782,6 +782,8 @@ void AsyncLidarScriptFileWriter::run()
             numberOfPointsWrittenMutex.lock();
 
             auto pointIter = outputData.points->constBegin();
+
+//            file.write(QString(QString(params.endOfLine + "Dbg. Chunk: " + QString::number(outputData.workUnit.chunkIndex) + ", points: " + QString::number(outputData.points->count()) + ", Duration (uptime, ms): " + QString::number(outputData.workUnit.endingUptime - outputData.workUnit.beginningUptime)) + ", Duration (itow, ns): " + QString::number(outputData.workUnit.endingITOWTime_ns - outputData.workUnit.beginningITOWTime_ns) + params.endOfLine).toLatin1());
 
             while (pointIter != outputData.points->constEnd())
             {

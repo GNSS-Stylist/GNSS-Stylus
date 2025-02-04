@@ -69,6 +69,9 @@ public:
 
     void generateLidarScript(const Params& params);
 
+private:
+    UBXMessage_RELPOSNED::ITOW getITOW(const QMap<qint64, UBXMessage_RELPOSNED::ITOW>* averagedSync, const quint64 &uptime_ms);
+
 signals:
     void infoMessage(const QString&);       //!< Signal for info-message (not warning or error)
     void warningMessage(const QString&);    //!< Signal for warning message (less severe than error)

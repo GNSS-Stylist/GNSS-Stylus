@@ -33,23 +33,16 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
     RPLidarPlausibilityFilter plausibilityFilter;
     plausibilityFilter.setSettings(*params.threadConstData.rpLidar.filteringSettings);
 
-    // Map where uptimes for all equal ITOWs are the same.
-    // This makes processing later easier
-    // Uptimes here are calculated as averages from rover values (for each ITOW)
-    QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
-
-    emit infoMessage("Generating equalized rover uptime timestamps...");
-    PostProcessingForm::generateAveragedRoverUptimeSync(params.threadConstData.rovers, averagedSync);
-    emit infoMessage("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
-
     QMap<LidarDevice, std::shared_ptr<AsyncLidarScriptFileWriter> > fileWriters;
 
     emit infoMessage("Searching for devices and creating output files...");
 
+//    qint64 iTOWTime_Min = get
+
     auto rpLidarIter = params.threadConstData.rpLidar.rounds->lowerBound(params.uptime_Min);
 
-    qint64 minLogUptime = std::numeric_limits<qint64>::max();
-    qint64 maxLogUptime = 0;
+//    qint64 minLogUptime = std::numeric_limits<qint64>::max();
+//    qint64 maxLogUptime = 0;
 
     if ((rpLidarIter != params.threadConstData.rpLidar.rounds->end()) && (rpLidarIter.key() <= params.uptime_Max))
     {
@@ -81,25 +74,28 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             fileWriters.insert(device, outFileWriter);
         }
 
-        minLogUptime = std::min(minLogUptime, rpLidarIter.key());
-        maxLogUptime = std::max(maxLogUptime, params.threadConstData.rpLidar.rounds->last().endTime);
+//        minLogUptime = std::min(minLogUptime, rpLidarIter.key());
+//        maxLogUptime = std::max(maxLogUptime, params.threadConstData.rpLidar.rounds->last().endTime);
     }
 
-    auto mid360Iter = params.threadConstData.mid360.datagrams->lowerBound(params.uptime_Min);
+    qint64 iTOWTime_Min_ns = getITOW(params.threadConstData.averagedSync, params.uptime_Min) * 1000000ULL;
+    qint64 iTOWTime_Max_ns = getITOW(params.threadConstData.averagedSync, params.uptime_Max) * 1000000ULL;
+
+    auto mid360Iter = params.threadConstData.mid360.datagrams->lowerBound(iTOWTime_Min_ns);
 
     // Slight speedup(?) compare only ip-addresses (as quint32s) instead of LidarDevices
     QVector<quint32> foundMid360Devices;
 
-    while ((mid360Iter != params.threadConstData.mid360.datagrams->end()) && (mid360Iter.key() <= params.uptime_Max))
+    while ((mid360Iter != params.threadConstData.mid360.datagrams->end()) && (mid360Iter.key() <= iTOWTime_Max_ns))
     {
-        quint32 ipAddress = mid360Iter.value().datagram.senderAddress().toIPv4Address();
+        quint32 ipAddress = mid360Iter.value()->datagram.senderAddress().toIPv4Address();
 
         if (!foundMid360Devices.contains(ipAddress))
         {
             LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
             foundMid360Devices.push_back(ipAddress);
 
-            QString ipAddressString = mid360Iter.value().datagram.senderAddress().toString();
+            QString ipAddressString = mid360Iter.value()->datagram.senderAddress().toString();
             QString ipAddressString_Snake = ipAddressString;
             ipAddressString_Snake.replace('.', '_');
 
@@ -127,8 +123,8 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             fileWriters.insert(device, outFileWriter);
         }
 
-        minLogUptime = std::min(minLogUptime, mid360Iter.key());
-        maxLogUptime = std::max(maxLogUptime, mid360Iter.key());
+//        minLogUptime = std::min(minLogUptime, mid360Iter.key() / 1000000);
+//        maxLogUptime = std::max(maxLogUptime, mid360Iter.key() / 1000000);
 
         mid360Iter++;
     }
@@ -139,8 +135,11 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
         return;
     }
 
-    qint64 currentUptime = std::max(params.uptime_Min, minLogUptime);
-    qint64 maxUptime = std::min(params.uptime_Max, maxLogUptime);
+//    qint64 currentUptime = std::max(params.uptime_Min, minLogUptime);
+//    qint64 maxUptime = std::min(params.uptime_Max, maxLogUptime);
+
+    qint64 currentUptime = params.uptime_Min;
+    qint64 maxUptime = params.uptime_Max;
 
     LidarScriptGeneratorThread::WorkUnit newWorkUnit;
     newWorkUnit.valid = true;
@@ -167,6 +166,9 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
         {
             newWorkUnit.endingUptime = currentUptime + params.maxWorkUnitDuration;
         }
+
+        newWorkUnit.beginningITOWTime_ns = getITOW(params.threadConstData.averagedSync, newWorkUnit.beginningUptime) * 1000000ULL;
+        newWorkUnit.endingITOWTime_ns = getITOW(params.threadConstData.averagedSync, newWorkUnit.endingUptime) * 1000000ULL;
 
         workUnitQueue.enqueue(newWorkUnit);
         currentUptime = newWorkUnit.endingUptime;
@@ -355,6 +357,38 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
         }
     }
 }
+
+UBXMessage_RELPOSNED::ITOW LidarScriptGenerator::getITOW(const QMap<qint64, UBXMessage_RELPOSNED::ITOW> *averagedSync, const quint64& uptime_ms)
+{
+    if (averagedSync->isEmpty())
+    {
+        return -1;
+    }
+
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW>::const_iterator timeIter_High = averagedSync->upperBound(uptime_ms);
+
+    if (timeIter_High == averagedSync->constEnd())
+    {
+        // No greater key available -> extrapolate based on the last item
+
+        return averagedSync->last() + (uptime_ms - averagedSync->lastKey()) / 1000000;
+    }
+
+    if (timeIter_High == averagedSync->constBegin())
+    {
+        // No lower key available -> extrapolate based on the first item (which in this case is already in the iter)
+
+        return timeIter_High.value() - (timeIter_High.key() - uptime_ms) / 1000000;
+    }
+
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW>::const_iterator timeIter_Low = timeIter_High - 1;
+
+    return timeIter_Low.value() + (timeIter_High.value() - timeIter_Low.value()) *
+                                      (uptime_ms - timeIter_Low.key()) / (timeIter_High.key() - timeIter_Low.key());
+
+}
+
+
 
 }; // namespace Lidar
 

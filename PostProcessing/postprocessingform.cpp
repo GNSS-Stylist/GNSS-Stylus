@@ -1382,14 +1382,14 @@ void PostProcessingForm::handleReplay(bool firstRound)
 
         if (mid360Datagrams.find(nextUptime_ms) != mid360Datagrams.end())
         {
-            QList<Mid360Datagram> datagramItems = mid360Datagrams.values(nextUptime_ms);
+            QList<std::shared_ptr<Mid360Datagram> > datagramItems = mid360Datagrams.values(nextUptime_ms);
 
             // Since "The items that share the same key are available from most recently to least recently inserted."
             // (taken from QMultiMap's doc), iterate in "reverse order" here
 
             for (int i = datagramItems.size() - 1; i >= 0; i--)
             {
-                emit replayData_LivoxMid360(datagramItems[i].datagram, nextUptime_ms);
+                emit replayData_LivoxMid360(datagramItems[i]->datagram, nextUptime_ms);
             }
         }
 
@@ -3005,8 +3005,9 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
             }
 */
 
-            qint64 numberOfSamples = 0;
-            unsigned int numberOfRounds = 0;
+            qint64 numberOfRPLidarSamples = 0;
+            unsigned int numberOfRPLidarRounds = 0;
+            unsigned int numberOfMid360Datagrams = 0;
             unsigned int parseErrors = 0;
             unsigned int chunkIndex = 0;
             unsigned int firstDuplicateChunk = 0;
@@ -3112,12 +3113,12 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                         RPLidarThread::DistanceItem newItem;
                         dataStream >> newItem.distance >> newItem.angle >> newItem.quality;
                         newRound.distanceItems.push_back(newItem);
-                        numberOfSamples++;
+                        numberOfRPLidarSamples++;
                     }
 
                     lidarRounds[endTime] = newRound;
 
-                    numberOfRounds++;
+                    numberOfRPLidarRounds++;
                     break;
                 }
                 case 0x10001:
@@ -3153,7 +3154,8 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                     newDatagram.datagram.setDestination(QHostAddress(destinationAddress), destinationPort);
                     newDatagram.datagram.setData(datagramData);
 
-                    mid360Datagrams.insert(timeStamp, newDatagram);
+                    mid360Datagrams.insert(timeStamp, std::make_shared<Mid360Datagram>(newDatagram));
+                    numberOfMid360Datagrams++;
                     break;
                 }
                 default:
@@ -3174,9 +3176,10 @@ void PostProcessingForm::addLidarData(const QStringList& fileNames)
                            "): Distance(s) with duplicate uptime(s). Line(s) skipped.");
             }
 
-            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid lidar rounds: " +
-                       QString::number(numberOfRounds) +
-                       ", samples: " + QString::number(numberOfSamples) +
+            addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid RPLidar rounds: " +
+                       QString::number(numberOfRPLidarRounds) +
+                       ", RPLidar samples: " + QString::number(numberOfRPLidarSamples) +
+                       ", Mid-360 datagrams: " + QString::number(numberOfMid360Datagrams) +
                        ", discarded chunks: " + QString::number(discardedChunks));
 
         }
@@ -3335,7 +3338,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.threadConstData.averagedSync = &averagedSync;
 
-        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+//        params.threadConstData.mid360.datagrams = &mid360Datagrams;
 
         params.threadConstData.expressionMap_Source = &expressionMap;
         params.threadConstData.rovers = rovers;
@@ -3570,7 +3573,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
 
         addLogLine("Generating equalized rover uptime timestamps...");
         PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
-        addLogLine("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
+        addLogLine("Equalized rover uptime timestamps generated. Number of items: " + QString::number(averagedSync.size()));
 
         Lidar::LidarScriptGenerator::Params params;
 
@@ -3611,7 +3614,13 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
 
-        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+        QMultiMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
+        addLogLine("Generating ITOW-ordered Mid-360 point cloud datagram map...");
+        generateITOWOrderedMid360PointCloudDatagramMap(newMap);
+        addLogLine("ITOW-ordered Mid-360 point cloud datagram map generated. Number of items: " + QString::number(newMap.size()));
+        addLogLine("Number of source items: " + QString::number(mid360Datagrams.size()));
+
+        params.threadConstData.mid360.datagrams = &newMap;
 
         params.fileParams.binary = ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked();
         params.fileParams.coordsFormat_HitPoint = (AsyncLidarScriptFileWriter::Params::CoordsFormat)ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex();
@@ -4455,4 +4464,41 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_2_cli
 {
     saveConvexHullsToFile(ui->plainTextEdit_Lidar_Script_ConvexHulls);
 }
+
+void PostProcessingForm::generateITOWOrderedMid360PointCloudDatagramMap(QMultiMap<qint64, Mid360Datagram *> &map)
+{
+    QMultiMap<qint64, std::shared_ptr<Mid360Datagram> >::iterator sourceMapIter = mid360Datagrams.begin();
+
+    // No need to handle datagrams arriving at the same time (ms) in correct order here,
+    // so we can use simple single iterator (no need for QList).
+    while (sourceMapIter != mid360Datagrams.end())
+    {
+        PostProcessingForm::Mid360Datagram* mid360Datagram = sourceMapIter.value().get();
+
+        LivoxMid360::PointCloudAndIMUDataHeader header(mid360Datagram->datagram);
+
+        if ((header.status == LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) && (
+                (header.data_type == LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) ||
+                (header.data_type == LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) ||
+                (header.data_type == LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
+        {
+            map.insert(header.timestamp, mid360Datagram);
+        }
+
+        sourceMapIter++;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

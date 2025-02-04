@@ -122,22 +122,27 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
     // this is done now by feeding bufferLength (now 16) samples from the datagram preceding the one found using the timestamp.
     // This adds a tiny time inaccuracy (8/200000s ("delay" of 8 samples)), so doesn't matter.
 
-    QMultiMap<qint64, PostProcessingForm::Mid360Datagram>::const_iterator mid360MultiMapIter = constData.mid360.datagrams->lowerBound(workUnitInProgress.beginningUptime);
+//    qint64 iTOWTime_ns_Begin = getITOW(workUnitInProgress.beginningUptime) * 1000000ULL;
+//    qint64 iTOWTime_ns_End = getITOW(workUnitInProgress.endingUptime) * 1000000ULL;
+    qint64 iTOWTime_ns_Begin = workUnitInProgress.beginningITOWTime_ns;
+    qint64 iTOWTime_ns_End = workUnitInProgress.endingITOWTime_ns;
+
+    QMultiMap<qint64, PostProcessingForm::Mid360Datagram* >::const_iterator mid360MultiMapIter = constData.mid360.datagrams->lowerBound(iTOWTime_ns_Begin);
 
     UBXMessage_RELPOSNED::ITOW lastInterpolatedITOWUptime_ms = -1;
 
-    while ((mid360MultiMapIter != constData.mid360.datagrams->end()) && (mid360MultiMapIter.key() < workUnitInProgress.endingUptime) && !terminateRequest)
+    while ((mid360MultiMapIter != constData.mid360.datagrams->end()) && (mid360MultiMapIter.key() < iTOWTime_ns_End) && !terminateRequest)
     {
         if (progressFractionMutex.try_lock())
         {
             // As estimated number of points from Mid-360 is in the order of *10 of RPLidar's, lets scale progress here to about 0.1-1
-            progressFraction = 0.1 + ((float(mid360MultiMapIter.key() - workUnitInProgress.beginningUptime) / (workUnitInProgress.endingUptime - workUnitInProgress.beginningUptime)) * 0.9);
+            progressFraction = 0.1 + ((float(mid360MultiMapIter.key() - iTOWTime_ns_Begin) / (iTOWTime_ns_End - iTOWTime_ns_Begin)) * 0.9);
             progressFractionMutex.unlock();
         }
 
-        qint64 uptime = mid360MultiMapIter.key();
+        qint64 iTOWTime_ns = mid360MultiMapIter.key();
 
-        auto scanningStateIter = constData.scanningStateMap->lowerBound(uptime);
+        auto scanningStateIter = constData.scanningStateMap->lowerBound(iTOWTime_ns);
         bool scanningActive = false;
 
         if (scanningStateIter != constData.scanningStateMap->end())
@@ -145,12 +150,12 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             scanningActive = scanningStateIter->scanningActive;
         }
 
-        QList<PostProcessingForm::Mid360Datagram> datagrams = constData.mid360.datagrams->values(uptime);
+        QList<PostProcessingForm::Mid360Datagram* > concurrentDatagrams = constData.mid360.datagrams->values(iTOWTime_ns);
 
-        for (int datagramIndex = datagrams.size() - 1; datagramIndex >= 0; datagramIndex--)
+        for (int datagramIndex = concurrentDatagrams.size() - 1; datagramIndex >= 0; datagramIndex--)
         {
-            const PostProcessingForm::Mid360Datagram mid360Datagram = datagrams[datagramIndex];
-            LivoxMid360::PointCloudAndIMUDataHeader header(mid360Datagram.datagram);
+            const PostProcessingForm::Mid360Datagram* mid360Datagram = concurrentDatagrams[datagramIndex];
+            LivoxMid360::PointCloudAndIMUDataHeader header(mid360Datagram->datagram);
 
             if ((header.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
                     (header.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
@@ -159,7 +164,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             {
                 continue;
             }
-            LivoxMid360::PointCloudData pcData(header, mid360Datagram.datagram);
+            LivoxMid360::PointCloudData pcData(header, mid360Datagram->datagram);
 
             if ((pcData.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
                 (pcData.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
@@ -170,7 +175,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             quint64 pointStartTime_ns = pcData.timestamp;
             quint64 pointChunkTime_ns = quint64(pcData.time_interval) * 100;
 
-            quint32 ipAddress = mid360Datagram.datagram.senderAddress().toIPv4Address();
+            quint32 ipAddress = mid360Datagram->datagram.senderAddress().toIPv4Address();
             LidarDevice device(LidarDevice::DT_LIVOX_MID360, ipAddress);
 
             Output* output;
@@ -186,10 +191,10 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
 
             if (!expressionMap_Local.contains(device))
             {
-                output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                     QString::number(mid360Datagram.chunkIndex)+
-                                     " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                     ", uptime " + QString::number(uptime) +
+                output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram->fileNameIndex) + "\", chunk index " +
+                                     QString::number(mid360Datagram->chunkIndex)+
+                                     " (Mid-360), IP: " + mid360Datagram->datagram.senderAddress().toString() +
+                                     ", uptime " + QString::number(iTOWTime_ns) +
                                      ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
                                      ": Filter expression not defined. Quitting generating script for this device.";
 
@@ -208,27 +213,27 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                 // This code is quite similar to the "real" filtering code later. Will not combine these since the "real" filtering should be as fast as possible.
                 // (This part is only ran once per "point set", so doesn't need to be very optimized).
 
-                auto backIter = constData.mid360.datagrams->lowerBound(workUnitInProgress.beginningUptime);
+                auto backIter = constData.mid360.datagrams->lowerBound(iTOWTime_ns_Begin);
 
                 while ((backIter != constData.mid360.datagrams->begin()) && (exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength))
                 {
                     backIter--;
 
                     qint64 uptime_Back = backIter.key();
-                    QList<PostProcessingForm::Mid360Datagram> datagrams_Back = constData.mid360.datagrams->values(uptime_Back);
+                    QList<PostProcessingForm::Mid360Datagram* > datagrams_Back = constData.mid360.datagrams->values(uptime_Back);
 
                     for (int datagramIndex_Back = 0; datagramIndex_Back < datagrams_Back.size(); datagramIndex_Back++)
                     {
-                        const PostProcessingForm::Mid360Datagram& mid360Datagram_Back = datagrams_Back[datagramIndex_Back];
+                        const PostProcessingForm::Mid360Datagram* mid360Datagram_Back = datagrams_Back[datagramIndex_Back];
 
-                        quint32 ipAddress_Back = mid360Datagram_Back.datagram.senderAddress().toIPv4Address();
+                        quint32 ipAddress_Back = mid360Datagram_Back->datagram.senderAddress().toIPv4Address();
 
                         if (ipAddress_Back != ipAddress)
                         {
                             continue;
                         }
 
-                        LivoxMid360::PointCloudAndIMUDataHeader header_Back(mid360Datagram_Back.datagram);
+                        LivoxMid360::PointCloudAndIMUDataHeader header_Back(mid360Datagram_Back->datagram);
 
                         if ((header_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) || (
                                 (header_Back.data_type != LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_SPHERICAL) &&
@@ -238,7 +243,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                             continue;
                         }
 
-                        LivoxMid360::PointCloudData pcData_Back(header_Back, mid360Datagram_Back.datagram);
+                        LivoxMid360::PointCloudData pcData_Back(header_Back, mid360Datagram_Back->datagram);
 
                         if ((pcData_Back.status != LivoxMid360::PointCloudAndIMUDataHeader::MessageDataStatus::STATUS_VALID) ||
                             (pcData_Back.time_type != LivoxMid360::PointCloudAndIMUDataHeader::TimeSyncType::TIME_SYNC_GPS))
@@ -253,7 +258,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                         for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
                         {
                             LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / pointNum_Back)) / 1000000;
+                            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
 
                             if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
                             {
@@ -264,11 +269,11 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                                 catch (QString& stringThrown)
                                 {
                                     Q_ASSERT(constData.lidarFileNames);
-                                    Q_ASSERT(constData.lidarFileNames->size() >  mid360Datagram_Back.fileNameIndex);
+                                    Q_ASSERT(constData.lidarFileNames->size() >  mid360Datagram_Back->fileNameIndex);
 
-                                    output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram_Back.fileNameIndex) + "\", chunk index " +
-                                                         QString::number(mid360Datagram_Back.chunkIndex)+
-                                                         " (Mid-360), IP: " + mid360Datagram_Back.datagram.senderAddress().toString() +
+                                    output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram_Back->fileNameIndex) + "\", chunk index " +
+                                                         QString::number(mid360Datagram_Back->chunkIndex)+
+                                                         " (Mid-360), IP: " + mid360Datagram_Back->datagram.senderAddress().toString() +
                                                          ", uptime " + QString::number(uptime_Back) +
                                                          ", ITOW " + QString::number(pointITOWUptime_ms) +
                                                          ": " + stringThrown + " Quitting generating script for this device.";
@@ -295,10 +300,10 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
 
             if (!constData.transforms_AfterRotation->contains(device))
             {
-                output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                     QString::number(mid360Datagram.chunkIndex)+
-                                     " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                     ", uptime " + QString::number(uptime) +
+                output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram->fileNameIndex) + "\", chunk index " +
+                                     QString::number(mid360Datagram->chunkIndex)+
+                                     " (Mid-360), IP: " + mid360Datagram->datagram.senderAddress().toString() +
+                                     ", uptime " + QString::number(iTOWTime_ns) +
                                      ", ITOW " + QString::number(pointStartTime_ns / 1000000) +
                                      ": Operation after rotation not defined. Quitting generating script for this device.";
 
@@ -318,7 +323,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             {
                 LivoxMid360::PointCloudData::Point* currentPoint = &pcData.points[i];
 
-                qint64 pointITOWUptime_ns = pointStartTime_ns + ((pointChunkTime_ns * i) / pointNum);
+                qint64 pointITOWUptime_ns = pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum -1));
 
                 UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = pointStartTime_ns / 1000000;
 
@@ -331,12 +336,12 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                     catch (QString& stringThrown)
                     {
                         Q_ASSERT(constData.lidarFileNames);
-                        Q_ASSERT(constData.lidarFileNames->size() > mid360Datagram.fileNameIndex);
+                        Q_ASSERT(constData.lidarFileNames->size() > mid360Datagram->fileNameIndex);
 
-                        output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram.fileNameIndex) + "\", chunk index " +
-                                             QString::number(mid360Datagram.chunkIndex)+
-                                             " (Mid-360), IP: " + mid360Datagram.datagram.senderAddress().toString() +
-                                             ", uptime " + QString::number(uptime) +
+                        output->errorString = "File \"" + constData.lidarFileNames->at(mid360Datagram->fileNameIndex) + "\", chunk index " +
+                                             QString::number(mid360Datagram->chunkIndex)+
+                                             " (Mid-360), IP: " + mid360Datagram->datagram.senderAddress().toString() +
+                                             ", uptime " + QString::number(iTOWTime_ns) +
                                              ", ITOW " + QString::number(pointITOWUptime_ms) +
                                              ": " + stringThrown + " Quitting generating script for this device.";
 
