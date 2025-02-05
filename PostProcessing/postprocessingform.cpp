@@ -3338,7 +3338,13 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.threadConstData.averagedSync = &averagedSync;
 
-//        params.threadConstData.mid360.datagrams = &mid360Datagrams;
+        QMultiMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
+        addLogLine("Generating ITOW-ordered Mid-360 point cloud datagram map...");
+        generateITOWOrderedMid360PointCloudDatagramMap(newMap);
+        addLogLine("ITOW-ordered Mid-360 point cloud datagram map generated. Number of items: " + QString::number(newMap.size()));
+        addLogLine("Number of source items: " + QString::number(mid360Datagrams.size()));
+
+        params.threadConstData.mid360.datagrams = &newMap;
 
         params.threadConstData.expressionMap_Source = &expressionMap;
         params.threadConstData.rovers = rovers;

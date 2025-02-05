@@ -360,6 +360,10 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
 UBXMessage_RELPOSNED::ITOW LidarScriptGenerator::getITOW(const QMap<qint64, UBXMessage_RELPOSNED::ITOW> *averagedSync, const quint64& uptime_ms)
 {
+    // TODO: This whole ITOW/uptime-conversion hassle should be rethough.
+    // This function, for example is identical to the one found from PointCloudGeneratorLidar.
+    // Maybe create a new class that does the conversion back and forth, init it in PostProcessingForm-level and relay here and there?
+
     if (averagedSync->isEmpty())
     {
         return -1;

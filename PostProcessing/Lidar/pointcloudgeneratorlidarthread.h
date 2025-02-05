@@ -59,7 +59,8 @@ public:
 
         struct
         {
-            const QMultiMap<qint64, PostProcessingForm::Mid360Datagram>* datagrams = nullptr;
+            // Keys here are iTOW-times as nanoseconds!
+            const QMultiMap<qint64, PostProcessingForm::Mid360Datagram* >* datagrams = nullptr;
         } mid360;
     };
 
@@ -75,6 +76,8 @@ public:
         int endingTagLine = -1;
         qint64 beginningUptime = -1;
         qint64 endingUptime = -1;
+        qint64 beginningITOWTime_ns = -1;
+        qint64 endingITOWTime_ns = -1;
     };
 
     class Output

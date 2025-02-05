@@ -192,6 +192,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
             while (currentUptime < uptime)
             {
                 newWorkUnit.beginningUptime = currentUptime;
+
                 if (uptime - currentUptime <= params.maxWorkUnitDuration)
                 {
                     newWorkUnit.endingUptime = uptime;
@@ -207,6 +208,10 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 }
 
                 newWorkUnit.chunkIndex = outFileChunkIndex;
+
+                newWorkUnit.beginningITOWTime_ns = getITOW(params.threadConstData.averagedSync, newWorkUnit.beginningUptime) * 1000000ULL;
+                newWorkUnit.endingITOWTime_ns = getITOW(params.threadConstData.averagedSync, newWorkUnit.endingUptime) * 1000000ULL;
+
                 workUnitQueue.enqueue(newWorkUnit);
                 currentUptime = newWorkUnit.endingUptime;
                 outFileChunkIndex++;
@@ -476,5 +481,38 @@ std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile
     return outFileWriter;
 }
 
+UBXMessage_RELPOSNED::ITOW PointCloudGenerator::getITOW(const QMap<qint64, UBXMessage_RELPOSNED::ITOW> *averagedSync, const quint64& uptime_ms)
+{
+    // TODO: This whole ITOW/uptime-conversion hassle should be rethough.
+    // This function, for example is identical to the one found from LidarScriptGenerator.
+    // Maybe create a new class that does the conversion back and forth, init it in PostProcessingForm-level and relay here and there?
+
+    if (averagedSync->isEmpty())
+    {
+        return -1;
+    }
+
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW>::const_iterator timeIter_High = averagedSync->upperBound(uptime_ms);
+
+    if (timeIter_High == averagedSync->constEnd())
+    {
+        // No greater key available -> extrapolate based on the last item
+
+        return averagedSync->last() + (uptime_ms - averagedSync->lastKey()) / 1000000;
+    }
+
+    if (timeIter_High == averagedSync->constBegin())
+    {
+        // No lower key available -> extrapolate based on the first item (which in this case is already in the iter)
+
+        return timeIter_High.value() - (timeIter_High.key() - uptime_ms) / 1000000;
+    }
+
+    QMap<qint64, UBXMessage_RELPOSNED::ITOW>::const_iterator timeIter_Low = timeIter_High - 1;
+
+    return timeIter_Low.value() + (timeIter_High.value() - timeIter_Low.value()) *
+                                      (uptime_ms - timeIter_Low.key()) / (timeIter_High.key() - timeIter_Low.key());
+
+}
 
 }; // namespace Lidar
