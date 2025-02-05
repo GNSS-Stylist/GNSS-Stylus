@@ -60,7 +60,7 @@ public:
         struct
         {
             // Keys here are iTOW-times as nanoseconds!
-            const QMultiMap<qint64, PostProcessingForm::Mid360Datagram* >* datagrams = nullptr;
+            const QMap<qint64, PostProcessingForm::Mid360Datagram* >* datagrams = nullptr;
         } mid360;
     };
 

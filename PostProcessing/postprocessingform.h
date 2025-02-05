@@ -404,7 +404,7 @@ private:
     bool saveConvexHullsToFile(QPlainTextEdit *textEdit);
 
     void generateScanningStateMap(QMap<qint64, ScanningState>& map, const QString &tagIdent_BeginNewObject, const QString &tagIdent_BeginPoints, const QString &tagIdent_EndPoints);
-    void generateITOWOrderedMid360PointCloudDatagramMap(QMultiMap<qint64, PostProcessingForm::Mid360Datagram* >& map);
+    void generateITOWOrderedMid360PointCloudDatagramMap(QMap<qint64, PostProcessingForm::Mid360Datagram* >& map);
 
 signals:
     void replayData_Rover(const UBXMessage&, const unsigned int roverId);  //!< New data for rover

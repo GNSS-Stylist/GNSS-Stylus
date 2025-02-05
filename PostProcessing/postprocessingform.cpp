@@ -3338,7 +3338,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.threadConstData.averagedSync = &averagedSync;
 
-        QMultiMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
+        QMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
         addLogLine("Generating ITOW-ordered Mid-360 point cloud datagram map...");
         generateITOWOrderedMid360PointCloudDatagramMap(newMap);
         addLogLine("ITOW-ordered Mid-360 point cloud datagram map generated. Number of items: " + QString::number(newMap.size()));
@@ -3620,7 +3620,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         params.threadConstData.rpLidar.filteringSettings = &lidarFilteringSettings;
         params.threadConstData.rpLidar.transform_BeforeRotation = &transform_RPLidar_Generated_BeforeRotation;
 
-        QMultiMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
+        QMap<qint64, PostProcessingForm::Mid360Datagram* > newMap;
         addLogLine("Generating ITOW-ordered Mid-360 point cloud datagram map...");
         generateITOWOrderedMid360PointCloudDatagramMap(newMap);
         addLogLine("ITOW-ordered Mid-360 point cloud datagram map generated. Number of items: " + QString::number(newMap.size()));
@@ -4471,9 +4471,9 @@ void PostProcessingForm::on_pushButton_Lidar_PointCloud_ConvexHulls_Export_2_cli
     saveConvexHullsToFile(ui->plainTextEdit_Lidar_Script_ConvexHulls);
 }
 
-void PostProcessingForm::generateITOWOrderedMid360PointCloudDatagramMap(QMultiMap<qint64, Mid360Datagram *> &map)
+void PostProcessingForm::generateITOWOrderedMid360PointCloudDatagramMap(QMap<qint64, Mid360Datagram *> &map)
 {
-    QMultiMap<qint64, std::shared_ptr<Mid360Datagram> >::iterator sourceMapIter = mid360Datagrams.begin();
+    QMap<qint64, std::shared_ptr<Mid360Datagram> >::iterator sourceMapIter = mid360Datagrams.begin();
 
     // No need to handle datagrams arriving at the same time (ms) in correct order here,
     // so we can use simple single iterator (no need for QList).
@@ -4488,7 +4488,15 @@ void PostProcessingForm::generateITOWOrderedMid360PointCloudDatagramMap(QMultiMa
                 (header.data_type == LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_16BIT) ||
                 (header.data_type == LivoxMid360::PointCloudAndIMUDataHeader::DATA_TYPE_POINTS_CARTESIAN_32BIT)))
         {
-            map.insert(header.timestamp, mid360Datagram);
+            qint64 timestamp = header.timestamp;
+            while (map.contains(timestamp))
+            {
+                // As the resolution of time is 1 ns here, there's not really need for QMultiMap.
+                // For the rare cases of duplicate just increment time until there's no duplicate.
+                timestamp++;
+            }
+
+            map.insert(timestamp, mid360Datagram);
         }
 
         sourceMapIter++;
