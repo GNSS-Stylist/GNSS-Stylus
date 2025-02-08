@@ -249,13 +249,14 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                 for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
                 {
                     LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                    UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
+                    qint64 pointITOWTime_ns = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1)));
+                    UBXMessage_RELPOSNED::ITOW pointITOWTime_ms = pointITOWTime_ns / 1000000;
 
-                    if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
+                    if (pointITOWTime_ms != lastInterpolatedITOWUptime_ms)
                     {
                         try
                         {
-                            loInterpolator.getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWUptime_ms, transform_LoSolver);
+                            loInterpolator.getInterpolatedLocationOrientationTransformMatrix_ITOW(pointITOWTime_ms, transform_LoSolver);
                         }
                         catch (QString& stringThrown)
                         {
@@ -266,7 +267,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                                                  QString::number(mid360Datagram_Back->chunkIndex)+
                                                  " (Mid-360), IP: " + mid360Datagram_Back->datagram.senderAddress().toString() +
 //                                                 ", uptime " + QString::number(uptime_Back) +
-                                                 ", ITOW " + QString::number(pointITOWUptime_ms) +
+                                                 ", ITOW " + QString::number(pointITOWTime_ms) +
                                                  ": " + stringThrown + " Quitting generating script for this device.";
 
                             output->result = Output::R_ERROR;
@@ -277,10 +278,10 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
 
                         exprFilter->setTransform_RigToNED(transform_LoSolver);
 
-                        lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
+                        lastInterpolatedITOWUptime_ms = pointITOWTime_ms;
                     }
 
-                    exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+                    exprFilter->addPoint(*currentPoint, pointITOWTime_ns);
                 }
             }
         }

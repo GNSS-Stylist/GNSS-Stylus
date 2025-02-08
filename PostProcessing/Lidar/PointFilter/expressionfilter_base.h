@@ -62,7 +62,7 @@ public:
     public:
         bool valid;
         double filterResult;
-        unsigned int uptime_ms;
+        qint64 timestamp; // Unit-agnostic. With Mid-360 this is GPS TOW as ns
         Eigen::Vector3d coords;
         double quality;
     };
@@ -100,7 +100,7 @@ protected:
         LazyEvaluator point_Lidar;
         LazyEvaluator point_Rig;
         LazyEvaluator point_NED;
-        int uptime_ms;
+        qint64 timestamp; // Unit-agnostic, with Mid-360 this is GPS TOW as ns.
     };
 
 //    virtual void initBuffer(void) = 0;

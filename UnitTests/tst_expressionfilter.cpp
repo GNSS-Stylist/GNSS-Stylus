@@ -52,7 +52,7 @@ PointFilter::ExpressionFilter_Mid360::OutItem TestExpressionFilter::getRandomOut
     PointFilter::ExpressionFilter_Mid360::OutItem item;
     item.valid = randomGenerator.generate() & 1;
     item.filterResult = randomGenerator.bounded(2e9) - 1e9;
-    item.uptime_ms = randomGenerator.generate();
+    item.timestamp = randomGenerator.generate64();
     item.coords = getRandomVec();
     item.quality = randomGenerator.bounded(2e9) - 1e9;
 
@@ -588,7 +588,7 @@ void TestExpressionFilter::defaultExpressions()
         QCOMPARE(filter.getFilteredPoint(out), true);
         QCOMPARE(out.valid, true);
         QCOMPARE(out.filterResult, 1);
-        QCOMPARE(out.uptime_ms, i + (filterBufferLength / 2) - 1);
+        QCOMPARE(out.timestamp, i + (filterBufferLength / 2) - 1);
         QCOMPARE(out.quality, 1);
     }
 }
@@ -622,7 +622,7 @@ void TestExpressionFilter::defaultExpressions_RPLidar()
         QCOMPARE(filter.getFilteredPoint(out), true);
         QCOMPARE(out.valid, true);
         QCOMPARE(out.filterResult, 1);
-        QCOMPARE(out.uptime_ms, i + (filterBufferLength / 2) - 1);
+        QCOMPARE(out.timestamp, i + (filterBufferLength / 2) - 1);
         QCOMPARE(out.quality, 1);
     }
 }

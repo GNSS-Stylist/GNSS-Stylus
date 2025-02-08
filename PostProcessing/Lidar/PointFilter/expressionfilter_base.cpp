@@ -206,7 +206,7 @@ bool ExpressionFilter_Base::getFilteredPoint(OutItem& outPoint)
         outPoint.quality = 0;
     }
 
-    outPoint.uptime_ms = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].uptime_ms;
+    outPoint.timestamp = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].timestamp;
     outPoint.coords = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].point_NED.getTransformedVector();
 
     return true;

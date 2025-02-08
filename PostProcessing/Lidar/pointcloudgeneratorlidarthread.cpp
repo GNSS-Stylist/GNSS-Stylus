@@ -406,7 +406,8 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
                 for (int i = pointNum_Back - exprFilter->bufferLength; i < pointNum_Back; i++)
                 {
                     LivoxMid360::PointCloudData::Point* currentPoint = &pcData_Back.points[i];
-                    UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1))) / 1000000;
+                    qint64 pointITOWTime_ns = (pointStartTime_ns_Back + ((pointChunkTime_ns_Back * i) / (pointNum_Back - 1)));
+                    UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = pointITOWTime_ns / 1000000;
 
                     if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
                     {
@@ -440,7 +441,7 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
                         lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
                     }
 
-                    exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+                    exprFilter->addPoint(*currentPoint, pointITOWTime_ns);
                 }
                 break;
             }

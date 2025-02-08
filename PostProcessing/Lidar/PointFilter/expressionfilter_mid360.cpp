@@ -88,11 +88,11 @@ void ExpressionFilter_Mid360::setCustomVariablesAndFunctions(void)
     parser_Quality.set_variables_and_functions(customFunctions);
 }
 
-void ExpressionFilter_Mid360::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const int uptime_ms)
+void ExpressionFilter_Mid360::addPoint(const LivoxMid360::PointCloudData::Point& lidarPoint, const qint64 timestamp)
 {
     buffer[bufferIndex % bufferLength].point_Mid360_Source = lidarPoint;
     buffer[bufferIndex % bufferLength].lidarSourceVector3D = Eigen::Vector3d(lidarPoint.x, lidarPoint.y, lidarPoint.z);
-    buffer[bufferIndex % bufferLength].uptime_ms = uptime_ms;
+    buffer[bufferIndex % bufferLength].timestamp = timestamp;
 
     buffer[bufferIndex % bufferLength].point_Lidar.invalidate();
     buffer[bufferIndex % bufferLength].point_Rig.invalidate();
@@ -104,4 +104,4 @@ void ExpressionFilter_Mid360::addPoint(const LivoxMid360::PointCloudData::Point&
     bufferIndex++;
 }
 
-}; // namespace PointFilter
+} // namespace PointFilter

@@ -81,13 +81,13 @@ void ExpressionFilter_RPLidar::setCustomVariablesAndFunctions(void)
     parser_Quality.set_variables_and_functions(customFunctions);
 }
 
-void ExpressionFilter_RPLidar::addPoint(const RPLidarThread::DistanceItem& lidarPoint, const int uptime_ms)
+void ExpressionFilter_RPLidar::addPoint(const RPLidarThread::DistanceItem& lidarPoint, const qint64 timestamp)
 {
     buffer[bufferIndex % bufferLength].horizontalAngle_RPLidar = lidarPoint.angle;
     buffer[bufferIndex % bufferLength].distance_RPLidar = lidarPoint.distance;
     buffer[bufferIndex % bufferLength].quality_RPLidar = lidarPoint.quality;
 
-    buffer[bufferIndex % bufferLength].uptime_ms = uptime_ms;
+    buffer[bufferIndex % bufferLength].timestamp = timestamp;
 
     buffer[bufferIndex % bufferLength].point_Lidar.invalidate();
     buffer[bufferIndex % bufferLength].point_Rig.invalidate();
