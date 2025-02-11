@@ -28,6 +28,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     tst_expressionfiltergenerator.cpp \
     tst_lazyevaluator.cpp \
     tst_main.cpp \
+    tst_postfilter.cpp \
     tst_textblockparser.cpp
 
 HEADERS += \
@@ -39,6 +40,7 @@ HEADERS += \
     ../PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.h \
     ../PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h \
     ../PostProcessing/Lidar/PointFilter/lazyevaluator.h \
+    ../PostProcessing/Lidar/PointFilter/postfilter.h \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     ../PostProcessing/Lidar/lidardevice.h \
@@ -49,6 +51,7 @@ HEADERS += \
     tst_expressionfiltergenerator.h \
     tst_lazyevaluator.h \
     tst_lidarfiltering.h \
+    tst_postfilter.h \
     tst_textblockparser.h
 
 INCLUDEPATH += ../ ../LivoxMid360

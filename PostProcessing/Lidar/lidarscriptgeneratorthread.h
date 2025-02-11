@@ -80,7 +80,8 @@ public:
     public:
         enum PointType
         {
-            PT_SCANNING_NOT_ACTIVE = 0,
+            PT_UNDEFINED = 0,
+            PT_SCANNING_NOT_ACTIVE,
             PT_MISS,
             PT_HIT
         };

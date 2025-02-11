@@ -126,6 +126,7 @@ HEADERS += \
     PostProcessing/Lidar/PointFilter/expressionfilter_rplidar.h \
     PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h \
     PostProcessing/Lidar/PointFilter/lazyevaluator.h \
+    PostProcessing/Lidar/PointFilter/postfilter.h \
     PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     PostProcessing/Lidar/lidardevice.h \

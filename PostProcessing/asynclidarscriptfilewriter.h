@@ -23,8 +23,8 @@
 #include <QMutex>
 #include <QQueue>
 #include <QWaitCondition>
-//#include "PostProcessing/Lidar/pointcloudgeneratorlidarthread.h"
 #include "PostProcessing/Lidar/lidarscriptgeneratorthread.h"
+#include "PostProcessing/Lidar/PointFilter/postfilter.h"
 #include "Eigen/Geometry"
 
 class AsyncLidarScriptFileWriter : public QThread
@@ -65,6 +65,7 @@ public:
         TimeFormat timeFormat = TF_NONE;
         Qualityformat qualityFormat = QF_FLOAT;
         QByteArray endOfLine = "\n";
+        PointFilter::PostFilter::Params postFilterParams;
     };
 
     AsyncLidarScriptFileWriter(const QString &fileName, const Params &params);
@@ -129,6 +130,10 @@ private:
     Eigen::Vector3i lastWrittenHitPoint = Eigen::Vector3i::Identity();
     Eigen::Vector3i lastWrittenSourcePoint = Eigen::Vector3i::Identity();
     qint64 lastWrittenTime_us = 0;
+
+    std::shared_ptr<QVector<LidarScriptGeneratorThread::Output::Point> > prevPoints = nullptr;
+    bool checkPrevPoint = false;
+    LidarScriptGeneratorThread::Output::PointType prevPointType = LidarScriptGeneratorThread::Output::PT_UNDEFINED;
 
     enum TerminateRequest
     {

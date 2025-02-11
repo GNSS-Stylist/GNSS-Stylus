@@ -192,7 +192,7 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
                 if (forceWrite)
                 {
                     // Write zero coords if they are over range. ForceWrite is used only when writing deltas that are not directly used as coordinates.
-                    intHitPoint = Eigen::Vector3i::Identity();
+                    intHitPoint.setZero();
                 }
                 else
                 {
@@ -216,7 +216,7 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
                 if (forceWrite)
                 {
                     // Write zero coords if they are over range. ForceWrite is used only when writing deltas that are not directly used as coordinates.
-                    intSourcePoint = Eigen::Vector3i::Identity();
+                    intSourcePoint.setZero();
                 }
                 else
                 {
@@ -567,6 +567,10 @@ void AsyncLidarScriptFileWriter::run()
 
     writeHeader();
 
+    PointFilter::PostFilter postFilter(params.postFilterParams);
+
+    checkPrevPoint = false;
+
     while (true)
     {
         if (terminateRequest == TR_ABANDONPENDINGDATA)
@@ -610,7 +614,18 @@ void AsyncLidarScriptFileWriter::run()
 
             numberOfPointsWrittenMutex.lock();
 
-            auto pointIter = outputData.points->constBegin();
+            QVector<LidarScriptGeneratorThread::Output::Point>::const_iterator pointIter = outputData.points->constBegin();
+
+            QVector<LidarScriptGeneratorThread::Output::Point>::const_iterator prevPointIter = pointIter; // AFAIK this should not need initialization here, but clang nags if it's not initialized...
+
+            if (prevPoints != nullptr)
+            {
+                prevPointIter = &prevPoints->constLast();
+            }
+            else
+            {
+                checkPrevPoint = false;
+            }
 
 //            file.write(QString(QString(params.endOfLine + "Dbg. Chunk: " + QString::number(outputData.workUnit.chunkIndex) + ", points: " + QString::number(outputData.points->count()) + ", Duration (uptime, ms): " + QString::number(outputData.workUnit.endingUptime - outputData.workUnit.beginningUptime)) + ", Duration (itow, ns): " + QString::number(outputData.workUnit.endingITOWTime_ns - outputData.workUnit.beginningITOWTime_ns) + params.endOfLine).toLatin1());
 
@@ -621,12 +636,60 @@ void AsyncLidarScriptFileWriter::run()
                     break;
                 }
 
-                if (writePoint(pointIter))
+                if (pointIter->type != prevPointType)
                 {
-                    numberOfPointsWritten++;
+                    // Always write point when type changes.
+
+                    if (writePoint(pointIter))
+                    {
+                        numberOfPointsWritten++;
+                    }
+
+                    if (checkPrevPoint)
+                    {
+                        // Always write also the previous point when type changes (if not already written)
+                        if (writePoint(prevPointIter))
+                        {
+                            numberOfPointsWritten++;
+                        }
+                    }
+
+                    // Current point was already written so no need to check it on the next round.
+                    checkPrevPoint = false;
+                }
+                else if (postFilter.filter(pointIter->hitPoint, pointIter->iTOW_ns))
+                {
+                    if (writePoint(pointIter))
+                    {
+                        numberOfPointsWritten++;
+                    }
+
+                    if (checkPrevPoint && (postFilter.checkBack(prevPointIter->hitPoint, prevPointIter->iTOW_ns)))
+                    {
+                        if (writePoint(prevPointIter))
+                        {
+                            numberOfPointsWritten++;
+                        }
+                    }
+
+                    // Current point was already written so no need to check it on the next round.
+                    checkPrevPoint = false;
+                }
+                else
+                {
+                    // As this point was not written, flag it to be checked on the next round (if it should be written then).
+                    checkPrevPoint = true;
                 }
 
+                prevPointType = pointIter->type;
+                prevPointIter = pointIter;
+
                 pointIter++;
+            }
+
+            if (!outputData.points->isEmpty())
+            {
+                prevPoints = outputData.points;
             }
 
             numberOfPointsWrittenMutex.unlock();
