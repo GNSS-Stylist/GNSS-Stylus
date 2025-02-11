@@ -357,11 +357,11 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             {
                 continue;
             }
-/*                if (exprOutItem.filterResult != 1.0)
+                if (exprOutItem.filterResult != 1.0)
             {
                 continue;
             }
-*/
+
             Eigen::Vector3d lidarPoint(currentPoint->x, currentPoint->y, currentPoint->z);
 
             // Lot of parentheses here to keep all calculations as matrix * vector
