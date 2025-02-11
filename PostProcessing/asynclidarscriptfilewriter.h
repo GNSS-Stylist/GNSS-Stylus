@@ -53,7 +53,8 @@ public:
         {
             QF_NONE = 0,            // Do not write quality
             QF_FLOAT,               // 32-bit float
-            QF_UCHAR,               // Unsigned char, float range 0...1 mapped to 0...255
+            QF_UCHAR_SCALED,        // Unsigned char, float range 0...1 mapped to 0...255
+            QF_UCHAR_RAW,           // Unsigned char, float range 0...255 mapped to 0...255
         };
 
         bool binary = true;

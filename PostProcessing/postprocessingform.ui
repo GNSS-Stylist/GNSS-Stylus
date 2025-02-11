@@ -3540,7 +3540,7 @@ These operations are calculated only once when starting operations so calculatin
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>662</width>
+                            <width>572</width>
                             <height>273</height>
                            </rect>
                           </property>
@@ -4379,7 +4379,12 @@ These operations are calculated only once when starting operations so calculatin
                    </item>
                    <item>
                     <property name="text">
-                     <string>unsigned char (8 bit, 0...1 -&gt; 0...255)</string>
+                     <string>scaled unsigned char (8 bit, 0...1 -&gt; 0...255)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>&quot;raw&quot; unsigned char (8 bit, 0...255 -&gt; 0...255)</string>
                     </property>
                    </item>
                   </widget>

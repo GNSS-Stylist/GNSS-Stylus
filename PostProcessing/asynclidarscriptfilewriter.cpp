@@ -124,7 +124,8 @@ void AsyncLidarScriptFileWriter::writeHeader(void)
         case Params::QF_FLOAT:
             dataToWrite += "property float quality" + eol;
             break;
-        case Params::QF_UCHAR:
+        case Params::QF_UCHAR_SCALED:
+        case Params::QF_UCHAR_RAW:
             dataToWrite += "property uchar quality" + eol;
             break;
         default:
@@ -408,8 +409,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
         case Params::QF_FLOAT:
             writeFloat(file, point->quality);
             break;
-        case Params::QF_UCHAR:
+        case Params::QF_UCHAR_SCALED:
             writeUChar(file, (unsigned char)(std::clamp(int(point->quality * 255), 0, 255)));
+            break;
+        case Params::QF_UCHAR_RAW:
+            writeUChar(file, (unsigned char)(point->quality));
             break;
         }
     }
@@ -502,8 +506,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
         case Params::QF_FLOAT:
             lineOut += " " + QString::number(point->quality, 'f', params.numberOfDecimals_Quality);
             break;
-        case Params::QF_UCHAR:
+        case Params::QF_UCHAR_SCALED:
             lineOut += " " + QString::number((unsigned char)(std::clamp(int(point->quality * 255), 0, 255)));
+            break;
+        case Params::QF_UCHAR_RAW:
+            lineOut += " " + QString::number((unsigned char)point->quality);
             break;
         }
 
