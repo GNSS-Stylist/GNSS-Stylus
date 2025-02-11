@@ -3332,6 +3332,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         // Uptimes here are calculated as averages from rover values (for each ITOW)
         QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
 
+        startStopwatch();
+
         addLogLine("Generating equalized rover uptime timestamps...");
         PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
         addLogLine("Equalized rover uptime timestamps created. Number of items: " + QString::number(averagedSync.size()));
@@ -3416,6 +3418,8 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
                          this, &PostProcessingForm::on_errorMessage);
 
         pointCloudGenerator.generatePointClouds(params);
+
+        stopStopwatch();
     }
 }
 
@@ -3577,6 +3581,8 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         // Uptimes here are calculated as averages from rover values (for each ITOW)
         QMap<qint64, UBXMessage_RELPOSNED::ITOW> averagedSync;
 
+        startStopwatch();
+
         addLogLine("Generating equalized rover uptime timestamps...");
         PostProcessingForm::generateAveragedRoverUptimeSync(rovers, averagedSync);
         addLogLine("Equalized rover uptime timestamps generated. Number of items: " + QString::number(averagedSync.size()));
@@ -3665,6 +3671,8 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
                          this, &PostProcessingForm::on_errorMessage);
 
         lidarScriptGenerator.generateLidarScript(params);
+
+        stopStopwatch();
     }
 }
 
@@ -4503,6 +4511,17 @@ void PostProcessingForm::generateITOWOrderedMid360PointCloudDatagramMap(QMap<qin
     }
 }
 
+void PostProcessingForm::startStopwatch(void)
+{
+    addLogLine("Starting stopwatch timer.");
+    stopwatchTimer.start();
+}
+
+void PostProcessingForm::stopStopwatch(void)
+{
+    double secsElapsed = stopwatchTimer.elapsed() / 1000.0;
+    addLogLine("Time elapsed since stopwatch started: " + QString::number(secsElapsed, 'g', 3) + " s.");
+}
 
 
 
