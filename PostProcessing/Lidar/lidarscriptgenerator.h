@@ -34,37 +34,16 @@ public:
     class Params
     {
     public:
-//        const Eigen::Transform<double, 3, Eigen::Affine>* transform_NEDToXYZ = nullptr;
         QString baseFileName;
         bool dontWriteFiles = false;
-//        const QMap<qint64, PostProcessingForm::ScanningState>* scanningStateMap = nullptr;
-//        const Eigen::Vector3d* boundingSphere_Center;
-//        double boundingSphere_Radius = 1e12;
         qint64 uptime_Min = 0;
         qint64 uptime_Max = 1e18;
-
-//        const QMultiMap<qint64, PostProcessingForm::Tag>* tags = nullptr;
-//        const PostProcessingForm::Rover* rovers = nullptr;
-//        const LOSolver* loSolver_Base;
-//        LOInterpolator* loInterpolator = nullptr;
-//        QVector<QString>* lidarFileNames = nullptr;
-
-//        QMap<LidarDevice, Eigen::Transform<double, 3, Eigen::Affine> > transforms_AfterRotation;
 
         int maxWorkUnitDuration = 1000;
         int numOfWorkerThreads = 1;
 
         LidarScriptGeneratorThread::ConstData threadConstData;
         AsyncLidarScriptFileWriter::Params fileParams;
-
-/*        struct
-        {
-            int timeShift = 0;
-            const QMap<qint64, PostProcessingForm::LidarRound>* rounds = nullptr;
-            const RPLidarPlausibilityFilter::Settings* filteringSettings = nullptr;
-            Eigen::Transform<double, 3, Eigen::Affine> transform_BeforeRotation;
-        } rpLidar;
-*/
     };
 
     void generateLidarScript(const Params& params);
