@@ -32,6 +32,7 @@ public:
     {
         double minDistDiff = -1;
         qint64 minTimeDiff = -1;
+        bool checkBackActive = false;
     };
 
     inline PostFilter(const Params& params);
@@ -43,6 +44,7 @@ public:
 private:
     double minDistDiff_Squared;
     qint64 minTimeDiff;
+    bool checkBackActive;
 
     bool first;
     Eigen::Vector3d lastValidVector;
@@ -58,6 +60,7 @@ inline void PostFilter::init(const Params& params)
 {
     this->minDistDiff_Squared = params.minDistDiff * params.minDistDiff;
     this->minTimeDiff = params.minTimeDiff;
+    this->checkBackActive = params.checkBackActive;
     this->first = true;
 }
 
@@ -90,7 +93,7 @@ inline bool PostFilter::filter(const Eigen::Vector3d& newVec, const qint64 newTi
 
 inline bool PostFilter::checkBack(const Eigen::Vector3d& oldVec, const qint64 oldTime)
 {
-    if (!first && ((((oldVec - lastValidVector).squaredNorm()) >= minDistDiff_Squared) ||
+    if (checkBackActive && !first && ((((oldVec - lastValidVector).squaredNorm()) >= minDistDiff_Squared) ||
                    (std::abs(oldTime - lastValidTime) >= minTimeDiff)))
     {
         return true;
