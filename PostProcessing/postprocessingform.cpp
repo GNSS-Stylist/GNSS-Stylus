@@ -3659,6 +3659,10 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
             break;
         }
 
+        params.fileParams.postFilterParams.minDistDiff = ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->value();
+        params.fileParams.postFilterParams.minTimeDiff = ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->value() * 1000;
+        params.fileParams.postFilterParams.checkBackActive = ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->isChecked();
+
         Lidar::LidarScriptGenerator lidarScriptGenerator;
 
         connect(&lidarScriptGenerator, &Lidar::LidarScriptGenerator::infoMessage,
