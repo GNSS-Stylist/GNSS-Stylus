@@ -3774,7 +3774,7 @@ These operations are calculated only once when starting operations so calculatin
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>3</number>
+                  <number>4</number>
                  </property>
                  <widget class="QWidget" name="tab_Lidar_Script_GenericSettings">
                   <property name="autoFillBackground">
@@ -4298,7 +4298,7 @@ These operations are calculated only once when starting operations so calculatin
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <item>
                     <property name="text">
@@ -4418,7 +4418,7 @@ These operations are calculated only once when starting operations so calculatin
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <item>
                     <property name="text">
@@ -4468,7 +4468,7 @@ These operations are calculated only once when starting operations so calculatin
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <item>
                     <property name="text">
@@ -4523,7 +4523,7 @@ These operations are calculated only once when starting operations so calculatin
                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                   </widget>
-                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_PLY_EOLCharacters">
+                  <widget class="QComboBox" name="comboBox_Lidar_Script_FileFormat_EOLCharacters">
                    <property name="geometry">
                     <rect>
                      <x>360</x>
@@ -4539,7 +4539,7 @@ These operations are calculated only once when starting operations so calculatin
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <item>
                     <property name="text">

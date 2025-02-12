@@ -190,8 +190,23 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value()).toInt());
     ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value()).toInt());
 
+    ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked()).toBool());
     ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
     ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text()).toString());
+    ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->setValue(settings.value("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value()).toInt());
+    ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->setValue(settings.value("PostProcessing_Lidar_Script_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->value()).toInt());
+    ui->checkBox_Lidar_Script_FileFormat_Binary->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked()).toBool());
+    ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_TimeFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_QualityFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex()).toInt());
+    ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->setValue(settings.value("PostProcessing_Lidar_Script_PostFilter_MinDistance", ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->value()).toDouble());
+    ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->setValue(settings.value("PostProcessing_Lidar_Script_PostFilter_MinTimeDelta", ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->value()).toInt());
+    ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->setChecked(settings.value("PostProcessing_Lidar_Script_PostFilter_CheckBackActive", ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->isChecked()).toBool());
 
     ui->plainTextEdit_RasterCameras_TransformMatrixScript->setPlainText(settings.value("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText()).toString());
     ui->plainTextEdit_RasterCameras_CameraScript->setPlainText(settings.value("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText()).toString());
@@ -334,8 +349,23 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value());
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value());
 
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
+    settings.setValue("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value());
+    settings.setValue("PostProcessing_Lidar_Script_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked());
+    settings.setValue("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_PostFilter_MinDistance", ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->value());
+    settings.setValue("PostProcessing_Lidar_Script_PostFilter_MinTimeDelta", ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->value());
+    settings.setValue("PostProcessing_Lidar_Script_PostFilter_CheckBackActive", ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->isChecked());
 
     settings.setValue("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText());
     settings.setValue("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText());
@@ -3643,7 +3673,7 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         params.fileParams.timeFormat = (AsyncLidarScriptFileWriter::Params::TimeFormat)ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex();
         params.fileParams.qualityFormat = (AsyncLidarScriptFileWriter::Params::Qualityformat)ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex();
 
-        switch (ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex())
+        switch (ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex())
         {
         case 0:
             params.fileParams.endOfLine = "\r";
