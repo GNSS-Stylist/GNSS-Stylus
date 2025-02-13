@@ -100,6 +100,7 @@ void TestPostFilter::gradualDistanceChange()
 
     params.minDistDiff = 1;
     params.minTimeDiff = 10000;
+    params.checkBackActive = true;
 
     PointFilter::PostFilter filter(params);
     qint64 time = 0;
@@ -175,6 +176,7 @@ void TestPostFilter::gradualTimeChange()
 
     params.minDistDiff = 1;
     params.minTimeDiff = 10;
+    params.checkBackActive = true;
 
     PointFilter::PostFilter filter(params);
     qint64 time = 0;
@@ -245,6 +247,7 @@ void TestPostFilter::distanceJumps()
 
     params.minDistDiff = 10;
     params.minTimeDiff = 10000;
+    params.checkBackActive = true;
 
     PointFilter::PostFilter filter(params);
     qint64 time = 0;
@@ -315,6 +318,7 @@ void TestPostFilter::timeJumps()
 
     params.minDistDiff = 10000;
     params.minTimeDiff = 100;
+    params.checkBackActive = true;
 
     PointFilter::PostFilter filter(params);
     qint64 time = 0;
