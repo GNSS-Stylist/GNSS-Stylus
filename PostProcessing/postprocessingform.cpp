@@ -157,11 +157,19 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->checkBox_Stylus_PointCloud_IncludeNormals->setChecked(settings.value("PostProcessing_Stylus_PointCloud_IncludeNormals", ui->checkBox_Stylus_PointCloud_IncludeNormals->isChecked()).toBool());
     ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->setChecked(settings.value("PostProcessing_Stylus_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->isChecked()).toBool());
 
-    ui->spinBox_LOSolver_Movie_ITOW_Script_Min->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value()).toInt());
-    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(settings.value("PostProcessing_LOSolver_Movie_ITOW_Script_Max", ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value()).toInt());
+    ui->spinBox_LOSolver_Script_ITOW_Range_Min->setValue(settings.value("PostProcessing_LOSolver_Script_ITOW_Range_Min", ui->spinBox_LOSolver_Script_ITOW_Range_Min->value()).toInt());
+    ui->spinBox_LOSolver_Script_ITOW_Range_Max->setValue(settings.value("PostProcessing_LOSolver_Script_ITOW_Range_Max", ui->spinBox_LOSolver_Script_ITOW_Range_Max->value()).toInt());
 
-    ui->comboBox_LOSolver_Movie_TimeStamps->setCurrentIndex(settings.value("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex()).toInt());
     ui->plainTextEdit_LOSolver_TransformMatrixScript->setPlainText(settings.value("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText()).toString());
+
+    ui->checkBox_LOSolver_Script_FileFormat_Binary->setChecked(settings.value("PostProcessing_LOSolver_Script_FileFormat_Binary", ui->checkBox_LOSolver_Script_FileFormat_Binary->isChecked()).toBool());
+    ui->comboBox_LOSolver_Script_FileFormat_LocationCoordsFormat->setCurrentIndex(settings.value("PostProcessing_LOSolver_Script_FileFormat_LocationCoordsFormat", ui->comboBox_LOSolver_Script_FileFormat_LocationCoordsFormat->currentIndex()).toInt());
+    ui->comboBox_LOSolver_Script_FileFormat_EOLCharacters->setCurrentIndex(settings.value("PostProcessing_LOSolver_Script_FileFormat_EOLCharacters", ui->comboBox_LOSolver_Script_FileFormat_EOLCharacters->currentIndex()).toInt());
+    ui->comboBox_LOSolver_Script_FileFormat_TimeStampsFormat->setCurrentIndex(settings.value("PostProcessing_LOSolver_Script_FileFormat_TimeStampsFormat", ui->comboBox_LOSolver_Script_FileFormat_TimeStampsFormat->currentIndex()).toInt());
+    ui->comboBox_LOSolver_Script_FileFormat_OrientationFormat->setCurrentIndex(settings.value("PostProcessing_LOSolver_Script_FileFormat_OrientationFormat", ui->comboBox_LOSolver_Script_FileFormat_OrientationFormat->currentIndex()).toInt());
+    ui->spinBox_LOSolver_Script_FileFormat_Decimals_Locations->setValue(settings.value("PostProcessing_LOSolver_Script_FileFormat_Decimals_Locations", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Locations->value()).toInt());
+    ui->spinBox_LOSolver_Script_FileFormat_Decimals_Bases->setValue(settings.value("PostProcessing_LOSolver_Script_FileFormat_Decimals_Bases", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Bases->value()).toInt());
+    ui->spinBox_LOSolver_Script_FileFormat_Decimals_Quaternion->setValue(settings.value("PostProcessing_LOSolver_Script_FileFormat_Decimals_Quaternion", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Quaternion->value()).toInt());
 
     ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText()).toString());
     ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->setPlainText(settings.value("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText()).toString());
@@ -313,10 +321,19 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_Stylus_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Stylus_PointCloud_SeparateOutputFilesForSubScans->isChecked());
 
 
-    settings.setValue("PostProcessing_LOSolver_Movie_ITOW_Script_Min", ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value());
-    settings.setValue("PostProcessing_LOSolver_Movie_ITOW_Script_Max", ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value());
-    settings.setValue("PostProcessing_LOSolver_Movie_Timestamps", ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex());
+    settings.setValue("PostProcessing_LOSolver_Script_ITOW_Range_Min", ui->spinBox_LOSolver_Script_ITOW_Range_Min->value());
+    settings.setValue("PostProcessing_LOSolver_Script_ITOW_Range_Max", ui->spinBox_LOSolver_Script_ITOW_Range_Max->value());
+
     settings.setValue("PostProcessing_LOSolver_TransformMatrixScript", ui->plainTextEdit_LOSolver_TransformMatrixScript->toPlainText());
+
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_Binary", ui->checkBox_LOSolver_Script_FileFormat_Binary->isChecked());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_LocationCoordsFormat", ui->comboBox_LOSolver_Script_FileFormat_LocationCoordsFormat->currentIndex());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_EOLCharacters", ui->comboBox_LOSolver_Script_FileFormat_EOLCharacters->currentIndex());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_TimeStampsFormat", ui->comboBox_LOSolver_Script_FileFormat_TimeStampsFormat->currentIndex());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_OrientationFormat", ui->comboBox_LOSolver_Script_FileFormat_OrientationFormat->currentIndex());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_Decimals_Locations", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Locations->value());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_Decimals_Bases", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Bases->value());
+    settings.setValue("PostProcessing_LOSolver_Script_FileFormat_Decimals_Quaternion", ui->spinBox_LOSolver_Script_FileFormat_Decimals_Quaternion->value());
 
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_BeforeRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_BeforeRotation->toPlainText());
     settings.setValue("PostProcessing_Lidar_TransformMatrixScript_AfterRotation", ui->plainTextEdit_Lidar_TransformMatrixScript_AfterRotation->toPlainText());
@@ -2975,14 +2992,38 @@ void PostProcessingForm::on_pushButton_LOSolver_GenerateScript_clicked()
 
         params.transform_NEDToXYZ = &transform_NEDToXYZ;
         params.transform_Generated = &transform_Generated;
-        params.iTOWRange_Script_Min = ui->spinBox_LOSolver_Movie_ITOW_Script_Min->value();
-        params.iTOWRange_Script_Max = ui->spinBox_LOSolver_Movie_ITOW_Script_Max->value();
+        params.iTOWRange_Script_Min = ui->spinBox_LOSolver_Script_ITOW_Range_Min->value();
+        params.iTOWRange_Script_Max = ui->spinBox_LOSolver_Script_ITOW_Range_Max->value();
 
         params.fileName = fileNameList[0];
-        params.timeStampFormat = ui->comboBox_LOSolver_Movie_TimeStamps->currentIndex() == 1 ? LOScriptGenerator::Params::TimeStampFormat::TSF_UPTIME : LOScriptGenerator::Params::TimeStampFormat::TSF_ITOW;
         params.loSolver = &loSolver;
 
         params.rovers = rovers;
+
+        params.binary = ui->checkBox_LOSolver_Script_FileFormat_Binary->isChecked();
+        params.coordsFormat = LOScriptGenerator::Params::CoordsFormat(ui->comboBox_LOSolver_Script_FileFormat_LocationCoordsFormat->currentIndex());
+
+        switch (ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex())
+        {
+        case 0:
+            params.endOfLine = "\r";
+            break;
+        case 1:
+            params.endOfLine = "\n";
+            break;
+        case 2:
+            params.endOfLine = "\r\n";
+            break;
+        default:
+            qFatal("Unhandled end of line.");
+            break;
+        }
+
+        params.timeFormat = LOScriptGenerator::Params::TimeFormat(ui->comboBox_LOSolver_Script_FileFormat_TimeStampsFormat->currentIndex());
+        params.orientationFormat = LOScriptGenerator::Params::OrientationFormat(ui->comboBox_LOSolver_Script_FileFormat_OrientationFormat->currentIndex());
+        params.numberOfDecimals_Coords = ui->spinBox_LOSolver_Script_FileFormat_Decimals_Locations->value();
+        params.numberOfDecimals_Basis = ui->spinBox_LOSolver_Script_FileFormat_Decimals_Bases->value();
+        params.numberOfDecimals_Quaternion = ui->spinBox_LOSolver_Script_FileFormat_Decimals_Quaternion->value();
 
         LOScriptGenerator loScriptGenerator;
 
@@ -3872,9 +3913,9 @@ void PostProcessingForm::on_pushButton_Stylus_Movie_ITOW_Script_Max_Maximize_cli
     ui->spinBox_Stylus_Movie_ITOW_Script_Max->setValue(604800000);
 }
 
-void PostProcessingForm::on_pushButton_LOSolver_Movie_ITOW_Script_Max_Maximize_clicked()
+void PostProcessingForm::on_pushButton_LOSolver_Script_ITOW_Script_Max_Maximize_clicked()
 {
-    ui->spinBox_LOSolver_Movie_ITOW_Script_Max->setValue(604800000);
+    ui->spinBox_LOSolver_Script_ITOW_Range_Max->setValue(604800000);
 }
 
 void PostProcessingForm::on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_clicked()

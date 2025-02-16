@@ -256,7 +256,7 @@ private slots:
 
     void on_pushButton_Stylus_Movie_ITOW_Script_Max_Maximize_clicked();
 
-    void on_pushButton_LOSolver_Movie_ITOW_Script_Max_Maximize_clicked();
+    void on_pushButton_LOSolver_Script_ITOW_Script_Max_Maximize_clicked();
 
     void on_pushButton_Lidar_Script_UptimeRange_Max_Maximize_clicked();
 
