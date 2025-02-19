@@ -82,20 +82,46 @@ void AsyncLidarScriptFileWriter::writeHeader(void)
     startTimeLastByte = dataToWrite.length();
     dataToWrite += eol;
 
-    if (params.coordsFormat_HitPoint != Params::CF_NONE)
+    QByteArray coordFormatString = getCoordFormatString(params.coordsFormat_HitPoint);
+
+    switch (params.coordsFormat_HitPoint)
     {
-        QByteArray coordFormatString = getCoordFormatString(params.coordsFormat_HitPoint);
+    case Params::CF_NONE:
+        break;
+    case Params::CF_SHORT_DELTA:
+        dataToWrite += "property " + coordFormatString + " dx" + eol;
+        dataToWrite += "property " + coordFormatString + " dy" + eol;
+        dataToWrite += "property " + coordFormatString + " dz" + eol;
+        break;
+    case Params::CF_FLOAT:
+    case Params::CF_DOUBLE:
+    case Params::CF_SHORT:
+    default:
         dataToWrite += "property " + coordFormatString + " x" + eol;
         dataToWrite += "property " + coordFormatString + " y" + eol;
         dataToWrite += "property " + coordFormatString + " z" + eol;
+        break;
     }
 
-    if (params.coordsFormat_SourcePoint != Params::CF_NONE)
+    coordFormatString = getCoordFormatString(params.coordsFormat_SourcePoint);
+
+    switch (params.coordsFormat_SourcePoint)
     {
-        QByteArray coordFormatString = getCoordFormatString(params.coordsFormat_SourcePoint);
+    case Params::CF_NONE:
+        break;
+    case Params::CF_SHORT_DELTA:
+        dataToWrite += "property " + coordFormatString + " origin_dx" + eol;
+        dataToWrite += "property " + coordFormatString + " origin_dy" + eol;
+        dataToWrite += "property " + coordFormatString + " origin_dz" + eol;
+        break;
+    case Params::CF_FLOAT:
+    case Params::CF_DOUBLE:
+    case Params::CF_SHORT:
+    default:
         dataToWrite += "property " + coordFormatString + " origin_x" + eol;
         dataToWrite += "property " + coordFormatString + " origin_y" + eol;
         dataToWrite += "property " + coordFormatString + " origin_z" + eol;
+        break;
     }
 
     dataToWrite += "property uchar type" + eol;
