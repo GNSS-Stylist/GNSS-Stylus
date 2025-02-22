@@ -60,7 +60,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>4</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>true</bool>
@@ -85,7 +85,7 @@
               <bool>true</bool>
              </property>
              <property name="currentIndex">
-              <number>5</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tab_Settings_Generic">
               <property name="autoFillBackground">
@@ -94,12 +94,9 @@
               <attribute name="title">
                <string>Generic</string>
               </attribute>
-              <layout class="QVBoxLayout" name="verticalLayout_17">
+              <layout class="QVBoxLayout" name="verticalLayout_12">
                <item>
-                <layout class="QFormLayout" name="formLayout_ITOWAlignment">
-                 <property name="labelAlignment">
-                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                 </property>
+                <layout class="QGridLayout" name="gridLayout_8">
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_ExpectedITOWAlignment">
                    <property name="text">
@@ -161,6 +158,38 @@
                    </property>
                    <property name="value">
                     <number>5</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="label_MissingITOWInterpolationMaxCount">
+                   <property name="text">
+                    <string>Max number of missing subsequent RELPOSNED-messages to create (interpolate):</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QSpinBox" name="spinBox_MissingITOWInterpolationMaxCount">
+                   <property name="maximumSize">
+                    <size>
+                     <width>100</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How much can iTOW differ from expected nearest aligned value to &amp;quot;snap&amp;quot; to it. Default: 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                   <property name="minimum">
+                    <number>0</number>
+                   </property>
+                   <property name="maximum">
+                    <number>10</number>
+                   </property>
+                   <property name="value">
+                    <number>0</number>
                    </property>
                   </widget>
                  </item>

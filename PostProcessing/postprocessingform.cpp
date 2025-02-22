@@ -73,6 +73,7 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
 {
     ui->spinBox_ExpectedITOWAlignment->setValue(settings.value("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value()).toInt());
     ui->spinBox_ITOWAutoAlignThreshold->setValue(settings.value("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value()).toInt());
+    ui->spinBox_MissingITOWInterpolationMaxCount->setValue(settings.value("PostProcessing_MissingITOWInterpolationMaxCount", ui->spinBox_MissingITOWInterpolationMaxCount->value()).toInt());
 
     ui->checkBox_ReportITOWAutoAlign->setChecked(settings.value("PostProcessing_ReportITOWAutoAlign", ui->checkBox_ReportITOWAutoAlign->isChecked()).toBool());
     ui->checkBox_ReportMissingITOWs->setChecked(settings.value("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked()).toBool());
@@ -240,6 +241,7 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
 {
     settings.setValue("PostProcessing_ExpectedITOWAlignment", ui->spinBox_ExpectedITOWAlignment->value());
     settings.setValue("PostProcessing_ITOWAutoAlignThreshold", ui->spinBox_ITOWAutoAlignThreshold->value());
+    settings.setValue("PostProcessing_MissingITOWInterpolationMaxCount", ui->spinBox_MissingITOWInterpolationMaxCount->value());
 
     settings.setValue("PostProcessing_ReportITOWAutoAlign", ui->checkBox_ReportITOWAutoAlign->isChecked());
     settings.setValue("PostProcessing_ReportMissingITOWs", ui->checkBox_ReportMissingITOWs->isChecked());
@@ -931,18 +933,44 @@ void PostProcessingForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
             }
         }
 
-        if ((ui->checkBox_ReportMissingITOWs->isChecked()) &&
-                ((currentRELPOSNEDReadingData.lastReadITOW != -1) &&
-                 (static_cast<unsigned int>(relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW) > expectedITOWAlignment)))
+        if ((static_cast<unsigned int>(relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW) > expectedITOWAlignment) &&
+                ((currentRELPOSNEDReadingData.lastReadITOW != -1)))
         {
             int missingITOWS = (relposned.iTOW - currentRELPOSNEDReadingData.lastReadITOW - 1) / expectedITOWAlignment;
 
-            addLogLine("Warning: iTOWs not consecutive with expected interval (" +
-                       QString::number(expectedITOWAlignment) +" ms). Number of missing iTOWs: " + QString::number(missingITOWS) +
-                       ". iTOW range: " + QString::number(currentRELPOSNEDReadingData.lastReadITOW + 1) + "..." +
-                       QString::number(relposned.iTOW - 1) +
-                       ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
-                       "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
+            if (ui->checkBox_ReportMissingITOWs->isChecked())
+            {
+                addLogLine("Warning: iTOWs not consecutive with expected interval (" +
+                           QString::number(expectedITOWAlignment) +" ms). Number of missing iTOWs: " + QString::number(missingITOWS) +
+                           ". iTOW range: " + QString::number(currentRELPOSNEDReadingData.lastReadITOW + 1) + "..." +
+                           QString::number(relposned.iTOW - 1) +
+                           ". Bytes " + QString::number(currentRELPOSNEDReadingData.lastHandledDataByteIndex + 1) +
+                           "..." + QString::number(currentRELPOSNEDReadingData.currentFileByteIndex));
+            }
+
+            if (missingITOWS <= ui->spinBox_MissingITOWInterpolationMaxCount->value())
+            {
+                UBXMessage_RELPOSNED::ITOW interpolatedITOW = currentRELPOSNEDReadingData.lastReadITOW + expectedITOWAlignment;
+
+                while (interpolatedITOW < relposned.iTOW)
+                {
+                    if (currentRELPOSNEDReadingData.relposnedMessages->find(interpolatedITOW) != currentRELPOSNEDReadingData.relposnedMessages->end())
+                    {
+                        // RELPOSNED-message with the same iTOW already exists
+                        addLogLine("Warning: Duplicate ITOW found while trying to generate interpolated message. ITOW: " + QString::number(interpolatedITOW) +
+                                   ". Only previous messages preserved.");
+                    }
+                    else
+                    {
+                        UBXMessage_RELPOSNED interpolatedMessage = UBXMessage_RELPOSNED::interpolateCoordinates(currentRELPOSNEDReadingData.relposnedMessages->find(currentRELPOSNEDReadingData.lastReadITOW).value(), relposned, interpolatedITOW);
+                        currentRELPOSNEDReadingData.relposnedMessages->operator[](interpolatedITOW) = interpolatedMessage;
+                        currentRELPOSNEDReadingData.messageCount_UBX_RELPOSNED_UniqueITOWs++;
+
+                        addLogLine("Created interpolated message at ITOW " + QString::number(interpolatedITOW));
+                    }
+                    interpolatedITOW += expectedITOWAlignment;
+                }
+            }
         }
 
         currentRELPOSNEDReadingData.lastReadITOW = relposned.iTOW;
@@ -950,7 +978,7 @@ void PostProcessingForm::ubloxProcessor_ubxMessageReceived(const UBXMessage& ubx
 
         if (currentRELPOSNEDReadingData.relposnedMessages->find(relposned.iTOW) != currentRELPOSNEDReadingData.relposnedMessages->end())
         {
-            // RELPOSNED-message with the same iTOW already existed
+            // RELPOSNED-message with the same iTOW already exists
             if (currentRELPOSNEDReadingData.firstDuplicateITOW != -1)
             {
                 // This was not the first already existing RELPOSNED-message with duplicate iTOW -> Increase counter
