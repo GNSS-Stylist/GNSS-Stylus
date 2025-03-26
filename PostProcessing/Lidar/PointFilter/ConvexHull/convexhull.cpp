@@ -287,7 +287,7 @@ bool ConvexHull::exportHullToObjFile(const QString& filename)
     }
 
     // This is quite "back and forth"-style handling
-    // (first creating QVectors base on "raw" data and here converting them back to "raw").
+    // (first creating QVectors based on "raw" data and here converting them back to "raw").
     // But this is not very often used, so who cares?
 
     ch_vertex* vertices = (ch_vertex*) malloc(mesh.vertices.size() * sizeof(ch_vertex));

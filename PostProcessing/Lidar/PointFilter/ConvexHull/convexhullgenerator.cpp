@@ -26,8 +26,6 @@ QMap<QString, ConvexHull> ConvexHullGenerator::generateMap(const QString& plainT
 
     int charIndex = 0;
 
-    QByteArray subString;
-
     int plainTextLength = plainText.length();
 
     while (charIndex < plainTextLength)

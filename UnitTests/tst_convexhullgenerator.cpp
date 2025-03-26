@@ -18,7 +18,7 @@
 
 #include "tst_convexhullgenerator.h"
 #include "../PostProcessing/Lidar/PointFilter/ConvexHull/convexhullgenerator.h"
-#include "PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h"
+//#include "PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h"
 
 TestConvexHullGenerator::TestConvexHullGenerator()
 {

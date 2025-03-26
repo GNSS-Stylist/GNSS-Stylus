@@ -1,5 +1,5 @@
 /*
-    tst_convexhullenerator.h (part of GNSS-Stylus)
+    tst_convexhullgenerator.h (part of GNSS-Stylus)
     Copyright (C) 2024-present Pasi Nuutinmaki (gnssstylist<at>sci<dot>fi)
 
     This program is free software: you can redistribute it and/or modify
