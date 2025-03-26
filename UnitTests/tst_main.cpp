@@ -24,6 +24,8 @@
 #include "tst_expressionfiltergenerator.h"
 #include "tst_convexhullgenerator.h"
 #include "tst_postfilter.h"
+#include "tst_fantriangle.h"
+#include "tst_pointfangenerator.h"
 
 int main(int argc, char **argv)
 {
@@ -70,6 +72,16 @@ int main(int argc, char **argv)
 
     {
         TestPostFilter tc;
+        status |= QTest::qExec(&tc, argc, argv);
+    }
+
+    {
+        TestFanTriangle tc;
+        status |= QTest::qExec(&tc, argc, argv);
+    }
+
+    {
+        TestPointFanGenerator tc;
         status |= QTest::qExec(&tc, argc, argv);
     }
 

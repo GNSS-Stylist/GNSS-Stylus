@@ -20,14 +20,19 @@ SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/expressionfiltergenerator.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
+    ../PostProcessing/PointFan/fantriangle.cpp \
+    ../PostProcessing/PointFan/pointfan.cpp \
+    ../PostProcessing/PointFan/pointfangenerator.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     ../Util/textblockparser.cpp \
     tst_convexhull.cpp \
     tst_convexhullgenerator.cpp \
     tst_expressionfilter.cpp \
     tst_expressionfiltergenerator.cpp \
+    tst_fantriangle.cpp \
     tst_lazyevaluator.cpp \
     tst_main.cpp \
+    tst_pointfangenerator.cpp \
     tst_postfilter.cpp \
     tst_textblockparser.cpp
 
@@ -44,13 +49,18 @@ HEADERS += \
     ../PostProcessing/Lidar/PointFilter/tinyexpr-plusplus/tinyexpr.h \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.h \
     ../PostProcessing/Lidar/lidardevice.h \
+    ../PostProcessing/PointFan/fantriangle.h \
+    ../PostProcessing/PointFan/pointfan.h \
+    ../PostProcessing/PointFan/pointfangenerator.h \
     ../Util/textblockparser.h \
     tst_convexhull.h \
     tst_convexhullgenerator.h \
     tst_expressionfilter.h \
     tst_expressionfiltergenerator.h \
+    tst_fantriangle.h \
     tst_lazyevaluator.h \
     tst_lidarfiltering.h \
+    tst_pointfangenerator.h \
     tst_postfilter.h \
     tst_textblockparser.h
 
