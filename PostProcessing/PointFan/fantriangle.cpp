@@ -39,3 +39,11 @@ FanTriangle::FanTriangle(const Eigen::Vector3d& point1, const Eigen::Vector3d& p
     planeEq_Y = -normal_3D.y() / normal_3D.z();
 }
 
+double FanTriangle::getArea_2D(void)
+{
+    Eigen::Vector2d vec01 = points_2D[1] - points_2D[0];
+    Eigen::Vector2d vec02 = points_2D[2] - points_2D[0];
+    Eigen::Vector2d normalVec01 = Eigen::Vector2d(vec01.y(), -vec01.x()).normalized();
+
+    return (vec01.norm()) * std::abs(vec02.dot(normalVec01)) * 0.5;
+}

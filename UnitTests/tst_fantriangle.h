@@ -41,6 +41,7 @@ private slots:
 
     void simplePlanarTriangle();
     void simplePlanarTriangle_ReverseWindingOrder();
+    void getArea_2D();
     void randomTriangles();
 
 };

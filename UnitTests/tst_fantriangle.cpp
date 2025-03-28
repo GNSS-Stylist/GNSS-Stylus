@@ -76,6 +76,8 @@ void TestFanTriangle::simplePlanarTriangle()
     QVERIFY(triangle.testHit_2D(vertices_2D[2]));
     QCOMPARE(triangle.getHitPoint(vertices_2D[2]), Eigen::Vector3d(vertices[2]));
 
+    QCOMPARE(triangle.getArea_2D(), 0.5);
+
     // Points close enough ("on" the edge, but with limited precision) to the edges should be regarded as being inside
     for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
     {
@@ -195,6 +197,8 @@ void TestFanTriangle::simplePlanarTriangle_ReverseWindingOrder()
     QVERIFY(triangle.testHit_2D(vertices_2D[2]));
     QCOMPARE(triangle.getHitPoint(vertices_2D[2]), Eigen::Vector3d(vertices[2]));
 
+    QCOMPARE(triangle.getArea_2D(), 0.5);
+
     // Points close enough ("on" the edge, but with limited precision) to the edges should be regarded as being inside
     for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++)
     {
@@ -271,6 +275,82 @@ void TestFanTriangle::simplePlanarTriangle_ReverseWindingOrder()
     }
 
     bool dbgTrap = 0; (void) dbgTrap;
+}
+
+void TestFanTriangle::getArea_2D()
+{
+    // "Random numbers" out of my head...
+    constexpr double equiLatRot = 0.26285564565456217;
+    constexpr double equiLatRadius = 4.56789;
+
+    struct
+    {
+        Eigen::Vector3d vertices[3];
+        double expectedArea;
+    } testItems[] =
+    {
+        {
+            {
+                Eigen::Vector3d(0, 0, 0),
+                Eigen::Vector3d(1, 1, 0),
+                Eigen::Vector3d(0, 1, 0),
+            },
+            0.5
+        },
+        {
+            {
+                // First item translated by 10 units in all axes
+                Eigen::Vector3d(10, 10, 10),
+                Eigen::Vector3d(11, 11, 10),
+                Eigen::Vector3d(10, 11, 10),
+            },
+            0.5
+        },
+        {
+            {
+                // First item sheared in y-axis and translated uniformly in z
+                Eigen::Vector3d(0, 10, -100),
+                Eigen::Vector3d(1, 11, -100),
+                Eigen::Vector3d(0, 11, -100),
+            },
+            0.5
+        },
+        {
+            {
+                // First item sheared in x-axis and translated randomly in z
+                Eigen::Vector3d(10, 0, 4),
+                Eigen::Vector3d(11, 1, 2),
+                Eigen::Vector3d(10, 1, 89),
+            },
+            0.5
+        },
+        {
+            {
+                // First item scaled
+                Eigen::Vector3d(0, 0, 0),
+                Eigen::Vector3d(10, 10, 0),
+                Eigen::Vector3d(0, 10, 0),
+            },
+            50.0
+        },
+        {
+            {
+                // More arbitrary triangle (rotated equilateral triangle)
+                Eigen::Vector3d(sin(equiLatRot) * equiLatRadius, cos(equiLatRot) * equiLatRadius, 233),
+                Eigen::Vector3d(sin(equiLatRot + 2.0 * M_PI / 3.0) * equiLatRadius, cos(equiLatRot + 2.0 * M_PI / 3.0) * equiLatRadius, 32),
+                Eigen::Vector3d(sin(equiLatRot + 2.0 * (2.0 * M_PI / 3.0)) * equiLatRadius, cos(equiLatRot + 2.0 * (2.0 * M_PI / 3.0)) * equiLatRadius, 32),
+            },
+            (sqrt(3.0) / 4.0) * pow(equiLatRadius * sqrt(3.0) , 2.0),
+        },
+
+    };
+
+    for (auto item:testItems)
+    {
+        FanTriangle triangle(item.vertices[0], item.vertices[1], item.vertices[2]);
+
+        QCOMPARE(triangle.getArea_2D(), item.expectedArea);
+    }
 }
 
 
