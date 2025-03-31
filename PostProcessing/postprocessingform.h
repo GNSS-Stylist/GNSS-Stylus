@@ -282,6 +282,8 @@ private slots:
 
     void on_pushButton_Lidar_PointCloud_ConvexHulls_Export_2_clicked();
 
+    void on_pushButton_PointFans_Generate_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -353,6 +355,8 @@ private:
     QFileDialog fileDialog_RasterCameraScript_Save;
 
     QFileDialog fileDialog_ExportConvexHulls;
+
+    QFileDialog fileDialog_ExportPointFans;
 
     // Replay:
     qint64 firstUptimeToReplay = 0;

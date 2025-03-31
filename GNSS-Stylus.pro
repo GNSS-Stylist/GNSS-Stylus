@@ -77,6 +77,10 @@ SOURCES += \
     PostProcessing/Lidar/lidarscriptgeneratorthread.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidar.cpp \
     PostProcessing/Lidar/pointcloudgeneratorlidarthread.cpp \
+    PostProcessing/PointFan/fantriangle.cpp \
+    PostProcessing/PointFan/pointfan.cpp \
+    PostProcessing/PointFan/pointfanfilewriter.cpp \
+    PostProcessing/PointFan/pointfangenerator.cpp \
     PostProcessing/Stylus/moviescriptgenerator.cpp \
     PostProcessing/Stylus/pointcloudgeneratorstylus.cpp \
     PostProcessing/asynclidarscriptfilewriter.cpp \
@@ -134,6 +138,10 @@ HEADERS += \
     PostProcessing/Lidar/lidarscriptgeneratorthread.h \
     PostProcessing/Lidar/pointcloudgeneratorlidar.h \
     PostProcessing/Lidar/pointcloudgeneratorlidarthread.h \
+    PostProcessing/PointFan/fantriangle.h \
+    PostProcessing/PointFan/pointfan.h \
+    PostProcessing/PointFan/pointfanfilewriter.h \
+    PostProcessing/PointFan/pointfangenerator.h \
     PostProcessing/Stylus/moviescriptgenerator.h \
     PostProcessing/Stylus/pointcloudgeneratorstylus.h \
     PostProcessing/asynclidarscriptfilewriter.h \

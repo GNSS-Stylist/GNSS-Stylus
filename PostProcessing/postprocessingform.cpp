@@ -34,6 +34,7 @@
 #include "rastercameragenerator.h"
 #include "Lidar/PointFilter/ConvexHull/convexhullgenerator.h"
 #include "PostProcessing/Lidar/PointFilter/expressionfiltergenerator.h"
+#include "PointFan/pointfangenerator.h"
 
 struct
 {
@@ -423,6 +424,8 @@ PostProcessingForm::~PostProcessingForm()
 
     settings.setValue("PostProcessing_Directory_Dialog_ExportConvexHulls", fileDialog_ExportConvexHulls.directory().path());
 
+    settings.setValue("PostProcessing_Directory_Dialog_ExportPointFans", fileDialog_ExportPointFans.directory().path());
+
     delete ui;
 }
 
@@ -457,7 +460,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_RasterCameraScript_Load.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_RasterCameraScript_Save.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_ExportConvexHulls.setOption(QFileDialog::DontUseNativeDialog, true);
-
+        fileDialog_ExportPointFans.setOption(QFileDialog::DontUseNativeDialog, true);
 
         fileDialog_UBX.setFileMode(QFileDialog::ExistingFiles);
 
@@ -626,6 +629,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_RasterCameraScript_Save.setNameFilters(rasterCameraScriptFilters);
 
         fileDialog_ExportConvexHulls.setFileMode(QFileDialog::Directory);
+        fileDialog_ExportPointFans.setFileMode(QFileDialog::Directory);
 
         for (unsigned int presetIndex = 0; presetIndex < (sizeof(transformationPresets) / sizeof(transformationPresets[0])); presetIndex++)
         {
@@ -661,6 +665,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
     fileDialog_RasterCameraScript_Save.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RasterCameraScript_Save").toString()));
 
     fileDialog_ExportConvexHulls.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_ExportConvexHulls").toString()));
+    fileDialog_ExportPointFans.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_ExportPointfans").toString()));
 }
 
 void PostProcessingForm::addLogLine(const QString& line)
@@ -4626,15 +4631,52 @@ void PostProcessingForm::stopStopwatch(void)
     addLogLine("Time elapsed since stopwatch started: " + QString::number(secsElapsed, 'g', 3) + " s.");
 }
 
+void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
+{
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
 
+    if (!generateTransformationMatrix(transform_NEDToXYZ))
+    {
+        return;
+    }
 
+    PointFanGenerator generator;
 
+    QMap<QString, PointFan> fans;
 
+    try
+    {
+        fans = generator.generateMap(ui->plainTextEdit_PointFans->toPlainText());
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        addLogLine("Generating expression map failed. Error: " + issue.text + ". CharIndex: " + QString::number(issue.beginChar));
+        QTextCursor cursor = ui->plainTextEdit_PointFans->textCursor();
+        cursor.setPosition(issue.beginChar);
+        if (issue.endChar != -1)
+        {
+            cursor.setPosition(issue.endChar, QTextCursor::KeepAnchor);
+        }
+        else
+        {
+            cursor.setPosition(issue.beginChar + 1, QTextCursor::KeepAnchor);
+        }
+        ui->plainTextEdit_PointFans->setTextCursor(cursor);
+        ui->plainTextEdit_PointFans->setFocus();
+    }
 
+    if (!fileDialog_ExportPointFans.exec())
+    {
+        return;
+    }
 
+    auto iter = fans.begin();
 
-
-
-
-
+    while (iter != fans.end())
+    {
+        QString fullFileName = QDir::cleanPath(fileDialog_ExportPointFans.directory().path() + "/" + iter.key() + ".ply");
+        iter.value().exportFanToFile(fullFileName, ui->checkBox_PointFans_Options_ExportCorners->isChecked(), ui->checkBox_PointFans_Options_ExportFaces->isChecked(), ui->checkBox_PointFans_Options_InvertedFaces->isChecked(), ui->spinBox_PointFans_Options_MaxPointCount->value());
+        iter++;
+    }
+}
 

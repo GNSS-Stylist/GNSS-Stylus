@@ -21,6 +21,7 @@
 
 #include <QVector>
 #include <Eigen/Geometry>
+
 class FanTriangle
 {
 public:
