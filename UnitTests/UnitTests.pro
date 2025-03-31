@@ -22,6 +22,7 @@ SOURCES +=  tst_lidarfiltering.cpp \
     ../PostProcessing/Lidar/PointFilter/tinyexprcustomfunctions.cpp \
     ../PostProcessing/PointFan/fantriangle.cpp \
     ../PostProcessing/PointFan/pointfan.cpp \
+    ../PostProcessing/PointFan/pointfanfilewriter.cpp \
     ../PostProcessing/PointFan/pointfangenerator.cpp \
     ../RPLidar/rplidarplausibilityfilter.cpp \
     ../Util/textblockparser.cpp \
@@ -51,6 +52,7 @@ HEADERS += \
     ../PostProcessing/Lidar/lidardevice.h \
     ../PostProcessing/PointFan/fantriangle.h \
     ../PostProcessing/PointFan/pointfan.h \
+    ../PostProcessing/PointFan/pointfanfilewriter.h \
     ../PostProcessing/PointFan/pointfangenerator.h \
     ../Util/textblockparser.h \
     tst_convexhull.h \

@@ -37,6 +37,10 @@ private slots:
     void valid_Input();
     void error_DuplicateFans();
     void error_InvalidName();
+    void error_ParamsMissing();
+    void error_InvalidCoordinateSpace();
+    void error_InvalidWindingOrder();
+    void error_InvalidPointSpacing();
     void error_PointDefinitionsMissing();
     void error_CharsAtWrongPlaces();
     void error_NotEnoughPoints();
@@ -45,8 +49,7 @@ private slots:
     void error_notEnoughDimensions();
     void error_UnicodeInExpressions();
 
-    void exportFanToFile();
-
+//    void exportFanToFile(); // Generates files to be inspected so disabled by default
 //    void error_InvalidExpression(); // This passes, but TinyExpr leaks memory on division by zero, according to valgrind memory analyzer.
 
 };

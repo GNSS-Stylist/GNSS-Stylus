@@ -26,44 +26,49 @@ class FanTriangle
 public:
     static constexpr double edgeLimit = 1e-6;
 
-    FanTriangle(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2, const Eigen::Vector3d& point3);
-	inline bool testHit_2D(const Eigen::Vector2d& point2D);
-	inline Eigen::Vector3d getHitPoint(const Eigen::Vector2d& point2D);
+    FanTriangle(const Eigen::Vector3d& vertex0, const Eigen::Vector3d& vertex1, const Eigen::Vector3d& vertex2);
+    inline bool testHit_2D(const Eigen::Vector2d& coord2D);
+    inline Eigen::Vector3d getHitPoint(const Eigen::Vector2d& coord2D);
 	Eigen::Vector3d getNormal(void) { return normal_3D; }
     double getArea_2D(void);
+    const Eigen::Vector3d* getVertices(void) { return vertices_3D; };
+
+    friend FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Isometry>& transform , const FanTriangle& rhs);
 
 private:
-    Eigen::Vector3d points_3D[3];
-	Eigen::Vector2d points_2D[3];
-	Eigen::Vector2d edgeNormals_2D[3];
-	Eigen::Vector3d normal_3D;
+    Eigen::Vector3d vertices_3D[3];
+    Eigen::Vector2d vertices_2D[3];
 
+    Eigen::Vector2d edgeNormals_2D[3];
+	Eigen::Vector3d normal_3D;
     double planeEq_X;  // "Slope" of z-coord along the x-axis
     double planeEq_Y;  // "Slope" of z-coord along the y-axis
+
+    void recalcSpeedupVariables(void);
 };
 
-inline bool FanTriangle::testHit_2D(const Eigen::Vector2d& point2D)
+inline bool FanTriangle::testHit_2D(const Eigen::Vector2d& coord2D)
 {
     if (normal_3D.z() < 0)
     {
-        return (edgeNormals_2D[0].dot(point2D - points_2D[0]) > -edgeLimit) &&
-               (edgeNormals_2D[1].dot(point2D - points_2D[1]) > -edgeLimit) &&
-               (edgeNormals_2D[2].dot(point2D - points_2D[2]) > -edgeLimit);
+        return (edgeNormals_2D[0].dot(coord2D - vertices_2D[0]) > -edgeLimit) &&
+               (edgeNormals_2D[1].dot(coord2D - vertices_2D[1]) > -edgeLimit) &&
+               (edgeNormals_2D[2].dot(coord2D - vertices_2D[2]) > -edgeLimit);
     }
     else
     {
-        return (edgeNormals_2D[0].dot(point2D - points_2D[0]) < edgeLimit) &&
-               (edgeNormals_2D[1].dot(point2D - points_2D[1]) < edgeLimit) &&
-               (edgeNormals_2D[2].dot(point2D - points_2D[2]) < edgeLimit);
+        return (edgeNormals_2D[0].dot(coord2D - vertices_2D[0]) < edgeLimit) &&
+               (edgeNormals_2D[1].dot(coord2D - vertices_2D[1]) < edgeLimit) &&
+               (edgeNormals_2D[2].dot(coord2D - vertices_2D[2]) < edgeLimit);
     }
 }
 
-inline Eigen::Vector3d FanTriangle::getHitPoint(const Eigen::Vector2d& point2D)
+inline Eigen::Vector3d FanTriangle::getHitPoint(const Eigen::Vector2d& coord2D)
 {
-    return Eigen::Vector3d(point2D.x(), point2D.y(),
-        points_3D[0].z() +
-        (point2D.x() - points_3D[0].x()) * planeEq_X +
-        (point2D.y() - points_3D[0].y()) * planeEq_Y);
+    return Eigen::Vector3d(coord2D.x(), coord2D.y(),
+        vertices_3D[0].z() +
+                               (coord2D.x() - vertices_3D[0].x()) * planeEq_X +
+                               (coord2D.y() - vertices_3D[0].y()) * planeEq_Y);
 }
 
 

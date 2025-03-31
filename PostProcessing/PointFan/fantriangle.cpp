@@ -19,21 +19,26 @@
 #include "fantriangle.h"
 
 
-FanTriangle::FanTriangle(const Eigen::Vector3d& point1, const Eigen::Vector3d& point2, const Eigen::Vector3d& point3)
+FanTriangle::FanTriangle(const Eigen::Vector3d& vertex0, const Eigen::Vector3d& vertex1, const Eigen::Vector3d& vertex2)
 {
-    points_3D[0] = point1;
-    points_3D[1] = point2;
-    points_3D[2] = point3;
+    vertices_3D[0] = vertex0;
+    vertices_3D[1] = vertex1;
+    vertices_3D[2] = vertex2;
 
-    points_2D[0] = Eigen::Vector2d(point1.x(), point1.y());
-    points_2D[1] = Eigen::Vector2d(point2.x(), point2.y());
-    points_2D[2] = Eigen::Vector2d(point3.x(), point3.y());
+    recalcSpeedupVariables();
+}
 
-    edgeNormals_2D[0] = Eigen::Vector2d((points_2D[1].y() - points_2D[0].y()), -(points_2D[1].x() - points_2D[0].x())).normalized();
-    edgeNormals_2D[1] = Eigen::Vector2d((points_2D[2].y() - points_2D[1].y()), -(points_2D[2].x() - points_2D[1].x())).normalized();
-    edgeNormals_2D[2] = Eigen::Vector2d((points_2D[0].y() - points_2D[2].y()), -(points_2D[0].x() - points_2D[2].x())).normalized();
+void FanTriangle::recalcSpeedupVariables(void)
+{
+    vertices_2D[0] = Eigen::Vector2d(vertices_3D[0].x(), vertices_3D[0].y());
+    vertices_2D[1] = Eigen::Vector2d(vertices_3D[1].x(), vertices_3D[1].y());
+    vertices_2D[2] = Eigen::Vector2d(vertices_3D[2].x(), vertices_3D[2].y());
 
-    normal_3D = ((point2 - point1).cross(point3 - point1)).normalized();
+    edgeNormals_2D[0] = Eigen::Vector2d((vertices_2D[1].y() - vertices_2D[0].y()), -(vertices_2D[1].x() - vertices_2D[0].x())).normalized();
+    edgeNormals_2D[1] = Eigen::Vector2d((vertices_2D[2].y() - vertices_2D[1].y()), -(vertices_2D[2].x() - vertices_2D[1].x())).normalized();
+    edgeNormals_2D[2] = Eigen::Vector2d((vertices_2D[0].y() - vertices_2D[2].y()), -(vertices_2D[0].x() - vertices_2D[2].x())).normalized();
+
+    normal_3D = ((vertices_3D[1] - vertices_3D[0]).cross(vertices_3D[2] - vertices_3D[0])).normalized();
 
     planeEq_X = -normal_3D.x() / normal_3D.z();
     planeEq_Y = -normal_3D.y() / normal_3D.z();
@@ -41,9 +46,15 @@ FanTriangle::FanTriangle(const Eigen::Vector3d& point1, const Eigen::Vector3d& p
 
 double FanTriangle::getArea_2D(void)
 {
-    Eigen::Vector2d vec01 = points_2D[1] - points_2D[0];
-    Eigen::Vector2d vec02 = points_2D[2] - points_2D[0];
+    Eigen::Vector2d vec01 = vertices_2D[1] - vertices_2D[0];
+    Eigen::Vector2d vec02 = vertices_2D[2] - vertices_2D[0];
     Eigen::Vector2d normalVec01 = Eigen::Vector2d(vec01.y(), -vec01.x()).normalized();
 
     return (vec01.norm()) * std::abs(vec02.dot(normalVec01)) * 0.5;
+}
+
+FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Isometry>& transform , const FanTriangle& rhs)
+{
+    FanTriangle transformed(transform * rhs.vertices_3D[0], transform * rhs.vertices_3D[2], transform * rhs.vertices_3D[1]);
+    return transformed;
 }

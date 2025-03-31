@@ -85,6 +85,140 @@ QMap<QString, PointFan> PointFanGenerator::generateMap(const QString& plainText)
 
         try
         {
+            PointFan newFan;
+
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
+
+            if (charIndex >= plainText.length())
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "All parameters and definitions missing for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            if (plainText.at(charIndex) == '{')
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "Parameters (coordinate system, winding order, point spacing) missing for fan \"" + fanNameString + "\".";;
+                throw error;
+            }
+
+            int paramStartIndex = charIndex;
+            QString paramString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{");
+            QString paramStringLowerCase = paramString.toLower();
+            int paramEndIndex = charIndex;
+
+            if (paramStringLowerCase == "ned")
+            {
+                newFan.coordinateSpace = PointFan::CS_NED;
+            }
+            else if (paramStringLowerCase == "xyz")
+            {
+                newFan.coordinateSpace = PointFan::CS_XYZ;
+            }
+            else
+            {
+                Issue error;
+                error.beginChar = paramStartIndex;
+                error.endChar = paramEndIndex;
+                error.text = "Invalid coordinate system definition (\"" + paramString + "\") for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
+
+            if (charIndex >= plainText.length())
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "Some parameters (winding order, point spacing) and point definitions missing for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            if (plainText.at(charIndex) == '{')
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "Some parameters (winding order, point spacing) missing for fan \"" + fanNameString + "\".";;
+                throw error;
+            }
+
+            paramStartIndex = charIndex;
+            paramString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{");
+            paramStringLowerCase = paramString.toLower();
+            paramEndIndex = charIndex;
+
+            if (paramStringLowerCase == "forward")
+            {
+                newFan.windingOrder = PointFan::WO_FORWARD;
+            }
+            else if (paramStringLowerCase == "reverse")
+            {
+                newFan.windingOrder = PointFan::WO_REVERSE;
+            }
+            else
+            {
+                Issue error;
+                error.beginChar = paramStartIndex;
+                error.endChar = paramEndIndex;
+                error.text = "Invalid winding order definition (\"" + paramString + "\") for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
+
+            if (charIndex >= plainText.length())
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "Parameter for point spacing and point definitions missing for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            if (plainText.at(charIndex) == '{')
+            {
+                Issue error;
+                error.beginChar = fanNameStartIndex;
+                error.endChar = fanNameEndIndex;
+                error.text = "Parameter for point spacing missing for fan \"" + fanNameString + "\".";;
+                throw error;
+            }
+
+            paramStartIndex = charIndex;
+            paramString = TextBlockParser::getSubString(plainText, charIndex, " \t\n{");
+            paramStringLowerCase = paramString.toLower();
+            paramEndIndex = charIndex;
+
+            bool convOk;
+            double spacing = paramString.toDouble(&convOk);
+
+            if (!convOk)
+            {
+                Issue error;
+                error.beginChar = paramStartIndex;
+                error.endChar = paramEndIndex;
+                error.text = "Can not convert parameter for point spacing (\"" + paramString + "\") to float for fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            if (spacing <= 0)
+            {
+                Issue error;
+                error.beginChar = paramStartIndex;
+                error.endChar = paramEndIndex;
+                error.text = "Point spacing must be > 0, fan \"" + fanNameString + "\".";
+                throw error;
+            }
+
+            newFan.pointSpacing = spacing;
+
             TextBlockParser::skipWhitespacesAndComments(plainText, charIndex);
 
             if (charIndex >= plainText.length())
@@ -109,10 +243,9 @@ QMap<QString, PointFan> PointFanGenerator::generateMap(const QString& plainText)
             QString coordinateBlockContents = TextBlockParser::getTextBlockAsString(plainText, charIndex, true);
             int coordinateBlockEndIndex = charIndex;
 
-            PointFan newFan;
             addFanPointsFromBlock(coordinateBlockContents, coordinateBlockStartIndex + 1, newFan);
 
-            if (newFan.getNumOfUniquePoints() < 3)
+            if (newFan.getNumOfVertices() < 3)
             {
                 Issue error;
                 error.beginChar = coordinateBlockStartIndex;
@@ -121,7 +254,7 @@ QMap<QString, PointFan> PointFanGenerator::generateMap(const QString& plainText)
                 throw error;
             }
 
-            if (!(newFan.isFanvalid()))
+            if (!(newFan.isFanValid()))
             {
                 Issue error;
                 error.beginChar = coordinateBlockStartIndex;
@@ -173,7 +306,7 @@ void PointFanGenerator::addFanPointsFromBlock(const QString &blockString, const 
 
         Eigen::Vector3d newPoint = extractCoordinatesFromBlock(coordinateBlockContents, coordinateBlockStartIndex + 1); // +1 for '{'
 
-        if (!fan.addPoint(newPoint))
+        if (!fan.addVertex(newPoint))
         {
             Issue error;
             error.beginChar = coordinateBlockStartIndex;

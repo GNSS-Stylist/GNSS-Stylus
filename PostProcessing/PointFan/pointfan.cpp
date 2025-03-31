@@ -17,26 +17,28 @@
 */
 
 #include "pointfan.h"
+#include "fantriangle.h"
+#include "pointfanfilewriter.h"
 
 PointFan::PointFan()
 {
 
 }
 
-unsigned int PointFan::addPoints(const QVector<Eigen::Vector3d>& newPoints)
+unsigned int PointFan::addVertices(const QVector<Eigen::Vector3d>& newVertices)
 {
     unsigned int count = 0;
 
-    for (int i = 0; i < newPoints.size(); i++)
+    for (int i = 0; i < newVertices.size(); i++)
     {
-        if (!isPointUnique(newPoints[i]))
+        if (!isVertexValid(newVertices[i]))
         {
-            // Only add unique points
+            // Only add vertices that are different from the last inserted and the first inserted (fan common point, "origin")
             continue;
         }
         else
         {
-            points.push_back(newPoints[i]);
+            vertices.push_back(newVertices[i]);
             count++;
         }
     }
@@ -44,76 +46,79 @@ unsigned int PointFan::addPoints(const QVector<Eigen::Vector3d>& newPoints)
     return count;
 }
 
-bool PointFan::addPoint(const Eigen::Vector3d& newPoint)
+bool PointFan::addVertex(const Eigen::Vector3d& newVertex)
 {
-    if (!isPointUnique(newPoint))
+    if (!isVertexValid(newVertex))
     {
-        // Only add unique points
+        // Only add vertices that are different from the last inserted and the first inserted (fan common point, "origin")
         return false;
     }
 
-    points.push_back(newPoint);
+    vertices.push_back(newVertex);
     return true;
 }
 
-void PointFan::clearPoints(void)
+void PointFan::clearVertices(void)
 {
-    points.clear();
+    vertices.clear();
 }
 
-bool PointFan::isPointUnique(const Eigen::Vector3d& newPoint)
+bool PointFan::isVertexValid(const Eigen::Vector3d& newVertex)
 {
-    return points.isEmpty() || (points.constLast() != newPoint);
-//    return (!points.contains(newPoint));
+    // TODO: Could maybe add some more checks... Too lazy now...
+    return vertices.isEmpty() || ((vertices.constLast() != newVertex) && (vertices[0] != newVertex));
 }
 
-unsigned int PointFan::getNumOfUniquePoints(void)
+unsigned int PointFan::getNumOfVertices(void)
 {
-    return points.size();
+    return vertices.size();
 }
 
-bool PointFan::isFanvalid(void)
+bool PointFan::isFanValid(void)
 {
-    // Could add more checks here, but too lazy...
+    // TODO: Could add more checks here (for identical points etc.), but too lazy...
 
-    return (getNumOfUniquePoints() >= 3);
+    return (getNumOfVertices() >= 3);
 }
 
-QVector<Eigen::Vector3d> PointFan::getPoints(void)
+QVector<Eigen::Vector3d> PointFan::getVertices(void)
 {
-    return points;
+    return vertices;
 }
 
-bool PointFan::exportFanToFile(const QString& filename, const double pointSpacing, const bool exportCorners, const bool exportFaces, const int countSanityLimit)
+void PointFan::exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit)
 {
-    if (!isFanvalid())
+    if (!isFanValid())
     {
-        return false;
+        throw QString("Fan is not valid.");
     }
 
-    Eigen::Vector3d origin = points[0];
-    Eigen::Vector3d xAxis = (points[1] - origin).normalized();
-    Eigen::Vector3d zAxis = ((points[1] - origin).cross(points[2] - origin)).normalized();
+    Eigen::Vector3d origin = vertices[0];
+    Eigen::Vector3d xAxis = (vertices[1] - origin).normalized();
+    Eigen::Vector3d zAxis = ((vertices[1] - origin).cross(vertices[2] - origin)).normalized();
     Eigen::Vector3d yAxis = xAxis.cross(zAxis).normalized();
 
     // Using coordinate space here, where axes are orientated according to the first triangle, where:
+    // Origin = fan common vertex (points[0])
     // x-axis points from the origin to the first defined point
     // y-axis is perpendicular to x- and z-axes (z = normal)
     // z-axis points to the normal direction of the first triangle
 
     Eigen::Transform<double, 3, Eigen::Isometry> transform;
+
     transform(0, 0) = xAxis.x();
-    transform(0, 1) = xAxis.y();
-    transform(0, 2) = xAxis.z();
-    transform(1, 0) = zAxis.x();
-    transform(1, 1) = zAxis.y();
-    transform(1, 2) = zAxis.z();
-    transform(2, 0) = yAxis.x();
-    transform(2, 1) = yAxis.y();
-    transform(2, 2) = yAxis.z();
+    transform(1, 0) = xAxis.y();
+    transform(2, 0) = xAxis.z();
+    transform(0, 1) = yAxis.x();
+    transform(1, 1) = yAxis.y();
+    transform(2, 1) = yAxis.z();
+    transform(0, 2) = zAxis.x();
+    transform(1, 2) = zAxis.y();
+    transform(2, 2) = zAxis.z();
+
     transform.translation() = origin;
 
-    // Doing all operations here in a space that has origin at the first point defined
+    // Doing all operations here in a space that has origin at the first point defined (fan common vertex)
     // and axes are defined as described above.
     // Therefore we need to convert all points back and forth using transform/inverse transform.
 
@@ -121,31 +126,127 @@ bool PointFan::exportFanToFile(const QString& filename, const double pointSpacin
 
     QVector<Eigen::Vector3d> localPoints;
 
-    localPoints.reserve(points.size());
+    localPoints.reserve(vertices.size());
 
-    for (Eigen::Vector3d& point:points)
+    for (Eigen::Vector3d& point:vertices)
     {
         localPoints.push_back(inverseTransform * point);
     }
 
     double minX = std::numeric_limits<double>::max();
-    double maxX = std::numeric_limits<double>::min();
+    double maxX = std::numeric_limits<double>::lowest();
     double minY = std::numeric_limits<double>::max();
-    double maxY = std::numeric_limits<double>::min();
+    double maxY = std::numeric_limits<double>::lowest();
     double minZ = std::numeric_limits<double>::max();
-    double maxZ = std::numeric_limits<double>::min();
+    double maxZ = std::numeric_limits<double>::lowest();
 
-    for (Eigen::Vector3d& point:localPoints)
+    for (Eigen::Vector3d& localPoint:localPoints)
     {
-        minX = std::min(minX, point.x());
-        maxX = std::max(maxX, point.x());
-        minY = std::min(minY, point.y());
-        maxY = std::max(maxY, point.y());
-        minZ = std::min(minZ, point.z());
-        maxZ = std::max(maxZ, point.z());
+        minX = std::min(minX, localPoint.x());
+        maxX = std::max(maxX, localPoint.x());
+        minY = std::min(minY, localPoint.y());
+        maxY = std::max(maxY, localPoint.y());
+        minZ = std::min(minZ, localPoint.z());
+        maxZ = std::max(maxZ, localPoint.z());
     }
 
+    QVector<FanTriangle> triangles;
+    triangles.reserve(vertices.size() - 1);
 
+    // Construct triangles
 
-    return true;
+    if (windingOrder == WO_FORWARD)
+    {
+        // Winding order affects normal direction
+        for (int i = 2; i < localPoints.size(); i++)
+        {
+            triangles.push_back(FanTriangle(Eigen::Vector3d(0, 0, 0), localPoints[i - 1], localPoints[i]));
+        }
+    }
+    else
+    {
+        for (int i = 2; i < localPoints.size(); i++)
+        {
+            triangles.push_back(FanTriangle(Eigen::Vector3d(0, 0, 0), localPoints[i], localPoints[i - 1]));
+        }
+    }
+
+    // Calculate combined 2D-area of all triangles
+
+    double totalTriangle2DArea = 0.0;
+
+    for (FanTriangle& triangle:triangles)
+    {
+        totalTriangle2DArea += triangle.getArea_2D();
+    }
+
+    double pointsPerSquare = pow((1.0 / pointSpacing), 2.0);
+    double totalApproximatePointCount = totalTriangle2DArea * pointsPerSquare;
+
+    if (totalApproximatePointCount > countSanityLimit)
+    {
+        QString errorString = "Approximate point count (" + QString::number(totalApproximatePointCount) + ") exceeds sanity limit of " + QString::number(countSanityLimit) + ". File not created.";
+        throw QString(errorString);
+    }
+
+    int minXIndex = std::floor(minX / pointSpacing);
+    int minYIndex = std::floor(minY / pointSpacing);
+    int maxXIndex = std::ceil(maxX / pointSpacing);
+    int maxYIndex = std::ceil(maxY / pointSpacing);
+
+    PointFanFileWriter::Params params;
+
+    params.writeCorners = exportCorners;
+    params.writeFaces = exportFaces;
+    params.invertedFaces = invertedFaces;
+
+    PointFanFileWriter writer(params);
+
+    if (!writer.openFile(filename))
+    {
+        throw QString("Can't open file \"" + filename + "\".");
+    }
+
+    // TODO: Calculate combinedTransform correctly
+    Eigen::Transform<double, 3, Eigen::Isometry> combinedTransform = transform;
+
+    auto combinedRotation = combinedTransform.rotation();
+
+    // First point will be our "origin" and common point for the fan
+    writer.writePoint(combinedTransform * Eigen::Vector3d::Zero(), combinedRotation * triangles[0].getNormal());
+
+    for (int yIndex = minYIndex; yIndex <= maxYIndex; yIndex++)
+    {
+        double yCoord = yIndex * pointSpacing;
+        for (int xIndex = minXIndex; xIndex <= maxXIndex; xIndex++)
+        {
+            if ((yIndex == 0) && (xIndex == 0))
+            {
+                // "Origin" is already written as the first point
+                continue;
+            }
+
+            double xCoord = xIndex * pointSpacing;
+
+            for (FanTriangle& triangle:triangles)
+            {
+                Eigen::Vector2d point2d(xCoord,yCoord);
+                if (triangle.testHit_2D(point2d))
+                {
+                    Eigen::Vector3d hitPoint;
+                    hitPoint = triangle.getHitPoint(point2d);
+                    writer.writePoint(combinedTransform * hitPoint, combinedRotation * triangle.getNormal());
+//                    writer.writePoint(combinedTransform * hitPoint, triangle.getNormal());
+                    break; // Checking other triangles may lead to duplicate vertices (although the normals are different).
+                }
+            }
+        }
+    }
+
+    for (auto& triangle:triangles)
+    {
+        writer.addTriangle(combinedTransform * triangle);
+    }
+
+//    writer.finalizeFile();
 }

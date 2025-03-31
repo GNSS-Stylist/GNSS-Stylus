@@ -28,32 +28,35 @@ public:
 
     enum WindingOrder
     {
-        WO_CLOCKWISE = 0,
-        WO_COUNTERCLOCKWISE,
+        // Due to coordinate system differences (left- vs right-handed when using xyz-coordinates)
+        // It's impossible to say if they are clock- or counterclockwise. Therefore using these terms...
+        WO_FORWARD = 0,
+        WO_REVERSE,
     };
 
     enum CoordinateSpace
     {
-        CS_XYZ = 0,
-        CS_NED
+        CS_NED = 0,
+        CS_XYZ,
     };
 
     PointFan();
 
-    WindingOrder windingOrder = WO_CLOCKWISE;
+    WindingOrder windingOrder = WO_FORWARD;
     CoordinateSpace coordinateSpace = CS_XYZ;
-    QVector<Eigen::Vector3d> pointCoords;
+    QVector<Eigen::Vector3d> vertexCoords;
+    double pointSpacing = 0.1;
 
-    unsigned int addPoints(const QVector<Eigen::Vector3d>& newPoints); // Returns the number of points added (only adds unique points)
-    bool addPoint(const Eigen::Vector3d& newPoint); // Returns true if point was added (only adds unique points)
-    void clearPoints(void);
-    bool isPointUnique(const Eigen::Vector3d& newPoint);
-    unsigned int getNumOfUniquePoints(void);
-    bool exportFanToFile(const QString& filename, const double pointSpacing, const bool exportCorners, const bool exportFaces, const int countSanityLimit);
-    bool isFanvalid(void);
-    QVector<Eigen::Vector3d> getPoints(void);
+    unsigned int addVertices(const QVector<Eigen::Vector3d>& newVertices); // Returns the number of points added (only adds unique points)
+    bool addVertex(const Eigen::Vector3d& newVertex); // Returns true if point was added (only adds unique points)
+    void clearVertices(void);
+    bool isVertexValid(const Eigen::Vector3d& newPoint);
+    unsigned int getNumOfVertices(void);
+    void exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit);
+    bool isFanValid(void);
+    QVector<Eigen::Vector3d> getVertices(void);
 
-    QVector<Eigen::Vector3d> points;
+    QVector<Eigen::Vector3d> vertices;
 
 };
 

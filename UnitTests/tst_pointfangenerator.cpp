@@ -45,7 +45,7 @@ void TestPointFanGenerator::cleanupTestCase()
 void TestPointFanGenerator::valid_Input()
 {
     QString plainText = QString::fromUtf8(
-        "firstfan\n"
+        "firstfan ned forward 0.5\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -57,7 +57,7 @@ void TestPointFanGenerator::valid_Input()
         "	{ {cos(0)} {1} {0} }\n"
         "	{ {cos(0)} {1} {cos(0)} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan  xyz \t reverse 1.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -70,7 +70,7 @@ void TestPointFanGenerator::valid_Input()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "THIRD\n"
+        "THIRD ned reverse 0.05\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
@@ -93,48 +93,48 @@ void TestPointFanGenerator::valid_Input()
 
         // These are reordered according to keys
         QCOMPARE(fan.key(), "THIRD");
-        QVERIFY(fan.value().isFanvalid());
-        QCOMPARE(fan.value().getNumOfUniquePoints(), (unsigned int)8);
-        auto points = fan.value().getPoints();
-        QCOMPARE(points.size(), 8);
-        QCOMPARE(points[0], Eigen::Vector3d(100, 100, 100));
-        QCOMPARE(points[1], Eigen::Vector3d(100, 100, 200));
-        QCOMPARE(points[2], Eigen::Vector3d(100, 200, 100));
-        QCOMPARE(points[3], Eigen::Vector3d(100, 200, 200));
-        QCOMPARE(points[4], Eigen::Vector3d(200, 100, 100));
-        QCOMPARE(points[5], Eigen::Vector3d(200, 100, 200));
-        QCOMPARE(points[6], Eigen::Vector3d(200, 200, 100));
-        QCOMPARE(points[7], Eigen::Vector3d(200, 200, 200));
+        QVERIFY(fan.value().isFanValid());
+        QCOMPARE(fan.value().getNumOfVertices(), (unsigned int)8);
+        auto vertices = fan.value().getVertices();
+        QCOMPARE(vertices.size(), 8);
+        QCOMPARE(vertices[0], Eigen::Vector3d(100, 100, 100));
+        QCOMPARE(vertices[1], Eigen::Vector3d(100, 100, 200));
+        QCOMPARE(vertices[2], Eigen::Vector3d(100, 200, 100));
+        QCOMPARE(vertices[3], Eigen::Vector3d(100, 200, 200));
+        QCOMPARE(vertices[4], Eigen::Vector3d(200, 100, 100));
+        QCOMPARE(vertices[5], Eigen::Vector3d(200, 100, 200));
+        QCOMPARE(vertices[6], Eigen::Vector3d(200, 200, 100));
+        QCOMPARE(vertices[7], Eigen::Vector3d(200, 200, 200));
 
         fan++;
         QCOMPARE(fan.key(), "firstfan");
-        QVERIFY(fan.value().isFanvalid());
-        QCOMPARE(fan.value().getNumOfUniquePoints(), (unsigned int)8);
-        points = fan.value().getPoints();
-        QCOMPARE(points.size(), 8);
-        QCOMPARE(points[0], Eigen::Vector3d(0, 0, 0));
-        QCOMPARE(points[1], Eigen::Vector3d(0, 0, 1));
-        QCOMPARE(points[2], Eigen::Vector3d(0, 1, 0));
-        QCOMPARE(points[3], Eigen::Vector3d(0, 1, 1));
-        QCOMPARE(points[4], Eigen::Vector3d(cos(0), 0, 0));
-        QCOMPARE(points[5], Eigen::Vector3d(cos(0), 0, cos(0)));
-        QCOMPARE(points[6], Eigen::Vector3d(cos(0), 1, 0));
-        QCOMPARE(points[7], Eigen::Vector3d(cos(0), 1, cos(0)));
+        QVERIFY(fan.value().isFanValid());
+        QCOMPARE(fan.value().getNumOfVertices(), (unsigned int)8);
+        vertices = fan.value().getVertices();
+        QCOMPARE(vertices.size(), 8);
+        QCOMPARE(vertices[0], Eigen::Vector3d(0, 0, 0));
+        QCOMPARE(vertices[1], Eigen::Vector3d(0, 0, 1));
+        QCOMPARE(vertices[2], Eigen::Vector3d(0, 1, 0));
+        QCOMPARE(vertices[3], Eigen::Vector3d(0, 1, 1));
+        QCOMPARE(vertices[4], Eigen::Vector3d(cos(0), 0, 0));
+        QCOMPARE(vertices[5], Eigen::Vector3d(cos(0), 0, cos(0)));
+        QCOMPARE(vertices[6], Eigen::Vector3d(cos(0), 1, 0));
+        QCOMPARE(vertices[7], Eigen::Vector3d(cos(0), 1, cos(0)));
 
         fan++;
         QCOMPARE(fan.key(), "secondFan");
-        QVERIFY(fan.value().isFanvalid());
-        QCOMPARE(fan.value().getNumOfUniquePoints(), (unsigned int)8);
-        points = fan.value().getPoints();
-        QCOMPARE(points.size(), 8);
-        QCOMPARE(points[0], Eigen::Vector3d(0, 0, 0));
-        QCOMPARE(points[1], Eigen::Vector3d(0, 0, -1));
-        QCOMPARE(points[2], Eigen::Vector3d(0, -1, 0));
-        QCOMPARE(points[3], Eigen::Vector3d(0, -1, -1));
-        QCOMPARE(points[4], Eigen::Vector3d(-1, 0, 0));
-        QCOMPARE(points[5], Eigen::Vector3d(-1, 0, -1));
-        QCOMPARE(points[6], Eigen::Vector3d(-1, -1, 0));
-        QCOMPARE(points[7], Eigen::Vector3d(-1, -1, -1));
+        QVERIFY(fan.value().isFanValid());
+        QCOMPARE(fan.value().getNumOfVertices(), (unsigned int)8);
+        vertices = fan.value().getVertices();
+        QCOMPARE(vertices.size(), 8);
+        QCOMPARE(vertices[0], Eigen::Vector3d(0, 0, 0));
+        QCOMPARE(vertices[1], Eigen::Vector3d(0, 0, -1));
+        QCOMPARE(vertices[2], Eigen::Vector3d(0, -1, 0));
+        QCOMPARE(vertices[3], Eigen::Vector3d(0, -1, -1));
+        QCOMPARE(vertices[4], Eigen::Vector3d(-1, 0, 0));
+        QCOMPARE(vertices[5], Eigen::Vector3d(-1, 0, -1));
+        QCOMPARE(vertices[6], Eigen::Vector3d(-1, -1, 0));
+        QCOMPARE(vertices[7], Eigen::Vector3d(-1, -1, -1));
     }
     catch (PointFanGenerator::Issue& issue)
     {
@@ -158,7 +158,7 @@ void TestPointFanGenerator::valid_Input()
 void TestPointFanGenerator::error_DuplicateFans()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -170,7 +170,7 @@ void TestPointFanGenerator::error_DuplicateFans()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned reverse 0.5/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -183,7 +183,7 @@ void TestPointFanGenerator::error_DuplicateFans()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "FirstFan\n"   // <- duplicate
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
         "/* This is Duplicate fan */"
         "{\n"
         "	{ {100} {100} {100} }\n"
@@ -206,14 +206,14 @@ void TestPointFanGenerator::error_DuplicateFans()
     {
         QCOMPARE(issue.text, "Duplicate fan: \"FirstFan\".");
         QCOMPARE(issue.beginChar, plainText.lastIndexOf("FirstFan"));
-        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n/* This is Duplicate fan */"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n ned reverse 0.05/* This is Duplicate fan */"));
     }
 }
 
 void TestPointFanGenerator::error_InvalidName()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan\n ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -225,7 +225,7 @@ void TestPointFanGenerator::error_InvalidName()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -238,7 +238,7 @@ void TestPointFanGenerator::error_InvalidName()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "FirstFän\n"   // <- Invalid name
+        "FirstFän\n"   // <- Invalid name (no need for params as the fan name is validated first)
         "/* Invalid name */"
         "{\n"
         "	{ {100} {100} {100} }\n"
@@ -260,12 +260,12 @@ void TestPointFanGenerator::error_InvalidName()
     catch (PointFanGenerator::Issue& issue)
     {
         QCOMPARE(issue.text, "Only alphanumeric \"ASCII\" (a...z, 0...9) or \"_\" allowed in fan name.");
-        QCOMPARE(issue.beginChar, plainText.lastIndexOf("ö"));
-        QCOMPARE(issue.endChar, plainText.lastIndexOf("ö") + 1);
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("ä"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("ä") + 1);
     }
 
     plainText = QString::fromUtf8(
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -277,7 +277,7 @@ void TestPointFanGenerator::error_InvalidName()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -290,7 +290,7 @@ void TestPointFanGenerator::error_InvalidName()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd\n"   // <- Invalid name ("hello world" in chinese)
+        "\xe4\xb8\x96\xe7\x95\x8c\xe6\x82\xa8\xe5\xa5\xbd ned forward 0.05\n"   // <- Invalid name ("hello world" in chinese)
         "/* Invalid name */"
         "{\n"
         "	{ {100} {100} {100} }\n"
@@ -318,10 +318,10 @@ void TestPointFanGenerator::error_InvalidName()
 
 }
 
-void TestPointFanGenerator::error_PointDefinitionsMissing()
+void TestPointFanGenerator::error_ParamsMissing()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -333,7 +333,7 @@ void TestPointFanGenerator::error_PointDefinitionsMissing()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan/*params missing*/\n"    // <- Parameters missing
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -346,7 +346,383 @@ void TestPointFanGenerator::error_PointDefinitionsMissing()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "PointlessFan\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Parameters (coordinate system, winding order, point spacing) missing for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("secondFan"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("/*params missing*/\n"));
+    }
+
+    plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan ned/*params missing*/\n"    // <- Parameters missing
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Some parameters (winding order, point spacing) missing for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("secondFan"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" ned/*params missing*/\n"));
+    }
+
+    plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan ned forward/*params missing*/\n"    // <- Parameters missing
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Parameter for point spacing missing for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("secondFan"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" ned forward/*params missing*/\n"));
+    }
+}
+
+void TestPointFanGenerator::error_InvalidCoordinateSpace()
+{
+    QString plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan worngspace/*worng(!) coordspace*/\n"    // <- Invalid coordinate space
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Invalid coordinate system definition (\"worngspace\") for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("worngspace"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("/*worng(!) coordspace*/"));
+    }
+}
+
+void TestPointFanGenerator::error_InvalidWindingOrder()
+{
+    QString plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan NED vastapaivaan/*invalid winding order*/\n"    // <- Invalid winding order
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Invalid winding order definition (\"vastapaivaan\") for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("vastapaivaan"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("/*invalid winding order*/"));
+    }
+}
+
+void TestPointFanGenerator::error_InvalidPointSpacing()
+{
+    QString plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan NED forward 0.000/*invalid spacing*/\n"    // <- Invalid spacing (out of range)
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Point spacing must be > 0, fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("0.000"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("/*invalid spacing*/"));
+    }
+
+    plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan NED forward spacingvalue/*invalid spacing*/\n"    // <- Invalid spacing (can not convert)
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "FirstFan\n ned reverse 0.05"   // <- duplicate
+        "/* This is Duplicate fan */"
+        "{\n"
+        "	{ {100} {100} {100} }\n"
+        "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
+        "	{ {100} {200} // EOL-style comment between coordinates\n{100} }\n"
+        "	{ {100} {200} {200 /*Comment inside expression*/} }\n"
+        "	{ {200} {100 // EOL-style comment inside expression\n} {100} }\n"
+        "	{ {200} {100} {200} }\n"
+        "	{ {200} {200} {100} }\n"
+        "	{ {200} {200} {200} }\n"
+        "}";
+
+    try
+    {
+        PointFanGenerator::generateMap(plainText);
+
+        QFAIL("Should throw an exception.");
+    }
+    catch (PointFanGenerator::Issue& issue)
+    {
+        QCOMPARE(issue.text, "Can not convert parameter for point spacing (\"spacingvalue\") to float for fan \"secondFan\".");
+        QCOMPARE(issue.beginChar, plainText.lastIndexOf("spacingvalue"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf("/*invalid spacing*/"));
+    }
+}
+
+void TestPointFanGenerator::error_PointDefinitionsMissing()
+{
+    QString plainText =
+        "firstfan ned forward 0.05\n"
+        "{\n"
+        "// Comment for the first fan\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {0} {1} } /* No end of line here */"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "}"
+        "secondFan ned forward 0.05/*comment*/\n"
+        "{\n"
+        "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
+        "	{ // EOL-style comment before coordinates\n"
+        "{0} {0} {-1} }\n"
+        "	{ {0} {-1} {0} }\n"
+        "	{ {0} {-1} {-1} }\n"
+        "	{ {-1} {0} {0} }\n"
+        "	{ {-1} {0} {-1} }\n"
+        "	{ {-1} {-1} {0} }\n"
+        "	{ {-1} {-1} {-1} }\n"
+        "/* Comment after points */"
+        "} //EOL-style comment before next fan title\n"
+        "PointlessFan ned forward 0.05\n"
         "/* fan without point block */";
 
     try
@@ -359,14 +735,14 @@ void TestPointFanGenerator::error_PointDefinitionsMissing()
     {
         QCOMPARE(issue.text, "Point definitions missing for fan \"PointlessFan\".");
         QCOMPARE(issue.beginChar, plainText.lastIndexOf("PointlessFan"));
-        QCOMPARE(issue.endChar, plainText.lastIndexOf("\n/* fan without point block */"));
+        QCOMPARE(issue.endChar, plainText.lastIndexOf(" ned forward 0.05\n/* fan without point block */"));
     }
 }
 
 void TestPointFanGenerator::error_CharsAtWrongPlaces()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -378,7 +754,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "Text in wrong place"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
@@ -407,7 +783,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
     }
 
     plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -419,7 +795,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -448,7 +824,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
     }
 
     plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -460,7 +836,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -488,7 +864,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
     }
 
     plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -500,7 +876,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -528,7 +904,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
     }
 
     plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -540,7 +916,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{chars at wrng place\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -572,7 +948,7 @@ void TestPointFanGenerator::error_CharsAtWrongPlaces()
 void TestPointFanGenerator::error_NotEnoughPoints()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -584,7 +960,7 @@ void TestPointFanGenerator::error_NotEnoughPoints()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "TooShortFan/*comment*/\n"
+        "TooShortFan ned forward 0.05/*comment*/\n"
         "/* fan with only 2 points */"
         "{\n"
         "{ {0} {0} {-1} }\n"
@@ -608,7 +984,7 @@ void TestPointFanGenerator::error_NotEnoughPoints()
 void TestPointFanGenerator::error_TextBlockParser()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -620,7 +996,7 @@ void TestPointFanGenerator::error_TextBlockParser()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "TooShortFan/*comment*/\n"
+        "TooShortFan ned forward 0.05/*comment*/\n"
         "/* fan with only 3 points */"
         "{// Fan start\n"
         "{ {0} {0} {-1} }\n"
@@ -645,7 +1021,7 @@ void TestPointFanGenerator::error_TextBlockParser()
 void TestPointFanGenerator::error_DuplicatePoints()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -657,7 +1033,7 @@ void TestPointFanGenerator::error_DuplicatePoints()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -672,7 +1048,7 @@ void TestPointFanGenerator::error_DuplicatePoints()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "ThirdFan\n"
+        "ThirdFan ned forward 0.05\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
@@ -701,7 +1077,7 @@ void TestPointFanGenerator::error_DuplicatePoints()
 void TestPointFanGenerator::error_notEnoughDimensions()
 {
     QString plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -713,7 +1089,7 @@ void TestPointFanGenerator::error_notEnoughDimensions()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -726,7 +1102,7 @@ void TestPointFanGenerator::error_notEnoughDimensions()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "ThirdFan\n"
+        "ThirdFan ned forward 0.05\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
@@ -755,7 +1131,7 @@ void TestPointFanGenerator::error_notEnoughDimensions()
 void TestPointFanGenerator::error_UnicodeInExpressions()
 {
     QString plainText = QString::fromUtf8(
-        "firstfan\n"
+        "firstfan ned forward 0.05\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -767,7 +1143,7 @@ void TestPointFanGenerator::error_UnicodeInExpressions()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.05/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -780,7 +1156,7 @@ void TestPointFanGenerator::error_UnicodeInExpressions()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "ThirdFan\n"
+        "ThirdFan ned forward 0.05\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
@@ -806,27 +1182,187 @@ void TestPointFanGenerator::error_UnicodeInExpressions()
     }
 }
 
+#if 0
+// This isn't a "traditional" unit test, but generates some files instead whose validity can be inspected.
+// They are also generated into ram disk by default, so you may want to change the path.
 void TestPointFanGenerator::exportFanToFile()
 {
+    // Top, bottom, north, south, east, west here refer to NED
+    // (north = x, east = y, down = z) - coordinates
+
     QString plainText = QString::fromUtf8(
-        "CubeFace_Front\n"
+        "CubeFace_Top ned forward 0.05\n"
         "{\n"
         "	{ {0} {0} {0} }\n"
-        "	{ {0} {1} {0} } /* No end of line here */"
-        "	{ {1} {1} {0} }\n"
         "	{ {1} {0} {0} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {0} {1} {0} }\n"
         "}"
+        "CubeFace_Top_Inverted ned reverse 0.05\n"
+        "{\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {0} {1} {0} }\n"
+        "}"
+        "CubeFace_Bottom ned reverse 0.05\n"
+        "{\n"
+        "	{ {0} {0} {1} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {1} {1} {1} }\n"
+        "	{ {0} {1} {1} }\n"
+        "}"
+        "CubeFace_South ned forward 0.05\n"
+        "{\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {0} {1} {0} }\n"
+        "	{ {0} {1} {1} }\n"
+        "	{ {0} {0} {1} }\n"
+        "}"
+        "CubeFace_North ned reverse 0.05\n"
+        "{\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "	{ {1} {0} {1} }\n"
+        "}"
+        "CubeFace_East ned forward 0.05\n"
+        "{\n"
+        "	{ {0} {1} {0} }\n"
+        "	{ {1} {1} {0} }\n"
+        "	{ {1} {1} {1} }\n"
+        "	{ {0} {1} {1} }\n"
+        "}"
+        "CubeFace_West ned reverse 0.05\n"
+        "{\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {1} {0} {0} }\n"
+        "	{ {1} {0} {1} }\n"
+        "	{ {0} {0} {1} }\n"
+        "}"
+
+        "CubeFace_Rotated_Top ned forward 0.03\n"
+        "{\n"
+        "	{ {sin(2)}          {-cos(2)}           {-sin(pi/4)} }\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {-sin(pi/4)} }\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {-sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {-sin(pi/4)} }\n"
+        "}"
+
+        "CubeFace_Rotated_Bottom ned reverse 0.03\n"
+        "{\n"
+        "	{ {sin(2)}          {-cos(2)}           {sin(pi/4)} }\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {sin(pi/4)} }\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {sin(pi/4)} }\n"
+        "}"
+
+        "CubeFace_Rotated_Side1 ned reverse 0.03\n"
+        "{\n"
+        "	{ {sin(2)}          {-cos(2)}           {-sin(pi/4)} }\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {-sin(pi/4)} }\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {sin(pi/4)} }\n"
+        "	{ {sin(2)}          {-cos(2)}           {sin(pi/4)} }\n"
+        "}"
+
+        "CubeFace_Rotated_Side2 ned reverse 0.03\n"
+        "{\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {-sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {-sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {sin(pi/4)} }\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {sin(pi/4)} }\n"
+        "}"
+
+        "CubeFace_Rotated_Side3 ned reverse 0.03\n"
+        "{\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {-sin(pi/4)} }\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {-sin(pi/4)} }\n"
+        "	{ {sin(2+2*pi/2)}   {-cos(2+2*pi/2)}    {sin(pi/4)} }\n"
+        "	{ {sin(2+pi/2)}     {-cos(2+pi/2)}      {sin(pi/4)} }\n"
+        "}"
+
+        "CubeFace_Rotated_Side4 ned forward 0.03\n"
+        "{\n"
+        "	{ {sin(2)}          {-cos(2)}           {-sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {-sin(pi/4)} }\n"
+        "	{ {sin(2+3*pi/2)}   {-cos(2+3*pi/2)}    {sin(pi/4)} }\n"
+        "	{ {sin(2)}          {-cos(2)}           {sin(pi/4)} }\n"
+        "}"
+
     );
 
     QMap<QString, PointFan> fanMap = PointFanGenerator::generateMap(plainText);
 
-    QCOMPARE(fanMap.count(), 1);
+//    QCOMPARE(fanMap.count(), 7);
 
     auto fan = fanMap.begin();
 
-    fan.value().exportFanToFile(fan.key(), 0.1, false, false, 10e6);
+    while (fan != fanMap.end())
+    {
+        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 10e6);
+        fan++;
+    }
 
+    plainText = QString::fromUtf8(
+        "InsaneAmountOfPoints ned forward 0.01\n"
+        "{\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {10} {0} {0} }\n"
+        "	{ {10} {10} {0} }\n"
+        "}"
+    );
+
+    fanMap = PointFanGenerator::generateMap(plainText);
+
+    fan = fanMap.begin();
+
+    try
+    {
+        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 400e3);
+        QFAIL("Should throw an exception");
+    }
+    catch (QString& errorThrown)
+    {
+        QCOMPARE(errorThrown, "Approximate point count (500000) exceeds sanity limit of 400000. File not created.");
+    }
+
+
+    plainText = QString::fromUtf8(
+        "fan ned forward 0.1\n"
+        "{\n"
+        "	{ {0} {0} {0} }\n"
+        "	{ {10} {0} {0} }\n"
+        "	{ {10} {10} {0} }\n"
+        "}"
+        );
+
+    fanMap = PointFanGenerator::generateMap(plainText);
+
+    fan = fanMap.begin();
+
+    try
+    {
+        fan.value().exportFanToFile("/tmp/ramdisk/this/directory/does_not_exist/" + fan.key() + ".ply", false, true, false, 400e3);
+        QFAIL("Should throw an exception");
+    }
+    catch (QString& errorThrown)
+    {
+        QCOMPARE(errorThrown, "Can't open file \"/tmp/ramdisk/this/directory/does_not_exist/fan.ply\".");
+    }
+
+    PointFan emptyFan;
+
+    try
+    {
+        emptyFan.exportFanToFile("/tmp/ramdisk/emptyfan.ply", false, true, false, 1e6);
+        QFAIL("Should throw an exception");
+    }
+    catch (QString& errorThrown)
+    {
+        QCOMPARE(errorThrown, "Fan is not valid.");
+    }
 }
+#endif
 
 #if 0
 void TestPointFanGenerator::error_InvalidExpression()
@@ -835,7 +1371,7 @@ void TestPointFanGenerator::error_InvalidExpression()
     // Therefore disabled for now.
 
     QString plainText = QString::fromUtf8(
-        "firstfan\n"
+        "firstfan ned forward 0.03\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -847,7 +1383,7 @@ void TestPointFanGenerator::error_InvalidExpression()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.03/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -860,7 +1396,7 @@ void TestPointFanGenerator::error_InvalidExpression()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "ThirdFan\n"
+        "ThirdFan ned forward 0.03\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
@@ -890,7 +1426,7 @@ void TestPointFanGenerator::error_InvalidExpression()
     }
 
     plainText =
-        "firstfan\n"
+        "firstfan ned forward 0.03\n"
         "{\n"
         "// Comment for the first fan\n"
         "	{ {0} {0} {0} }\n"
@@ -902,7 +1438,7 @@ void TestPointFanGenerator::error_InvalidExpression()
         "	{ {1} {1} {0} }\n"
         "	{ {1} {1} {1} }\n"
         "}"
-        "secondFan/*comment*/\n"
+        "secondFan ned forward 0.03/*comment*/\n"
         "{\n"
         "	{/*Comment before coordinates*/ {0} {0} {0} }\n"
         "	{ // EOL-style comment before coordinates\n"
@@ -915,7 +1451,7 @@ void TestPointFanGenerator::error_InvalidExpression()
         "	{ {-1} {-1} {-1} }\n"
         "/* Comment after points */"
         "} //EOL-style comment before next fan title\n"
-        "ThirdFan\n"
+        "ThirdFan ned forward 0.03\n"
         "{\n"
         "	{ {100} {100} {100} }\n"
         "	{ {100}/*comment between coordinates*/ {100} {200} }\n"
