@@ -206,7 +206,7 @@ void EssentialsForm::on_pushButton_StartLogging_clicked()
         return;
     }
 
-    QString fileNameBeginning = QDir::cleanPath(ui->lineEdit_LoggingDirectory->text() + "\\" + ui->lineEdit_LoggingFileNamePrefix->text());
+    QString fileNameBeginning = QDir::cleanPath(ui->lineEdit_LoggingDirectory->text() + "/" + ui->lineEdit_LoggingFileNamePrefix->text());
 
     logFile_Base_Raw.setFileName(fileNameBeginning + "_base.raw");
     logFile_Base_NMEA.setFileName(fileNameBeginning + "_base.NMEA");
