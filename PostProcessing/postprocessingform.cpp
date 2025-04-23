@@ -2071,9 +2071,6 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
             int lineNumber = 1;
             int discardedLines = 0;
 
-            int firstDuplicateSyncItemLine = 0;
-            int lastDuplicateSyncItemLine = 0;
-
             unsigned int expectedITOWAlignment = ui->spinBox_ExpectedITOWAlignment->value();
 
             while (!textStream.atEnd())
@@ -2167,24 +2164,48 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
 
                 if (roverContainer->find(uptime) != roverContainer->end())
                 {
-                    discardedLines++;
+                    // Modification 23-apr-2025: I think this was the first time ever that I encountered duplicate sync items in a real log.
+                    // Excerpt from the file Ground_Lidar.sync logged 18-apr-2025:
+                    // 19:29:14:489	Rover A	RELPOSNED	491372300	1221443	1
+                    // 19:29:14:489	Rover A	RELPOSNED	491372400	1221446	0
+                    // 19:29:14:491	Rover B	RELPOSNED	491372300	1221449	0
+                    // 19:29:14:492	Rover B	RELPOSNED	491372400	1221449	0 << Duplicate
+                    // 19:29:14:493	Rover C	RELPOSNED	491372300	1221450	0
+                    // 19:29:14:494	Rover C	RELPOSNED	491372400	1221450	1 << Duplicate
+                    // 19:29:14:574	Rover A	RELPOSNED	491372500	1221548	1
+                    // 19:29:14:579	Rover C	RELPOSNED	491372500	1221558	1
+                    // 19:29:14:583	Rover B	RELPOSNED	491372500	1221562	2
+                    // 19:29:14:674	Rover A	RELPOSNED	491372600	1221647	10
+                    // 19:29:14:677	Rover B	RELPOSNED	491372600	1221646	13 << Wrong order!?!?! (but different rover so doesn't matter much)
+                    // ...
+                    // 19:29:16:504	Rover B	RELPOSNED	491374300	1223464	0
+                    // 19:29:16:505	Rover B	RELPOSNED	491374400	1223464	0
+                    // ...
+                    // 19:29:17:583	Rover B	RELPOSNED	491375300	1224563	0
+                    // 19:29:17:584	Rover B	RELPOSNED	491375400	1224563	1
+                    // ...
+                    // 19:29:18:498	Rover B	RELPOSNED	491376300	1225459	0
+                    // 19:29:18:499	Rover C	RELPOSNED	491376400	1225459	1
+                    // 19:29:18:499	Rover B	RELPOSNED	491376400	1225459	1 << Duplicate
+                    // 19:29:18:585	Rover A	RELPOSNED	491376500	1225549	2
+                    //
+                    // So there were some weird bursts of data here. Relying that the frames are ordered correctly
+                    // because they should as this is kind of ("virtual") serial comms anyway.
+                    // Not sure which level this bursting happens at (ZED-F9P/USB-hub/receiving thread/???),
+                    // but it doesn't really matter either, so just fix the timestamps....
 
-                    if (!firstDuplicateSyncItemLine)
+                    qint64 originalUptime = uptime;
+
+                    while (roverContainer->find(uptime) != roverContainer->end())
                     {
-                        firstDuplicateSyncItemLine = lineNumber;
+                        // Only expecting 1 or at most "few" ms fix here.
+                        uptime++;
                     }
 
-                    lastDuplicateSyncItemLine = lineNumber;
-                    continue;
-                }
+                    qint64 timeDiff = uptime - originalUptime;
 
-                if (firstDuplicateSyncItemLine)
-                {
-                    addLogLine("Warning: Line(s) " + QString::number(firstDuplicateSyncItemLine) + "-" +
-                               QString::number(lastDuplicateSyncItemLine) +
-                               ": Duplicate rover sync item(s). Line(s) skipped.");
-
-                    firstDuplicateSyncItemLine = 0;
+                    addLogLine("Warning: Line " + QString::number(lineNumber) +
+                               ": Duplicate rover sync item. Added " + QString::number(timeDiff) + " ms to the uptime to preserve message ordering.");
                 }
 
                 if ((newSyncItem.iTOW % expectedITOWAlignment) != 0)
@@ -2232,13 +2253,6 @@ void PostProcessingForm::addSyncData(const QStringList& fileNames)
                 reverseContainer->insert(newSyncItem.iTOW, uptime);
 
                 numberOfSyncItems ++;
-            }
-
-            if (firstDuplicateSyncItemLine)
-            {
-                addLogLine("Warning: Line(s) " + QString::number(firstDuplicateSyncItemLine) + "-" +
-                           QString::number(lastDuplicateSyncItemLine) +
-                           ": Duplicate rover sync item(s). Line(s) skipped.");
             }
 
             addLogLine("File \"" + fileInfo.fileName() + "\" processed. Valid sync items: " +
