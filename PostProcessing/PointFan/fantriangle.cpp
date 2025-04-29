@@ -53,7 +53,7 @@ double FanTriangle::getArea_2D(void)
     return (vec01.norm()) * std::abs(vec02.dot(normalVec01)) * 0.5;
 }
 
-FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Isometry>& transform , const FanTriangle& rhs)
+FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Affine>& transform , const FanTriangle& rhs)
 {
     FanTriangle transformed(transform * rhs.vertices_3D[0], transform * rhs.vertices_3D[2], transform * rhs.vertices_3D[1]);
     return transformed;

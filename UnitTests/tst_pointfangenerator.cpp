@@ -36,10 +36,31 @@ TestPointFanGenerator::~TestPointFanGenerator()
 
 void TestPointFanGenerator::initTestCase()
 {
+    randomGenerator.seed(42);
 }
 
 void TestPointFanGenerator::cleanupTestCase()
 {
+}
+
+Eigen::Vector3d TestPointFanGenerator::getRandomVec(double lowLimit, double highLimit)
+{
+    return Eigen::Vector3d(randomGenerator.generateDouble() * (highLimit - lowLimit) + lowLimit,
+                           randomGenerator.generateDouble() * (highLimit - lowLimit) + lowLimit,
+                           randomGenerator.generateDouble() * (highLimit - lowLimit) + lowLimit
+                           );
+}
+
+Eigen::Transform<double, 3, Eigen::Affine> TestPointFanGenerator::getRandomTransform(double translateLowLimit, double translateHighLimit)
+{
+    // Doesn't return very evenly distributed transforms, but should suffice in this context.
+
+    Eigen::AngleAxisd orientation(randomGenerator.generateDouble() * (2 * M_PI), getRandomVec(-1.0, 1.0).normalized());
+    Eigen::Transform<double, 3, Eigen::Affine> ret;
+    //    ret.fromPositionOrientationScale(getRandomVec(translateLowLimit, translateHighLimit), orientation, getRandomVec(-10.0, 10.0));
+    ret.fromPositionOrientationScale(getRandomVec(translateLowLimit, translateHighLimit), orientation, Eigen::Vector3d(1,1,1));
+
+    return ret;
 }
 
 void TestPointFanGenerator::valid_Input()
@@ -1299,9 +1320,18 @@ void TestPointFanGenerator::exportFanToFile()
 
     while (fan != fanMap.end())
     {
-        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 10e6);
+        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 10e6, Eigen::Transform<double, 3, Eigen::Affine>::Identity());
         fan++;
     }
+
+    fan = fanMap.begin();
+
+    while (fan != fanMap.end())
+    {
+        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + "_RandomTransform.ply", false, true, false, 10e6, getRandomTransform());
+        fan++;
+    }
+
 
     plainText = QString::fromUtf8(
         "InsaneAmountOfPoints ned forward 0.01\n"
@@ -1318,7 +1348,7 @@ void TestPointFanGenerator::exportFanToFile()
 
     try
     {
-        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 400e3);
+        fan.value().exportFanToFile("/tmp/ramdisk/" + fan.key() + ".ply", false, true, false, 400e3, Eigen::Transform<double, 3, Eigen::Affine>::Identity());
         QFAIL("Should throw an exception");
     }
     catch (QString& errorThrown)
@@ -1342,7 +1372,7 @@ void TestPointFanGenerator::exportFanToFile()
 
     try
     {
-        fan.value().exportFanToFile("/tmp/ramdisk/this/directory/does_not_exist/" + fan.key() + ".ply", false, true, false, 400e3);
+        fan.value().exportFanToFile("/tmp/ramdisk/this/directory/does_not_exist/" + fan.key() + ".ply", false, true, false, 400e3, Eigen::Transform<double, 3, Eigen::Affine>::Identity());
         QFAIL("Should throw an exception");
     }
     catch (QString& errorThrown)
@@ -1354,7 +1384,7 @@ void TestPointFanGenerator::exportFanToFile()
 
     try
     {
-        emptyFan.exportFanToFile("/tmp/ramdisk/emptyfan.ply", false, true, false, 1e6);
+        emptyFan.exportFanToFile("/tmp/ramdisk/emptyfan.ply", false, true, false, 1e6, Eigen::Transform<double, 3, Eigen::Affine>::Identity());
         QFAIL("Should throw an exception");
     }
     catch (QString& errorThrown)

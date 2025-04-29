@@ -4689,7 +4689,7 @@ void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
     while (iter != fans.end())
     {
         QString fullFileName = QDir::cleanPath(fileDialog_ExportPointFans.directory().path() + "/" + iter.key() + ".ply");
-        iter.value().exportFanToFile(fullFileName, ui->checkBox_PointFans_Options_ExportCorners->isChecked(), ui->checkBox_PointFans_Options_ExportFaces->isChecked(), ui->checkBox_PointFans_Options_InvertedFaces->isChecked(), ui->spinBox_PointFans_Options_MaxPointCount->value());
+        iter.value().exportFanToFile(fullFileName, ui->checkBox_PointFans_Options_ExportCorners->isChecked(), ui->checkBox_PointFans_Options_ExportFaces->isChecked(), ui->checkBox_PointFans_Options_InvertedFaces->isChecked(), ui->spinBox_PointFans_Options_MaxPointCount->value(), transform_NEDToXYZ);
         iter++;
     }
 }

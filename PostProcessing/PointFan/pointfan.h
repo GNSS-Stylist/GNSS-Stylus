@@ -52,7 +52,7 @@ public:
     void clearVertices(void);
     bool isVertexValid(const Eigen::Vector3d& newPoint);
     unsigned int getNumOfVertices(void);
-    void exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit);
+    void exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit, const Eigen::Transform<double, 3, Eigen::Affine> &transform_NEDToXYZ);
     bool isFanValid(void);
     QVector<Eigen::Vector3d> getVertices(void);
 

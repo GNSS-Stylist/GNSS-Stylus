@@ -86,7 +86,7 @@ QVector<Eigen::Vector3d> PointFan::getVertices(void)
     return vertices;
 }
 
-void PointFan::exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit)
+void PointFan::exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit, const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ)
 {
     if (!isFanValid())
     {
@@ -104,7 +104,7 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
     // y-axis is perpendicular to x- and z-axes (z = normal)
     // z-axis points to the normal direction of the first triangle
 
-    Eigen::Transform<double, 3, Eigen::Isometry> transform;
+    Eigen::Transform<double, 3, Eigen::Isometry> transform = Eigen::Transform<double, 3, Eigen::Isometry>::Identity();
 
     transform(0, 0) = xAxis.x();
     transform(1, 0) = xAxis.y();
@@ -207,13 +207,20 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
         throw QString("Can't open file \"" + filename + "\".");
     }
 
-    // TODO: Calculate combinedTransform correctly
-    Eigen::Transform<double, 3, Eigen::Isometry> combinedTransform = transform;
+    Eigen::Transform<double, 3, Eigen::Affine> combinedTransform = transform;
 
-    auto combinedRotation = combinedTransform.rotation();
+    if (this->coordinateSpace == CS_NED)
+    {
+        combinedTransform = transform_NEDToXYZ * combinedTransform;
+    }
+
+    auto combinedLinearPart = combinedTransform.linear();
 
     // First point will be our "origin" and common point for the fan
-    writer.writePoint(combinedTransform * Eigen::Vector3d::Zero(), combinedRotation * triangles[0].getNormal());
+    writer.writePoint(combinedTransform * Eigen::Vector3d::Zero(), combinedLinearPart * triangles[0].getNormal());
+
+    // TODO: This could be optimized somewhat by reordering , limiting and/or "caching" some things.
+    // But as they say, "premature optimization is the root of all evil"...
 
     for (int yIndex = minYIndex; yIndex <= maxYIndex; yIndex++)
     {
@@ -235,7 +242,7 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
                 {
                     Eigen::Vector3d hitPoint;
                     hitPoint = triangle.getHitPoint(point2d);
-                    writer.writePoint(combinedTransform * hitPoint, combinedRotation * triangle.getNormal());
+                    writer.writePoint(combinedTransform * hitPoint, combinedLinearPart * triangle.getNormal());
 //                    writer.writePoint(combinedTransform * hitPoint, triangle.getNormal());
                     break; // Checking other triangles may lead to duplicate vertices (although the normals are different).
                 }

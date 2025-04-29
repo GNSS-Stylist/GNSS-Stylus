@@ -34,7 +34,7 @@ public:
     double getArea_2D(void);
     const Eigen::Vector3d* getVertices(void) { return vertices_3D; };
 
-    friend FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Isometry>& transform , const FanTriangle& rhs);
+    friend FanTriangle operator*(const Eigen::Transform<double, 3, Eigen::Affine>& transform , const FanTriangle& rhs);
 
 private:
     Eigen::Vector3d vertices_3D[3];

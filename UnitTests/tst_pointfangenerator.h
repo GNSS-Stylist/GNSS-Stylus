@@ -21,6 +21,7 @@
 
 #include <QCoreApplication>
 #include <QRandomGenerator>
+#include "Eigen/Geometry"
 
 class TestPointFanGenerator : public QObject
 {
@@ -29,6 +30,11 @@ class TestPointFanGenerator : public QObject
 public:
     TestPointFanGenerator();
     ~TestPointFanGenerator();
+
+private:
+    QRandomGenerator randomGenerator;
+    Eigen::Vector3d getRandomVec(double lowLimit = -10, double highLimit = 10);
+    Eigen::Transform<double, 3, Eigen::Affine> getRandomTransform(double translateLowLimit = -10.0, double translateHighLimit = 10.0);
 
 private slots:
     void initTestCase();
