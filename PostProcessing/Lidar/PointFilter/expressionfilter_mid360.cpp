@@ -59,9 +59,11 @@ void ExpressionFilter_Mid360::initBuffer(void)
 
         item.point_Rig.setSourceEvaluator(&item.point_Lidar);
         item.point_NED.setSourceEvaluator(&item.point_Rig);
+        item.point_XYZ.setSourceEvaluator(&item.point_NED);
 
         item.point_Rig.setTransform(&transformCache_LidarToRig[0]);
         item.point_NED.setTransform(&transformCache_RigToNED[0]);
+        item.point_XYZ.setTransform(&transformCache_NEDToXYZ[0]);
     }
 }
 
@@ -97,9 +99,11 @@ void ExpressionFilter_Mid360::addPoint(const LivoxMid360::PointCloudData::Point&
     buffer[bufferIndex % bufferLength].point_Lidar.invalidate();
     buffer[bufferIndex % bufferLength].point_Rig.invalidate();
     buffer[bufferIndex % bufferLength].point_NED.invalidate();
+    buffer[bufferIndex % bufferLength].point_XYZ.invalidate();
 
     buffer[bufferIndex % bufferLength].point_Rig.setTransform(&transformCache_LidarToRig[transformCacheIndex_LidarToRig]);
     buffer[bufferIndex % bufferLength].point_NED.setTransform(&transformCache_RigToNED[transformCacheIndex_RigToNED]);
+    buffer[bufferIndex % bufferLength].point_XYZ.setTransform(&transformCache_NEDToXYZ[transformCacheIndex_NEDToXYZ]);
 
     bufferIndex++;
 }

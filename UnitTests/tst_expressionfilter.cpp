@@ -1792,6 +1792,7 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
     LivoxMid360::PointCloudData::Point sourcePoints[defaultTestRounds];
     Eigen::Transform<double, 3, Eigen::Affine> transforms_LidarToRig[defaultTestRounds];
     Eigen::Transform<double, 3, Eigen::Affine> transforms_RigToNED[defaultTestRounds];
+    Eigen::Transform<double, 3, Eigen::Affine> transforms_NEDToXYZ[defaultTestRounds];
 
     PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordX;
     PointFilter::ExpressionFilter_Mid360 filter_Rig_CoordY;
@@ -1809,6 +1810,14 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
     PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Y;
     PointFilter::ExpressionFilter_Mid360::OutItem out_NED_Z;
 
+    PointFilter::ExpressionFilter_Mid360 filter_XYZ_CoordX;
+    PointFilter::ExpressionFilter_Mid360 filter_XYZ_CoordY;
+    PointFilter::ExpressionFilter_Mid360 filter_XYZ_CoordZ;
+
+    PointFilter::ExpressionFilter_Mid360::OutItem out_XYZ_X;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_XYZ_Y;
+    PointFilter::ExpressionFilter_Mid360::OutItem out_XYZ_Z;
+
     filter_Rig_CoordX.setExpression_Filter("rig.coord.x");
     filter_Rig_CoordY.setExpression_Filter("rig.coord.y");
     filter_Rig_CoordZ.setExpression_Filter("rig.coord.z");
@@ -1817,13 +1826,19 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
     filter_NED_CoordY.setExpression_Filter("ned.coord.y");
     filter_NED_CoordZ.setExpression_Filter("ned.coord.z");
 
+    filter_XYZ_CoordX.setExpression_Filter("xyz.coord.x");
+    filter_XYZ_CoordY.setExpression_Filter("xyz.coord.y");
+    filter_XYZ_CoordZ.setExpression_Filter("xyz.coord.z");
+
     Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = getRandomTransform();
     Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = getRandomTransform();
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ = getRandomTransform();
 //    Eigen::Transform<double, 3, Eigen::Affine> transform_LidarToRig = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
 //    Eigen::Transform<double, 3, Eigen::Affine> transform_RigToNED = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
 
     unsigned int transformChanges_LidarToRig = 0;
     unsigned int transformChanges_RigToNED = 0;
+    unsigned int transformChanges_NEDToXYZ = 0;
 
     unsigned int index = 0;
 
@@ -1832,6 +1847,7 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
         sourcePoints[i] = getRandomLidarSourcePoint();
         transforms_LidarToRig[i] = transform_LidarToRig;
         transforms_RigToNED[i] = transform_RigToNED;
+        transforms_NEDToXYZ[i] = transform_NEDToXYZ;
 
         if ((randomGenerator.generate() % 20) == 0)
         {
@@ -1843,12 +1859,18 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
             transform_RigToNED = getRandomTransform();
             transformChanges_RigToNED++;
         }
+        if ((randomGenerator.generate() % 20) == 0)
+        {
+            transform_NEDToXYZ = getRandomTransform();
+            transformChanges_NEDToXYZ++;
+        }
     }
 
     Q_ASSERT(transformChanges_LidarToRig > 3);
     Q_ASSERT(transformChanges_RigToNED > 3);
     Q_ASSERT(transformChanges_LidarToRig < defaultTestRounds - 10);
     Q_ASSERT(transformChanges_RigToNED < defaultTestRounds - 10);
+    Q_ASSERT(transformChanges_NEDToXYZ < defaultTestRounds - 10);
 
     // Prefill buffers
     for (index = 0; index < filterBufferLength - 1; index++)
@@ -1862,6 +1884,10 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
             filter_NED_CoordX.setTransform_LidarToRig(transforms_LidarToRig[index]);
             filter_NED_CoordY.setTransform_LidarToRig(transforms_LidarToRig[index]);
             filter_NED_CoordZ.setTransform_LidarToRig(transforms_LidarToRig[index]);
+
+            filter_XYZ_CoordX.setTransform_LidarToRig(transforms_LidarToRig[index]);
+            filter_XYZ_CoordY.setTransform_LidarToRig(transforms_LidarToRig[index]);
+            filter_XYZ_CoordZ.setTransform_LidarToRig(transforms_LidarToRig[index]);
         }
 
         if ((index == 0) || (!(transforms_RigToNED[index - 1].isApprox(transforms_RigToNED[index]))))
@@ -1873,6 +1899,17 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
             filter_NED_CoordX.setTransform_RigToNED(transforms_RigToNED[index]);
             filter_NED_CoordY.setTransform_RigToNED(transforms_RigToNED[index]);
             filter_NED_CoordZ.setTransform_RigToNED(transforms_RigToNED[index]);
+
+            filter_XYZ_CoordX.setTransform_RigToNED(transforms_RigToNED[index]);
+            filter_XYZ_CoordY.setTransform_RigToNED(transforms_RigToNED[index]);
+            filter_XYZ_CoordZ.setTransform_RigToNED(transforms_RigToNED[index]);
+        }
+
+        if ((index == 0) || (!(transforms_NEDToXYZ[index - 1].isApprox(transforms_NEDToXYZ[index]))))
+        {
+            filter_XYZ_CoordX.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
+            filter_XYZ_CoordY.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
+            filter_XYZ_CoordZ.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
         }
 
         filter_Rig_CoordX.addPoint(sourcePoints[index], index);
@@ -1882,6 +1919,10 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
         filter_NED_CoordX.addPoint(sourcePoints[index], index);
         filter_NED_CoordY.addPoint(sourcePoints[index], index);
         filter_NED_CoordZ.addPoint(sourcePoints[index], index);
+
+        filter_XYZ_CoordX.addPoint(sourcePoints[index], index);
+        filter_XYZ_CoordY.addPoint(sourcePoints[index], index);
+        filter_XYZ_CoordZ.addPoint(sourcePoints[index], index);
     }
 
     for (; index < defaultTestRounds; index++)
@@ -1895,6 +1936,10 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
             filter_NED_CoordX.setTransform_LidarToRig(transforms_LidarToRig[index]);
             filter_NED_CoordY.setTransform_LidarToRig(transforms_LidarToRig[index]);
             filter_NED_CoordZ.setTransform_LidarToRig(transforms_LidarToRig[index]);
+
+            filter_XYZ_CoordX.setTransform_LidarToRig(transforms_LidarToRig[index]);
+            filter_XYZ_CoordY.setTransform_LidarToRig(transforms_LidarToRig[index]);
+            filter_XYZ_CoordZ.setTransform_LidarToRig(transforms_LidarToRig[index]);
         }
 
         if (!(transforms_RigToNED[index - 1].isApprox(transforms_RigToNED[index])))
@@ -1906,6 +1951,17 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
             filter_NED_CoordX.setTransform_RigToNED(transforms_RigToNED[index]);
             filter_NED_CoordY.setTransform_RigToNED(transforms_RigToNED[index]);
             filter_NED_CoordZ.setTransform_RigToNED(transforms_RigToNED[index]);
+
+            filter_XYZ_CoordX.setTransform_RigToNED(transforms_RigToNED[index]);
+            filter_XYZ_CoordY.setTransform_RigToNED(transforms_RigToNED[index]);
+            filter_XYZ_CoordZ.setTransform_RigToNED(transforms_RigToNED[index]);
+        }
+
+        if (!(transforms_NEDToXYZ[index - 1].isApprox(transforms_NEDToXYZ[index])))
+        {
+            filter_XYZ_CoordX.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
+            filter_XYZ_CoordY.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
+            filter_XYZ_CoordZ.setTransform_NEDToXYZ(transforms_NEDToXYZ[index]);
         }
 
         filter_Rig_CoordX.addPoint(sourcePoints[index], index);
@@ -1916,6 +1972,10 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
         filter_NED_CoordY.addPoint(sourcePoints[index], index);
         filter_NED_CoordZ.addPoint(sourcePoints[index], index);
 
+        filter_XYZ_CoordX.addPoint(sourcePoints[index], index);
+        filter_XYZ_CoordY.addPoint(sourcePoints[index], index);
+        filter_XYZ_CoordZ.addPoint(sourcePoints[index], index);
+
         QCOMPARE(filter_Rig_CoordX.getFilteredPoint(out_Rig_X), true);
         QCOMPARE(filter_Rig_CoordY.getFilteredPoint(out_Rig_Y), true);
         QCOMPARE(filter_Rig_CoordZ.getFilteredPoint(out_Rig_Z), true);
@@ -1924,14 +1984,21 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
         QCOMPARE(filter_NED_CoordY.getFilteredPoint(out_NED_Y), true);
         QCOMPARE(filter_NED_CoordZ.getFilteredPoint(out_NED_Z), true);
 
+        QCOMPARE(filter_XYZ_CoordX.getFilteredPoint(out_XYZ_X), true);
+        QCOMPARE(filter_XYZ_CoordY.getFilteredPoint(out_XYZ_Y), true);
+        QCOMPARE(filter_XYZ_CoordZ.getFilteredPoint(out_XYZ_Z), true);
+
         Eigen::Vector3d sourceVector(sourcePoints[index - (filterBufferLength / 2)].x, sourcePoints[index - (filterBufferLength / 2)].y, sourcePoints[index - (filterBufferLength / 2)].z);
         Eigen::Vector3d rigVector(out_Rig_X.filterResult, out_Rig_Y.filterResult, out_Rig_Z.filterResult);
         Eigen::Vector3d nedVector(out_NED_X.filterResult, out_NED_Y.filterResult, out_NED_Z.filterResult);
+        Eigen::Vector3d xyzVector(out_XYZ_X.filterResult, out_XYZ_Y.filterResult, out_XYZ_Z.filterResult);
 
         QVERIFY(compareVectors(transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector, rigVector));
         QVERIFY(compareVectors(transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector), nedVector));
+        QVERIFY(compareVectors(transforms_NEDToXYZ[index - (filterBufferLength / 2)] * transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector), xyzVector));
 
         Eigen::Vector3d expectedNEDOutVector = transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector);
+        Eigen::Vector3d expectedXYZOutVector = transforms_NEDToXYZ[index - (filterBufferLength / 2)] * transforms_RigToNED[index - (filterBufferLength / 2)] * (transforms_LidarToRig[index - (filterBufferLength / 2)] * sourceVector);
 
         QVERIFY(compareVectors(out_NED_X.coords, expectedNEDOutVector));
         QVERIFY(compareVectors(out_NED_Y.coords, expectedNEDOutVector));
@@ -1940,6 +2007,10 @@ void TestExpressionFilter::rigAndNEDCoords_RandomTransforms()
         QVERIFY(compareVectors(out_Rig_X.coords, expectedNEDOutVector));
         QVERIFY(compareVectors(out_Rig_Y.coords, expectedNEDOutVector));
         QVERIFY(compareVectors(out_Rig_Z.coords, expectedNEDOutVector));
+
+        QVERIFY(compareVectors(out_XYZ_X.coords, expectedXYZOutVector));
+        QVERIFY(compareVectors(out_XYZ_Y.coords, expectedXYZOutVector));
+        QVERIFY(compareVectors(out_XYZ_Z.coords, expectedXYZOutVector));
     }
 }
 

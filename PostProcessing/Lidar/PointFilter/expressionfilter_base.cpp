@@ -33,6 +33,9 @@ ExpressionFilter_Base::ExpressionFilter_Base() : te_expr(TE_DEFAULT)
     transformCacheIndex_RigToNED = 0;
     transformCache_RigToNED[0] = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
 
+    transformCacheIndex_NEDToXYZ = 0;
+    transformCache_NEDToXYZ[0] = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+
     if (!convexHullFilterIndexesInitialized)
     {
         for (int i = 0; i < 256; i++)
@@ -74,9 +77,14 @@ void ExpressionFilter_Base::copyFields(const ExpressionFilter_Base& source, Expr
     {
         dest.transformCache_RigToNED[i] = source.transformCache_RigToNED[i];
     }
+    for (unsigned int i = 0; i < sizeof(transformCache_NEDToXYZ) / sizeof(transformCache_NEDToXYZ[0]); i++)
+    {
+        dest.transformCache_NEDToXYZ[i] = source.transformCache_NEDToXYZ[i];
+    }
 
     dest.transformCacheIndex_LidarToRig = source.transformCacheIndex_LidarToRig;
     dest.transformCacheIndex_RigToNED = source.transformCacheIndex_RigToNED;
+    dest.transformCacheIndex_NEDToXYZ = source.transformCacheIndex_NEDToXYZ;
 
     dest.numOfConvexHullFilters = source.numOfConvexHullFilters;
     dest.convexHullFilters = source.convexHullFilters;
@@ -168,6 +176,12 @@ void ExpressionFilter_Base::setTransform_RigToNED(const Eigen::Transform<double,
     transformCache_RigToNED[transformCacheIndex_RigToNED] = newTransform;
 }
 
+void ExpressionFilter_Base::setTransform_NEDToXYZ(const Eigen::Transform<double, 3, Eigen::Affine>& newTransform)
+{
+    transformCacheIndex_NEDToXYZ++;
+    transformCache_NEDToXYZ[transformCacheIndex_NEDToXYZ] = newTransform;
+}
+
 bool ExpressionFilter_Base::setConvexHullFilters(const QVector<ConvexHullFilter>& newConvexHullFilters)
 {
     convexHullFilters = newConvexHullFilters;
@@ -207,7 +221,7 @@ bool ExpressionFilter_Base::getFilteredPoint(OutItem& outPoint)
     }
 
     outPoint.timestamp = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].timestamp;
-    outPoint.coords = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].point_NED.getTransformedVector();
+    outPoint.coords = buffer[(bufferIndex - (bufferLength / 2) - 1) % bufferLength].point_XYZ.getTransformedVector();
 
     return true;
 }
@@ -251,6 +265,14 @@ std::set<te_variable> ExpressionFilter_Base::getCommonCustomFunctions(void)
         { "ned.coord_indexed.y", ned_coord_indexed_y, TE_DEFAULT, this },
         { "ned.coord_indexed.z", ned_coord_indexed_z, TE_DEFAULT, this },
 
+        { "xyz.coord.x", xyz_coord_x, TE_DEFAULT, this },
+        { "xyz.coord.y", xyz_coord_y, TE_DEFAULT, this },
+        { "xyz.coord.z", xyz_coord_z, TE_DEFAULT, this },
+
+        { "xyz.coord_indexed.x", xyz_coord_indexed_x, TE_DEFAULT, this },
+        { "xyz.coord_indexed.y", xyz_coord_indexed_y, TE_DEFAULT, this },
+        { "xyz.coord_indexed.z", xyz_coord_indexed_z, TE_DEFAULT, this },
+
         { "lidar.in_convex_hull", lidar_in_convex_hull, TE_DEFAULT, this },
         { "lidar.in_convex_hull_indexed", lidar_in_convex_hull_indexed, TE_DEFAULT, this },
 
@@ -259,6 +281,9 @@ std::set<te_variable> ExpressionFilter_Base::getCommonCustomFunctions(void)
 
         { "ned.in_convex_hull", ned_in_convex_hull, TE_DEFAULT, this },
         { "ned.in_convex_hull_indexed", ned_in_convex_hull_indexed, TE_DEFAULT, this },
+
+        { "xyz.in_convex_hull", xyz_in_convex_hull, TE_DEFAULT, this },
+        { "xyz.in_convex_hull_indexed", xyz_in_convex_hull_indexed, TE_DEFAULT, this },
 
         { "lidar.in_aabb", lidar_in_aabb, TE_DEFAULT, this },
         { "lidar.in_aabb_indexed", lidar_in_aabb_indexed, TE_DEFAULT, this },
@@ -269,6 +294,9 @@ std::set<te_variable> ExpressionFilter_Base::getCommonCustomFunctions(void)
         { "ned.in_aabb", ned_in_aabb, TE_DEFAULT, this },
         { "ned.in_aabb_indexed", ned_in_aabb_indexed, TE_DEFAULT, this },
 
+        { "xyz.in_aabb", xyz_in_aabb, TE_DEFAULT, this },
+        { "xyz.in_aabb_indexed", xyz_in_aabb_indexed, TE_DEFAULT, this },
+
         { "lidar.in_sphere", lidar_in_sphere, TE_DEFAULT, this },
         { "lidar.in_sphere_indexed", lidar_in_sphere_indexed, TE_DEFAULT, this },
 
@@ -277,6 +305,9 @@ std::set<te_variable> ExpressionFilter_Base::getCommonCustomFunctions(void)
 
         { "ned.in_sphere", ned_in_sphere, TE_DEFAULT, this },
         { "ned.in_sphere_indexed", ned_in_sphere_indexed, TE_DEFAULT, this },
+
+        { "xyz.in_sphere", xyz_in_sphere, TE_DEFAULT, this },
+        { "xyz.in_sphere_indexed", xyz_in_sphere_indexed, TE_DEFAULT, this },
     };
 
     numOfConvexHullFilters = convexHullFilters.size();

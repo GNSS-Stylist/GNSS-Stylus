@@ -58,6 +58,13 @@ te_type ned_coord_indexed_y(const te_expr* context, te_type pointIndex);
 te_type ned_coord_z(const te_expr* context);
 te_type ned_coord_indexed_z(const te_expr* context, te_type pointIndex);
 
+te_type xyz_coord_x(const te_expr* context);
+te_type xyz_coord_indexed_x(const te_expr* context, te_type pointIndex);
+te_type xyz_coord_y(const te_expr* context);
+te_type xyz_coord_indexed_y(const te_expr* context, te_type pointIndex);
+te_type xyz_coord_z(const te_expr* context);
+te_type xyz_coord_indexed_z(const te_expr* context, te_type pointIndex);
+
 te_type rig_coord_x(const te_expr* context);
 te_type rig_coord_indexed_x(const te_expr* context, te_type pointIndex);
 te_type rig_coord_y(const te_expr* context);
@@ -71,6 +78,8 @@ te_type rig_in_convex_hull(const te_expr* context, te_type hullIndex, te_type ma
 te_type rig_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex);
 te_type ned_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin);
 te_type ned_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex);
+te_type xyz_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin);
+te_type xyz_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex);
 
 te_type lidar_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ);
 te_type lidar_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex);
@@ -78,6 +87,8 @@ te_type rig_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type 
 te_type rig_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex);
 te_type ned_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ);
 te_type ned_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex);
+te_type xyz_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ);
+te_type xyz_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex);
 
 te_type lidar_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance);
 te_type lidar_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex);
@@ -85,6 +96,8 @@ te_type rig_in_sphere(const te_expr* context, te_type centerX, te_type centerY, 
 te_type rig_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex);
 te_type ned_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance);
 te_type ned_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex);
+te_type xyz_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance);
+te_type xyz_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex);
 
 // RPLidar:
 

@@ -236,6 +236,42 @@ te_type ned_coord_indexed_z(const te_expr* context, te_type pointIndex)
     return static_cast<te_type>(c->exprfunc_ned_coord_indexed_z(pointIndex));
 }
 
+te_type xyz_coord_x(const te_expr* context)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_x());
+}
+
+te_type xyz_coord_indexed_x(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_indexed_x(pointIndex));
+}
+
+te_type xyz_coord_y(const te_expr* context)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_y());
+}
+
+te_type xyz_coord_indexed_y(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_indexed_y(pointIndex));
+}
+
+te_type xyz_coord_z(const te_expr* context)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_z());
+}
+
+te_type xyz_coord_indexed_z(const te_expr* context, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_coord_indexed_z(pointIndex));
+}
+
 
 te_type lidar_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin)
 {
@@ -274,6 +310,18 @@ te_type ned_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te
     return static_cast<te_type>(c->exprfunc_ned_in_convex_hull_indexed(hullIndex, margin, pointIndex));
 }
 
+te_type xyz_in_convex_hull(const te_expr* context, te_type hullIndex, te_type margin)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_convex_hull(hullIndex, margin));
+}
+
+te_type xyz_in_convex_hull_indexed(const te_expr* context, te_type hullIndex, te_type margin, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_convex_hull_indexed(hullIndex, margin, pointIndex));
+}
+
 te_type lidar_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ)
 {
     auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
@@ -308,6 +356,18 @@ te_type ned_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, 
 {
     auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
     return static_cast<te_type>(c->exprfunc_ned_in_aabb_indexed(minX, minY, minZ, maxX, maxY, maxZ, pointIndex));
+}
+
+te_type xyz_in_aabb(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_aabb(minX, minY, minZ, maxX, maxY, maxZ));
+}
+
+te_type xyz_in_aabb_indexed(const te_expr* context, te_type minX, te_type minY, te_type minZ, te_type maxX, te_type maxY, te_type maxZ, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_aabb_indexed(minX, minY, minZ, maxX, maxY, maxZ, pointIndex));
 }
 
 
@@ -345,6 +405,18 @@ te_type ned_in_sphere_indexed(const te_expr* context, te_type centerX, te_type c
 {
     auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
     return static_cast<te_type>(c->exprfunc_ned_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
+}
+
+te_type xyz_in_sphere(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_sphere(centerX, centerY, centerZ, distance));
+}
+
+te_type xyz_in_sphere_indexed(const te_expr* context, te_type centerX, te_type centerY, te_type centerZ, te_type distance, te_type pointIndex)
+{
+    auto* c = dynamic_cast<const ExpressionFilter_Base*>(context);
+    return static_cast<te_type>(c->exprfunc_xyz_in_sphere_indexed(centerX, centerY, centerZ, distance, pointIndex));
 }
 
 // RPLidar:

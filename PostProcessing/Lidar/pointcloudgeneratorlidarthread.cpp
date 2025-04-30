@@ -359,6 +359,8 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 #if !defined(MID360_HARDCODED_FILTERING)
         PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (expressionMap_Local.value(device).get());
 
+        exprFilter->setTransform_NEDToXYZ(*constData.transform_NEDToXYZ);
+
         if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360MultiMapIter != constData.mid360.datagrams->begin()))
         {
             // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
@@ -579,13 +581,13 @@ bool PointCloudGeneratorLidarThread::generatePointCloudPointSet(LOInterpolator& 
 #if defined(MID360_HARDCODED_FILTERING)
             Eigen::Vector3d laserHitPosAfterLOSolverTransform = transform_LoSolver * (transform_AfterRotation * lidarPoint);
 #else
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
+            Eigen::Vector3d laserHitPosXYZ = exprOutItem.coords;
 #endif
-            if ((laserHitPosAfterLOSolverTransform - *constData.boundingSphere_Center).norm() <= constData.boundingSphere_Radius)
+            if ((laserHitPosXYZ - *constData.boundingSphere_Center).norm() <= constData.boundingSphere_Radius)
             {
                 Output::Point newPoint;
 
-                newPoint.hitPoint = *constData.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+                newPoint.hitPoint = laserHitPosXYZ;
                 newPoint.normal = (laserOriginAfterLOSolverTransformXYZ - newPoint.hitPoint).normalized();
                 newPoint.quality = exprOutItem.quality;
 

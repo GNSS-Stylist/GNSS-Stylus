@@ -202,6 +202,8 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
 
         PointFilter::ExpressionFilter_Mid360* exprFilter = dynamic_cast<PointFilter::ExpressionFilter_Mid360*> (expressionMap_Local.value(device).get());
 
+        exprFilter->setTransform_NEDToXYZ(*constData.transform_NEDToXYZ);
+
         if ((exprFilter->getNumOfAddedPoints() < exprFilter->bufferLength) && (mid360MapIter != constData.mid360.datagrams->begin()))
         {
             // To allow chunks to be split for different threads to handle, the starting and ending times of subsequent chunks must match exactly.
@@ -374,12 +376,11 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                 Eigen::Vector3d laserOriginAfterLOSolverTransform = transform_LoSolver * laserOriginAfterPostRotationTransform;
                 Eigen::Vector3d laserOriginAfterLOSolverTransformXYZ = transform_NEDToXYZ * laserOriginAfterLOSolverTransform;
                 */
-            Eigen::Vector3d laserHitPosAfterLOSolverTransform = exprOutItem.coords;
 
             Output::Point newPoint;
 
             newPoint.iTOW_ns = pointITOWUptime_ns;
-            newPoint.hitPoint = *constData.transform_NEDToXYZ * laserHitPosAfterLOSolverTransform;
+            newPoint.hitPoint = exprOutItem.coords;
             newPoint.sourcePoint = laserOriginAfterLOSolverTransformXYZ;
 
             if (!scanningActive)
