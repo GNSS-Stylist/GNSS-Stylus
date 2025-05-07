@@ -41,6 +41,7 @@ public:
         bool separateFilesForSubScans = false;
         int maxWorkUnitDuration = 1000;
         int numOfWorkerThreads = 1;
+        bool overwriteExistingFiles = false;
 
         PointCloudGeneratorLidarThread::ConstData threadConstData;
         AsyncPointCloudFileWriter::Params fileParams;
@@ -50,7 +51,7 @@ public:
 
 private:
 
-    std::shared_ptr<AsyncPointCloudFileWriter> createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag& currentTag, const qint64 uptime);
+    std::shared_ptr<AsyncPointCloudFileWriter> createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag& currentTag, const qint64 uptime, const bool overwriteExisting);
     UBXMessage_RELPOSNED::ITOW getITOW(const QMap<qint64, UBXMessage_RELPOSNED::ITOW>* averagedSync, const quint64 &uptime_ms);
 
 signals:

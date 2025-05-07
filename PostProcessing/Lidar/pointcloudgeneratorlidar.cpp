@@ -106,7 +106,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 QString fileName = baseFileName + fileExtension;
 
                 outFileChunkIndex = 0;
-                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime);
+                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime, params.overwriteExistingFiles);
 
                 if (!currentFileWriter)
                 {
@@ -156,7 +156,7 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
                 QString fileName = QDir::cleanPath(baseFileName + "_" + fileIndexString + fileExtension);
 
                 outFileChunkIndex = 0;
-                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime);
+                currentFileWriter = createNewOutFile(fileName, params.fileParams, scanningStateIter->currentTag, uptime, params.overwriteExistingFiles);
 
                 if (!currentFileWriter)
                 {
@@ -442,11 +442,11 @@ void PointCloudGenerator::generatePointClouds(const Params& params)
 }
 
 
-std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag &currentTag, const qint64 uptime)
+std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile(const QString fileName, const AsyncPointCloudFileWriter::Params &params, const PostProcessingForm::Tag &currentTag, const qint64 uptime, const bool overwriteExisting)
 {
     QFile outFile(fileName);
 
-    if (outFile.exists())
+    if (!overwriteExisting && outFile.exists())
     {
         // File already exists -> Not allowed
 
@@ -459,7 +459,14 @@ std::shared_ptr<AsyncPointCloudFileWriter> PointCloudGenerator::createNewOutFile
         return nullptr;
     }
 
-    emit infoMessage("Creating file \"" + fileName + "\"...");
+    if (outFile.exists())
+    {
+        emit infoMessage("Overwriting file \"" + fileName + "\"...");
+    }
+    else
+    {
+        emit infoMessage("Creating file \"" + fileName + "\"...");
+    }
 
     std::shared_ptr<AsyncPointCloudFileWriter> outFileWriter = std::make_shared<AsyncPointCloudFileWriter>(fileName, params);
 

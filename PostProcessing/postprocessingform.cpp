@@ -181,6 +181,7 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
 
     ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_FileFormat", ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex()).toInt());
     ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->setChecked(settings.value("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked()).toBool());
+    ui->checkBox_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles->setChecked(settings.value("PostProcessing_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles", ui->checkBox_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles->isChecked()).toBool());
     ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->setValue(settings.value("PostProcessing_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value()).toInt());
     ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->setValue(settings.value("PostProcessing_Lidar_PointCloud_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value()).toInt());
 
@@ -346,6 +347,7 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
 
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_FileFormat", ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
     settings.setValue("PostProcessing_Lidar_PointCloud_SeparateOutputFilesForSubScans", ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked());
+    settings.setValue("PostProcessing_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles", ui->checkBox_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles->isChecked());
     settings.setValue("PostProcessing_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value());
     settings.setValue("PostProcessing_Lidar_PointCloud_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value());
 
@@ -3431,6 +3433,7 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
         params.directory = directory;
         params.scanningStateMap = &scanningStateMap;
         params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked();
+        params.overwriteExistingFiles = ui->checkBox_Lidar_PointCloud_GenericSettings_OverwriteExistingFiles->isChecked();
         params.threadConstData.rpLidar.timeShift = ui->spinBox_Lidar_TimeShift->value();
 
         Eigen::Vector3d boundingSphere_Center = Eigen::Vector3d(ui->doubleSpinBox_Lidar_BoundingSphere_Center_N->value(),
@@ -3471,8 +3474,6 @@ void PostProcessingForm::on_pushButton_Lidar_GeneratePointClouds_clicked()
 
         params.maxWorkUnitDuration = ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value();
         params.numOfWorkerThreads = ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value();
-
-        params.separateFilesForSubScans = ui->checkBox_Lidar_PointCloud_GenericSettings_SeparateOutputFilesForSubScans->isChecked();
 
         params.fileParams.fileFormat = AsyncPointCloudFileWriter::Params::FileFormat(ui->comboBox_Lidar_PointCloud_FileFormat_FileFormat->currentIndex());
 
