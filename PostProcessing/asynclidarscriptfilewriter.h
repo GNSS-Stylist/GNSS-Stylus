@@ -92,10 +92,15 @@ private:
         PT_UNDEFINED = 255,
     };
 
+    // Flags for writePoint->flags
+    static constexpr int WP_FORCE_WRITE = 1 << 0;
+    static constexpr int WP_HIT_POINT_IN_MM = 1 << 1;
+    static constexpr int WP_SOURCE_POINT_IN_MM = 1 << 2;
+
     QFile file;
     bool openFile(void);
     void writeHeader(void);
-    bool writePoint(const LidarScriptGeneratorThread::Output::Point* const point, const PointType pointTypeOverride = PT_UNDEFINED, const bool forceWrite = false);
+    bool writePoint(const LidarScriptGeneratorThread::Output::Point* const point, const PointType pointTypeOverride = PT_UNDEFINED, const unsigned char flags = 0);
 //    void writePoint_XYZ(const LidarScriptGeneratorThread::Output::Point* const point);
 //    void writePoint_PLY(const LidarScriptGeneratorThread::Output::Point* const point);
     void finalizeFile(void);
@@ -128,8 +133,8 @@ private:
     bool startTimeDetected = false;
     qint64 startTime = 0;
 
-    Eigen::Vector3i lastWrittenHitPoint = Eigen::Vector3i::Identity();
-    Eigen::Vector3i lastWrittenSourcePoint = Eigen::Vector3i::Identity();
+    Eigen::Vector3i lastWrittenIntHitPoint = Eigen::Vector3i::Identity();
+    Eigen::Vector3i lastWrittenIntSourcePoint = Eigen::Vector3i::Identity();
     qint64 lastWrittenTime_us = 0;
 
     std::shared_ptr<QVector<LidarScriptGeneratorThread::Output::Point> > prevPoints = nullptr;

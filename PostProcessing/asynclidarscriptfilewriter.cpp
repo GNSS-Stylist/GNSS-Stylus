@@ -198,7 +198,7 @@ static inline void writeUChar(QFile& file, const unsigned char src)
     file.write((const char*)&src, 1);
 }
 
-bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Output::Point * const point, const PointType pointTypeOverride, const bool forceWrite)
+bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Output::Point * const point, const PointType pointTypeOverride, const unsigned char flags)
 {
     // Checking (and storing) ranges of coordinates first (need to discard the whole point if exceeded)
 
@@ -207,7 +207,16 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
     if ((params.coordsFormat_HitPoint == Params::CF_SHORT) || (params.coordsFormat_HitPoint == Params::CF_SHORT_DELTA))
     {
-        intHitPoint = (1000 * point->hitPoint).cast<int>();
+        if (flags & WP_HIT_POINT_IN_MM)
+        {
+            // Recursive calls require exact coordinates to prevent infinite loop
+            // (in rare cases rounding errors when multiplying and dividing by 1000 cause this)
+            intHitPoint = point->hitPoint.cast<int>();
+        }
+        else
+        {
+            intHitPoint = (1000 * point->hitPoint).cast<int>();
+        }
 
         if (params.coordsFormat_HitPoint == Params::CF_SHORT)
         {
@@ -216,7 +225,7 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
             if ((intHitPoint.x() < valmin) || (intHitPoint.x() > valmax) || (intHitPoint.y() < valmin) || (intHitPoint.y() > valmax) || (intHitPoint.z() < valmin) || (intHitPoint.z() > valmax))
             {
-                if (forceWrite)
+                if (flags & WP_FORCE_WRITE)
                 {
                     // Write zero coords if they are over range. ForceWrite is used only when writing deltas that are not directly used as coordinates.
                     intHitPoint.setZero();
@@ -231,7 +240,14 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
     if ((params.coordsFormat_SourcePoint == Params::CF_SHORT) || (params.coordsFormat_SourcePoint == Params::CF_SHORT_DELTA))
     {
-        intSourcePoint = (1000 * point->sourcePoint).cast<int>();
+        if (flags & WP_SOURCE_POINT_IN_MM)
+        {
+            intSourcePoint = point->sourcePoint.cast<int>();
+        }
+        else
+        {
+            intSourcePoint = (1000 * point->sourcePoint).cast<int>();
+        }
 
         if (params.coordsFormat_SourcePoint == Params::CF_SHORT)
         {
@@ -240,7 +256,7 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
             if ((intSourcePoint.x() < valmin) || (intSourcePoint.x() > valmax) || (intSourcePoint.y() < valmin) || (intSourcePoint.y() > valmax) || (intSourcePoint.z() < valmin) || (intSourcePoint.z() > valmax))
             {
-                if (forceWrite)
+                if (flags & WP_FORCE_WRITE)
                 {
                     // Write zero coords if they are over range. ForceWrite is used only when writing deltas that are not directly used as coordinates.
                     intSourcePoint.setZero();
@@ -264,6 +280,8 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
     {
         // If using deltas, they may exceeed their maximum values.
         // Therefore calling this kind of recursively if needed.
+
+        unsigned char newFlags = WP_FORCE_WRITE;
 
         LidarScriptGeneratorThread::Output::Point fillPoint;
 
@@ -294,17 +312,19 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
             if (params.coordsFormat_HitPoint == Params::CF_SHORT_DELTA)
             {
-                Eigen::Vector3i deltaHitPoint = intHitPoint - lastWrittenHitPoint;
+                newFlags |= WP_HIT_POINT_IN_MM;
+
+                Eigen::Vector3i deltaHitPoint = intHitPoint - lastWrittenIntHitPoint;
                 Eigen::Vector3i deltaHitPoint_Clamped(std::clamp(deltaHitPoint.x(), -32768, 32767), std::clamp(deltaHitPoint.y(), -32768, 32767), std::clamp(deltaHitPoint.z(), -32768, 32767));
 
                 if (deltaHitPoint_Clamped != deltaHitPoint)
                 {
                     deltaLimitExceeded = true;
-                    fillPoint.hitPoint = 0.001 * ((lastWrittenHitPoint + deltaHitPoint_Clamped).cast<double>()); // lastWrittenHitPoint will be updated in recursive call
+                    fillPoint.hitPoint = (lastWrittenIntHitPoint + deltaHitPoint_Clamped).cast<double>(); // lastWrittenIntHitPoint will be updated in recursive call
                 }
                 else
                 {
-                    fillPoint.hitPoint = point->hitPoint;
+                    fillPoint.hitPoint = intHitPoint.cast<double>();
                 }
             }
             else
@@ -314,17 +334,19 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
 
             if (params.coordsFormat_SourcePoint == Params::CF_SHORT_DELTA)
             {
-                Eigen::Vector3i deltaSourcePoint = intSourcePoint - lastWrittenSourcePoint;
+                newFlags |= WP_SOURCE_POINT_IN_MM;
+
+                Eigen::Vector3i deltaSourcePoint = intSourcePoint - lastWrittenIntSourcePoint;
                 Eigen::Vector3i deltaSourcePoint_Clamped(std::clamp(deltaSourcePoint.x(), -32768, 32767), std::clamp(deltaSourcePoint.y(), -32768, 32767), std::clamp(deltaSourcePoint.z(), -32768, 32767));
 
                 if (deltaSourcePoint_Clamped != deltaSourcePoint)
                 {
                     deltaLimitExceeded = true;
-                    fillPoint.sourcePoint = 0.001* ((lastWrittenSourcePoint + deltaSourcePoint_Clamped).cast<double>()); // lastWrittenSourcePoint will be updated in recursive call
+                    fillPoint.sourcePoint = (lastWrittenIntSourcePoint + deltaSourcePoint_Clamped).cast<double>(); // lastWrittenIntSourcePoint will be updated in recursive call
                 }
                 else
                 {
-                    fillPoint.sourcePoint = point->sourcePoint;
+                    fillPoint.sourcePoint = intSourcePoint.cast<double>();
                 }
             }
             else
@@ -336,7 +358,7 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
             {
                 fillPoint.quality = point->quality;
                 fillPoint.type = point->type;
-                if (writePoint(&fillPoint, PT_DELTA_EXCEEDED, true))
+                if (writePoint(&fillPoint, PT_DELTA_EXCEEDED, newFlags))
                 {
                     // This should not actually be reached (TODO: Remove after testing/debugging).
                     numberOfPointsWritten++;
@@ -367,11 +389,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
             writeShort(file, intHitPoint.z());
             break;
         case Params::CF_SHORT_DELTA:
-            Eigen::Vector3i delta = intHitPoint - lastWrittenHitPoint;
+            Eigen::Vector3i delta = intHitPoint - lastWrittenIntHitPoint;
             writeShort(file, delta.x());
             writeShort(file, delta.y());
             writeShort(file, delta.z());
-            lastWrittenHitPoint = intHitPoint;
+            lastWrittenIntHitPoint = intHitPoint;
             break;
         }
 
@@ -395,11 +417,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
             writeShort(file, intSourcePoint.z());
             break;
         case Params::CF_SHORT_DELTA:
-            Eigen::Vector3i delta = intSourcePoint - lastWrittenSourcePoint;
+            Eigen::Vector3i delta = intSourcePoint - lastWrittenIntSourcePoint;
             writeShort(file, delta.x());
             writeShort(file, delta.y());
             writeShort(file, delta.z());
-            lastWrittenSourcePoint = intSourcePoint;
+            lastWrittenIntSourcePoint = intSourcePoint;
             break;
         }
 
@@ -463,11 +485,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
                        " " + QString::number(intHitPoint.z());
             break;
         case Params::CF_SHORT_DELTA:
-            Eigen::Vector3i delta = intHitPoint - lastWrittenHitPoint;
+            Eigen::Vector3i delta = intHitPoint - lastWrittenIntHitPoint;
             lineOut = QString::number(delta.x()) +
                        " " + QString::number(delta.y()) +
                        " " + QString::number(delta.z());
-            lastWrittenHitPoint = intHitPoint;
+            lastWrittenIntHitPoint = intHitPoint;
             break;
         }
 
@@ -490,11 +512,11 @@ bool AsyncLidarScriptFileWriter::writePoint(const LidarScriptGeneratorThread::Ou
             break;
         case Params::CF_SHORT_DELTA:
             if (lineOut.length() != 0) lineOut += " ";
-            Eigen::Vector3i delta = intSourcePoint - lastWrittenSourcePoint;
+            Eigen::Vector3i delta = intSourcePoint - lastWrittenIntSourcePoint;
             lineOut += QString::number(delta.x()) +
                        " " + QString::number(delta.y()) +
                        " " + QString::number(delta.z());
-            lastWrittenSourcePoint = intSourcePoint;
+            lastWrittenIntSourcePoint = intSourcePoint;
             break;
         }
 
