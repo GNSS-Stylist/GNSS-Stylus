@@ -67,6 +67,8 @@ public:
         Qualityformat qualityFormat = QF_FLOAT;
         QByteArray endOfLine = "\n";
         PointFilter::PostFilter::Params postFilterParams;
+        qint64 uptime_Min = 0;
+        qint64 uptime_Max = 1e18;
     };
 
     AsyncLidarScriptFileWriter(const QString &fileName, const Params &params);

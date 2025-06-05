@@ -64,7 +64,9 @@ void AsyncLidarScriptFileWriter::writeHeader(void)
         dataToWrite += "format ascii 1.0" + eol;
     }
 
-    dataToWrite += "comment File created with GNSS-Stylus on (dd.mm.yyyy hh:mm): " + QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm").toLatin1() + eol;
+    dataToWrite += "comment Lidar script file created with GNSS-Stylus on (dd.mm.yyyy hh:mm): " + QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm").toLatin1() + eol;
+    dataToWrite += "comment Uptime range for the script, min: " + QString::number(params.uptime_Min).toLatin1() + eol;
+    dataToWrite += "comment Uptime range for the script, max: " + QString::number(params.uptime_Max).toLatin1() + eol;
 
     // rows "comment pad" and "element vertex (N/A) added here this way to allow updating them later with simple overwriting some bytes.
     // Vertex count is not known when creating the file so it needs to be updated as one of the last steps when finalizing the file.

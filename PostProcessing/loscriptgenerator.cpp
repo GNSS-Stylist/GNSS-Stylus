@@ -265,7 +265,9 @@ void LOScriptGenerator::writeHeader(void)
         dataToWrite += "format ascii 1.0" + eol;
     }
 
-    dataToWrite += "comment File created with GNSS-Stylus on (dd.mm.yyyy hh:mm): " + QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm").toLatin1() + eol;
+    dataToWrite += "comment LOScript-file created with GNSS-Stylus on (dd.mm.yyyy hh:mm): " + QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm").toLatin1() + eol;
+    dataToWrite += "comment ITOW range for the script, min: " + QString::number(params.iTOWRange_Script_Min).toLatin1() + eol;
+    dataToWrite += "comment ITOW range for the script, max: " + QString::number(params.iTOWRange_Script_Max).toLatin1() + eol;
 
     // rows "comment pad" and "element vertex (N/A) added here this way to allow updating them later with simple overwriting some bytes.
     // Vertex count is not known when creating the file so it needs to be updated as one of the last steps when finalizing the file.

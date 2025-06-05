@@ -3761,6 +3761,8 @@ void PostProcessingForm::on_pushButton_Lidar_GenerateScript_clicked()
         params.fileParams.numberOfDecimals_Quality = ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value();
         params.fileParams.timeFormat = (AsyncLidarScriptFileWriter::Params::TimeFormat)ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex();
         params.fileParams.qualityFormat = (AsyncLidarScriptFileWriter::Params::Qualityformat)ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex();
+        params.fileParams.uptime_Min = params.uptime_Min;
+        params.fileParams.uptime_Max = params.uptime_Max;
 
         switch (ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex())
         {
