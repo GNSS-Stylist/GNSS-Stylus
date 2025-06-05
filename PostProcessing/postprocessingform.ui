@@ -60,7 +60,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>true</bool>
@@ -2454,7 +2454,7 @@
               <bool>true</bool>
              </property>
              <property name="currentIndex">
-              <number>2</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tab_LOScript_Generic">
               <property name="autoFillBackground">
@@ -2671,6 +2671,9 @@ multiply	1	0	0	0
 	0	1	0	0
 	0	0	1	0;
 </string>
+                 </property>
+                 <property name="tabStopDistance">
+                  <double>12.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -3048,7 +3051,7 @@ multiply	1	0	0	0
               <bool>true</bool>
              </property>
              <property name="currentIndex">
-              <number>2</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tab_Lidar_OperationsBeforeRotation">
               <property name="autoFillBackground">
@@ -3155,6 +3158,9 @@ multiply	1	0	0	0
 	0	1	0	0
 	0	0	1	0;
 </string>
+                 </property>
+                 <property name="tabStopDistance">
+                  <double>12.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -3309,6 +3315,9 @@ multiply	1	0	0	0
 	0	1	0	0
 	0	0	1	0;
 </string>
+                 </property>
+                 <property name="tabStopDistance">
+                  <double>12.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -3566,6 +3575,9 @@ OriginCube
 
 </string>
                      </property>
+                     <property name="tabStopDistance">
+                      <double>12.000000000000000</double>
+                     </property>
                     </widget>
                    </item>
                    <item>
@@ -3678,6 +3690,9 @@ These operations are calculated only once when starting operations so calculatin
 }
 { 1 / lidar.distance }</string>
                      </property>
+                     <property name="tabStopDistance">
+                      <double>12.000000000000000</double>
+                     </property>
                     </widget>
                    </item>
                   </layout>
@@ -3742,7 +3757,7 @@ These operations are calculated only once when starting operations so calculatin
                    <item>
                     <widget class="QTabWidget" name="tabWidget_PointCloud_FileFormatSettings">
                      <property name="currentIndex">
-                      <number>1</number>
+                      <number>0</number>
                      </property>
                      <widget class="QWidget" name="tab_Lidar_PointCloud_FileFormatSettings_XYZ">
                       <property name="autoFillBackground">
@@ -3904,8 +3919,8 @@ These operations are calculated only once when starting operations so calculatin
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>572</width>
-                            <height>273</height>
+                            <width>676</width>
+                            <height>309</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_31">
@@ -4138,7 +4153,7 @@ These operations are calculated only once when starting operations so calculatin
                   <bool>true</bool>
                  </property>
                  <property name="currentIndex">
-                  <number>4</number>
+                  <number>0</number>
                  </property>
                  <widget class="QWidget" name="tab_Lidar_Script_GenericSettings">
                   <property name="autoFillBackground">
@@ -4388,6 +4403,9 @@ OriginCube
 
 </string>
                      </property>
+                     <property name="tabStopDistance">
+                      <double>12.000000000000000</double>
+                     </property>
                     </widget>
                    </item>
                    <item>
@@ -4499,6 +4517,9 @@ These operations are calculated only once when starting operations so calculatin
         )
 }
 { 1 / lidar.distance }</string>
+                     </property>
+                     <property name="tabStopDistance">
+                      <double>12.000000000000000</double>
                      </property>
                     </widget>
                    </item>
@@ -5056,7 +5077,7 @@ These operations are calculated only once when starting operations so calculatin
               <bool>true</bool>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tab_Operations">
               <property name="autoFillBackground">
@@ -5143,6 +5164,9 @@ These operations are calculated only once when starting to generate script so ca
                  </property>
                  <property name="plainText">
                   <string>// See location/orientation solver script for more information about operations</string>
+                 </property>
+                 <property name="tabStopDistance">
+                  <double>12.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -5326,6 +5350,9 @@ ProcessStills DSC*.JPG itows;
 // XML-section ending tag
 WriteOutputString &quot; &lt;/RasterGroup&gt;&quot;;</string>
                  </property>
+                 <property name="tabStopDistance">
+                  <double>12.000000000000000</double>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -5392,7 +5419,7 @@ WriteOutputString &quot; &lt;/RasterGroup&gt;&quot;;</string>
             <bool>true</bool>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tab_PointFans_Fans">
             <property name="autoFillBackground">
@@ -5540,6 +5567,9 @@ CubeFace_West ned reverse 0.05
 	{ {0} {0} {1} }
 }
 </string>
+             </property>
+             <property name="tabStopDistance">
+              <double>12.000000000000000</double>
              </property>
             </widget>
             <widget class="QPushButton" name="pushButton_PointFans_LoadFromFile">
