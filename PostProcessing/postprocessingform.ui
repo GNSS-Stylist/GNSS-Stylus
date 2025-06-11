@@ -3409,7 +3409,7 @@ multiply	1	0	0	0
                         <number>256</number>
                        </property>
                        <property name="value">
-                        <number>10</number>
+                        <number>1</number>
                        </property>
                       </widget>
                      </item>
@@ -3436,13 +3436,13 @@ multiply	1	0	0	0
                         <number>100</number>
                        </property>
                        <property name="maximum">
-                        <number>60000</number>
+                        <number>600000</number>
                        </property>
                        <property name="singleStep">
                         <number>1000</number>
                        </property>
                        <property name="value">
-                        <number>1000</number>
+                        <number>600000</number>
                        </property>
                       </widget>
                      </item>
@@ -3919,8 +3919,8 @@ These operations are calculated only once when starting operations so calculatin
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>676</width>
-                            <height>309</height>
+                            <width>572</width>
+                            <height>273</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_31">
@@ -4237,7 +4237,7 @@ These operations are calculated only once when starting operations so calculatin
                         <number>256</number>
                        </property>
                        <property name="value">
-                        <number>10</number>
+                        <number>1</number>
                        </property>
                       </widget>
                      </item>
@@ -4264,13 +4264,13 @@ These operations are calculated only once when starting operations so calculatin
                         <number>100</number>
                        </property>
                        <property name="maximum">
-                        <number>60000</number>
+                        <number>600000</number>
                        </property>
                        <property name="singleStep">
                         <number>1000</number>
                        </property>
                        <property name="value">
-                        <number>1000</number>
+                        <number>600000</number>
                        </property>
                       </widget>
                      </item>
