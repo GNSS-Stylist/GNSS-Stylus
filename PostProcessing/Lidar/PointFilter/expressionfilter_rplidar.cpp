@@ -24,7 +24,7 @@ namespace PointFilter
 
 ExpressionFilter_RPLidar::ExpressionFilter_RPLidar()
 {
-    initBuffer();
+    initBuffer_Local();
     ExpressionFilter_RPLidar::setCustomVariablesAndFunctions();
 }
 
@@ -38,6 +38,12 @@ ExpressionFilter_RPLidar::ExpressionFilter_RPLidar(const ExpressionFilter_RPLida
 ExpressionFilter_RPLidar ExpressionFilter_RPLidar::operator=(const ExpressionFilter_RPLidar& source)
 {
     copyFields(source, *this);
+
+    for (unsigned int i = 0; i < bufferLength; i++)
+    {
+        this->buffer[i].point_Lidar.setPrimarySourceVector2D(&this->buffer[i].horizontalAngle_RPLidar, &this->buffer[i].distance_RPLidar);
+    }
+
     setCustomVariablesAndFunctions();
     setExpression_Filter(expression_Filter);
     setExpression_Quality(expression_Quality);
@@ -49,6 +55,11 @@ ExpressionFilter_RPLidar::~ExpressionFilter_RPLidar()
 }
 
 void ExpressionFilter_RPLidar::initBuffer(void)
+{
+    initBuffer_Local();
+}
+
+void ExpressionFilter_RPLidar::initBuffer_Local(void)
 {
     bufferIndex = 0;
 

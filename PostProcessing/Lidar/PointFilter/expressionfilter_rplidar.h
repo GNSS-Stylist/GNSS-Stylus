@@ -38,6 +38,9 @@ public:
     virtual void initBuffer(void);
 
 private:
+    // clang nags "Call to virtual method 'ExpressionFilter_Mid360::initBuffer' during construction bypasses virtual dispatch"
+    // when calling virtual initBuffer from constructor, so using a separate private function to perform the real work.
+    void initBuffer_Local(void);
     void setCustomVariablesAndFunctions(void);
 };
 

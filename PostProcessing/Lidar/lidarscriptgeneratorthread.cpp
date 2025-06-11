@@ -317,7 +317,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
 
             qint64 pointITOWUptime_ns = pointStartTime_ns + ((pointChunkTime_ns * i) / (pointNum -1));
 
-            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = pointStartTime_ns / 1000000;
+            UBXMessage_RELPOSNED::ITOW pointITOWUptime_ms = pointITOWUptime_ns / 1000000;
 
             if (pointITOWUptime_ms != lastInterpolatedITOWUptime_ms)
             {
@@ -347,7 +347,7 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
                 lastInterpolatedITOWUptime_ms = pointITOWUptime_ms;
             }
 
-            exprFilter->addPoint(*currentPoint, pointITOWUptime_ms);
+            exprFilter->addPoint(*currentPoint, pointITOWUptime_ns);
 
             PointFilter::ExpressionFilter_Mid360::OutItem exprOutItem;
 

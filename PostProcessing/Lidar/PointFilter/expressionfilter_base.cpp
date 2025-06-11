@@ -66,7 +66,12 @@ void ExpressionFilter_Base::copyFields(const ExpressionFilter_Base& source, Expr
     for (unsigned int i = 0; i < bufferLength; i++)
     {
         dest.buffer[i] = source.buffer[i];
+
+        dest.buffer[i].point_Rig.setSourceEvaluator(&dest.buffer[i].point_Lidar);
+        dest.buffer[i].point_NED.setSourceEvaluator(&dest.buffer[i].point_Rig);
+        dest.buffer[i].point_XYZ.setSourceEvaluator(&dest.buffer[i].point_NED);
     }
+
     dest.bufferIndex = source.bufferIndex;
 
     for (unsigned int i = 0; i < sizeof(transformCache_LidarToRig) / sizeof(transformCache_LidarToRig[0]); i++)

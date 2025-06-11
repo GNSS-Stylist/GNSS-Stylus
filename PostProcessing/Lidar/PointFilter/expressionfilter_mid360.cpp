@@ -24,12 +24,19 @@ namespace PointFilter
 
 ExpressionFilter_Mid360::ExpressionFilter_Mid360()
 {
-    initBuffer();
+    initBuffer_Local();
     ExpressionFilter_Mid360::setCustomVariablesAndFunctions();
 }
 
 ExpressionFilter_Mid360::ExpressionFilter_Mid360(const ExpressionFilter_Mid360& source) : ExpressionFilter_Base(source)
 {
+    copyFields(source, *this);
+
+    for (unsigned int i = 0; i < bufferLength; i++)
+    {
+        this->buffer[i].point_Lidar.setPrimarySourceVector(&this->buffer[i].lidarSourceVector3D);
+    }
+
     ExpressionFilter_Mid360::setCustomVariablesAndFunctions();
     setExpression_Filter(expression_Filter);
     setExpression_Quality(expression_Quality);
@@ -38,6 +45,12 @@ ExpressionFilter_Mid360::ExpressionFilter_Mid360(const ExpressionFilter_Mid360& 
 ExpressionFilter_Mid360 ExpressionFilter_Mid360::operator=(const ExpressionFilter_Mid360& source)
 {
     copyFields(source, *this);
+
+    for (unsigned int i = 0; i < bufferLength; i++)
+    {
+        this->buffer[i].point_Lidar.setPrimarySourceVector(&this->buffer[i].lidarSourceVector3D);
+    }
+
     setCustomVariablesAndFunctions();
     setExpression_Filter(expression_Filter);
     setExpression_Quality(expression_Quality);
@@ -49,6 +62,13 @@ ExpressionFilter_Mid360::~ExpressionFilter_Mid360()
 }
 
 void ExpressionFilter_Mid360::initBuffer(void)
+{
+    initBuffer_Local();
+}
+
+// clang nags "Call to virtual method 'ExpressionFilter_Mid360::initBuffer' during construction bypasses virtual dispatch"
+// when calling virtual initBuffer from constructor, so using a separate private function to perform the real work.
+void ExpressionFilter_Mid360::initBuffer_Local(void)
 {
     bufferIndex = 0;
 
