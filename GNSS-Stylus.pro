@@ -88,6 +88,7 @@ SOURCES += \
     PostProcessing/loscriptgenerator.cpp \
     PostProcessing/postprocessingform.cpp \
     PostProcessing/rastercameragenerator.cpp \
+    PostProcessing/rovertrackgenerator.cpp \
     Util/textblockparser.cpp \
     laserrangefinder20hzv2messagemonitorform.cpp \
     laserrangefinder20hzv2serialthread.cpp \
@@ -150,6 +151,7 @@ HEADERS += \
     PostProcessing/loscriptgenerator.h \
     PostProcessing/postprocessingform.h \
     PostProcessing/rastercameragenerator.h \
+    PostProcessing/rovertrackgenerator.h \
     Util/textblockparser.h \
     laserrangefinder20hzv2messagemonitorform.h \
     laserrangefinder20hzv2serialthread.h \

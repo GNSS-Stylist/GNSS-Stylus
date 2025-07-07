@@ -30,6 +30,7 @@
 #include "Stylus/pointcloudgeneratorstylus.h"
 #include "Lidar/pointcloudgeneratorlidar.h"
 #include "loscriptgenerator.h"
+#include "rovertrackgenerator.h"
 #include "Lidar/lidarscriptgenerator.h"
 #include "rastercameragenerator.h"
 #include "Lidar/PointFilter/ConvexHull/convexhullgenerator.h"
@@ -413,6 +414,7 @@ PostProcessingForm::~PostProcessingForm()
     settings.setValue("PostProcessing_Directory_Dialog_PointCloud", fileDialog_PointCloud.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Stylus_MovieScript", fileDialog_Stylus_MovieScript.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_LOSolver_Script", fileDialog_LOSolver_Script.directory().path());
+    settings.setValue("PostProcessing_Directory_Dialog_RoverTrack", fileDialog_RoverTrack.directory().path());
     settings.setValue("PostProcessing_Directory_Dialog_Lidar_Script", fileDialog_Lidar_Script.directory().path());
 
     settings.setValue("PostProcessing_Directory_Dialog_Operations_Load", fileDialog_Operations_Load.directory().path());
@@ -454,6 +456,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
         fileDialog_PointCloud.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_Stylus_MovieScript.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_LOSolver_Script.setOption(QFileDialog::DontUseNativeDialog, true);
+        fileDialog_RoverTrack.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_Lidar_Script.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_Operations_Load.setOption(QFileDialog::DontUseNativeDialog, true);
         fileDialog_Operations_Save.setOption(QFileDialog::DontUseNativeDialog, true);
@@ -577,10 +580,21 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         QStringList loScriptFilters;
 
-        loScriptFilters << "location/orientation script files (*.loscript)"
+        loScriptFilters << "location/orientation script files (*.LOScript)"
                 << "Any files (*)";
 
         fileDialog_LOSolver_Script.setNameFilters(loScriptFilters);
+
+
+        fileDialog_RoverTrack.setFileMode(QFileDialog::AnyFile);
+        fileDialog_RoverTrack.setDefaultSuffix("RoverTrack");
+
+        QStringList roverTrackFilters;
+
+        roverTrackFilters << "Rover track files (*.RoverTrack)"
+                        << "Any files (*)";
+
+        fileDialog_RoverTrack.setNameFilters(roverTrackFilters);
 
 
         fileDialog_Lidar_Script.setFileMode(QFileDialog::AnyFile);
@@ -655,6 +669,7 @@ void PostProcessingForm::showEvent(QShowEvent* event)
     fileDialog_PointCloud.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_PointCloud").toString()));
     fileDialog_Stylus_MovieScript.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Stylus_MovieScript").toString()));
     fileDialog_LOSolver_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_LOSolver_Script").toString()));
+    fileDialog_RoverTrack.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_RoverTrack").toString()));
     fileDialog_Lidar_Script.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Lidar_Script").toString()));
 
     fileDialog_Operations_Load.setDirectory(QDir(settings.value("PostProcessing_Directory_Dialog_Operations_Load").toString()));
@@ -4694,6 +4709,81 @@ void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
         QString fullFileName = QDir::cleanPath(fileDialog_ExportPointFans.directory().path() + "/" + iter.key() + ".ply");
         iter.value().exportFanToFile(fullFileName, ui->checkBox_PointFans_Options_ExportCorners->isChecked(), ui->checkBox_PointFans_Options_ExportFaces->isChecked(), ui->checkBox_PointFans_Options_InvertedFaces->isChecked(), ui->spinBox_PointFans_Options_MaxPointCount->value(), transform_NEDToXYZ);
         iter++;
+    }
+}
+
+
+void PostProcessingForm::on_pushButton_RoverTrack_GenerateTrack_clicked()
+{
+    Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ;
+
+    if (!generateTransformationMatrix(transform_NEDToXYZ))
+    {
+        return;
+    }
+
+    if (fileDialog_RoverTrack.exec())
+    {
+        QStringList fileNameList = fileDialog_RoverTrack.selectedFiles();
+
+        if (fileNameList.size() != 0)
+        {
+            fileDialog_RoverTrack.setDirectory(QFileInfo(fileNameList[0]).path());
+        }
+
+        if (fileNameList.length() != 1)
+        {
+            addLogLine("Rover track: Multiple file selection not supported. Track file not created.");
+            return;
+        }
+
+        RoverTrackGenerator::Params params;
+
+        params.transform_NEDToXYZ = &transform_NEDToXYZ;
+        params.iTOWRange_Script_Min = ui->spinBox_RoverTrack_ITOW_Range_Min->value();
+        params.iTOWRange_Script_Max = ui->spinBox_RoverTrack_ITOW_Range_Max->value();
+
+        params.fileName = fileNameList[0];
+
+        params.rover = &rovers[ui->comboBox_RoverTrack_Rover->currentIndex()];
+
+        params.binary = ui->checkBox_RoverTrack_FileFormat_Binary->isChecked();
+        params.coordsFormat = RoverTrackGenerator::Params::CoordsFormat(ui->comboBox_RoverTrack_FileFormat_LocationCoordsFormat->currentIndex());
+        params.accuracyFormat = RoverTrackGenerator::Params::CoordsFormat(ui->comboBox_RoverTrack_FileFormat_AccuracyFormat->currentIndex());
+
+        switch (ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex())
+        {
+        case 0:
+            params.endOfLine = "\r";
+            break;
+        case 1:
+            params.endOfLine = "\n";
+            break;
+        case 2:
+            params.endOfLine = "\r\n";
+            break;
+        default:
+            qFatal("Unhandled end of line.");
+            break;
+        }
+
+        params.timeFormat = RoverTrackGenerator::Params::TimeFormat(ui->comboBox_RoverTrack_FileFormat_TimeStampsFormat->currentIndex());
+        params.flagsFormat = RoverTrackGenerator::Params::FlagsFormat(ui->comboBox_RoverTrack_FileFormat_FlagsFormat->currentIndex());
+        params.numberOfDecimals_Coords = ui->spinBox_RoverTrack_FileFormat_Decimals_Locations->value();
+        params.numberOfDecimals_Accuracy = ui->spinBox_RoverTrack_FileFormat_Decimals_Locations->value();
+
+        RoverTrackGenerator roverTrackGenerator;
+
+        connect(&roverTrackGenerator, &RoverTrackGenerator::infoMessage,
+                this, &PostProcessingForm::on_infoMessage);
+
+        connect(&roverTrackGenerator, &RoverTrackGenerator::warningMessage,
+                this, &PostProcessingForm::on_warningMessage);
+
+        connect(&roverTrackGenerator, &RoverTrackGenerator::errorMessage,
+                this, &PostProcessingForm::on_errorMessage);
+
+        roverTrackGenerator.generateTrack(params);
     }
 }
 

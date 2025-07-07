@@ -284,6 +284,8 @@ private slots:
 
     void on_pushButton_PointFans_Generate_clicked();
 
+    void on_pushButton_RoverTrack_GenerateTrack_clicked();
+
 private:
     /**
      * @brief RELPOSNEDReadingData-class is used to make it easier to handle processing if RELPOSNED-data
@@ -343,6 +345,7 @@ private:
     QFileDialog fileDialog_PointCloud;
     QFileDialog fileDialog_Stylus_MovieScript;
     QFileDialog fileDialog_LOSolver_Script;
+    QFileDialog fileDialog_RoverTrack;
     QFileDialog fileDialog_Lidar_Script;
 
     QFileDialog fileDialog_Operations_Load;

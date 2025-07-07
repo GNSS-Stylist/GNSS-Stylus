@@ -3037,6 +3037,528 @@ multiply	1	0	0	0
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="tab_RoverTrack">
+          <attribute name="title">
+           <string>Rover track</string>
+          </attribute>
+          <widget class="QTabWidget" name="tabWidget_RoverTrack">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>744</width>
+             <height>473</height>
+            </rect>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <widget class="QWidget" name="tab_RoverTrack_Generic">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+            <attribute name="title">
+             <string>Generic settings</string>
+            </attribute>
+            <widget class="QSpinBox" name="spinBox_RoverTrack_ITOW_Range_Min">
+             <property name="geometry">
+              <rect>
+               <x>200</x>
+               <y>10</y>
+               <width>100</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximum">
+              <number>604800000</number>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_ITOWRange_Points_Min">
+             <property name="geometry">
+              <rect>
+               <x>15</x>
+               <y>10</y>
+               <width>179</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>ITOW range for the track, min:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="pushButton_RoverTrack_ITOW_Script_Max_Maximize">
+             <property name="geometry">
+              <rect>
+               <x>310</x>
+               <y>40</y>
+               <width>80</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Set max</string>
+             </property>
+            </widget>
+            <widget class="QSpinBox" name="spinBox_RoverTrack_ITOW_Range_Max">
+             <property name="geometry">
+              <rect>
+               <x>204</x>
+               <y>40</y>
+               <width>100</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximum">
+              <number>604800000</number>
+             </property>
+             <property name="value">
+              <number>604800000</number>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_ITOWRange_Points_Max">
+             <property name="geometry">
+              <rect>
+               <x>170</x>
+               <y>40</y>
+               <width>28</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>max:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_Rover">
+             <property name="geometry">
+              <rect>
+               <x>47</x>
+               <y>70</y>
+               <width>151</width>
+               <height>20</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Rover:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_Rover">
+             <property name="geometry">
+              <rect>
+               <x>200</x>
+               <y>70</y>
+               <width>101</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>A</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>B</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>C</string>
+              </property>
+             </item>
+            </widget>
+           </widget>
+           <widget class="QWidget" name="tab_RoverTrack_FileFormat">
+            <property name="autoFillBackground">
+             <bool>true</bool>
+            </property>
+            <attribute name="title">
+             <string>File format settings</string>
+            </attribute>
+            <widget class="QSpinBox" name="spinBox_RoverTrack_FileFormat_Decimals_Accuracies">
+             <property name="geometry">
+              <rect>
+               <x>362</x>
+               <y>240</y>
+               <width>34</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>6</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_FileFormat_EOLCharacters">
+             <property name="geometry">
+              <rect>
+               <x>362</x>
+               <y>182</y>
+               <width>300</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>CR (PLY-standard(?), meshlab doesn't support)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>LF (&quot;Linux&quot;)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>CR+LF (&quot;Windows&quot;)</string>
+              </property>
+             </item>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_TimeStampsFormat">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>80</y>
+               <width>311</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Write timestamps &amp; format:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_EOLCharacters">
+             <property name="geometry">
+              <rect>
+               <x>33</x>
+               <y>182</y>
+               <width>321</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>End of line character(s):</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_FileFormat_TimeStampsFormat">
+             <property name="geometry">
+              <rect>
+               <x>360</x>
+               <y>80</y>
+               <width>300</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>None (don't write timestamps)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>ITOW (32-bit GPS Time Of Week as ms)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Uptime (32-bit uptime from the logs)</string>
+              </property>
+             </item>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_Decimals_Accuracies">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>240</y>
+               <width>351</width>
+               <height>20</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Decimals for accuracies (text files only):</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_LocationCoordsFormat">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>50</y>
+               <width>311</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Write location coordinates &amp; format:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QSpinBox" name="spinBox_RoverTrack_FileFormat_Decimals_Locations">
+             <property name="geometry">
+              <rect>
+               <x>362</x>
+               <y>211</y>
+               <width>34</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>6</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_Decimals_Locations">
+             <property name="geometry">
+              <rect>
+               <x>33</x>
+               <y>211</y>
+               <width>323</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Decimals for locations (text files only):</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QCheckBox" name="checkBox_RoverTrack_FileFormat_Binary">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>10</y>
+               <width>644</width>
+               <height>21</height>
+              </rect>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Normal lengths can be utilized in MeshLab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Binary (more precise, faster to generate, not human-readable)</string>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_AccuracyFormat">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>110</y>
+               <width>311</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Write accuracies &amp; format:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_FileFormat_AccuracyFormat">
+             <property name="geometry">
+              <rect>
+               <x>360</x>
+               <y>110</y>
+               <width>300</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>None (don't write accuracies)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>float (32 bit)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>double (64 bit)</string>
+              </property>
+             </item>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_FileFormat_LocationCoordsFormat">
+             <property name="geometry">
+              <rect>
+               <x>360</x>
+               <y>50</y>
+               <width>300</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>None (don't write coords)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>float (32 bit)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>double (64 bit)</string>
+              </property>
+             </item>
+            </widget>
+            <widget class="QComboBox" name="comboBox_RoverTrack_FileFormat_FlagsFormat">
+             <property name="geometry">
+              <rect>
+               <x>360</x>
+               <y>140</y>
+               <width>300</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>None (don't write flags)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>raw (16 bit, raw content of flags-field)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>carrSoln (8 bit, bits 4...3 of flags-field (no sol / float / fix))</string>
+              </property>
+             </item>
+            </widget>
+            <widget class="QLabel" name="label_RoverTrack_FileFormat_FlagsFormat">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>140</y>
+               <width>311</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Write flags &amp; format:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </widget>
+          </widget>
+          <widget class="QPushButton" name="pushButton_RoverTrack_GenerateTrack">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>480</y>
+             <width>661</width>
+             <height>23</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Generate track</string>
+           </property>
+          </widget>
+         </widget>
          <widget class="QWidget" name="tab_Lidar">
           <property name="autoFillBackground">
            <bool>true</bool>
