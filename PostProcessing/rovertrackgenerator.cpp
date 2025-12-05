@@ -61,8 +61,6 @@ void RoverTrackGenerator::generateTrack(const Params& params)
 
     writeHeader();
 
-    UBXMessage_RELPOSNED::ITOW currentITOW = params.iTOWRange_Script_Min;
-
     numberOfPointsWritten = 0;
 
 //    UBXMessage_RELPOSNED::ITOW iTOWMismatchStart = -1;
@@ -70,7 +68,11 @@ void RoverTrackGenerator::generateTrack(const Params& params)
 
     unsigned int warningCount = 0;
 
-    while (currentITOW <= params.iTOWRange_Script_Max)
+    QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator;
+
+    relposIterator = params.rover->relposnedMessages.lowerBound(params.iTOWRange_Script_Min);
+
+    while (relposIterator != params.rover->relposnedMessages.end())
     {
         if (warningCount >= 1000)
         {
@@ -81,17 +83,12 @@ void RoverTrackGenerator::generateTrack(const Params& params)
             break;
         }
 
-        QMap<UBXMessage_RELPOSNED::ITOW, UBXMessage_RELPOSNED>::const_iterator relposIterator;
+        const UBXMessage_RELPOSNED& relPosNED = relposIterator.value();
 
-        relposIterator = params.rover->relposnedMessages.lowerBound(currentITOW);
-
-        if (relposIterator == params.rover->relposnedMessages.end())
+        if (relPosNED.iTOW > params.iTOWRange_Script_Max)
         {
-            // No more data
             break;
         }
-
-        const UBXMessage_RELPOSNED& relPosNED = relposIterator.value();
 
         unsigned int itemTime;
 
@@ -107,7 +104,14 @@ void RoverTrackGenerator::generateTrack(const Params& params)
         writeRELPOSNEDItem(relPosNED, itemTime);
         numberOfPointsWritten++;
 
-        currentITOW = relPosNED.iTOW + 1;
+        for (int i = 0; i < (params.frameSkip + 1); i++)
+        {
+            relposIterator++;
+            if (relposIterator == params.rover->relposnedMessages.end())
+            {
+                break;
+            }
+        }
     }
 
     finalizeFile();
@@ -139,6 +143,7 @@ void RoverTrackGenerator::writeHeader(void)
     dataToWrite += "comment Rover track-file created with GNSS-Stylus on (dd.mm.yyyy hh:mm): " + QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm").toLatin1() + eol;
     dataToWrite += "comment ITOW range for the script, min: " + QString::number(params.iTOWRange_Script_Min).toLatin1() + eol;
     dataToWrite += "comment ITOW range for the script, max: " + QString::number(params.iTOWRange_Script_Max).toLatin1() + eol;
+    dataToWrite += "comment Frame skip: " + QString::number(params.frameSkip).toLatin1() + eol;
 
     dataToWrite += "comment AccuracyBasis:";
     for (int row = 0; row < 3; row++)

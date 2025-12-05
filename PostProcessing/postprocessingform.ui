@@ -1196,7 +1196,7 @@
                     </size>
                    </property>
                    <property name="decimals">
-                    <number>3</number>
+                    <number>5</number>
                    </property>
                    <property name="minimum">
                     <double>-10000.000000000000000</double>
@@ -1218,7 +1218,7 @@
                     </size>
                    </property>
                    <property name="decimals">
-                    <number>3</number>
+                    <number>5</number>
                    </property>
                    <property name="minimum">
                     <double>-10000.000000000000000</double>
@@ -1243,7 +1243,7 @@
                     </size>
                    </property>
                    <property name="decimals">
-                    <number>3</number>
+                    <number>5</number>
                    </property>
                    <property name="minimum">
                     <double>-10000.000000000000000</double>
@@ -3199,6 +3199,35 @@ multiply	1	0	0	0
               </property>
              </item>
             </widget>
+            <widget class="QLabel" name="label_RoverTrack_FrameSkip">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>100</y>
+               <width>161</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Frame skip:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QSpinBox" name="spinBox_RoverTrack_FrameSkip">
+             <property name="geometry">
+              <rect>
+               <x>200</x>
+               <y>100</y>
+               <width>101</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="maximum">
+              <number>1000000000</number>
+             </property>
+            </widget>
            </widget>
            <widget class="QWidget" name="tab_RoverTrack_FileFormat">
             <property name="autoFillBackground">
@@ -4442,7 +4471,7 @@ These operations are calculated only once when starting operations so calculatin
                             <x>0</x>
                             <y>0</y>
                             <width>572</width>
-                            <height>273</height>
+                            <height>268</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_31">

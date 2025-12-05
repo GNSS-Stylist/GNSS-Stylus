@@ -79,6 +79,7 @@ public:
 
         int numberOfDecimals_Coords = 4;
         int numberOfDecimals_Accuracy = 4;
+        int frameSkip = 0;
 //        int numberOfDecimals_Basis = 6;
 //        int numberOfDecimals_Quaternion = 6;
     };

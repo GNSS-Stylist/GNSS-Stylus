@@ -4771,6 +4771,7 @@ void PostProcessingForm::on_pushButton_RoverTrack_GenerateTrack_clicked()
         params.flagsFormat = RoverTrackGenerator::Params::FlagsFormat(ui->comboBox_RoverTrack_FileFormat_FlagsFormat->currentIndex());
         params.numberOfDecimals_Coords = ui->spinBox_RoverTrack_FileFormat_Decimals_Locations->value();
         params.numberOfDecimals_Accuracy = ui->spinBox_RoverTrack_FileFormat_Decimals_Locations->value();
+        params.frameSkip = ui->spinBox_RoverTrack_FrameSkip->value();
 
         RoverTrackGenerator roverTrackGenerator;
 
