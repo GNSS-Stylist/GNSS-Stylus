@@ -283,37 +283,48 @@ void PointFanGenerator::addFanPointsFromBlock(const QString &blockString, const 
     int charIndex = 0;
     int blockStringLength = blockString.length();
 
-    while (charIndex < blockStringLength)
+    try
     {
-        TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
-
-        if (charIndex >= blockStringLength)
+        while (charIndex < blockStringLength)
         {
-            break;
+            TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
+
+            if (charIndex >= blockStringLength)
+            {
+                break;
+            }
+
+            if (blockString.at(charIndex) != '{')
+            {
+                Issue error;
+                error.beginChar = charIndex + blockStartCharIndex;
+                error.endChar = charIndex + blockStartCharIndex+ 1;
+                error.text = "Only comments and whitespaces allowed before first coordinate definition block.";
+                throw error;
+            }
+
+            int coordinateBlockStartIndex = charIndex + blockStartCharIndex;
+            QString coordinateBlockContents = TextBlockParser::getTextBlockAsString(blockString, charIndex, true);
+
+            Eigen::Vector3d newPoint = extractCoordinatesFromBlock(coordinateBlockContents, coordinateBlockStartIndex + 1); // +1 for '{'
+
+            if (!fan.addVertex(newPoint))
+            {
+                Issue error;
+                error.beginChar = coordinateBlockStartIndex;
+                error.endChar = charIndex + blockStartCharIndex;
+                error.text = "Duplicate point. Only unique points allowed when defining a point fan.";
+                throw error;
+            }
         }
-
-        if (blockString.at(charIndex) != '{')
-        {
-            Issue error;
-            error.beginChar = charIndex + blockStartCharIndex;
-            error.endChar = charIndex + blockStartCharIndex+ 1;
-            error.text = "Only comments and whitespaces allowed before first coordinate definition block.";
-            throw error;
-        }
-
-        int coordinateBlockStartIndex = charIndex + blockStartCharIndex;
-        QString coordinateBlockContents = TextBlockParser::getTextBlockAsString(blockString, charIndex, true);
-
-        Eigen::Vector3d newPoint = extractCoordinatesFromBlock(coordinateBlockContents, coordinateBlockStartIndex + 1); // +1 for '{'
-
-        if (!fan.addVertex(newPoint))
-        {
-            Issue error;
-            error.beginChar = coordinateBlockStartIndex;
-            error.endChar = charIndex + blockStartCharIndex;
-            error.text = "Duplicate point. Only unique points allowed when defining a point fan.";
-            throw error;
-        }
+    }
+    catch (TextBlockParser::Issue& parseIssue)
+    {
+        Issue error;
+        error.beginChar = parseIssue.beginChar + blockStartCharIndex;
+        error.endChar = parseIssue.endChar + blockStartCharIndex;
+        error.text = parseIssue.text;
+        throw error;
     }
 }
 
@@ -323,53 +334,65 @@ Eigen::Vector3d PointFanGenerator::extractCoordinatesFromBlock(const QString& bl
     int charIndex = 0;
     int blockStringLength = blockString.length();
 
-    for (int i = 0; i < 3; i++)
+    try
     {
-        TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
-
-        if (charIndex >= blockStringLength)
+        for (int i = 0; i < 3; i++)
         {
-            Issue error;
-            error.beginChar = blockStartCharIndex;
-            error.endChar = blockStringLength + blockStartCharIndex;
-            error.text = "Not enough coordinate blocks (3 for xyz) in point definition block.";
-            throw error;
+            TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
+
+            if (charIndex >= blockStringLength)
+            {
+                Issue error;
+                error.beginChar = blockStartCharIndex;
+                error.endChar = blockStringLength + blockStartCharIndex;
+                error.text = "Not enough coordinate blocks (3 for xyz) in point definition block.";
+                throw error;
+            }
+
+            if (blockString.at(charIndex) != '{')
+            {
+                Issue error;
+                error.beginChar = charIndex + blockStartCharIndex;
+                error.endChar = charIndex + blockStartCharIndex+ 1;
+                error.text = "Only comments and whitespaces allowed in point definition block outside the coordinate blocks.";
+                throw error;
+            }
+
+            int coordinateBlockStartIndex = charIndex + blockStartCharIndex;
+            QString coordinateBlockContents = TextBlockParser::getTextBlockAsString(blockString, charIndex);
+
+            coords[i] = evaluateBlockContents(coordinateBlockContents, coordinateBlockStartIndex + 1); // + 1 for '{'
         }
 
-        if (blockString.at(charIndex) != '{')
+        TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
+
+        if ((charIndex < blockStringLength) && (blockString.at(charIndex) == '{'))
         {
             Issue error;
             error.beginChar = charIndex + blockStartCharIndex;
-            error.endChar = charIndex + blockStartCharIndex+ 1;
-            error.text = "Only comments and whitespaces allowed in point definition block outside the coordinate blocks.";
+            error.endChar = charIndex + blockStartCharIndex + 1;
+            error.text = "Opening curly brace after point definitions (only 3 spatial dimensions in use in the known universe).";
             throw error;
         }
 
-        int coordinateBlockStartIndex = charIndex + blockStartCharIndex;
-        QString coordinateBlockContents = TextBlockParser::getTextBlockAsString(blockString, charIndex);
-
-        coords[i] = evaluateBlockContents(coordinateBlockContents, coordinateBlockStartIndex + 1); // + 1 for '{'
+        if (charIndex < blockStringLength)
+        {
+            Issue error;
+            error.beginChar = charIndex + blockStartCharIndex;
+            error.endChar = charIndex + blockStartCharIndex + 1;
+            error.text = "Only comments and whitespaces allowed in point definition block after the coordinate blocks.";
+            throw error;
+        }
     }
-
-    TextBlockParser::skipWhitespacesAndComments(blockString, charIndex);
-
-    if ((charIndex < blockStringLength) && (blockString.at(charIndex) == '{'))
+    catch (TextBlockParser::Issue& parseIssue)
     {
         Issue error;
-        error.beginChar = charIndex + blockStartCharIndex;
-        error.endChar = charIndex + blockStartCharIndex + 1;
-        error.text = "Opening curly brace after point definitions (only 3 spatial dimensions in use in the known universe).";
+        error.beginChar = parseIssue.beginChar + blockStartCharIndex;
+        error.endChar = parseIssue.endChar + blockStartCharIndex;
+        error.text = parseIssue.text;
         throw error;
     }
 
-    if (charIndex < blockStringLength)
-    {
-        Issue error;
-        error.beginChar = charIndex + blockStartCharIndex;
-        error.endChar = charIndex + blockStartCharIndex + 1;
-        error.text = "Only comments and whitespaces allowed in point definition block after the coordinate blocks.";
-        throw error;
-    }
 
     return Eigen::Vector3d(coords[0], coords[1], coords[2]);
 }

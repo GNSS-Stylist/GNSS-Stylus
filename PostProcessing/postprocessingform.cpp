@@ -4682,7 +4682,7 @@ void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
     }
     catch (PointFanGenerator::Issue& issue)
     {
-        addLogLine("Generating expression map failed. Error: " + issue.text + ". CharIndex: " + QString::number(issue.beginChar));
+        addLogLine("Generating point fans failed. Error: " + issue.text + ". CharIndex: " + QString::number(issue.beginChar));
         QTextCursor cursor = ui->plainTextEdit_PointFans->textCursor();
         cursor.setPosition(issue.beginChar);
         if (issue.endChar != -1)
@@ -4695,6 +4695,8 @@ void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
         }
         ui->plainTextEdit_PointFans->setTextCursor(cursor);
         ui->plainTextEdit_PointFans->setFocus();
+
+        return;
     }
 
     if (!fileDialog_ExportPointFans.exec())
