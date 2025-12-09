@@ -24,9 +24,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-625</y>
+         <y>-577</y>
          <width>675</width>
-         <height>1214</height>
+         <height>1167</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -1915,6 +1915,13 @@
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="pushButton_ShowChartWindow_Mid360">
+                <property name="text">
+                 <string>Show chart window</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_SuspendThread_Mid360">
                 <property name="text">
                  <string>Suspended</string>
@@ -2090,7 +2097,7 @@
      <x>0</x>
      <y>0</y>
      <width>709</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

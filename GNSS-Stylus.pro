@@ -59,6 +59,7 @@ win32:LIBS += -l"ws2_32"
 # for gcc 9.x (not recognized by 7.x): QMAKE_CXXFLAGS += -Wno-deprecated-copy
 
 SOURCES += \
+    LivoxMid360/livoxmid360chartform.cpp \
     LivoxMid360/livoxmid360controlcommand.cpp \
     LivoxMid360/livoxmid360devicemonitorform.cpp \
     LivoxMid360/livoxmid360messagemonitorform.cpp \
@@ -116,6 +117,7 @@ SOURCES += \
     FastCRC/FastCRCsw.cpp
 
 HEADERS += \
+    LivoxMid360/livoxmid360chartform.h \
     LivoxMid360/livoxmid360controlcommand.h \
     LivoxMid360/livoxmid360devicemonitorform.h \
     LivoxMid360/livoxmid360messagemonitorform.h \
@@ -175,6 +177,7 @@ HEADERS += \
     FastCRC/FastCRC.h
 
 FORMS += \
+    LivoxMid360/livoxmid360chartform.ui \
     LivoxMid360/livoxmid360devicemonitorform.ui \
     LivoxMid360/livoxmid360messagemonitorform.ui \
     PostProcessing/postprocessingform.ui \

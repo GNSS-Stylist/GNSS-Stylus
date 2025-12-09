@@ -188,6 +188,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     messageMonitorForm_Mid360 = new LivoxMid360MessageMonitorForm(parent, "Message monitor (Livox Mid-360)");
     livoxMid360DeviceMonitorForm = new LivoxMid360DeviceMonitorForm(parent);
+    livoxMid360ChartForm = new LivoxMid360ChartForm(parent);
 }
 
 MainWindow::~MainWindow()
@@ -212,6 +213,7 @@ MainWindow::~MainWindow()
     delete messageMonitorForm_RPLidar;
     delete messageMonitorForm_Mid360;
     delete livoxMid360DeviceMonitorForm;
+    delete livoxMid360ChartForm;
     delete lidarChartForm;
 
     for (unsigned int i = 0; i < sizeof(rovers) / sizeof(rovers[0]); i++)
@@ -272,6 +274,7 @@ void MainWindow::closeEvent (QCloseEvent *event)
     messageMonitorForm_RPLidar->close();
     messageMonitorForm_Mid360->close();
     livoxMid360DeviceMonitorForm->close();
+    livoxMid360ChartForm->close();
     lidarChartForm->close();
 
     if (serialThread_Base)
@@ -1348,6 +1351,7 @@ void MainWindow::on_pushButton_StartThread_Mid360_clicked()
         messageMonitorForm_Mid360->connectLivoxMid360ThreadSlots(thread_Mid360);
         essentialsForm->connectLivoxMid360ThreadSlots(thread_Mid360);
         livoxMid360DeviceMonitorForm->connectLivoxMid360Thread(thread_Mid360);
+        livoxMid360ChartForm->connectLivoxMid360Thread(thread_Mid360);
         thread_Mid360->connectPostProcessingSlots(postProcessingForm);
 
         thread_Mid360->start();
@@ -1394,6 +1398,7 @@ void MainWindow::on_pushButton_TerminateThread_Mid360_clicked()
         messageMonitorForm_Mid360->disconnectLivoxMid360ThreadSlots(thread_Mid360);
         essentialsForm->disconnectLivoxMid360ThreadSlots(thread_Mid360);
         livoxMid360DeviceMonitorForm->disconnectLivoxMid360Thread(thread_Mid360);
+        livoxMid360ChartForm->disconnectLivoxMid360Thread(thread_Mid360);
         thread_Mid360->disconnectPostProcessingSlots(postProcessingForm);
 
         delete thread_Mid360;
@@ -1435,5 +1440,13 @@ void MainWindow::on_checkBox_SuspendThread_Mid360_stateChanged(int arg1)
             thread_Mid360->resume();
         }
     }
+}
+
+
+void MainWindow::on_pushButton_ShowChartWindow_Mid360_clicked()
+{
+    livoxMid360ChartForm->show();
+    livoxMid360ChartForm->raise();
+    livoxMid360ChartForm->activateWindow();
 }
 
