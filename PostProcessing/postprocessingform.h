@@ -216,7 +216,7 @@ private slots:
 
     void on_pushButton_AddAllIncludingParams_clicked();
 
-    void on_pushButton_Preset_clicked();
+    void on_pushButton_CopyPresetToClipboard_clicked();
 
     void on_pushButton_ClearRELPOSNEDData_RoverC_clicked();
 

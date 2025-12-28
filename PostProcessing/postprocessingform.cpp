@@ -22,6 +22,7 @@
 #include <QTime>
 #include <QMessageBox>
 #include <QtMath>
+#include <QClipboard>
 
 #include "postprocessingform.h"
 #include "PostProcessing/lointerpolator.h"
@@ -40,31 +41,28 @@
 struct
 {
     QString name;
-    double values[4][4];
+    int values[3][3];
 } static const transformationPresets[] =
 {
     { "XYZ = +N+E+D or NED -> +X+Y+Z (default \"no conversion\")",
         {
-            {  1,  0,  0,  0 },
-            {  0,  1,  0,  0 },
-            {  0,  0,  1,  0 },
-            {  0,  0,  0,  1 },
+            {  1,  0,  0 },
+            {  0,  1,  0 },
+            {  0,  0,  1 },
         }
     },
     { "XYZ = EDS = +E+D-N or NED -> -Z+X+Y (Processing's default left-handed)",
         {
-            {  0,  1,  0,  0 },
-            {  0,  0,  1,  0 },
-            { -1,  0,  0,  0 },
-            {  0,  0,  0,  1 },
+            {  0,  1,  0 },
+            {  0,  0,  1 },
+            { -1,  0,  0 },
         }
     },
     { "XYZ = EUS = +E-D-N or NED -> -Z+X-Y (Godot's \"North = -Z\")",
     {
-        {  0,  1,  0,  0 },
-        {  0,  0, -1,  0 },
-        { -1,  0,  0,  0 },
-        {  0,  0,  0,  1 },
+        {  0,  1,  0 },
+        {  0,  0, -1 },
+        { -1,  0,  0 },
     }
 },
 
@@ -116,22 +114,39 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
         }
     }
 
-    ui->doubleSpinBox_Translation_N->setValue(settings.value("PostProcessing_Translation_N", ui->doubleSpinBox_Translation_N->value()).toDouble());
-    ui->doubleSpinBox_Translation_E->setValue(settings.value("PostProcessing_Translation_E", ui->doubleSpinBox_Translation_E->value()).toDouble());
-    ui->doubleSpinBox_Translation_D->setValue(settings.value("PostProcessing_Translation_D", ui->doubleSpinBox_Translation_D->value()).toDouble());
-
-    for (int row = 0; row < 4; row++)
+    if (settings.contains("PostProcessing_NED_To_XYZ_Transform"))
     {
-        for (int column = 0; column < 4; column++)
-        {
-            QString settingKey = "PostProcessing_Transform_Row" +
-                    QString::number(row) + "_Column" +
-                    QString::number(column);
-
-            ui->tableWidget_TransformationMatrix->item(row, column)->setText(settings.value(settingKey, ui->tableWidget_TransformationMatrix->item(row, column)->text()).toString());
-        }
+        ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setPlainText(settings.value("PostProcessing_NED_To_XYZ_Transform", ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->toPlainText()).toString());
     }
+    else
+    {
+        // Automatic conversion from old format (separate translation in NED and then transform matrix NED -> XYZ) to "operations"
 
+        QString plainText = "// Automatically converted operations from the old format\n// (separate translation in NED and then transformation matrix NED -> XYZ)";
+
+        plainText += "\n\n// Old fields from \"Translation in NED-coordinates (before transformation)\":";
+        plainText += "\ntranslate " + QString::number(settings.value("PostProcessing_Translation_N", 0).toDouble(), 'g', 5) + " " +
+                QString::number(settings.value("PostProcessing_Translation_E", 0).toDouble(), 'g', 5) + " " +
+                QString::number(settings.value("PostProcessing_Translation_D", 0).toDouble(), 'g', 5) + ";";
+
+        plainText += "\n\n// Old fields from \"Transformation matrix (last row not included as only affine transforms are supported)\":";
+        plainText += "\nmultiply";
+
+        for (int row = 0; row < 3; row++)
+        {
+            for (int column = 0; column < 4; column++)
+            {
+                QString settingKey = "PostProcessing_Transform_Row" +
+                        QString::number(row) + "_Column" +
+                        QString::number(column);
+
+                plainText += " " + settings.value(settingKey, row == column ? 1 : 0).toString();
+            }
+        }
+        plainText += ";\n";
+
+        ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setPlainText(plainText);
+    }
 
     ui->doubleSpinBox_ReplaySpeed->setValue(settings.value("PostProcessing_Replay_ReplaySpeed", ui->doubleSpinBox_ReplaySpeed->value()).toDouble());
     ui->doubleSpinBox_LimitInterval->setValue(settings.value("PostProcessing_Replay_IntervalLimit", ui->doubleSpinBox_LimitInterval->value()).toDouble());
@@ -284,21 +299,7 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
         }
     }
 
-    settings.setValue("PostProcessing_Translation_N", ui->doubleSpinBox_Translation_N->value());
-    settings.setValue("PostProcessing_Translation_E", ui->doubleSpinBox_Translation_E->value());
-    settings.setValue("PostProcessing_Translation_D", ui->doubleSpinBox_Translation_D->value());
-
-    for (int row = 0; row < 4; row++)
-    {
-        for (int column = 0; column < 4; column++)
-        {
-            QString settingKey = "PostProcessing_Transform_Row" +
-                    QString::number(row) + "_Column" +
-                    QString::number(column);
-
-            settings.setValue(settingKey, ui->tableWidget_TransformationMatrix->item(row, column)->text());
-        }
-    }
+    settings.setValue("PostProcessing_NED_To_XYZ_Transform", ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->toPlainText());
 
     settings.setValue("PostProcessing_Replay_ReplaySpeed", ui->doubleSpinBox_ReplaySpeed->value());
     settings.setValue("PostProcessing_Replay_IntervalLimit", ui->doubleSpinBox_LimitInterval->value());
@@ -547,14 +548,15 @@ void PostProcessingForm::showEvent(QShowEvent* event)
 
         QStringList transformationFilters;
 
-        transformationFilters << "Transformation files (*.Transformation)"
+        transformationFilters << "Operations-files (*.Operations)"
+                << "Transformation files (for backwards compatibility) (*.Transformation)"
                 << "Any files (*)";
 
         fileDialog_Transformation_Load.setNameFilters(transformationFilters);
 
 
         fileDialog_Transformation_Save.setFileMode(QFileDialog::AnyFile);
-        fileDialog_Transformation_Save.setDefaultSuffix("Transformation");
+        fileDialog_Transformation_Save.setDefaultSuffix("Operations");
 
         fileDialog_Transformation_Save.setNameFilters(transformationFilters);
 
@@ -2342,36 +2344,43 @@ void PostProcessingForm::on_pushButton_GenerateSyncDataBasedOnITOWS_clicked()
 
 bool PostProcessingForm::generateTransformationMatrix(Eigen::Transform<double, 3, Eigen::Affine>& outputMatrix)
 {
-    Eigen::Transform<double, 3, Eigen::Affine> translation_NED;
+    TransformMatrixGenerator matrixGenerator;
 
-    translation_NED = translation_NED.Identity();
-
-    translation_NED(0, 3) = ui->doubleSpinBox_Translation_N->value();
-    translation_NED(1, 3) = ui->doubleSpinBox_Translation_E->value();
-    translation_NED(2, 3) = ui->doubleSpinBox_Translation_D->value();
-
-    Eigen::Transform<double, 3, Eigen::Affine> prelimTransform;
-
-    for (int i = 0; i < 4; i++)
+    try
     {
-        for (int k= 0; k < 4; k++)
+        QStringList lines = ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->document()->toPlainText().split("\n");
+
+        outputMatrix = matrixGenerator.generateSingle(lines).matrix();
+    }
+    catch (TransformMatrixGenerator::Issue& issue)
+    {
+        addLogLine("Generating NED to XYZ transform matrix failed (in Settings->Translate/transform (NED->XYZ)). Error: " + issue.text +
+                   " Row: " + QString::number(issue.item.lineNumber + 1) + ", column: " + QString::number(issue.item.firstCol + 1));
+
+        QTextCursor cursor = ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->textCursor();
+        cursor.setPosition(0, QTextCursor::MoveAnchor);
+        cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, issue.item.lineNumber);
+        if (issue.item.firstCol != -1)
         {
-            bool ok;
-            prelimTransform(i, k) = ui->tableWidget_TransformationMatrix->item(i, k)->text().toDouble(&ok);
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::MoveAnchor, issue.item.firstCol);
 
-            if (!ok)
+            if (issue.item.lastCol != -1)
             {
-                addLogLine("Error: Row " + QString::number(i + 1) +
-                           ", column " + QString::number(k + 1) +
-                           " of transformation matrix not convertible to a (double precision) floating point value. "
-                           "Unable to perform NED->XYZ-coordinate conversion.");
-
-                return false;
+                cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, issue.item.lastCol - issue.item.firstCol + 1);
             }
         }
+
+        ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setTextCursor(cursor);
+        ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setFocus();
+
+        return false;
     }
 
-    outputMatrix = prelimTransform * translation_NED;
+
+
+
+
+
 
     return true;
 }
@@ -2585,61 +2594,86 @@ void PostProcessingForm::loadTransformation(const QString fileName)
     {
         QTextStream textStream(&transformationFile);
 
-        QString headerLine = textStream.readLine();
-
-        if (headerLine.compare(getTransformationFileHeaderLine(), Qt::CaseInsensitive))
+        if (fileName.toLower().endsWith(".transformation"))
         {
-            addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Data not read.");
-            transformationFile.close();
-            return;
-        }
+            // Conversion from old format for backwards compatibility
 
-        QString dataLine = textStream.readLine();
+            QString headerLine = textStream.readLine();
 
-        QStringList dataLineItems = dataLine.split("\t");
+            if (headerLine.compare(getTransformationFileHeaderLine(), Qt::CaseInsensitive))
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" doesn't have correct header. Data not read.");
+                transformationFile.close();
+                return;
+            }
 
-        if (dataLineItems.count() != (16 + 3))
-        {
-            addLogLine("Error: File's \"" + fileInfo.fileName() + "\" data line doesn't have correct number of items (19). Data not read.");
-            transformationFile.close();
-            return;
+            QString dataLine = textStream.readLine();
+
+            QStringList dataLineItems = dataLine.split("\t");
+
+            if (dataLineItems.count() != (16 + 3))
+            {
+                addLogLine("Error: File's \"" + fileInfo.fileName() + "\" data line doesn't have correct number of items (19). Data not read.");
+                transformationFile.close();
+                return;
+            }
+            else
+            {
+                double convertedItems[3];
+                bool convOk = true;
+
+                for (int itemIndex = 0; itemIndex < (3); itemIndex++)
+                {
+                    convertedItems[itemIndex] = dataLineItems[itemIndex].toDouble(&convOk);
+
+                    if (!convOk)
+                    {
+                        addLogLine("Error: File's \"" + fileInfo.fileName() +
+                                   "\" data line item #" + QString::number(itemIndex + 1) +
+                                   "can't be converted to double. Data not read.");
+
+                        transformationFile.close();
+
+                        break;
+                    }
+                }
+
+                if (convOk)
+                {
+                    // Automatic conversion from old format (separate translation in NED and then transform matrix NED -> XYZ) to "operations"
+
+                    QString plainText = "// Automatically converted operations from the old format\n// (separate translation in NED and then transformation matrix NED -> XYZ)";
+
+                    plainText += "\n\n// Old fields from \"Translation in NED-coordinates (before transformation)\":";
+                    plainText += "\ntranslate " + QString::number(convertedItems[0], 'g', 5) + " " +
+                            QString::number(convertedItems[1], 'g', 5) + " " +
+                            QString::number(convertedItems[2], 'g', 5) + ";";
+
+                    plainText += "\n\n// Old fields from \"Transformation matrix (last row not included as only affine transforms are supported)\":";
+                    plainText += "\nmultiply";
+
+                    for (int row = 0; row < 3; row++)
+                    {
+                        for (int column = 0; column < 4; column++)
+                        {
+                            QString settingKey = "PostProcessing_Transform_Row" +
+                                    QString::number(row) + "_Column" +
+                                    QString::number(column);
+
+                            plainText += " " + dataLineItems[3 + (row * 4) + column];
+                        }
+                    }
+                    plainText += ";\n";
+
+                    ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setPlainText(plainText);
+
+                    addLogLine("File read.");
+                }
+            }
         }
         else
         {
-            double convertedItems[3];
-            bool convOk = true;
-
-            for (int itemIndex = 0; itemIndex < (3); itemIndex++)
-            {
-                convertedItems[itemIndex] = dataLineItems[itemIndex].toDouble(&convOk);
-
-                if (!convOk)
-                {
-                    addLogLine("Error: File's \"" + fileInfo.fileName() +
-                               "\" data line item #" + QString::number(itemIndex + 1) +
-                               "can't be converted to double. Data not read.");
-
-                    transformationFile.close();
-
-                    break;
-                }
-            }
-
-            if (convOk)
-            {
-                ui->doubleSpinBox_Translation_N->setValue(convertedItems[0]);
-                ui->doubleSpinBox_Translation_E->setValue(convertedItems[1]);
-                ui->doubleSpinBox_Translation_D->setValue(convertedItems[2]);
-
-                for (int row = 0; row < 4; row++)
-                {
-                    for (int column = 0; column < 4; column++)
-                    {
-                        ui->tableWidget_TransformationMatrix->item(row, column)->setText(dataLineItems[3 + (row * 4) + column]);
-                    }
-                }
-                addLogLine("File read.");
-            }
+            ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->setPlainText(textStream.read(65536));   // 64 k should be enough for everyone.
         }
     }
     else
@@ -2718,21 +2752,7 @@ void PostProcessingForm::on_pushButton_SaveTransformation_clicked()
 
         QTextStream textStream(&transformationFile);
 
-        textStream << getTransformationFileHeaderLine() << "\n";
-
-        textStream << QString::number(ui->doubleSpinBox_Translation_N->value()) << "\t"
-                      << QString::number(ui->doubleSpinBox_Translation_E->value()) << "\t"
-                      << QString::number(ui->doubleSpinBox_Translation_D->value());
-
-        for (int row = 0; row < 4; row++)
-        {
-            for (int column = 0; column < 4; column++)
-            {
-                textStream << "\t" << ui->tableWidget_TransformationMatrix->item(row, column)->text();
-            }
-        }
-
-        textStream << "\n";
+        textStream << ui->plainTextEdit_Settings_NED_To_XYZ_Transform_Operations->toPlainText();
     }
 }
 
@@ -2741,7 +2761,7 @@ void PostProcessingForm::on_pushButton_AddAllIncludingParams_clicked()
     addAllData(true);
 }
 
-void PostProcessingForm::on_pushButton_Preset_clicked()
+void PostProcessingForm::on_pushButton_CopyPresetToClipboard_clicked()
 {
     int presetIndex = ui->comboBox_Presets->currentIndex();
 
@@ -2751,15 +2771,27 @@ void PostProcessingForm::on_pushButton_Preset_clicked()
     }
     else
     {
-        for (int row = 0; row < 4; row++)
+        QString command = "multiply";
+
+        for (int row = 0; row < 3; row++)
         {
-            for (int column = 0; column < 3; column++)
+            for (int column = 0; column < 4; column++)
             {
-                ui->tableWidget_TransformationMatrix->item(row, column)->setText(QString::number(transformationPresets[presetIndex].values[row][column]));
+                if (column < 3)
+                {
+                    command += " " + QString::number(transformationPresets[presetIndex].values[row][column]);
+                }
+                else
+                {
+                    command += " 0";    // Translation
+                }
             }
         }
 
-        ui->tableWidget_TransformationMatrix->item(3, 3)->setText(QString::number(transformationPresets[presetIndex].values[3][3]));
+        command += ";";
+
+        QGuiApplication::clipboard()->setText(command);
+        addLogLine("Coordinate system conversion command copied to clipboard.");
     }
 }
 
@@ -4789,4 +4821,5 @@ void PostProcessingForm::on_pushButton_RoverTrack_GenerateTrack_clicked()
         roverTrackGenerator.generateTrack(params);
     }
 }
+
 
