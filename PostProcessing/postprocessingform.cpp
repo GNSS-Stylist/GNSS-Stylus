@@ -217,26 +217,35 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value()).toInt());
     ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value()).toInt());
 
-    ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked()).toBool());
     ui->lineEdit_Lidar_Script_UptimeRange_Min->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text()).toString());
     ui->lineEdit_Lidar_Script_UptimeRange_Max->setText(settings.value("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text()).toString());
-    ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->setValue(settings.value("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value()).toInt());
     ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->setValue(settings.value("PostProcessing_Lidar_Script_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->value()).toInt());
-    ui->checkBox_Lidar_Script_FileFormat_Binary->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked()).toBool());
-    ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex()).toInt());
-    ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex()).toInt());
-    ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value()).toInt());
-    ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value()).toInt());
-    ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value()).toInt());
-    ui->comboBox_Lidar_Script_FileFormat_TimeFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex()).toInt());
-    ui->comboBox_Lidar_Script_FileFormat_QualityFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex()).toInt());
-    ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex()).toInt());
+    ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->setValue(settings.value("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value()).toInt());
+    ui->plainTextEdit_Lidar_Script_ConvexHulls->setPlainText(settings.value("PostProcessing_Lidar_Script_ConvexHulls", ui->plainTextEdit_Lidar_Script_ConvexHulls->toPlainText()).toString());
+    ui->plainTextEdit_Lidar_Script_FilterExpression->setPlainText(settings.value("PostProcessing_Lidar_Script_FilterExpression", ui->plainTextEdit_Lidar_Script_FilterExpression->toPlainText()).toString());
     ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->setValue(settings.value("PostProcessing_Lidar_Script_PostFilter_MinDistance", ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->value()).toDouble());
     ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->setValue(settings.value("PostProcessing_Lidar_Script_PostFilter_MinTimeDelta", ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->value()).toInt());
     ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->setChecked(settings.value("PostProcessing_Lidar_Script_PostFilter_CheckBackActive", ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->isChecked()).toBool());
 
+    ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked()).toBool());
+    ui->checkBox_Lidar_Script_FileFormat_Binary->setChecked(settings.value("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked()).toBool());
+    ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_TimeFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_QualityFormat->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex()).toInt());
+    ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->setCurrentIndex(settings.value("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value()).toInt());
+    ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->setValue(settings.value("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value()).toInt());
+
     ui->plainTextEdit_RasterCameras_TransformMatrixScript->setPlainText(settings.value("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText()).toString());
     ui->plainTextEdit_RasterCameras_CameraScript->setPlainText(settings.value("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText()).toString());
+
+    ui->plainTextEdit_PointFans->setPlainText(settings.value("PostProcessing_PointFans_Fans", ui->plainTextEdit_PointFans->toPlainText()).toString());
+    ui->checkBox_PointFans_Options_ExportCorners->setChecked(settings.value("PostProcessing_PointFans_Options_ExportCorners", ui->checkBox_PointFans_Options_ExportCorners->isChecked()).toBool());
+    ui->checkBox_PointFans_Options_ExportFaces->setChecked(settings.value("PostProcessing_PointFans_Options_ExportFaces", ui->checkBox_PointFans_Options_ExportFaces->isChecked()).toBool());
+    ui->checkBox_PointFans_Options_InvertedFaces->setChecked(settings.value("PostProcessing_PointFans_Options_InvertedFaces", ui->checkBox_PointFans_Options_InvertedFaces->isChecked()).toBool());
+    ui->spinBox_PointFans_Options_MaxPointCount->setValue(settings.value("PostProcessing_PointFans_Options_MaximumPointCount", ui->spinBox_PointFans_Options_MaxPointCount->value()).toInt());
 
 }
 
@@ -353,9 +362,6 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value());
     settings.setValue("PostProcessing_Lidar_PointCloud_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value());
 
-    ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->setValue(settings.value("PostProcessing_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_PointCloud_GenericSettings_MaxWorkUnitDuration->value()).toInt());
-    ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->setValue(settings.value("PostProcessing_Lidar_PointCloud_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_PointCloud_GenericSettings_NumberOfThreads->value()).toInt());
-
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_IncludeNormals->isChecked());
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality", ui->checkBox_Lidar_PointCloud_FileFormat_XYZ_NormalLengthsAsQuality->isChecked());
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter", ui->comboBox_Lidar_PointCloud_FileFormat_XYZ_EOLCharacter->currentIndex());
@@ -373,26 +379,36 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Normals->value());
     settings.setValue("PostProcessing_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality", ui->spinBox_Lidar_PointCloud_FileFormat_PLY_Decimals_Quality->value());
 
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Min", ui->lineEdit_Lidar_Script_UptimeRange_Min->text());
     settings.setValue("PostProcessing_Lidar_Script_Uptime_Max", ui->lineEdit_Lidar_Script_UptimeRange_Max->text());
-    settings.setValue("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value());
     settings.setValue("PostProcessing_Lidar_Script_GenericSettings_NumberOfThreads", ui->spinBox_Lidar_Script_GenericSettings_NumberOfThreads->value());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked());
-    settings.setValue("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex());
-    settings.setValue("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_GenericSettings_MaxWorkUnitDuration", ui->spinBox_Lidar_Script_GenericSettings_MaxWorkUnitDuration->value());
+    settings.setValue("PostProcessing_Lidar_Script_ConvexHulls", ui->plainTextEdit_Lidar_Script_ConvexHulls->toPlainText());
+    settings.setValue("PostProcessing_Lidar_Script_FilterExpression", ui->plainTextEdit_Lidar_Script_FilterExpression->toPlainText());
     settings.setValue("PostProcessing_Lidar_Script_PostFilter_MinDistance", ui->doubleSpinBox_Lidar_Script_PostFilter_MinDistance->value());
     settings.setValue("PostProcessing_Lidar_Script_PostFilter_MinTimeDelta", ui->spinBox_Lidar_Script_PostFilter_MinTimeDelta->value());
     settings.setValue("PostProcessing_Lidar_Script_PostFilter_CheckBackActive", ui->checkBox_Lidar_Script_PostFilter_CheckBackActive->isChecked());
 
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_DontWriteFiles", ui->checkBox_Lidar_Script_FileFormat_DontWriteFiles->isChecked());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Binary", ui->checkBox_Lidar_Script_FileFormat_Binary->isChecked());
+    settings.setValue("PostProcessing_Lidar_Lidar_Script_FileFormat_HitPointCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_HitPointCoordsFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_SourceCoordsFormat", ui->comboBox_Lidar_Script_FileFormat_SourceCoordsFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_TimeFormat", ui->comboBox_Lidar_Script_FileFormat_TimeFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_QualityFormat", ui->comboBox_Lidar_Script_FileFormat_QualityFormat->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_EOLCharacters", ui->comboBox_Lidar_Script_FileFormat_EOLCharacters->currentIndex());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_HitPointCoords", ui->spinBox_Lidar_Script_FileFormat_Decimals_HitPointCoords->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_SourcePoints", ui->spinBox_Lidar_Script_FileFormat_Decimals_SourcePoints->value());
+    settings.setValue("PostProcessing_Lidar_Script_FileFormat_Decimals_Quality", ui->spinBox_Lidar_Script_FileFormat_Decimals_Quality->value());
+
     settings.setValue("PostProcessing_RasterCameras_TransformMatrixScript", ui->plainTextEdit_RasterCameras_TransformMatrixScript->toPlainText());
     settings.setValue("PostProcessing_RasterCameras_CameraScript", ui->plainTextEdit_RasterCameras_CameraScript->toPlainText());
+
+    settings.setValue("PostProcessing_PointFans_Fans", ui->plainTextEdit_PointFans->toPlainText());
+    settings.setValue("PostProcessing_PointFans_Options_ExportCorners", ui->checkBox_PointFans_Options_ExportCorners->isChecked());
+    settings.setValue("PostProcessing_PointFans_Options_ExportFaces", ui->checkBox_PointFans_Options_ExportFaces->isChecked());
+    settings.setValue("PostProcessing_PointFans_Options_InvertedFaces", ui->checkBox_PointFans_Options_InvertedFaces->isChecked());
+    settings.setValue("PostProcessing_PointFans_Options_MaximumPointCount", ui->spinBox_PointFans_Options_MaxPointCount->value());
+
 }
 
 
