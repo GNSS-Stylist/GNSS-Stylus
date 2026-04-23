@@ -789,16 +789,53 @@ void EssentialsForm::on_pushButton_AddTag_clicked()
     addTextTag();
 }
 
+//#define NEWFILE_LMB_RMB (true)
+
 void EssentialsForm::on_pushButton_MouseTag_clicked()
 {
+#ifdef NEWFILE_LMB_RMB
+    // Just an ultra-dirty hack to allow throwing logging laptop into backpack and still be able to log
+    // several "sessions" using only mouse buttons
+    // (Implemented because need to log in quite low temps (-15 deg C or so),
+    // to make it possible to just throw the laptop into a backpack to keep it warm).
+
+    ui->lineEdit_LoggingFileNamePrefix->setText(ui->lineEdit_LoggingFileNamePrefix->text() + "a");
+    on_pushButton_StartLogging_clicked();
+    if (loggingActive)
+    {
+        soundEffect_LMB.play();
+    }
+    else
+    {
+        soundEffect_MBError.play();
+    }
+#else
     addMouseButtonTag("LMB", soundEffect_LMB);
     stylusTipLocation_LMB = lastStylusTipLocation;
+#endif
 }
 
 void EssentialsForm::on_pushButton_MouseTag_rightClicked()
 {
+#ifdef NEWFILE_LMB_RMB
+    // Just an ultra-dirty hack to allow throwing logging laptop into backpack and still be able to log
+    // several "sessions" using only mouse buttons
+    // (Implemented because need to log in quite low temps (-15 deg C or so),
+    // to make it possible to just throw the laptop into a backpack to keep it warm).
+
+    if (loggingActive)
+    {
+        soundEffect_RMB.play();
+        on_pushButton_StopLogging_clicked();
+    }
+    else
+    {
+        soundEffect_MBError.play();
+    }
+#else
     addMouseButtonTag("RMB", soundEffect_RMB);
     stylusTipLocation_RMB = lastStylusTipLocation;
+#endif
 }
 
 void EssentialsForm::on_pushButton_MouseTag_middleClicked()
