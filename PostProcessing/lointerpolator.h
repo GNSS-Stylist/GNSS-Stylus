@@ -163,9 +163,12 @@ inline void LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_Up
 
 inline void LOInterpolator::getInterpolatedLocationOrientationTransformMatrix_ITOW(
     const UBXMessage_RELPOSNED::ITOW iTOW,
+//    UBXMessage_RELPOSNED::ITOW iTOW,
     Eigen::Transform<double, 3, Eigen::Affine>& transform,
     const unsigned int maxInterpolationTimeRange)
 {
+//    iTOW = 476330000;   // Hacked input to allow stationary scans (for example inside, without good GNSS-signals)
+
     if ((iTOW < roverITOWLimit_Low) || (iTOW >= roverITOWLimit_High))
     {
         // "Cache miss" -> Find new limiting values
