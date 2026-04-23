@@ -46,7 +46,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
 
     if ((rpLidarIter != params.threadConstData.rpLidar.rounds->end()) && (rpLidarIter.key() <= params.uptime_Max))
     {
-        QString fileName = QDir::cleanPath(params.baseFileName + "_RPLidar.lidarscript");
+        QString fileName = QDir::cleanPath(params.baseFileName + "_RPLidar.LidarScript");
 
         emit infoMessage("Data for RPLidar device found. Creating file \"" + fileName + "\"...");
         QFile outFile(fileName);
@@ -99,7 +99,7 @@ void LidarScriptGenerator::generateLidarScript(const Params& params)
             QString ipAddressString_Snake = ipAddressString;
             ipAddressString_Snake.replace('.', '_');
 
-            QString fileName = QDir::cleanPath(params.baseFileName + "_Mid360_" + ipAddressString_Snake + ".lidarscript");
+            QString fileName = QDir::cleanPath(params.baseFileName + "_Mid360_" + ipAddressString_Snake + ".LidarScript");
 
             emit infoMessage("Data for Mid-360 device, IP-address " + ipAddressString + " found. Creating file \"" + fileName + "\"...");
             QFile outFile(fileName);
