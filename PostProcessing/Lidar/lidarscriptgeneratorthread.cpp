@@ -380,7 +380,18 @@ bool LidarScriptGeneratorThread::processWorkUnit(LOInterpolator &loInterpolator)
             Output::Point newPoint;
 
             newPoint.iTOW_ns = pointITOWUptime_ns;
+
+#if true
             newPoint.hitPoint = exprOutItem.coords;
+#else
+// MAD Projection: Project (pun unintended) the point to 0 X-coordinate to get better projection to the wall
+// (This is very quick implementation without much thoughts about optimization etc.)
+            double xDistanceBetweenPoints = fabs(laserOriginAfterLOSolverTransformXYZ.x() - exprOutItem.coords.x());
+            double multiplier = fabs(laserOriginAfterLOSolverTransformXYZ.x() / xDistanceBetweenPoints);
+
+            newPoint.hitPoint = (exprOutItem.coords - laserOriginAfterLOSolverTransformXYZ) * multiplier;
+            newPoint.hitPoint.x() = 0;
+#endif
             newPoint.sourcePoint = laserOriginAfterLOSolverTransformXYZ;
 
             if (!scanningActive)
