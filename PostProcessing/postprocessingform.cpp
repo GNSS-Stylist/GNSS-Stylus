@@ -245,6 +245,8 @@ void PostProcessingForm::loadParametersFromQSettings(QSettings& settings)
     ui->checkBox_PointFans_Options_ExportCorners->setChecked(settings.value("PostProcessing_PointFans_Options_ExportCorners", ui->checkBox_PointFans_Options_ExportCorners->isChecked()).toBool());
     ui->checkBox_PointFans_Options_ExportFaces->setChecked(settings.value("PostProcessing_PointFans_Options_ExportFaces", ui->checkBox_PointFans_Options_ExportFaces->isChecked()).toBool());
     ui->checkBox_PointFans_Options_InvertedFaces->setChecked(settings.value("PostProcessing_PointFans_Options_InvertedFaces", ui->checkBox_PointFans_Options_InvertedFaces->isChecked()).toBool());
+    ui->checkBox_PointFans_Options_WriteQuality->setChecked(settings.value("PostProcessing_PointFans_Options_WriteQuality", ui->checkBox_PointFans_Options_WriteQuality->isChecked()).toBool());
+    ui->doubleSpinBox_PointFans_Options_QualityValue->setValue(settings.value("PostProcessing_PointFans_Options_QualityValue", ui->doubleSpinBox_PointFans_Options_QualityValue->value()).toDouble());
     ui->spinBox_PointFans_Options_MaxPointCount->setValue(settings.value("PostProcessing_PointFans_Options_MaximumPointCount", ui->spinBox_PointFans_Options_MaxPointCount->value()).toInt());
 
 }
@@ -407,6 +409,8 @@ void PostProcessingForm::saveParametersToQSettings(QSettings& settings)
     settings.setValue("PostProcessing_PointFans_Options_ExportCorners", ui->checkBox_PointFans_Options_ExportCorners->isChecked());
     settings.setValue("PostProcessing_PointFans_Options_ExportFaces", ui->checkBox_PointFans_Options_ExportFaces->isChecked());
     settings.setValue("PostProcessing_PointFans_Options_InvertedFaces", ui->checkBox_PointFans_Options_InvertedFaces->isChecked());
+    settings.setValue("PostProcessing_PointFans_Options_WriteQuality", ui->checkBox_PointFans_Options_WriteQuality->isChecked());
+    settings.setValue("PostProcessing_PointFans_Options_QualityValue", ui->doubleSpinBox_PointFans_Options_QualityValue->value());
     settings.setValue("PostProcessing_PointFans_Options_MaximumPointCount", ui->spinBox_PointFans_Options_MaxPointCount->value());
 
 }
@@ -4752,12 +4756,22 @@ void PostProcessingForm::on_pushButton_PointFans_Generate_clicked()
         return;
     }
 
+    PointFan::ExportParams exportParams;
+
+    exportParams.exportCorners = ui->checkBox_PointFans_Options_ExportCorners->isChecked();
+    exportParams.exportFaces = ui->checkBox_PointFans_Options_ExportFaces->isChecked();
+    exportParams.invertedFaces = ui->checkBox_PointFans_Options_InvertedFaces->isChecked();
+    exportParams.writeQuality = ui->checkBox_PointFans_Options_WriteQuality->isChecked();
+    exportParams.qualityValue = ui->doubleSpinBox_PointFans_Options_QualityValue->value();
+    exportParams.countSanityLimit = ui->spinBox_PointFans_Options_MaxPointCount->value();
+    exportParams.transform_NEDToXYZ = transform_NEDToXYZ;
+
     auto iter = fans.begin();
 
     while (iter != fans.end())
     {
         QString fullFileName = QDir::cleanPath(fileDialog_ExportPointFans.directory().path() + "/" + iter.key() + ".ply");
-        iter.value().exportFanToFile(fullFileName, ui->checkBox_PointFans_Options_ExportCorners->isChecked(), ui->checkBox_PointFans_Options_ExportFaces->isChecked(), ui->checkBox_PointFans_Options_InvertedFaces->isChecked(), ui->spinBox_PointFans_Options_MaxPointCount->value(), transform_NEDToXYZ);
+        iter.value().exportFanToFile(fullFileName, exportParams);
         iter++;
     }
 }

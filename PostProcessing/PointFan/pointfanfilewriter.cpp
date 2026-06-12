@@ -78,6 +78,11 @@ bool PointFanFileWriter::writeHeader(void)
     dataToWrite += "property float ny" + eol;
     dataToWrite += "property float nz" + eol;
 
+    if (params.writeQuality)
+    {
+        dataToWrite += "property float quality" + eol;
+    }
+
     if (params.writeCorners || params.writeFaces)
     {
         // Read above ("element vertex") how writing of counts are supposed to work here
@@ -110,6 +115,11 @@ bool PointFanFileWriter::writePoint(const Eigen::Vector3d& point, const Eigen::V
     writeFloat(normal.x());
     writeFloat(normal.y());
     writeFloat(normal.z());
+
+    if (params.writeQuality)
+    {
+        writeFloat(params.qualityValue);
+    }
 
     numberOfPointsWritten++;
 

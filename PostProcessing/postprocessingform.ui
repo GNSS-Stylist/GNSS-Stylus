@@ -60,7 +60,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="usesScrollButtons">
           <bool>true</bool>
@@ -5992,8 +5992,8 @@ CubeFace_West ned reverse 0.05
             <widget class="QSpinBox" name="spinBox_PointFans_Options_MaxPointCount">
              <property name="geometry">
               <rect>
-               <x>200</x>
-               <y>110</y>
+               <x>190</x>
+               <y>170</y>
                <width>191</width>
                <height>23</height>
               </rect>
@@ -6014,8 +6014,8 @@ CubeFace_West ned reverse 0.05
             <widget class="QLabel" name="label_PointFans_Options_MaxPointCount">
              <property name="geometry">
               <rect>
-               <x>20</x>
-               <y>110</y>
+               <x>10</x>
+               <y>170</y>
                <width>171</width>
                <height>16</height>
               </rect>
@@ -6025,6 +6025,54 @@ CubeFace_West ned reverse 0.05
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QCheckBox" name="checkBox_PointFans_Options_WriteQuality">
+             <property name="geometry">
+              <rect>
+               <x>20</x>
+               <y>110</y>
+               <width>151</width>
+               <height>20</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Write quality</string>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_PointFans_Options_QualityValue">
+             <property name="geometry">
+              <rect>
+               <x>30</x>
+               <y>140</y>
+               <width>151</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Quality value:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_PointFans_Options_QualityValue">
+             <property name="geometry">
+              <rect>
+               <x>190</x>
+               <y>140</y>
+               <width>191</width>
+               <height>23</height>
+              </rect>
+             </property>
+             <property name="maximum">
+              <double>1000000000.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
              </property>
             </widget>
            </widget>

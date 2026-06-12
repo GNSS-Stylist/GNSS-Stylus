@@ -37,6 +37,8 @@ public:
         bool writeCorners = false;
         bool writeFaces = false;
         bool invertedFaces = false;
+        bool writeQuality = false;
+        float qualityValue = 1;
     };
 
     PointFanFileWriter(const Params &params);

@@ -40,6 +40,18 @@ public:
         CS_XYZ,
     };
 
+    class ExportParams
+    {
+    public:
+        bool exportCorners = false;
+        bool exportFaces = false;
+        bool invertedFaces = false;
+        bool writeQuality = false;
+        float qualityValue = 1;
+        int countSanityLimit = 1000000;
+        Eigen::Transform<double, 3, Eigen::Affine> transform_NEDToXYZ = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
+    };
+
     PointFan();
 
     WindingOrder windingOrder = WO_FORWARD;
@@ -52,7 +64,7 @@ public:
     void clearVertices(void);
     bool isVertexValid(const Eigen::Vector3d& newPoint);
     unsigned int getNumOfVertices(void);
-    void exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit, const Eigen::Transform<double, 3, Eigen::Affine> &transform_NEDToXYZ);
+    void exportFanToFile(const QString& filename, const ExportParams& exportParams);
     bool isFanValid(void);
     QVector<Eigen::Vector3d> getVertices(void);
 

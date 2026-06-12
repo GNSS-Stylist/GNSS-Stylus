@@ -86,7 +86,7 @@ QVector<Eigen::Vector3d> PointFan::getVertices(void)
     return vertices;
 }
 
-void PointFan::exportFanToFile(const QString& filename, const bool exportCorners, const bool exportFaces, const bool invertedFaces, const int countSanityLimit, const Eigen::Transform<double, 3, Eigen::Affine>& transform_NEDToXYZ)
+void PointFan::exportFanToFile(const QString& filename, const ExportParams& exportParams)
 {
     if (!isFanValid())
     {
@@ -183,9 +183,9 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
     double pointsPerSquare = pow((1.0 / pointSpacing), 2.0);
     double totalApproximatePointCount = totalTriangle2DArea * pointsPerSquare;
 
-    if (totalApproximatePointCount > countSanityLimit)
+    if (totalApproximatePointCount > exportParams.countSanityLimit)
     {
-        QString errorString = "Approximate point count (" + QString::number(totalApproximatePointCount) + ") exceeds sanity limit of " + QString::number(countSanityLimit) + ". File not created.";
+        QString errorString = "Approximate point count (" + QString::number(totalApproximatePointCount) + ") exceeds sanity limit of " + QString::number(exportParams.countSanityLimit) + ". File not created.";
         throw QString(errorString);
     }
 
@@ -194,13 +194,15 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
     int maxXIndex = std::ceil(maxX / pointSpacing);
     int maxYIndex = std::ceil(maxY / pointSpacing);
 
-    PointFanFileWriter::Params params;
+    PointFanFileWriter::Params fileWriterParams;
 
-    params.writeCorners = exportCorners;
-    params.writeFaces = exportFaces;
-    params.invertedFaces = invertedFaces;
+    fileWriterParams.writeCorners = exportParams.exportCorners;
+    fileWriterParams.writeFaces = exportParams.exportFaces;
+    fileWriterParams.invertedFaces = exportParams.invertedFaces;
+    fileWriterParams.writeQuality = exportParams.writeQuality;
+    fileWriterParams.qualityValue = exportParams.qualityValue;
 
-    PointFanFileWriter writer(params);
+    PointFanFileWriter writer(fileWriterParams);
 
     if (!writer.openFile(filename))
     {
@@ -211,7 +213,7 @@ void PointFan::exportFanToFile(const QString& filename, const bool exportCorners
 
     if (this->coordinateSpace == CS_NED)
     {
-        combinedTransform = transform_NEDToXYZ * combinedTransform;
+        combinedTransform = exportParams.transform_NEDToXYZ * combinedTransform;
     }
 
     auto combinedLinearPart = combinedTransform.linear();
