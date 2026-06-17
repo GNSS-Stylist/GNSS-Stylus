@@ -178,6 +178,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_Mid360HostIPAddress->setText(settings.value("HostIPAddress_LivoxMid360", "xxx.xxx.xxx.xxx").toString());
     ui->lineEdit_Mid360IPAddresses->setText(settings.value("LidarIPAddresses_LivoxMid360", "xxx,yyy,zzz").toString());
 
+    ui->actionDark_theme->setChecked(settings.value("Theme_Dark", "0").toBool());
+
     // Why is this needed? Q_ENUM should do the job? Different threads causing the need for this?
     qRegisterMetaType<SerialThread::DataReceivedEmitReason>();
 
@@ -206,6 +208,8 @@ MainWindow::~MainWindow()
 
     settings.setValue("HostIPAddress_LivoxMid360", ui->lineEdit_Mid360HostIPAddress->text());
     settings.setValue("LidarIPAddresses_LivoxMid360", ui->lineEdit_Mid360IPAddresses->text());
+
+    settings.setValue("Theme_Dark", ui->actionDark_theme->isChecked());
 
     delete messageMonitorForm_Base_Serial;
     delete messageMonitorForm_Base_NTRIP;
@@ -1448,5 +1452,29 @@ void MainWindow::on_pushButton_ShowChartWindow_Mid360_clicked()
     livoxMid360ChartForm->show();
     livoxMid360ChartForm->raise();
     livoxMid360ChartForm->activateWindow();
+}
+
+
+void MainWindow::on_actionDark_theme_changed()
+{
+    if (ui->actionDark_theme->isChecked())
+    {
+        QFile f(":qdarkstyle/dark/darkstyle.qss");
+
+        if (!f.exists())
+        {
+            printf("Unable to set stylesheet, file not found\n");
+        }
+        else
+        {
+            f.open(QFile::ReadOnly | QFile::Text);
+            QTextStream ts(&f);
+            qApp->setStyleSheet(ts.readAll());
+        }
+    }
+    else
+    {
+        qApp->setStyleSheet("");
+    }
 }
 

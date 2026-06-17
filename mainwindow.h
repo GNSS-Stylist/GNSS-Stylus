@@ -246,6 +246,8 @@ private slots:
 
     void on_pushButton_ShowChartWindow_Mid360_clicked();
 
+    void on_actionDark_theme_changed();
+
 signals:
     void distanceChanged(const EssentialsForm::DistanceItem&);  //!< Signal emitted when distance changes
 

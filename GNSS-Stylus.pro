@@ -190,6 +190,8 @@ FORMS += \
     essentialsform.ui \
     RPLidar/rplidarmessagemonitorform.ui
 
+RESOURCES += qdarkstyle/dark/darkstyle.qrc
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
